@@ -1,2 +1,2 @@
 # sd.cpp-webui
-A simple webui for stable-diffusion.cpp
+A simple interface based on Gradio library for stable-diffusion.cpp.
