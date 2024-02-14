@@ -381,4 +381,4 @@ sdcpp = gr.TabbedInterface(
     theme=gr.themes.Soft(),
 )
 
-sdcpp.launch(server_name="0.0.0.0")
+sdcpp.launch()
