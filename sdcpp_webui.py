@@ -38,7 +38,7 @@ def get_next_txt2img():
     next_number = highest_number + 1
     return f"{next_number}.png"
 
-def txt2img(model, vae, ppromt, nprompt, sampling, steps, schedule, width, height, batch_count, cfg, seed, clip_skip, threads, vae_tiling, rng, output, verbose):
+def txt2img(model, vae, ppromt, nprompt, sampling, steps, schedule, width, height, batch_count, cfg, seed, clip_skip, threads, vae_tiling, control_net_cpu, rng, output, verbose):
     fmodel = f'models/Stable-Diffusion/{model}'
     if vae:    
         fvae = f'models/VAE/{vae}'
@@ -57,6 +57,8 @@ def txt2img(model, vae, ppromt, nprompt, sampling, steps, schedule, width, heigh
     fthreads = str(threads)
     if vae_tiling:
         fvae_tiling = vae_tiling
+    if control_net_cpu:
+        fcontrol_net_cpu = control_net_cpu
     frng = f'{rng}'
 
     if output is None or '""':
@@ -75,6 +77,8 @@ def txt2img(model, vae, ppromt, nprompt, sampling, steps, schedule, width, heigh
         command.extend(['-n', fnprompt])
     if 'fvae_tiling' in locals():
         command.extend(['--vae-tiling'])
+    if 'fcontrol_net_cpu' in locals():
+        command.extend(['--control_net_cpu'])
     if 'fverbose' in locals():
         command.extend(['-v'])
 
@@ -98,26 +102,41 @@ def txt2img(model, vae, ppromt, nprompt, sampling, steps, schedule, width, heigh
         print("Errors:", errors)
     return foutput
 
-def convert(og_model, type, gguf_model):
+def convert(og_model, type, gguf_model, verbose):
     fog_model =  f'models/Stable-Diffusion/{og_model}'
     ftype = f'{type}'
-    if gguf_model is None or '""':
-        fgguf_model = f'"models/Stable-Diffusion/{og_model}.{type}.gguf"'
+    if gguf_model == '':
+        model_name, ext = os.path.splitext(og_model)
+        fgguf_model = f'"models/Stable-Diffusion/{model_name}.{type}.gguf"'
     else:
         fgguf_model = f'"models/Stable-Diffusion/{gguf_model}"'
+    if verbose:
+        fverbose = verbose
 
     command=['./sd', '-M', 'convert', '-m', fog_model, '-o', fgguf_model, '--type', ftype]
 
+    if 'fverbose' in locals():
+        command.extend(['-v'])
+
     # Run the command
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 
-    # Wait for the process to finish and capture its output and errors
-    output, errors = process.communicate()
+    # Read the output line by line in real-time
+    while True:
+        output_line = process.stdout.readline()
+        if output_line == '' and process.poll() is not None:
+            break
+        if output_line:
+            print(output_line.strip())
 
-    # Print the output and errors (if any)
-    print("Output:", output.decode())
-    print("Errors:", errors.decode())
-    return "Process Complete."
+    # Wait for the process to finish and capture its errors
+    _, errors = process.communicate()
+
+    # Print any remaining errors (if any)
+    if errors:
+        print("Errors:", errors)
+    result = "Process completed."
+    return result
 
 def greet(name):
     return "Hello " + name + "!"
@@ -156,13 +175,17 @@ with gr.Blocks() as txt2img_block:
             clip_skip = gr.Slider(label="CLIP skip", minimum=0, maximum=7, value=0, step=1)
             with gr.Accordion(label="Extra", open=False):
                 threads = gr.Number(label="Threads", minimum=0, maximum=os.cpu_count(), value=0)
-                vae_tiling = gr.Checkbox(label="Vae Tiling")
+                with gr.Row():
+                    with gr.Column(scale=1):
+                        vae_tiling = gr.Checkbox(label="Vae Tiling")
+                    with gr.Column(scale=1):
+                        control_net_cpu = gr.Checkbox(label="ControlNet on CPU")
                 rng = gr.Dropdown(label="RNG", choices=["std_default", "cuda"], value="cuda")
                 output = gr.Textbox(label="Output Name (optional)", value="")
                 verbose = gr.Checkbox(label="Verbose")
         with gr.Column(scale=1):
             img_final = gr.Image()
-            gen_btn.click(txt2img, inputs=[model, vae, pprompt, nprompt, sampling, steps, schedule, width, height, batch_count, cfg, seed,clip_skip, threads, vae_tiling, rng, output, verbose], outputs=[img_final])
+            gen_btn.click(txt2img, inputs=[model, vae, pprompt, nprompt, sampling, steps, schedule, width, height, batch_count, cfg, seed,clip_skip, threads, vae_tiling, control_net_cpu, rng, output, verbose], outputs=[img_final])
 
 img2img = gr.Interface(
 fn=greet,
@@ -172,20 +195,21 @@ title="Image to Image (WIP)",
 allow_flagging="never",
 )
 
-convert = gr.Interface(
-    fn=convert,
-    inputs=[
-        gr.Dropdown(label="Original Model", choices=get_hf_models()),
-        gr.Dropdown(label="Type", choices=["f32", "f16", "q8_0", "q5_1", "q5_0", "q4_1", "q4_0"], value="f32"),
-        gr.Textbox(label="Output Name (oprional, must end with .gguf)", value=""),],
-    outputs=[
-        "text",],
-    title="Convert and Quantize (WIP)",
-    allow_flagging="never",
-)
+with gr.Blocks() as convert_block:
+    convert_title = gr.Markdown("# Convert and Quantize")
+    with gr.Row():
+        with gr.Column(scale=1):
+            og_model = gr.Dropdown(label="Original Model", choices=get_hf_models())
+            type = gr.Dropdown(label="Type", choices=["f32", "f16", "q8_0", "q5_1", "q5_0", "q4_1", "q4_0"], value="f32")
+            verbose = gr.Checkbox(label="Verbose")
+            gguf_model = gr.Textbox(label="Output Name (optional, must end with .gguf)", value="")
+            convert_btn = gr.Button(value="Convert")
+        with gr.Column(scale=1):
+            result = gr.Textbox(interactive=False,value="")
+    convert_btn.click(convert, inputs=[og_model, type, gguf_model, verbose], outputs=[result])
 
 sdcpp = gr.TabbedInterface(
-    [txt2img_block, img2img, convert],
+    [txt2img_block, img2img, convert_block],
     ["txt2img", "img2img", "Checkpoint Converter"],
     title="sd.cpp-webui",
     theme=gr.themes.Soft(),
