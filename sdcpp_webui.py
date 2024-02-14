@@ -18,6 +18,21 @@ def get_hf_models():
         print(f"The {models_folder} folder does not exist.")
         return []
 
+def get_controlnet():
+    models_folder = "models/ControlNet"
+    if os.path.isdir(models_folder):
+        return [model for model in os.listdir(models_folder) if os.path.isfile(os.path.join(models_folder, model))]
+    else:
+        print(f"The {models_folder} folder does not exist.")
+
+def get_taesd():
+    models_folder = "models/TAESD"
+    if os.path.isdir(models_folder):
+        return [model for model in os.listdir(models_folder) if os.path.isfile(os.path.join(models_folder, model))]
+    else:
+        print(f"The {models_folder} folder does not exist.")
+        return []
+
 def get_vaes():
     models_folder = "models/VAE"
     if os.path.isdir(models_folder):
@@ -38,10 +53,20 @@ def get_next_txt2img():
     next_number = highest_number + 1
     return f"{next_number}.png"
 
-def txt2img(model, vae, ppromt, nprompt, sampling, steps, schedule, width, height, batch_count, cfg, seed, clip_skip, threads, vae_tiling, control_net_cpu, rng, output, verbose):
+def txt2img(model, vae, taesd, controlnet, control_img, control_strength, ppromt, nprompt, sampling, steps, schedule, width, height, batch_count, cfg, seed, clip_skip, threads, vae_tiling, control_net_cpu, rng, output, verbose):
     fmodel = f'models/Stable-Diffusion/{model}'
     if vae:    
         fvae = f'models/VAE/{vae}'
+    fembed = f'models/Embeddings/'
+    flora = f'models/Lora/'
+    if taesd:
+        ftaesd = f'models/TAESD/{taesd}'
+    if controlnet:
+        fcontrolnet = f'models/ControlNet/{controlnet}'
+    if control_img:
+        fcontrol_img = f'{control_img}'
+    if control_strength:
+        fcontrol_strength = str(control_strength)
     fpprompt = f'"{ppromt}"'
     if nprompt:
         fnprompt = f'"{nprompt}"'    
@@ -73,6 +98,18 @@ def txt2img(model, vae, ppromt, nprompt, sampling, steps, schedule, width, heigh
 
     if 'fvae' in locals():
         command.extend(['--vae', fvae])
+    if 'fembed' in locals():
+        command.extend(['--embd-dir', fembed])
+    if 'flora' in locals():
+        command.extend(['--lora-model-dir', flora])
+    if 'ftaesd' in locals():
+        command.extend(['--taesd', ftaesd])
+    if 'fcontrolnet' in locals():
+        command.extend(['--control-net', fcontrolnet])
+    if 'fcontrol_img' in locals():
+        command.extend(['--control_image', fcontrol_img])
+    if 'fcontrol_strength' in locals():
+        command.extend(['--control-strength', fcontrol_strength])
     if 'fnprompt' in locals():
         command.extend(['-n', fnprompt])
     if 'fvae_tiling' in locals():
@@ -102,10 +139,14 @@ def txt2img(model, vae, ppromt, nprompt, sampling, steps, schedule, width, heigh
         print("Errors:", errors)
     return foutput
 
-def img2img(model, vae, img_inp, ppromt, nprompt, sampling, steps, schedule, width, height, batch_count, strenght, cfg, seed, clip_skip, threads, vae_tiling, control_net_cpu, rng, output, verbose):
+def img2img(model, vae, taesd, img_inp, ppromt, nprompt, sampling, steps, schedule, width, height, batch_count, strenght, cfg, seed, clip_skip, threads, vae_tiling, control_net_cpu, rng, output, verbose):
     fmodel = f'models/Stable-Diffusion/{model}'
     if vae:    
         fvae = f'models/VAE/{vae}'
+    fembed = f'models/Embeddings/'
+    flora = f'models/Lora/'
+    if taesd:
+        ftaesd = f'models/TAESD/{taesd}'
     fimg_inp = f'{img_inp}'
     fpprompt = f'"{ppromt}"'
     if nprompt:
@@ -139,6 +180,12 @@ def img2img(model, vae, img_inp, ppromt, nprompt, sampling, steps, schedule, wid
 
     if 'fvae' in locals():
         command.extend(['--vae', fvae])
+    if 'fembed' in locals():
+        command.extend(['--embd-dir', fembed])
+    if 'flora' in locals():
+        command.extend(['--lora-model-dir', flora])
+    if 'ftaesd' in locals():
+        command.extend(['--taesd', ftaesd])
     if 'fnprompt' in locals():
         command.extend(['-n', fnprompt])
     if 'fvae_tiling' in locals():
@@ -212,6 +259,11 @@ with gr.Blocks() as txt2img_block:
             model = gr.Dropdown(label="Model", choices=get_models())
         with gr.Column():
             vae = gr.Dropdown(label="VAE", choices=get_vaes())
+            clear_model = gr.ClearButton(vae, size="sm")
+    with gr.Row():
+        with gr.Accordion(label="Extra Networks", open=False):
+            taesd = gr.Dropdown(label="TAESD", choices=get_taesd())
+            clear_model = gr.ClearButton(taesd, size="sm")
     with gr.Row():
         with gr.Column(scale=3):
             pprompt = gr.Textbox(label="Positive Prompt")
@@ -237,6 +289,11 @@ with gr.Blocks() as txt2img_block:
             cfg = gr.Slider(label="CFG Scale", minimum=1, maximum=30, value=7.0, step=0.1)
             seed = gr.Number(label="Seed", minimum=-1, maximum=2**32, value=-1)
             clip_skip = gr.Slider(label="CLIP skip", minimum=0, maximum=7, value=0, step=1)
+            with gr.Accordion(label="ControlNet", open=False):
+                controlnet = gr.Dropdown(label="ControlNet", choices=get_controlnet())
+                clear_model = gr.ClearButton(controlnet, size="sm")
+                control_img = gr.Image(sources="upload", type="filepath")
+                control_strength = gr.Slider(label="ControlNet strength", minimum=0, maximum=1, step=0.01, value=0.9)
             with gr.Accordion(label="Extra", open=False):
                 threads = gr.Number(label="Threads", minimum=0, maximum=os.cpu_count(), value=0)
                 with gr.Row():
@@ -249,7 +306,7 @@ with gr.Blocks() as txt2img_block:
                 verbose = gr.Checkbox(label="Verbose")
         with gr.Column(scale=1):
             img_final = gr.Image(type="pil")
-            gen_btn.click(txt2img, inputs=[model, vae, pprompt, nprompt, sampling, steps, schedule, width, height, batch_count, cfg, seed, clip_skip, threads, vae_tiling, control_net_cpu, rng, output, verbose], outputs=[img_final])
+            gen_btn.click(txt2img, inputs=[model, vae, taesd, controlnet, control_img, control_strength, pprompt, nprompt, sampling, steps, schedule, width, height, batch_count, cfg, seed, clip_skip, threads, vae_tiling, control_net_cpu, rng, output, verbose], outputs=[img_final])
 
 with gr.Blocks()as img2img_block:
     img2img_title = gr.Markdown("# Image to Image")
@@ -258,6 +315,11 @@ with gr.Blocks()as img2img_block:
             model = gr.Dropdown(label="Model", choices=get_models())
         with gr.Column():
             vae = gr.Dropdown(label="VAE", choices=get_vaes())
+            clear_model = gr.ClearButton(vae, size="sm")
+    with gr.Row():
+        with gr.Accordion(label="Extra Networks", open=False):
+            taesd = gr.Dropdown(label="TAESD", choices=get_taesd())
+            clear_model = gr.ClearButton(taesd, size="sm")
     with gr.Row():
         with gr.Column(scale=3):
             pprompt = gr.Textbox(label="Positive Prompt")
@@ -297,7 +359,7 @@ with gr.Blocks()as img2img_block:
                 verbose = gr.Checkbox(label="Verbose")
         with gr.Column(scale=1):
             img_final = gr.Image(type="pil")
-            gen_btn.click(img2img, inputs=[model, vae, img_inp, pprompt, nprompt, sampling, steps, schedule, width, height, batch_count, strenght, cfg, seed, clip_skip, threads, vae_tiling, control_net_cpu, rng, output, verbose], outputs=[img_final])
+            gen_btn.click(img2img, inputs=[model, vae, taesd, img_inp, pprompt, nprompt, sampling, steps, schedule, width, height, batch_count, strenght, cfg, seed, clip_skip, threads, vae_tiling, control_net_cpu, rng, output, verbose], outputs=[img_final])
 
 with gr.Blocks() as convert_block:
     convert_title = gr.Markdown("# Convert and Quantize")
