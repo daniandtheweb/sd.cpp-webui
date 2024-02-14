@@ -102,6 +102,73 @@ def txt2img(model, vae, ppromt, nprompt, sampling, steps, schedule, width, heigh
         print("Errors:", errors)
     return foutput
 
+def img2img(model, vae, img_inp, ppromt, nprompt, sampling, steps, schedule, width, height, batch_count, strenght, cfg, seed, clip_skip, threads, vae_tiling, control_net_cpu, rng, output, verbose):
+    fmodel = f'models/Stable-Diffusion/{model}'
+    if vae:    
+        fvae = f'models/VAE/{vae}'
+    fimg_inp = f'{img_inp}'
+    fpprompt = f'"{ppromt}"'
+    if nprompt:
+        fnprompt = f'"{nprompt}"'    
+    fsampling = f'{sampling}'
+    fsteps = str(steps)
+    fschedule = f'{schedule}'
+    fwidth = str(width)
+    fheight = str(height)
+    fbatch_count = str(batch_count)
+    fstrenght = str(strenght)
+    fcfg = str(cfg)
+    fseed = str(seed)
+    fclip_skip = str(clip_skip + 1)
+    fthreads = str(threads)
+    if vae_tiling:
+        fvae_tiling = vae_tiling
+    if control_net_cpu:
+        fcontrol_net_cpu = control_net_cpu
+    frng = f'{rng}'
+
+    if output is None or '""':
+        foutput = "outputs/txt2img/" + get_next_txt2img()
+    else:
+        foutput = f'"outputs/txt2img/{output}.png"'
+
+    if verbose:
+        fverbose = verbose
+
+    command = ['./sd', '-M', 'img2img', '-m', fmodel, '-i', fimg_inp, '-p', fpprompt, '--sampling-method', fsampling, '--steps', fsteps, '--schedule', fschedule, '-W', fwidth, '-H', fheight, '-b', fbatch_count, '--strength', fstrenght, '--cfg-scale', fcfg, '-s', fseed, '--clip-skip', fclip_skip, '-t', fthreads, '--rng', frng, '-o', foutput]
+
+    if 'fvae' in locals():
+        command.extend(['--vae', fvae])
+    if 'fnprompt' in locals():
+        command.extend(['-n', fnprompt])
+    if 'fvae_tiling' in locals():
+        command.extend(['--vae-tiling'])
+    if 'fcontrol_net_cpu' in locals():
+        command.extend(['--control_net_cpu'])
+    if 'fverbose' in locals():
+        command.extend(['-v'])
+
+    print(command)
+    # Run the command
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+
+    # Read the output line by line in real-time
+    while True:
+        output_line = process.stdout.readline()
+        if output_line == '' and process.poll() is not None:
+            break
+        if output_line:
+            print(output_line.strip())
+
+    # Wait for the process to finish and capture its errors
+    _, errors = process.communicate()
+
+    # Print any remaining errors (if any)
+    if errors:
+        print("Errors:", errors)
+    return foutput
+
+
 def convert(og_model, type, gguf_model, verbose):
     fog_model =  f'models/Stable-Diffusion/{og_model}'
     ftype = f'{type}'
@@ -137,9 +204,6 @@ def convert(og_model, type, gguf_model, verbose):
         print("Errors:", errors)
     result = "Process completed."
     return result
-
-def greet(name):
-    return "Hello " + name + "!"
 
 with gr.Blocks() as txt2img_block:
     txt2img_title = gr.Markdown("# Text to Image"),
@@ -184,16 +248,56 @@ with gr.Blocks() as txt2img_block:
                 output = gr.Textbox(label="Output Name (optional)", value="")
                 verbose = gr.Checkbox(label="Verbose")
         with gr.Column(scale=1):
-            img_final = gr.Image()
-            gen_btn.click(txt2img, inputs=[model, vae, pprompt, nprompt, sampling, steps, schedule, width, height, batch_count, cfg, seed,clip_skip, threads, vae_tiling, control_net_cpu, rng, output, verbose], outputs=[img_final])
+            img_final = gr.Image(type="pil")
+            gen_btn.click(txt2img, inputs=[model, vae, pprompt, nprompt, sampling, steps, schedule, width, height, batch_count, cfg, seed, clip_skip, threads, vae_tiling, control_net_cpu, rng, output, verbose], outputs=[img_final])
 
-img2img = gr.Interface(
-fn=greet,
-inputs="textbox",
-outputs="textbox",
-title="Image to Image (WIP)",
-allow_flagging="never",
-)
+with gr.Blocks()as img2img_block:
+    img2img_title = gr.Markdown("# Image to Image")
+    with gr.Row():
+        with gr.Column():
+            model = gr.Dropdown(label="Model", choices=get_models())
+        with gr.Column():
+            vae = gr.Dropdown(label="VAE", choices=get_vaes())
+    with gr.Row():
+        with gr.Column(scale=3):
+            pprompt = gr.Textbox(label="Positive Prompt")
+            nprompt = gr.Textbox(label="Negative Prompt")
+        with gr.Column(scale=1):
+            img_inp = gr.Image(sources="upload", type="filepath")
+            gen_btn = gr.Button(value="Generate")
+
+    with gr.Row():
+        with gr.Column(scale=1):
+            with gr.Row():
+                with gr.Column(scale=1):
+                    sampling = gr.Dropdown(label="Sampling method", choices=["euler", "euler_a", "heun", "dpm2", "dpm2++2s_a", "dpm++2m", "dpm++2mv2", "lcm"], value="euler_a")
+                with gr.Column(scale=1):
+                    steps = gr.Slider(label="Steps", minimum=1, maximum=999, value=20, step=1)
+            with gr.Row():
+                schedule = gr.Dropdown(label="Schedule", choices=["discrete", "karras"], value="discrete")
+            with gr.Row():
+                with gr.Column(scale=2):
+                    width = gr.Slider(label="Width", minimum=1, maximum=8192, value=512, step=1)
+                    height = gr.Slider(label="Height", minimum=1, maximum=8192, value=512, step=1)
+                with gr.Column(scale=1):
+                    batch_count = gr.Slider(label="Batch count", minimum=1, maximum=99, step=1, value=1)
+            strenght = gr.Slider(label="Noise strenght", minimum=0, maximum=1, step=0.01, value=0.75)
+            cfg = gr.Slider(label="CFG Scale", minimum=1, maximum=30, step=0.1, value=7.0)
+            seed = gr.Number(label="Seed", minimum=-1, maximum=2**32, value=-1)
+            clip_skip = gr.Slider(label="CLIP skip", minimum=0, maximum=7, value=0, step=1)
+            with gr.Accordion(label="Extra", open=False):
+                threads = gr.Number(label="Threads", minimum=0, maximum=os.cpu_count(), value=0)
+                with gr.Row():
+                    with gr.Column(scale=1):
+                        vae_tiling = gr.Checkbox(label="Vae Tiling")
+                    with gr.Column(scale=1):
+                        control_net_cpu = gr.Checkbox(label="ControlNet on CPU")
+                rng = gr.Dropdown(label="RNG", choices=["std_default", "cuda"], value="cuda")
+                output = gr.Textbox(label="Output Name (optional)", value="")
+                verbose = gr.Checkbox(label="Verbose")
+        with gr.Column(scale=1):
+            img_final = gr.Image(type="pil")
+            gen_btn.click(img2img, inputs=[model, vae, img_inp, pprompt, nprompt, sampling, steps, schedule, width, height, batch_count, strenght, cfg, seed, clip_skip, threads, vae_tiling, control_net_cpu, rng, output, verbose], outputs=[img_final])
 
 with gr.Blocks() as convert_block:
     convert_title = gr.Markdown("# Convert and Quantize")
@@ -209,7 +313,7 @@ with gr.Blocks() as convert_block:
     convert_btn.click(convert, inputs=[og_model, type, gguf_model, verbose], outputs=[result])
 
 sdcpp = gr.TabbedInterface(
-    [txt2img_block, img2img, convert_block],
+    [txt2img_block, img2img_block, convert_block],
     ["txt2img", "img2img", "Checkpoint Converter"],
     title="sd.cpp-webui",
     theme=gr.themes.Soft(),
