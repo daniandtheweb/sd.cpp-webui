@@ -1,5 +1,5 @@
-#!/usr/bin/sh
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+#!/usr/bin/bash
+SCRIPT_DIR="$( cd "$( dirname "$(readlink -f "$0")" )" && pwd )"
 cd "$SCRIPT_DIR"
 
 if [ -d "venv" ]; then
@@ -11,7 +11,12 @@ else
 fi
 
 echo "Activating virtual environment..."
-source venv/bin/activate
+if [ -f "venv/bin/activate" ]; then
+    source venv/bin/activate
+else
+    echo "Error: Virtual environment activation script not found."
+    exit 1
+fi
 echo "Virtual environment activated succesfully."
 
 if pip freeze | grep -q -F -f requirements.txt; then
