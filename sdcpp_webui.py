@@ -38,7 +38,7 @@ def get_next_txt2img():
     next_number = highest_number + 1
     return f"{next_number}.png"
 
-def txt2img(model, vae, ppromt, nprompt, sampling, steps, width, height, cfg, seed, threads, rng, output):
+def txt2img(model, vae, ppromt, nprompt, sampling, steps, schedule, width, height, batch_count, cfg, seed, clip_skip, threads, vae_tiling, rng, output, verbose):
     fmodel = f'models/Stable-Diffusion/{model}'
     if vae:    
         fvae = f'models/VAE/{vae}'
@@ -47,11 +47,16 @@ def txt2img(model, vae, ppromt, nprompt, sampling, steps, width, height, cfg, se
         fnprompt = f'"{nprompt}"'    
     fsampling = f'{sampling}'
     fsteps = str(steps)
+    fschedule = f'{schedule}'
     fwidth = str(width)
     fheight = str(height)
+    fbatch_count = str(batch_count)
     fcfg = str(cfg)
     fseed = str(seed)
+    fclip_skip = str(clip_skip + 1)
     fthreads = str(threads)
+    if vae_tiling:
+        fvae_tiling = vae_tiling
     frng = f'{rng}'
 
     if output is None or '""':
@@ -59,22 +64,38 @@ def txt2img(model, vae, ppromt, nprompt, sampling, steps, width, height, cfg, se
     else:
         foutput = f'"outputs/txt2img/{output}.png"'
 
-    command = ['./sd', '-M', 'txt2img', '-m', fmodel, '-p', fpprompt, '--sampling-method', fsampling, '--steps', fsteps, '-W', fwidth, '-H', fheight, '--cfg-scale', fcfg, '-s', fseed, '-t', fthreads, '--rng', frng, '-o', foutput]
+    if verbose:
+        fverbose = verbose
+
+    command = ['./sd', '-M', 'txt2img', '-m', fmodel, '-p', fpprompt, '--sampling-method', fsampling, '--steps', fsteps, '--schedule', fschedule, '-W', fwidth, '-H', fheight, '-b', fbatch_count, '--cfg-scale', fcfg, '-s', fseed, '--clip-skip', fclip_skip, '-t', fthreads, '--rng', frng, '-o', foutput]
 
     if 'fvae' in locals():
         command.extend(['--vae', fvae])
     if 'fnprompt' in locals():
         command.extend(['-n', fnprompt])
+    if 'fvae_tiling' in locals():
+        command.extend(['--vae-tiling'])
+    if 'fverbose' in locals():
+        command.extend(['-v'])
 
+    print(command)
     # Run the command
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
 
-    # Wait for the process to finish and capture its output and errors
-    output, errors = process.communicate()
+    # Read the output line by line in real-time
+    while True:
+        output_line = process.stdout.readline()
+        if output_line == '' and process.poll() is not None:
+            break
+        if output_line:
+            print(output_line.strip())
 
-    # Print the output and errors (if any)
-    print("Output:", output.decode())
-    print("Errors:", errors.decode())
+    # Wait for the process to finish and capture its errors
+    _, errors = process.communicate()
+
+    # Print any remaining errors (if any)
+    if errors:
+        print("Errors:", errors)
     return foutput
 
 def convert(og_model, type, gguf_model):
@@ -121,18 +142,27 @@ with gr.Blocks() as txt2img_block:
                 with gr.Column(scale=1):
                     sampling = gr.Dropdown(label="Sampling method", choices=["euler", "euler_a", "heun", "dpm2", "dpm2++2s_a", "dpm++2m", "dpm++2mv2", "lcm"], value="euler_a")
                 with gr.Column(scale=1):
-                    steps = gr.Slider(label="Steps", minimum=1, maximum=999, value=20)
-            width = gr.Slider(label="Width", minimum=1, maximum=8192, value=512)
-            height = gr.Slider(label="Height", minimum=1, maximum=8192, value=512)
-            cfg = gr.Slider(label="CFG Scale", minimum=1, maximum=30, value=7.0)
+                    steps = gr.Slider(label="Steps", minimum=1, maximum=999, value=20, step=1)
+            with gr.Row():
+                schedule = gr.Dropdown(label="Schedule", choices=["discrete", "karras"], value="discrete")
+            with gr.Row():
+                with gr.Column(scale=2):
+                    width = gr.Slider(label="Width", minimum=1, maximum=8192, value=512, step=1)
+                    height = gr.Slider(label="Height", minimum=1, maximum=8192, value=512, step=1)
+                with gr.Column(scale=1):
+                    batch_count = gr.Slider(label="Batch count", minimum=1, maximum=99, value=1, step=1)
+            cfg = gr.Slider(label="CFG Scale", minimum=1, maximum=30, value=7.0, step=0.1)
             seed = gr.Number(label="Seed", minimum=-1, maximum=2**32, value=-1)
+            clip_skip = gr.Slider(label="CLIP skip", minimum=0, maximum=7, value=0, step=1)
             with gr.Accordion(label="Extra", open=False):
                 threads = gr.Number(label="Threads", minimum=0, maximum=os.cpu_count(), value=0)
+                vae_tiling = gr.Checkbox(label="Vae Tiling")
                 rng = gr.Dropdown(label="RNG", choices=["std_default", "cuda"], value="cuda")
                 output = gr.Textbox(label="Output Name (optional)", value="")
+                verbose = gr.Checkbox(label="Verbose")
         with gr.Column(scale=1):
             img_final = gr.Image()
-            gen_btn.click(txt2img, inputs=[model, vae, pprompt, nprompt, sampling, steps, width, height, cfg, seed, threads, rng, output], outputs=[img_final])
+            gen_btn.click(txt2img, inputs=[model, vae, pprompt, nprompt, sampling, steps, schedule, width, height, batch_count, cfg, seed,clip_skip, threads, vae_tiling, rng, output, verbose], outputs=[img_final])
 
 img2img = gr.Interface(
 fn=greet,
@@ -161,4 +191,4 @@ sdcpp = gr.TabbedInterface(
     theme=gr.themes.Soft(),
 )
 
-sdcpp.launch()
+sdcpp.launch(server_name="0.0.0.0")
