@@ -1,5 +1,5 @@
 #!/usr/bin/bash
-SCRIPT_DIR="$( cd "$( dirname "$(readlink -f "$0")" )" && pwd )"
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 cd "$SCRIPT_DIR"
 
 if [ -d "venv" ]; then
@@ -28,4 +28,8 @@ else
 fi
 
 echo "Starting the WebUI..."
-python3 sdcpp_webui.py
+if [[ "$1" == "--listen" ]]; then
+    python sdcpp_webui.py --listen
+else
+    python sdcpp_webui.py
+fi
