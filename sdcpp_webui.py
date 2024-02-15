@@ -1,6 +1,17 @@
 import os
-import gradio as gr
+import argparse
 import subprocess
+import platform
+import gradio as gr
+
+
+if not os.system("which lspci > /dev/null") == 0:
+    if os.name == "nt":
+        sd = "sd.exe"
+    elif os.name == "posix":
+        sd = "./sd"
+else:
+    sd = "./sd"
 
 
 def get_models(models_folder):
@@ -71,16 +82,14 @@ def txt2img(model, vae, taesd, controlnet, control_img, control_strength,
     if cont_net_cpu:
         fcont_net_cpu = cont_net_cpu
     frng = f'{rng}'
-
     if output is None or '""':
         foutput = "outputs/txt2img/" + get_next_txt2img()
     else:
         foutput = f'"outputs/txt2img/{output}.png"'
-
     if verbose:
         fverbose = verbose
 
-    command = ['./sd', '-M', 'txt2img', '-m', fmodel, '-p', fpprompt,
+    command = [sd, '-M', 'txt2img', '-m', fmodel, '-p', fpprompt,
                '--sampling-method', fsampling, '--steps', fsteps,
                '--schedule', fschedule, '-W', fwidth, '-H', fheight, '-b',
                fbatch_count, '--cfg-scale', fcfg, '-s', fseed, '--clip-skip',
@@ -170,16 +179,14 @@ def img2img(model, vae, taesd, img_inp, controlnet, control_img,
     if cont_net_cpu:
         fcont_net_cpu = cont_net_cpu
     frng = f'{rng}'
-
     if output is None or '""':
         foutput = "outputs/txt2img/" + get_next_txt2img()
     else:
         foutput = f'"outputs/txt2img/{output}.png"'
-
     if verbose:
         fverbose = verbose
 
-    command = ['./sd', '-M', 'img2img', '-m', fmodel, '-i', fimg_inp, '-p',
+    command = [sd, '-M', 'img2img', '-m', fmodel, '-i', fimg_inp, '-p',
                fpprompt, '--sampling-method', fsampling, '--steps', fsteps,
                '--schedule', fschedule, '-W', fwidth, '-H', fheight, '-b',
                fbatch_count, '--strength', fstrenght, '--cfg-scale', fcfg,
@@ -243,7 +250,7 @@ def convert(og_model, type, gguf_model, verbose):
     if verbose:
         fverbose = verbose
 
-    command = ['./sd', '-M', 'convert', '-m', fog_model,
+    command = [sd, '-M', 'convert', '-m', fog_model,
                '-o', fgguf_model, '--type', ftype]
 
     if 'fverbose' in locals():
@@ -359,6 +366,7 @@ with gr.Blocks() as txt2img_block:
                                            rng, output, verbose],
                           outputs=[img_final])
 
+
 with gr.Blocks()as img2img_block:
     img2img_title = gr.Markdown("# Image to Image")
     with gr.Row():
@@ -382,7 +390,6 @@ with gr.Blocks()as img2img_block:
         with gr.Column(scale=1):
             img_inp = gr.Image(sources="upload", type="filepath")
             gen_btn = gr.Button(value="Generate")
-
     with gr.Row():
         with gr.Column(scale=1):
             with gr.Row():
@@ -450,6 +457,7 @@ with gr.Blocks()as img2img_block:
                                            rng, output, verbose],
                           outputs=[img_final])
 
+
 with gr.Blocks() as convert_block:
     convert_title = gr.Markdown("# Convert and Quantize")
     with gr.Row():
@@ -468,6 +476,7 @@ with gr.Blocks() as convert_block:
     convert_btn.click(convert, inputs=[og_model, type, gguf_model, verbose],
                       outputs=[result])
 
+
 sdcpp = gr.TabbedInterface(
     [txt2img_block, img2img_block, convert_block],
     ["txt2img", "img2img", "Checkpoint Converter"],
@@ -475,4 +484,13 @@ sdcpp = gr.TabbedInterface(
     theme=gr.themes.Soft(),
 )
 
-sdcpp.launch()
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Process optional arguments')
+    parser.add_argument('--listen', action='store_true',
+                        help='Listen on 0.0.0.0')
+    args = parser.parse_args()
+    if args.listen:
+        sdcpp.launch(server_name="0.0.0.0")
+    else:
+        sdcpp.launch()
