@@ -609,25 +609,31 @@ with gr.Blocks() as gallery_block:
     with gr.Row():
         glr_txt2img = gr.Button(value="txt2img")
         glr_img2img = gr.Button(value="img2img")
-    gallery_title= gr.Markdown('# Gallery')
+    gallery_title = gr.Markdown('# Gallery')
     gallery = gr.Gallery(label="txt2img", columns=[4], rows=[4],
                          object_fit="contain", height="auto")
     with gr.Row():
         glr_first = gr.Button(value="First page")
         glr_pvw = gr.Button(value="Previous")
-        page_num_select = gr.Number(label="Page:", minimum=1, value=1, interactive=True)
+        page_num_select = gr.Number(label="Page:", minimum=1, value=1,
+                                    interactive=True)
         page_num_btn = gr.Button(value="Go")
         glr_nxt = gr.Button(value="Next")
         glr_last = gr.Button(value="End page")
         glr_txt2img.click(txt2img_ctrl)
-        glr_txt2img.click(reload_gallery, inputs=[], outputs=[gallery, page_num_select])
+        glr_txt2img.click(reload_gallery, inputs=[],
+                          outputs=[gallery, page_num_select])
         glr_img2img.click(img2img_ctrl)
-        glr_img2img.click(reload_gallery, inputs=[], outputs=[gallery, page_num_select])
+        glr_img2img.click(reload_gallery, inputs=[],
+                          outputs=[gallery, page_num_select])
         glr_pvw.click(prev_page, inputs=[], outputs=[gallery, page_num_select])
         glr_nxt.click(next_page, inputs=[], outputs=[gallery, page_num_select])
-        glr_first.click(reload_gallery, inputs=[], outputs=[gallery, page_num_select])
-        glr_last.click(last_page, inputs=[], outputs=[gallery, page_num_select])
-        page_num_btn.click(reload_gallery, inputs=[page_num_select], outputs=[gallery, page_num_select])
+        glr_first.click(reload_gallery, inputs=[],
+                        outputs=[gallery, page_num_select])
+        glr_last.click(last_page, inputs=[],
+                       outputs=[gallery, page_num_select])
+        page_num_btn.click(reload_gallery, inputs=[page_num_select],
+                           outputs=[gallery, page_num_select])
 
 
 with gr.Blocks() as convert_block:
