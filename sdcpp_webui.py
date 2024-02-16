@@ -6,6 +6,13 @@ import gradio as gr
 
 
 current_dir = os.getcwd()
+model_dir = "models/Stable-Diffusion"
+vae_dir = "models/VAE"
+emb_dir = "models/Embeddings"
+lora_dir = "models/Lora"
+taesd_dir = "models/TAESD"
+cnnet_dir = "models/ControlNet"
+reload_symbol = '\U0001f504'
 
 
 if not os.system("which lspci > /dev/null") == 0:
@@ -17,8 +24,8 @@ else:
     sd = "./sd"
 
 
-def get_models(models_dir):
-    fmodels_dir = os.path.join(current_dir, models_dir)
+def get_models(model_dir):
+    fmodels_dir = os.path.join(current_dir, model_dir)
     if os.path.isdir(fmodels_dir):
         return [model for model in os.listdir(fmodels_dir)
                 if os.path.isfile(os.path.join(fmodels_dir, model)) and
@@ -39,6 +46,11 @@ def get_hf_models():
         return []
 
 
+def reload_models(model_dir):
+    refreshed_models = gr.update(choices=get_models(model_dir))
+    return refreshed_models
+
+
 def get_next_txt2img():
     ftxt2img_out = os.path.join(current_dir, "outputs/txt2img")
     files = os.listdir(ftxt2img_out)
@@ -52,23 +64,22 @@ def get_next_txt2img():
     return f"{next_number}.png"
 
 
-def txt2img(model, vae, taesd, controlnet, control_img, control_strength,
+def txt2img(model, vae, taesd, cnnet, control_img, control_strength,
             ppromt, nprompt, sampling, steps, schedule, width, height,
             batch_count, cfg, seed, clip_skip, threads, vae_tiling,
             cont_net_cpu, rng, output, verbose):
-    fmodel = os.path.join(current_dir, f'models/Stable-Diffusion/{model}')
-    if vae:
+    if model != "None":
+        fmodel = os.path.join(current_dir, f'models/Stable-Diffusion/{model}')
+    if vae != "None":
         fvae = os.path.join(current_dir, f'models/VAE/{vae}')
     fembed = os.path.join(current_dir, f'models/Embeddings')
     flora = os.path.join(current_dir, f'models/Lora')
     if taesd:
         ftaesd = os.path.join(current_dir, f'models/TAESD/{taesd}')
-    if controlnet:
-        fcontrolnet = os.path.join(current_dir,
-                                   f'models/ControlNet/{controlnet}')
-    if control_img:
+    if cnnet:
+        fcnnet = os.path.join(current_dir,
+                              f'models/ControlNet/{cnnet}')
         fcontrol_img = f'{control_img}'
-    if control_strength:
         fcontrol_strength = str(control_strength)
     fpprompt = f'"{ppromt}"'
     if nprompt:
@@ -100,21 +111,16 @@ def txt2img(model, vae, taesd, controlnet, control_img, control_strength,
                '--sampling-method', fsampling, '--steps', fsteps,
                '--schedule', fschedule, '-W', fwidth, '-H', fheight, '-b',
                fbatch_count, '--cfg-scale', fcfg, '-s', fseed, '--clip-skip',
-               fclip_skip, '-t', fthreads, '--rng', frng, '-o', foutput]
+               fclip_skip, '--embd-dir', fembed, '--lora-model-dir', flora,
+               '-t', fthreads, '--rng', frng, '-o', foutput]
 
     if 'fvae' in locals():
         command.extend(['--vae', fvae])
-    if 'fembed' in locals():
-        command.extend(['--embd-dir', fembed])
-    if 'flora' in locals():
-        command.extend(['--lora-model-dir', flora])
     if 'ftaesd' in locals():
         command.extend(['--taesd', ftaesd])
-    if 'fcontrolnet' in locals():
-        command.extend(['--control-net', fcontrolnet])
-    if 'fcontrol_img' in locals():
+    if 'fcnnet' in locals():
+        command.extend(['--control-net', fcnnet])
         command.extend(['--control_image', fcontrol_img])
-    if 'fcontrol_strength' in locals():
         command.extend(['--control-strength', fcontrol_strength])
     if 'fnprompt' in locals():
         command.extend(['-n', fnprompt])
@@ -151,7 +157,7 @@ def txt2img(model, vae, taesd, controlnet, control_img, control_strength,
     return img_final
 
 
-def img2img(model, vae, taesd, img_inp, controlnet, control_img,
+def img2img(model, vae, taesd, img_inp, cnnet, control_img,
             control_strength, ppromt, nprompt, sampling, steps, schedule,
             width, height, batch_count, strenght, cfg, seed, clip_skip,
             threads, vae_tiling, cont_net_cpu, rng, output, verbose):
@@ -163,12 +169,10 @@ def img2img(model, vae, taesd, img_inp, controlnet, control_img,
     if taesd:
         ftaesd = os.path.join(current_dir, f'models/TAESD/{taesd}')
     fimg_inp = f'{img_inp}'
-    if controlnet:
-        fcontrolnet = os.path.join(current_dir,
-                                   f'models/ControlNet/{controlnet}')
-    if control_img:
+    if cnnet:
+        fcnnet = os.path.join(current_dir,
+                              f'models/ControlNet/{cnnet}')
         fcontrol_img = f'{control_img}'
-    if control_strength:
         fcontrol_strength = str(control_strength)
     fpprompt = f'"{ppromt}"'
     if nprompt:
@@ -201,22 +205,17 @@ def img2img(model, vae, taesd, img_inp, controlnet, control_img,
                fpprompt, '--sampling-method', fsampling, '--steps', fsteps,
                '--schedule', fschedule, '-W', fwidth, '-H', fheight, '-b',
                fbatch_count, '--strength', fstrenght, '--cfg-scale', fcfg,
-               '-s', fseed, '--clip-skip', fclip_skip, '-t', fthreads, '--rng',
-               frng, '-o', foutput]
+               '-s', fseed, '--clip-skip', fclip_skip, '--embd-dir', fembed,
+               '--lora-model-dir', flora, '-t', fthreads, '--rng', frng, '-o',
+               foutput]
 
     if 'fvae' in locals():
         command.extend(['--vae', fvae])
-    if 'fembed' in locals():
-        command.extend(['--embd-dir', fembed])
-    if 'flora' in locals():
-        command.extend(['--lora-model-dir', flora])
     if 'ftaesd' in locals():
         command.extend(['--taesd', ftaesd])
-    if 'fcontrolnet' in locals():
-        command.extend(['--control-net', fcontrolnet])
-    if 'fcontrol_img' in locals():
+    if 'fcnnet' in locals():
+        command.extend(['--control-net', fcnnet])
         command.extend(['--control_image', fcontrol_img])
-    if 'fcontrol_strength' in locals():
         command.extend(['--control-strength', fcontrol_strength])
     if 'fnprompt' in locals():
         command.extend(['-n', fnprompt])
@@ -292,26 +291,43 @@ def convert(og_model, type, gguf_model, verbose):
 
 with gr.Blocks() as txt2img_block:
     txt2img_title = gr.Markdown("# Text to Image"),
+    model_dir_txt = gr.Textbox(value=model_dir, render=False)
+    vae_dir_txt = gr.Textbox(value=vae_dir, render=False)
+    emb_dir_txt = gr.Textbox(value=emb_dir, render=False)
+    lora_dir_txt = gr.Textbox(value=lora_dir, render=False)
+    taesd_dir_txt = gr.Textbox(value=taesd_dir, render=False)
+    cnnet_dir_txt = gr.Textbox(value=cnnet_dir, render=False)
+
     with gr.Row():
-        with gr.Column():
-            model = gr.Dropdown(label="Model",
-                                choices=get_models("models/Stable-Diffusion"))
-        with gr.Column():
-            vae = gr.Dropdown(label="VAE", choices=get_models("models/VAE"))
-            clear_model = gr.ClearButton(vae, size="sm")
+        model = gr.Dropdown(label="Model",
+                            choices=get_models(model_dir), scale=7)
+        rl_model = gr.Button(value=reload_symbol, scale=1)
+        rl_model.click(reload_models, inputs=[model_dir_txt], outputs=[model])
+        vae = gr.Dropdown(label="VAE", choices=get_models(vae_dir), scale=7)
+        with gr.Column(scale=1):
+            rl_vae = gr.Button(value=reload_symbol)
+            rl_vae.click(reload_models, inputs=[vae_dir_txt], outputs=[vae])
+            clear_vae = gr.ClearButton(vae)
     with gr.Row():
         with gr.Accordion(label="Extra Networks", open=False):
-            taesd = gr.Dropdown(label="TAESD",
-                                choices=get_models("models/TAESD"))
-            clear_model = gr.ClearButton(taesd, size="sm")
+            with gr.Row():
+                taesd = gr.Dropdown(label="TAESD",
+                                    choices=get_models(taesd_dir), scale=7)
+                with gr.Column():
+                    rl_taesd = gr.Button(value=reload_symbol, scale=1)
+                    rl_taesd.click(reload_models, inputs=[taesd_dir_txt],
+                                   outputs=[taesd])
+                    clear_taesd = gr.ClearButton(taesd, scale=1)
     with gr.Row():
         with gr.Column(scale=3):
             pprompt = gr.Textbox(placeholder="Positive prompt",
-                                 label="Positive Prompt", lines=3)
+                                 label="Positive Prompt", lines=3,
+                                 show_copy_button=True)
             nprompt = gr.Textbox(placeholder="Negative prompt",
-                                 label="Negative Prompt", lines=3)
+                                 label="Negative Prompt", lines=3,
+                                 show_copy_button=True)
         with gr.Column(scale=1):
-            gen_btn = gr.Button(value="Generate")
+            gen_btn = gr.Button(value="Generate", size="lg")
 
     with gr.Row():
         with gr.Column(scale=1):
@@ -330,24 +346,25 @@ with gr.Blocks() as txt2img_block:
                                                                   "karras"],
                                        value="discrete")
             with gr.Row():
-                with gr.Column(scale=2):
+                with gr.Column():
                     width = gr.Slider(label="Width", minimum=1, maximum=2048,
                                       value=512, step=1)
                     height = gr.Slider(label="Height", minimum=1, maximum=2048,
                                        value=512, step=1)
-                with gr.Column(scale=1):
-                    batch_count = gr.Slider(label="Batch count", minimum=1,
-                                            maximum=99, value=1, step=1)
+                batch_count = gr.Slider(label="Batch count", minimum=1,
+                                        maximum=99, value=1, step=1)
             cfg = gr.Slider(label="CFG Scale", minimum=1, maximum=30,
                             value=7.0, step=0.1)
             seed = gr.Number(label="Seed", minimum=-1, maximum=2**32, value=-1)
             clip_skip = gr.Slider(label="CLIP skip", minimum=0, maximum=12,
                                   value=0, step=0.1)
             with gr.Accordion(label="ControlNet", open=False):
-                controlnet = gr.Dropdown(label="ControlNet",
-                                         choices=get_models("models/ControlNet"
-                                                            ))
-                clear_model = gr.ClearButton(controlnet, size="sm")
+                cnnet = gr.Dropdown(label="ControlNet",
+                                    choices=get_models(cnnet_dir))
+                rl_connet = gr.Button(value=reload_symbol)
+                rl_connet.click(reload_models, inputs=[cnnet_dir_txt],
+                                outputs=[cnnet])
+                clear_connet = gr.ClearButton(cnnet)
                 control_img = gr.Image(sources="upload", type="filepath")
                 control_strength = gr.Slider(label="ControlNet strength",
                                              minimum=0, maximum=1, step=0.01,
@@ -369,7 +386,7 @@ with gr.Blocks() as txt2img_block:
             img_final = gr.Gallery(label="Generated images", show_label=False,
                                    columns=[3], rows=[1], object_fit="contain",
                                    height="auto")
-            gen_btn.click(txt2img, inputs=[model, vae, taesd, controlnet,
+            gen_btn.click(txt2img, inputs=[model, vae, taesd, cnnet,
                                            control_img, control_strength,
                                            pprompt, nprompt, sampling, steps,
                                            schedule, width, height,
@@ -381,27 +398,44 @@ with gr.Blocks() as txt2img_block:
 
 with gr.Blocks()as img2img_block:
     img2img_title = gr.Markdown("# Image to Image")
+    model_dir_txt = gr.Textbox(value=model_dir, render=False)
+    vae_dir_txt = gr.Textbox(value=vae_dir, render=False)
+    emb_dir_txt = gr.Textbox(value=emb_dir, render=False)
+    lora_dir_txt = gr.Textbox(value=lora_dir, render=False)
+    taesd_dir_txt = gr.Textbox(value=taesd_dir, render=False)
+    cnnet_dir_txt = gr.Textbox(value=cnnet_dir, render=False)
+
     with gr.Row():
-        with gr.Column():
-            model = gr.Dropdown(label="Model",
-                                choices=get_models("models/Stable-Diffusion"))
-        with gr.Column():
-            vae = gr.Dropdown(label="VAE", choices=get_models("models/VAE"))
-            clear_model = gr.ClearButton(vae, size="sm")
+        model = gr.Dropdown(label="Model",
+                            choices=get_models(model_dir), scale=7)
+        rl_model = gr.Button(value=reload_symbol, scale=1)
+        rl_model.click(reload_models, inputs=[model_dir_txt], outputs=[model])
+        vae = gr.Dropdown(label="VAE", choices=get_models(vae_dir), scale=7)
+        with gr.Column(scale=1):
+            rl_vae = gr.Button(value=reload_symbol)
+            rl_vae.click(reload_models, inputs=[vae_dir_txt], outputs=[vae])
+            clear_vae = gr.ClearButton(vae)
     with gr.Row():
         with gr.Accordion(label="Extra Networks", open=False):
-            taesd = gr.Dropdown(label="TAESD",
-                                choices=get_models("models/TAESD"))
-            clear_model = gr.ClearButton(taesd, size="sm")
+            with gr.Row():
+                taesd = gr.Dropdown(label="TAESD",
+                                    choices=get_models(taesd_dir), scale=7)
+                with gr.Column():
+                    rl_taesd = gr.Button(value=reload_symbol, scale=1)
+                    rl_taesd.click(reload_models, inputs=[taesd_dir_txt],
+                                   outputs=[taesd])
+                    clear_taesd = gr.ClearButton(taesd, scale=1)
     with gr.Row():
         with gr.Column(scale=3):
             pprompt = gr.Textbox(placeholder="Positive prompt",
-                                 label="Positive Prompt", lines=3)
+                                 label="Positive Prompt", lines=3,
+                                 show_copy_button=True)
             nprompt = gr.Textbox(placeholder="Negative prompt",
-                                 label="Negative Prompt", lines=3)
+                                 label="Negative Prompt", lines=3,
+                                 show_copy_button=True)
         with gr.Column(scale=1):
-            img_inp = gr.Image(sources="upload", type="filepath")
             gen_btn = gr.Button(value="Generate")
+            img_inp = gr.Image(sources="upload", type="filepath")
     with gr.Row():
         with gr.Column(scale=1):
             with gr.Row():
@@ -419,14 +453,13 @@ with gr.Blocks()as img2img_block:
                                        choices=["discrete", "karras"],
                                        value="discrete")
             with gr.Row():
-                with gr.Column(scale=2):
+                with gr.Column():
                     width = gr.Slider(label="Width", minimum=1, maximum=2048,
                                       value=512, step=1)
                     height = gr.Slider(label="Height", minimum=1, maximum=2048,
                                        value=512, step=1)
-                with gr.Column(scale=1):
-                    batch_count = gr.Slider(label="Batch count", minimum=1,
-                                            maximum=99, step=1, value=1)
+                batch_count = gr.Slider(label="Batch count", minimum=1,
+                                        maximum=99, step=1, value=1)
             strenght = gr.Slider(label="Noise strenght", minimum=0, maximum=1,
                                  step=0.01, value=0.75)
             cfg = gr.Slider(label="CFG Scale", minimum=1, maximum=30,
@@ -435,10 +468,12 @@ with gr.Blocks()as img2img_block:
             clip_skip = gr.Slider(label="CLIP skip", minimum=0, maximum=12,
                                   value=0, step=0.1)
             with gr.Accordion(label="ControlNet", open=False):
-                controlnet = gr.Dropdown(label="ControlNet",
-                                         choices=get_models("models/ControlNet"
-                                                            ))
-                clear_model = gr.ClearButton(controlnet, size="sm")
+                cnnet = gr.Dropdown(label="ControlNet",
+                                    choices=get_models(cnnet_dir))
+                rl_connet = gr.Button(value=reload_symbol)
+                rl_connet.click(reload_models, inputs=[cnnet_dir_txt],
+                                outputs=[cnnet])
+                clear_connet = gr.ClearButton(cnnet)
                 control_img = gr.Image(sources="upload", type="filepath")
                 control_strength = gr.Slider(label="ControlNet strength",
                                              minimum=0, maximum=1, step=0.01,
@@ -460,7 +495,7 @@ with gr.Blocks()as img2img_block:
                                    columns=[3], rows=[1], object_fit="contain",
                                    height="auto")
             gen_btn.click(img2img, inputs=[model, vae, taesd, img_inp,
-                                           controlnet, control_img,
+                                           cnnet, control_img,
                                            control_strength, pprompt,
                                            nprompt, sampling, steps, schedule,
                                            width, height, batch_count,
