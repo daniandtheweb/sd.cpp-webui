@@ -3,6 +3,8 @@ import argparse
 import subprocess
 import platform
 import gradio as gr
+from PIL import Image
+import numpy as np
 
 
 current_dir = os.getcwd()
@@ -12,7 +14,10 @@ emb_dir = "models/Embeddings"
 lora_dir = "models/Lora"
 taesd_dir = "models/TAESD"
 cnnet_dir = "models/ControlNet"
+txt2img_dir = "outputs/txt2img"
+img2img_dir = "outputs/img2img"
 reload_symbol = '\U0001f504'
+page_num = 0
 
 
 if not os.system("which lspci > /dev/null") == 0:
@@ -49,6 +54,86 @@ def get_hf_models():
 def reload_models(model_dir):
     refreshed_models = gr.update(choices=get_models(model_dir))
     return refreshed_models
+
+
+def reload_txt2img(fpage_num=1, ctrl=0):
+    imgs = []
+    files = os.listdir(txt2img_dir)
+    image_files = [file for file in files if file.endswith('.jpg')]
+    image_files.sort()
+    start_index = fpage_num * 16 - 16
+    end_index = min(start_index + 16, len(image_files))
+    for file_name in image_files[start_index:end_index]:
+        image_path = os.path.join(txt2img_dir, file_name)
+        image = Image.open(image_path)
+        imgs.append(image)
+    global page_num
+    page_num = fpage_num
+    if ctrl == 0:
+        return imgs, page_num
+    else:
+        return imgs
+
+
+def reload_img2img(fpage_num=1):
+    imgs = []
+    files = os.listdir(img2img_dir)
+    image_files = [file for file in files if file.endswith('.jpg')]
+    image_files.sort()
+    start_index = fpage_num * 16 - 16
+    end_index = min(start_index + 16, len(image_files))
+    for file_name in image_files[start_index:end_index]:
+        image_path = os.path.join(img2img_dir, file_name)
+        image = Image.open(image_path)
+        imgs.append(image)
+    global page_num
+    page_num = fpage_num
+    return imgs, page_num
+
+
+def next_page():
+    ctrl = 1
+    imgs = []
+    global page_num
+    next_page_num = page_num + 1
+    files = os.listdir(txt2img_dir)
+    total_imgs = len([file for file in files if file.endswith('.jpg')])
+    total_pages = (total_imgs + 15) // 16
+    if next_page_num > total_pages:
+        page_num = 1
+        imgs = reload_txt2img(page_num, ctrl)
+    else:
+        page_num = next_page_num
+        imgs = reload_txt2img(next_page_num, ctrl)
+    return imgs, page_num
+
+
+def prev_page():
+    ctrl = 1
+    imgs = []
+    global page_num
+    prev_page_num = page_num - 1
+    files = os.listdir(txt2img_dir)
+    total_imgs = len([file for file in files if file.endswith('.jpg')])
+    total_pages = (total_imgs + 15) // 16
+    if prev_page_num < 1:
+        page_num = total_pages
+        imgs = reload_txt2img(total_pages, ctrl)
+    else:
+        page_num = prev_page_num
+        imgs = reload_txt2img(prev_page_num, ctrl)
+    return imgs, page_num
+
+
+def last_page():
+    ctrl = 1
+    global page_num
+    files = os.listdir(txt2img_dir)
+    total_imgs = len([file for file in files if file.endswith('.jpg')])
+    total_pages = (total_imgs + 15) // 16
+    imgs = reload_txt2img(total_pages, ctrl)
+    page_num = total_pages
+    return imgs, page_num
 
 
 def get_next_txt2img():
@@ -505,6 +590,31 @@ with gr.Blocks()as img2img_block:
                           outputs=[img_final])
 
 
+with gr.Blocks() as gallery_block:
+    txt2img_dir_txt = gr.Textbox(value=txt2img_dir, render=False)
+    img2img_dir_txt = gr.Textbox(value=img2img_dir, render=False)
+    with gr.Row():
+        glr_txt2img = gr.Button(value="txt2img")
+        glr_img2img = gr.Button(value="img2img")
+    gallery_title= gr.Markdown('# Gallery')
+    gallery = gr.Gallery(label="txt2img", columns=[4], rows=[4],
+                         object_fit="contain", height="auto")
+    with gr.Row():
+        glr_first = gr.Button(value="First page")
+        glr_pvw = gr.Button(value="Previous")
+        page_num_select = gr.Number(label="Page:", minimum=1, value=1, interactive=True)
+        page_num_btn = gr.Button(value="Go")
+        glr_nxt = gr.Button(value="Next")
+        glr_last = gr.Button(value="End page")
+        glr_txt2img.click(reload_txt2img, inputs=[], outputs=[gallery, page_num_select])
+        glr_img2img.click(reload_img2img, inputs=[], outputs=[gallery, page_num_select])
+        glr_pvw.click(prev_page, inputs=[], outputs=[gallery, page_num_select])
+        glr_nxt.click(next_page, inputs=[], outputs=[gallery, page_num_select])
+        glr_first.click(reload_txt2img, inputs=[], outputs=[gallery, page_num_select])
+        glr_last.click(last_page, inputs=[], outputs=[gallery, page_num_select])
+        page_num_btn.click(reload_txt2img, inputs=[page_num_select], outputs=[gallery, page_num_select])
+
+
 with gr.Blocks() as convert_block:
     convert_title = gr.Markdown("# Convert and Quantize")
     with gr.Row():
@@ -525,8 +635,8 @@ with gr.Blocks() as convert_block:
 
 
 sdcpp = gr.TabbedInterface(
-    [txt2img_block, img2img_block, convert_block],
-    ["txt2img", "img2img", "Checkpoint Converter"],
+    [txt2img_block, img2img_block, gallery_block, convert_block],
+    ["txt2img", "img2img", "Gallery", "Checkpoint Converter"],
     title="sd.cpp-webui",
     theme=gr.themes.Soft(),
 )
