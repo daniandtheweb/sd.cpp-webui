@@ -4,4 +4,6 @@ __pycache__
 *.pth
 *.gguf
 *.png
+sd
+sd.exe
 /venv
