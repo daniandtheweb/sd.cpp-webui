@@ -5,6 +5,9 @@ import platform
 import gradio as gr
 
 
+current_dir = os.getcwd()
+
+
 if not os.system("which lspci > /dev/null") == 0:
     if os.name == "nt":
         sd = "sd.exe"
@@ -14,33 +17,35 @@ else:
     sd = "./sd"
 
 
-def get_models(models_folder):
-    if os.path.isdir(models_folder):
-        return [model for model in os.listdir(models_folder)
-                if os.path.isfile(os.path.join(models_folder, model))]
+def get_models(models_dir):
+    fmodels_dir = os.path.join(current_dir, models_dir)
+    if os.path.isdir(fmodels_dir):
+        return [model for model in os.listdir(fmodels_dir)
+                if os.path.isfile(os.path.join(fmodels_dir, model)) and
+                (model.endswith(".gguf") or model.endswith(".safetensors"))]
     else:
-        print(f"The {models_folder} folder does not exist.")
+        print(f"The {fmodels_dir} folder does not exist.")
         return []
 
 
 def get_hf_models():
-    models_folder = "models/Stable-Diffusion"
-    if os.path.isdir(models_folder):
-        return [model for model in os.listdir(models_folder)
-                if os.path.isfile(os.path.join(models_folder, model)) and
+    fmodels_dir = os.path.join(current_dir, "models/Stable-Diffusion")
+    if os.path.isdir(fmodels_dir):
+        return [model for model in os.listdir(fmodels_dir)
+                if os.path.isfile(os.path.join(fmodels_dir, model)) and
                 (model.endswith(".safetensors") or model.endswith(".ckpt"))]
     else:
-        print(f"The {models_folder} folder does not exist.")
+        print(f"The {fmodels_dir} folder does not exist.")
         return []
 
 
 def get_next_txt2img():
-    txt2img_out = "outputs/txt2img"
-    files = os.listdir(txt2img_out)
+    ftxt2img_out = os.path.join(current_dir, "outputs/txt2img")
+    files = os.listdir(ftxt2img_out)
     png_files = [file for file in files if file.endswith('.png')]
 
     if not png_files:
-        return '1.png'
+        return "1.png"
 
     highest_number = max([int(file.split('.')[0]) for file in png_files])
     next_number = highest_number + 1
@@ -51,15 +56,16 @@ def txt2img(model, vae, taesd, controlnet, control_img, control_strength,
             ppromt, nprompt, sampling, steps, schedule, width, height,
             batch_count, cfg, seed, clip_skip, threads, vae_tiling,
             cont_net_cpu, rng, output, verbose):
-    fmodel = f'models/Stable-Diffusion/{model}'
+    fmodel = os.path.join(current_dir, f'models/Stable-Diffusion/{model}')
     if vae:
-        fvae = f'models/VAE/{vae}'
-    fembed = f'models/Embeddings/'
-    flora = f'models/Lora/'
+        fvae = os.path.join(current_dir, f'models/VAE/{vae}')
+    fembed = os.path.join(current_dir, f'models/Embeddings')
+    flora = os.path.join(current_dir, f'models/Lora')
     if taesd:
-        ftaesd = f'models/TAESD/{taesd}'
+        ftaesd = os.path.join(current_dir, f'models/TAESD/{taesd}')
     if controlnet:
-        fcontrolnet = f'models/ControlNet/{controlnet}'
+        fcontrolnet = os.path.join(current_dir,
+                                   f'models/ControlNet/{controlnet}')
     if control_img:
         fcontrol_img = f'{control_img}'
     if control_strength:
@@ -83,9 +89,10 @@ def txt2img(model, vae, taesd, controlnet, control_img, control_strength,
         fcont_net_cpu = cont_net_cpu
     frng = f'{rng}'
     if output is None or '""':
-        foutput = "outputs/txt2img/" + get_next_txt2img()
+        foutput = os.path.join(current_dir, "outputs/txt2img/" +
+                               get_next_txt2img())
     else:
-        foutput = f'"outputs/txt2img/{output}.png"'
+        foutput = os.path.join(current_dir, f'"outputs/txt2img/{output}.png"')
     if verbose:
         fverbose = verbose
 
@@ -118,7 +125,9 @@ def txt2img(model, vae, taesd, controlnet, control_img, control_strength,
     if 'fverbose' in locals():
         command.extend(['-v'])
 
-    print(command)
+    fcommand = ' '.join(str(arg) for arg in command)
+
+    print(fcommand)
     # Run the command
     process = subprocess.Popen(command, stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE, universal_newlines=True)
@@ -146,16 +155,17 @@ def img2img(model, vae, taesd, img_inp, controlnet, control_img,
             control_strength, ppromt, nprompt, sampling, steps, schedule,
             width, height, batch_count, strenght, cfg, seed, clip_skip,
             threads, vae_tiling, cont_net_cpu, rng, output, verbose):
-    fmodel = f'models/Stable-Diffusion/{model}'
+    fmodel = os.path.join(current_dir, f'models/Stable-Diffusion/{model}')
     if vae:
-        fvae = f'models/VAE/{vae}'
-    fembed = f'models/Embeddings/'
-    flora = f'models/Lora/'
+        fvae = os.path.join(current_dir, f'models/VAE/{vae}')
+    fembed = os.path.join(current_dir, f'models/Embeddings/')
+    flora = os.path.join(current_dir, f'models/Lora/')
     if taesd:
-        ftaesd = f'models/TAESD/{taesd}'
+        ftaesd = os.path.join(current_dir, f'models/TAESD/{taesd}')
     fimg_inp = f'{img_inp}'
     if controlnet:
-        fcontrolnet = f'models/ControlNet/{controlnet}'
+        fcontrolnet = os.path.join(current_dir,
+                                   f'models/ControlNet/{controlnet}')
     if control_img:
         fcontrol_img = f'{control_img}'
     if control_strength:
@@ -180,9 +190,10 @@ def img2img(model, vae, taesd, img_inp, controlnet, control_img,
         fcont_net_cpu = cont_net_cpu
     frng = f'{rng}'
     if output is None or '""':
-        foutput = "outputs/txt2img/" + get_next_txt2img()
+        foutput = os.path.join(current_dir, "outputs/txt2img/" +
+                               get_next_txt2img())
     else:
-        foutput = f'"outputs/txt2img/{output}.png"'
+        foutput = os.path.join(current_dir, f'"outputs/txt2img/{output}.png"')
     if verbose:
         fverbose = verbose
 
@@ -240,13 +251,14 @@ def img2img(model, vae, taesd, img_inp, controlnet, control_img,
 
 
 def convert(og_model, type, gguf_model, verbose):
-    fog_model = f'models/Stable-Diffusion/{og_model}'
+    model_dir = os.path.join(current_dir, "models/Stable-Diffusion/")
+    fog_model = os.path.join(model_dir, og_model)
     ftype = f'{type}'
     if gguf_model == '':
         model_name, ext = os.path.splitext(og_model)
-        fgguf_model = f'"models/Stable-Diffusion/{model_name}.{type}.gguf"'
+        fgguf_model = os.path.join(model_dir, f"{model_name}.{type}.gguf")
     else:
-        fgguf_model = f'"models/Stable-Diffusion/{gguf_model}"'
+        fgguf_model = os.path.join(model_dir, gguf_model)
     if verbose:
         fverbose = verbose
 
