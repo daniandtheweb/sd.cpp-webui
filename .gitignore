@@ -5,6 +5,7 @@ __pycache__
 *.pt
 *.gguf
 *.png
+*.jpg
 sd
 sd.exe
 /venv
