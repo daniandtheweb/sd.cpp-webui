@@ -34,6 +34,10 @@ git clone https://github.com/leejet/stable-diffusion.cpp.git
    - `sdpp_webui_linux.sh` for Linux
    - `sdcpp_webui_windows.bat` for Windows
 
+
+If you want to share the WebUI locally on your newtork run the script with `--listen`.
+
+
 ![sd_cpp-webui](https://github.com/DaniAndTheWeb/sd.cpp-webui/assets/57776841/0fa8e459-61db-4993-bead-cfc9032532b3)
 
 
