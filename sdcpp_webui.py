@@ -83,7 +83,7 @@ def reload_gallery(fpage_num=1, subctrl=0):
         files = os.listdir(txt2img_dir)
     elif ctrl == 1:
         files = os.listdir(img2img_dir)
-    image_files = [file for file in files if file.endswith('.jpg')]
+    image_files = [file for file in files if file.endswith('.jpg') or file.endswith('.png')]
     image_files.sort()
     start_index = fpage_num * 16 - 16
     end_index = min(start_index + 16, len(image_files))
