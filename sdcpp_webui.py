@@ -168,12 +168,16 @@ def img_info(sel_img: gr.SelectData):
     file_paths = []
     for root, dirs, files in os.walk(img_dir):
         for file in files:
-            file_paths.append(os.path.join(root, file))
+            if file.lower().endswith(('.png', '.jpg')):
+                file_paths.append(os.path.join(root, file))
+    file_paths.sort()
     try:
-        img_path = file_paths[img_index - 1]
+        img_path = file_paths[img_index]
     except IndexError:
         print("Image index is out of range.")
         return
+    print(img_path)
+    print(img_index)
     if img_path.endswith(('.jpg', '.jpeg')):
         exif_data = piexif.load(img_path)
         user_comment = piexif.helper.UserComment.load(
