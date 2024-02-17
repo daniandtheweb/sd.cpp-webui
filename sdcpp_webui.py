@@ -41,19 +41,25 @@ def get_models(model_dir):
         return []
 
 
+def reload_models(model_dir):
+    refreshed_models = gr.update(choices=get_models(model_dir))
+    return refreshed_models
+
+
 def get_hf_models():
-    fmodels_dir = os.path.join(current_dir, "models/Stable-Diffusion")
+    fmodels_dir = os.path.join(current_dir, model_dir)
     if os.path.isdir(fmodels_dir):
         return [model for model in os.listdir(fmodels_dir)
                 if os.path.isfile(os.path.join(fmodels_dir, model)) and
-                (model.endswith(".safetensors") or model.endswith(".ckpt"))]
+                (model.endswith(".safetensors") or model.endswith(".ckpt")
+                or model.endswith(".gguf"))]
     else:
         print(f"The {fmodels_dir} folder does not exist.")
         return []
 
 
-def reload_models(model_dir):
-    refreshed_models = gr.update(choices=get_models(model_dir))
+def reload_hf_models(model_dir):
+    refreshed_models = gr.update(choices=get_hf_models())
     return refreshed_models
 
 
@@ -389,12 +395,12 @@ def convert(og_model, type, gguf_model, verbose):
 
 with gr.Blocks() as txt2img_block:
     txt2img_title = gr.Markdown("# Text to Image"),
-    model_dir_txt = gr.Textbox(value=model_dir, render=False)
-    vae_dir_txt = gr.Textbox(value=vae_dir, render=False)
-    emb_dir_txt = gr.Textbox(value=emb_dir, render=False)
-    lora_dir_txt = gr.Textbox(value=lora_dir, render=False)
-    taesd_dir_txt = gr.Textbox(value=taesd_dir, render=False)
-    cnnet_dir_txt = gr.Textbox(value=cnnet_dir, render=False)
+    model_dir_txt = gr.Textbox(value=model_dir, visible=False)
+    vae_dir_txt = gr.Textbox(value=vae_dir, visible=False)
+    emb_dir_txt = gr.Textbox(value=emb_dir, visible=False)
+    lora_dir_txt = gr.Textbox(value=lora_dir, visible=False)
+    taesd_dir_txt = gr.Textbox(value=taesd_dir, visible=False)
+    cnnet_dir_txt = gr.Textbox(value=cnnet_dir, visible=False)
 
     with gr.Row():
         model = gr.Dropdown(label="Model",
@@ -496,12 +502,12 @@ with gr.Blocks() as txt2img_block:
 
 with gr.Blocks()as img2img_block:
     img2img_title = gr.Markdown("# Image to Image")
-    model_dir_txt = gr.Textbox(value=model_dir, render=False)
-    vae_dir_txt = gr.Textbox(value=vae_dir, render=False)
-    emb_dir_txt = gr.Textbox(value=emb_dir, render=False)
-    lora_dir_txt = gr.Textbox(value=lora_dir, render=False)
-    taesd_dir_txt = gr.Textbox(value=taesd_dir, render=False)
-    cnnet_dir_txt = gr.Textbox(value=cnnet_dir, render=False)
+    model_dir_txt = gr.Textbox(value=model_dir, visible=False)
+    vae_dir_txt = gr.Textbox(value=vae_dir, visible=False)
+    emb_dir_txt = gr.Textbox(value=emb_dir, visible=False)
+    lora_dir_txt = gr.Textbox(value=lora_dir, visible=False)
+    taesd_dir_txt = gr.Textbox(value=taesd_dir, visible=False)
+    cnnet_dir_txt = gr.Textbox(value=cnnet_dir, visible=False)
 
     with gr.Row():
         model = gr.Dropdown(label="Model",
@@ -604,8 +610,6 @@ with gr.Blocks()as img2img_block:
 
 
 with gr.Blocks() as gallery_block:
-    txt2img_dir_txt = gr.Textbox(value=txt2img_dir, render=False)
-    img2img_dir_txt = gr.Textbox(value=img2img_dir, render=False)
     with gr.Row():
         glr_txt2img = gr.Button(value="txt2img")
         glr_img2img = gr.Button(value="img2img")
@@ -640,8 +644,11 @@ with gr.Blocks() as convert_block:
     convert_title = gr.Markdown("# Convert and Quantize")
     with gr.Row():
         with gr.Column(scale=1):
-            og_model = gr.Dropdown(label="Original Model",
-                                   choices=get_hf_models())
+            with gr.Row():
+                og_model = gr.Dropdown(label="Original Model",
+                                       choices=get_hf_models(), scale=5)
+                rl_model = gr.Button(reload_symbol, scale=1)
+                rl_model.click(reload_hf_models, inputs=[], outputs=[og_model])
             type = gr.Dropdown(label="Type",
                                choices=["f32", "f16", "q8_0", "q5_1", "q5_0",
                                         "q4_1", "q4_0"], value="f32")
