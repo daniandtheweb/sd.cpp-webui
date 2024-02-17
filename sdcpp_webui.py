@@ -176,8 +176,6 @@ def img_info(sel_img: gr.SelectData):
     except IndexError:
         print("Image index is out of range.")
         return
-    print(img_path)
-    print(img_index)
     if img_path.endswith(('.jpg', '.jpeg')):
         exif_data = piexif.load(img_path)
         user_comment = piexif.helper.UserComment.load(
