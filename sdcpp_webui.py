@@ -5,6 +5,8 @@ import platform
 import gradio as gr
 from PIL import Image
 import numpy as np
+import piexif
+import piexif.helper
 
 
 current_dir = os.getcwd()
@@ -83,7 +85,7 @@ def reload_gallery(fpage_num=1, subctrl=0):
         files = os.listdir(txt2img_dir)
     elif ctrl == 1:
         files = os.listdir(img2img_dir)
-    image_files = [file for file in files if file.endswith('.jpg') or file.endswith('.png')]
+    image_files = [file for file in files if file.endswith(('.jpg', '.png'))]
     image_files.sort()
     start_index = fpage_num * 16 - 16
     end_index = min(start_index + 16, len(image_files))
@@ -153,6 +155,48 @@ def last_page():
     imgs = reload_gallery(total_pages, subctrl)
     page_num = total_pages
     return imgs, page_num
+
+
+def img_info(sel_img: gr.SelectData):
+    global ctrl
+    global page_num
+    img_index = (page_num - 1) * 16 + sel_img.index
+    if ctrl == 0:
+        img_dir = txt2img_dir
+    elif ctrl == 1:
+        img_dir = img2img_dir
+    file_paths = []
+    for root, dirs, files in os.walk(img_dir):
+        for file in files:
+            file_paths.append(os.path.join(root, file))
+    try:
+        img_path = file_paths[img_index - 1]
+    except IndexError:
+        print("Image index is out of range.")
+        return
+    if img_path.endswith(('.jpg', '.jpeg')):
+        exif_data = piexif.load(img_path)
+        user_comment = piexif.helper.UserComment.load(
+                       exif_data["Exif"][piexif.ExifIFD.UserComment])
+        metadata = f"JPG: Exif\nPositive prompt: {user_comment}"
+        return metadata
+    elif img_path.endswith('.png'):
+        with open(img_path, 'rb') as f:
+            header = f.read(8)
+            while True:
+                length_chunk = f.read(4)
+                if not length_chunk:
+                    break
+                length = int.from_bytes(length_chunk, byteorder='big')
+                chunk_type = f.read(4).decode('utf-8')
+                data = f.read(length)
+                crc = f.read(4)
+                if chunk_type == 'tEXt':
+                    keyword, value = data.split(b'\x00', 1)
+                    tEXt = f"{value.decode('utf-8')}"
+                    metadata = f"PNG: tEXt\nPositive prompt: {tEXt}"
+                    return metadata
+        return
 
 
 def get_next_txt2img():
@@ -614,8 +658,6 @@ with gr.Blocks() as gallery_block:
         glr_txt2img = gr.Button(value="txt2img")
         glr_img2img = gr.Button(value="img2img")
     gallery_title = gr.Markdown('# Gallery')
-    gallery = gr.Gallery(label="txt2img", columns=[4], rows=[4],
-                         object_fit="contain", height="auto")
     with gr.Row():
         glr_first = gr.Button(value="First page")
         glr_pvw = gr.Button(value="Previous")
@@ -624,20 +666,24 @@ with gr.Blocks() as gallery_block:
         page_num_btn = gr.Button(value="Go")
         glr_nxt = gr.Button(value="Next")
         glr_last = gr.Button(value="End page")
-        glr_txt2img.click(txt2img_ctrl)
-        glr_txt2img.click(reload_gallery, inputs=[],
-                          outputs=[gallery, page_num_select])
-        glr_img2img.click(img2img_ctrl)
-        glr_img2img.click(reload_gallery, inputs=[],
-                          outputs=[gallery, page_num_select])
-        glr_pvw.click(prev_page, inputs=[], outputs=[gallery, page_num_select])
-        glr_nxt.click(next_page, inputs=[], outputs=[gallery, page_num_select])
-        glr_first.click(reload_gallery, inputs=[],
-                        outputs=[gallery, page_num_select])
-        glr_last.click(last_page, inputs=[],
+    gallery = gr.Gallery(label="txt2img", columns=[4], rows=[4],
+                         object_fit="contain", height="auto")
+    img_info_txt = gr.Textbox(label="Metadata", value="", interactive=False)
+    gallery.select(img_info, inputs=[], outputs=[img_info_txt])
+    glr_txt2img.click(txt2img_ctrl)
+    glr_txt2img.click(reload_gallery, inputs=[],
+                      outputs=[gallery, page_num_select])
+    glr_img2img.click(img2img_ctrl)
+    glr_img2img.click(reload_gallery, inputs=[],
+                      outputs=[gallery, page_num_select])
+    glr_pvw.click(prev_page, inputs=[], outputs=[gallery, page_num_select])
+    glr_nxt.click(next_page, inputs=[], outputs=[gallery, page_num_select])
+    glr_first.click(reload_gallery, inputs=[],
+                    outputs=[gallery, page_num_select])
+    glr_last.click(last_page, inputs=[],
+                   outputs=[gallery, page_num_select])
+    page_num_btn.click(reload_gallery, inputs=[page_num_select],
                        outputs=[gallery, page_num_select])
-        page_num_btn.click(reload_gallery, inputs=[page_num_select],
-                           outputs=[gallery, page_num_select])
 
 
 with gr.Blocks() as convert_block:
