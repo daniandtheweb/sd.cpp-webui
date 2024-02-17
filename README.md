@@ -9,7 +9,8 @@ A simple interface based on Gradio library for [stable-diffusion.cpp](https://gi
 - txt2img and img2img modes
 - ControlNet
 - Gallery
-- 4GB video card support
+- Read images metadata
+- 4GB video card support (stable-diffusion-xl models quantized q8_0 run with less than 4GB of VRAM)
 - Supports gguf, safetensors (ckpt can be converted)
 
 
