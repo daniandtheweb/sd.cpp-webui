@@ -39,7 +39,7 @@ if 'def_vae' in data:
     def_vae = data['def_vae']
 else:
     def_vae = None
-def_sampling  = data['def_sampling']
+def_sampling = data['def_sampling']
 def_steps = data['def_steps']
 def_schedule = data['def_schedule']
 def_width = data['def_width']
@@ -776,7 +776,8 @@ with gr.Blocks() as options_block:
                             value=def_model)
         with gr.Column(scale=1):
             rl_model = gr.Button(value=reload_symbol, scale=1)
-            rl_model.click(reload_models, inputs=[model_dir_txt], outputs=[model])
+            rl_model.click(reload_models, inputs=[model_dir_txt],
+                           outputs=[model])
         vae = gr.Dropdown(label="VAE", choices=get_models(vae_dir), scale=7,
                           value=def_vae)
         with gr.Column(scale=1):
@@ -799,7 +800,8 @@ with gr.Blocks() as options_block:
                            value=def_height, step=1)
         with gr.Row():
             set_btn = gr.Button(value="Set Defaults")
-            set_btn.click(set_defaults, [model, vae, sampling, steps, schedule, width, height], [])
+            set_btn.click(set_defaults, [model, vae, sampling, steps, schedule,
+                                         width, height], [])
             rst_btn = gr.Button(value="Restore Defaults")
             rst_btn.click(rst_def, [], [])
 
