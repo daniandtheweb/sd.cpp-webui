@@ -7,7 +7,6 @@
     "cnnet_dir": "models/ControlNet",
     "txt2img_dir": "outputs/txt2img",
     "img2img_dir": "outputs/img2img",
-    "def_model": "",
     "def_sampling": "euler_a",
     "def_steps": 20,
     "def_schedule": "discrete",
