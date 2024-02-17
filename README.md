@@ -5,7 +5,7 @@ A simple interface based on Gradio library for [stable-diffusion.cpp](https://gi
 
 ## Features
 
-- Minimal python dependencies (gradio, no pytorch required, only raw CUDA, ROCm is required for GPU inference)
+- Minimal python dependencies (gradio and piexif, no pytorch required, only raw CUDA, ROCm is required for GPU inference)
 - txt2img and img2img modes
 - ControlNet
 - Gallery
