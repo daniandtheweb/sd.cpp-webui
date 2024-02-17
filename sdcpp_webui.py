@@ -31,7 +31,10 @@ txt2img_dir = data['txt2img_dir']
 img2img_dir = data['img2img_dir']
 
 
-def_model = data['def_model']
+if 'def_model' in data:
+    def_model = data['def_model']
+else:
+    def_model = None
 if 'def_vae' in data:
     def_vae = data['def_vae']
 else:
@@ -459,8 +462,10 @@ def convert(og_model, type, gguf_model, verbose):
 
 
 def set_defaults(model, vae, sampling, steps, schedule, width, height):
-    data['def_model'] = model
-    data['def_vae'] = vae
+    if model:
+        data['def_model'] = model
+    if vae:
+        data['def_vae'] = vae
     data['def_sampling'] = sampling
     data['def_steps'] = steps
     data['def_schedule'] = schedule
@@ -473,7 +478,8 @@ def set_defaults(model, vae, sampling, steps, schedule, width, height):
 
 
 def rst_def():
-    data['def_model'] = ""
+    if 'def_model' in data:
+        del data['def_model']
     if 'def_vae' in data:
         del data['def_vae']
     data['def_sampling'] = "euler_a"
