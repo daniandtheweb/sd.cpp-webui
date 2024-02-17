@@ -5,22 +5,42 @@ import platform
 import gradio as gr
 from PIL import Image
 import numpy as np
+import json
 import piexif
 import piexif.helper
 
 
 current_dir = os.getcwd()
-model_dir = "models/Stable-Diffusion"
-vae_dir = "models/VAE"
-emb_dir = "models/Embeddings"
-lora_dir = "models/Lora"
-taesd_dir = "models/TAESD"
-cnnet_dir = "models/ControlNet"
-txt2img_dir = "outputs/txt2img"
-img2img_dir = "outputs/img2img"
+json_path = 'config.json'
 reload_symbol = '\U0001f504'
 page_num = 0
 ctrl = 0
+
+
+with open(json_path, 'r') as json_file:
+    data = json.load(json_file)
+
+
+model_dir = data['model_dir']
+vae_dir = data['vae_dir']
+emb_dir = data['emb_dir']
+lora_dir = data['lora_dir']
+taesd_dir = data['taesd_dir']
+cnnet_dir = data['cnnet_dir']
+txt2img_dir = data['txt2img_dir']
+img2img_dir = data['img2img_dir']
+
+
+def_model = data['def_model']
+if 'def_vae' in data:
+    def_vae = data['def_vae']
+else:
+    def_vae = None
+def_sampling  = data['def_sampling']
+def_steps = data['def_steps']
+def_schedule = data['def_schedule']
+def_width = data['def_width']
+def_height = data['def_height']
 
 
 if not os.system("which lspci > /dev/null") == 0:
@@ -37,7 +57,7 @@ def get_models(model_dir):
     if os.path.isdir(fmodels_dir):
         return [model for model in os.listdir(fmodels_dir)
                 if os.path.isfile(os.path.join(fmodels_dir, model)) and
-                (model.endswith(".gguf") or model.endswith(".safetensors"))]
+                (model.endswith((".gguf", ".safetensors", ".pth")))]
     else:
         print(f"The {fmodels_dir} folder does not exist.")
         return []
@@ -53,8 +73,7 @@ def get_hf_models():
     if os.path.isdir(fmodels_dir):
         return [model for model in os.listdir(fmodels_dir)
                 if os.path.isfile(os.path.join(fmodels_dir, model)) and
-                (model.endswith(".safetensors") or model.endswith(".ckpt")
-                or model.endswith(".gguf"))]
+                (model.endswith((".safetensors", ".ckpt", ".gguf")))]
     else:
         print(f"The {fmodels_dir} folder does not exist.")
         return []
@@ -439,6 +458,35 @@ def convert(og_model, type, gguf_model, verbose):
     return result
 
 
+def set_defaults(model, vae, sampling, steps, schedule, width, height):
+    data['def_model'] = model
+    data['def_vae'] = vae
+    data['def_sampling'] = sampling
+    data['def_steps'] = steps
+    data['def_schedule'] = schedule
+    data['def_width'] = width
+    data['def_height'] = height
+    with open(json_path, 'w') as json_file:
+        json.dump(data, json_file, indent=4)
+    print("Set new defaults completed.")
+    return
+
+
+def rst_def():
+    data['def_model'] = ""
+    if 'def_vae' in data:
+        del data['def_vae']
+    data['def_sampling'] = "euler_a"
+    data['def_steps'] = 20
+    data['def_schedule'] = "discrete"
+    data['def_width'] = 512
+    data['def_height'] = 512
+    with open(json_path, 'w') as json_file:
+        json.dump(data, json_file, indent=4)
+    print("Reset defaults completed.")
+    return
+
+
 with gr.Blocks() as txt2img_block:
     txt2img_title = gr.Markdown("# Text to Image"),
     model_dir_txt = gr.Textbox(value=model_dir, visible=False)
@@ -450,10 +498,12 @@ with gr.Blocks() as txt2img_block:
 
     with gr.Row():
         model = gr.Dropdown(label="Model",
-                            choices=get_models(model_dir), scale=7)
+                            choices=get_models(model_dir), scale=7,
+                            value=def_model)
         rl_model = gr.Button(value=reload_symbol, scale=1)
         rl_model.click(reload_models, inputs=[model_dir_txt], outputs=[model])
-        vae = gr.Dropdown(label="VAE", choices=get_models(vae_dir), scale=7)
+        vae = gr.Dropdown(label="VAE", choices=get_models(vae_dir), scale=7,
+                          value=def_vae)
         with gr.Column(scale=1):
             rl_vae = gr.Button(value=reload_symbol)
             rl_vae.click(reload_models, inputs=[vae_dir_txt], outputs=[vae])
@@ -487,20 +537,20 @@ with gr.Blocks() as txt2img_block:
                                            choices=["euler", "euler_a", "heun",
                                                     "dpm2", "dpm2++2s_a",
                                                     "dpm++2m", "dpm++2mv2",
-                                                    "lcm"], value="euler_a")
+                                                    "lcm"], value=def_sampling)
                 with gr.Column(scale=1):
                     steps = gr.Slider(label="Steps", minimum=1, maximum=99,
-                                      value=20, step=1)
+                                      value=def_steps, step=1)
             with gr.Row():
                 schedule = gr.Dropdown(label="Schedule", choices=["discrete",
                                                                   "karras"],
-                                       value="discrete")
+                                       value=def_schedule)
             with gr.Row():
                 with gr.Column():
                     width = gr.Slider(label="Width", minimum=1, maximum=2048,
-                                      value=512, step=1)
+                                      value=def_width, step=1)
                     height = gr.Slider(label="Height", minimum=1, maximum=2048,
-                                       value=512, step=1)
+                                       value=def_height, step=1)
                 batch_count = gr.Slider(label="Batch count", minimum=1,
                                         maximum=99, value=1, step=1)
             cfg = gr.Slider(label="CFG Scale", minimum=1, maximum=30,
@@ -557,10 +607,12 @@ with gr.Blocks()as img2img_block:
 
     with gr.Row():
         model = gr.Dropdown(label="Model",
-                            choices=get_models(model_dir), scale=7)
+                            choices=get_models(model_dir), scale=7,
+                            value=def_model)
         rl_model = gr.Button(value=reload_symbol, scale=1)
         rl_model.click(reload_models, inputs=[model_dir_txt], outputs=[model])
-        vae = gr.Dropdown(label="VAE", choices=get_models(vae_dir), scale=7)
+        vae = gr.Dropdown(label="VAE", choices=get_models(vae_dir), scale=7,
+                          value=def_vae)
         with gr.Column(scale=1):
             rl_vae = gr.Button(value=reload_symbol)
             rl_vae.click(reload_models, inputs=[vae_dir_txt], outputs=[vae])
@@ -597,7 +649,7 @@ with gr.Blocks()as img2img_block:
                                                     "lcm"], value="euler_a")
                 with gr.Column(scale=1):
                     steps = gr.Slider(label="Steps", minimum=1, maximum=99,
-                                      value=20, step=1)
+                                      value=def_steps, step=1)
             with gr.Row():
                 schedule = gr.Dropdown(label="Schedule",
                                        choices=["discrete", "karras"],
@@ -605,9 +657,9 @@ with gr.Blocks()as img2img_block:
             with gr.Row():
                 with gr.Column():
                     width = gr.Slider(label="Width", minimum=1, maximum=2048,
-                                      value=512, step=1)
+                                      value=def_width, step=1)
                     height = gr.Slider(label="Height", minimum=1, maximum=2048,
-                                       value=512, step=1)
+                                       value=def_height, step=1)
                 batch_count = gr.Slider(label="Batch count", minimum=1,
                                         maximum=99, step=1, value=1)
             strenght = gr.Slider(label="Noise strenght", minimum=0, maximum=1,
@@ -710,9 +762,45 @@ with gr.Blocks() as convert_block:
                       outputs=[result])
 
 
+with gr.Blocks() as options_block:
+    options_title = gr.Markdown("# Options")
+    with gr.Column():
+        model = gr.Dropdown(label="Model",
+                            choices=get_models(model_dir), scale=7,
+                            value=def_model)
+        with gr.Column(scale=1):
+            rl_model = gr.Button(value=reload_symbol, scale=1)
+            rl_model.click(reload_models, inputs=[model_dir_txt], outputs=[model])
+        vae = gr.Dropdown(label="VAE", choices=get_models(vae_dir), scale=7,
+                          value=def_vae)
+        with gr.Column(scale=1):
+            rl_vae = gr.Button(value=reload_symbol)
+            rl_vae.click(reload_models, inputs=[vae_dir_txt], outputs=[vae])
+            clear_vae = gr.ClearButton(vae)
+        sampling = gr.Dropdown(label="Sampling method",
+                               choices=["euler", "euler_a", "heun",
+                                        "dpm2", "dpm2++2s_a",
+                                        "dpm++2m", "dpm++2mv2",
+                                        "lcm"], value=def_sampling)
+        steps = gr.Slider(label="Steps", minimum=1, maximum=99,
+                          value=def_steps, step=1)
+        schedule = gr.Dropdown(label="Schedule",
+                               choices=["discrete", "karras"],
+                               value="discrete")
+        width = gr.Slider(label="Width", minimum=1, maximum=2048,
+                          value=def_width, step=1)
+        height = gr.Slider(label="Height", minimum=1, maximum=2048,
+                           value=def_height, step=1)
+        with gr.Row():
+            set_btn = gr.Button(value="Set Defaults")
+            set_btn.click(set_defaults, [model, vae, sampling, steps, schedule, width, height], [])
+            rst_btn = gr.Button(value="Restore Defaults")
+            rst_btn.click(rst_def, [], [])
+
 sdcpp = gr.TabbedInterface(
-    [txt2img_block, img2img_block, gallery_block, convert_block],
-    ["txt2img", "img2img", "Gallery", "Checkpoint Converter"],
+    [txt2img_block, img2img_block, gallery_block, convert_block,
+     options_block],
+    ["txt2img", "img2img", "Gallery", "Checkpoint Converter", "Options"],
     title="sd.cpp-webui",
     theme=gr.themes.Soft(),
 )
