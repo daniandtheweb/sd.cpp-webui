@@ -1,0 +1,16 @@
+{
+    "model_dir": "models/Stable-Diffusion",
+    "vae_dir": "models/VAE",
+    "emb_dir": "models/Embeddings",
+    "lora_dir": "models/Lora",
+    "taesd_dir": "models/TAESD",
+    "cnnet_dir": "models/ControlNet",
+    "txt2img_dir": "outputs/txt2img",
+    "img2img_dir": "outputs/img2img",
+    "def_model": "",
+    "def_sampling": "euler_a",
+    "def_steps": 20,
+    "def_schedule": "discrete",
+    "def_width": 512,
+    "def_height": 512
+}
