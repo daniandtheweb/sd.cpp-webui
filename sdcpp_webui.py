@@ -58,7 +58,7 @@ def get_hf_models():
         return []
 
 
-def reload_hf_models(model_dir):
+def reload_hf_models():
     refreshed_models = gr.update(choices=get_hf_models())
     return refreshed_models
 
