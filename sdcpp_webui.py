@@ -104,15 +104,16 @@ def reload_gallery(fpage_num=1, subctrl=0):
     global page_num
     imgs = []
     if ctrl == 0:
-        files = os.listdir(txt2img_dir)
+        img_dir = txt2img_dir
     elif ctrl == 1:
-        files = os.listdir(img2img_dir)
+        img_dir = img2img_dir
+    files = os.listdir(img_dir)
     image_files = [file for file in files if file.endswith(('.jpg', '.png'))]
     image_files.sort()
     start_index = (fpage_num * 16) - 16
     end_index = min(start_index + 16, len(image_files))
     for file_name in image_files[start_index:end_index]:
-        image_path = os.path.join(txt2img_dir, file_name)
+        image_path = os.path.join(img_dir, file_name)
         image = Image.open(image_path)
         imgs.append(image)
     page_num = fpage_num
@@ -229,12 +230,11 @@ def get_next_img(subctrl):
     elif subctrl == 1:
         fimg_out = os.path.join(current_dir, img2img_dir)
     files = os.listdir(fimg_out)
-    png_files = [file for file in files if file.endswith('.png')]
-
+    png_files = [file for file in files if file.endswith('.png') and
+                 file[:-4].isdigit()]
     if not png_files:
         return "1.png"
-
-    highest_number = max([int(file.split('.')[0]) for file in png_files])
+    highest_number = max([int(file[:-4]) for file in png_files])
     next_number = highest_number + 1
     fnext_img = f"{next_number}.png"
     return fnext_img
