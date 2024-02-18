@@ -1,10 +1,8 @@
 import os
 import argparse
 import subprocess
-import platform
 import gradio as gr
 from PIL import Image
-import numpy as np
 import json
 import piexif
 import piexif.helper
@@ -21,14 +19,14 @@ with open(json_path, 'r') as json_file:
     data = json.load(json_file)
 
 
-model_dir = data['model_dir']
-vae_dir = data['vae_dir']
-emb_dir = data['emb_dir']
-lora_dir = data['lora_dir']
-taesd_dir = data['taesd_dir']
-cnnet_dir = data['cnnet_dir']
-txt2img_dir = data['txt2img_dir']
-img2img_dir = data['img2img_dir']
+model_dir = eval(data['model_dir'])
+vae_dir = eval(data['vae_dir'])
+emb_dir = eval(data['emb_dir'])
+lora_dir = eval(data['lora_dir'])
+taesd_dir = eval(data['taesd_dir'])
+cnnet_dir = eval(data['cnnet_dir'])
+txt2img_dir = eval(data['txt2img_dir'])
+img2img_dir = eval(data['img2img_dir'])
 
 
 if 'def_model' in data:
@@ -56,10 +54,10 @@ else:
 
 
 def get_models(model_dir):
-    fmodels_dir = os.path.join(current_dir, model_dir)
+    fmodels_dir = model_dir
     if os.path.isdir(fmodels_dir):
         return [model for model in os.listdir(fmodels_dir)
-                if os.path.isfile(os.path.join(fmodels_dir, model)) and
+                if os.path.isfile(fmodels_dir + model) and
                 (model.endswith((".gguf", ".safetensors", ".pth")))]
     else:
         print(f"The {fmodels_dir} folder does not exist.")
@@ -72,10 +70,10 @@ def reload_models(model_dir):
 
 
 def get_hf_models():
-    fmodels_dir = os.path.join(current_dir, model_dir)
+    fmodels_dir = model_dir
     if os.path.isdir(fmodels_dir):
         return [model for model in os.listdir(fmodels_dir)
-                if os.path.isfile(os.path.join(fmodels_dir, model)) and
+                if os.path.isfile(fmodels_dir + model) and
                 (model.endswith((".safetensors", ".ckpt", ".pth", ".gguf")))]
     else:
         print(f"The {fmodels_dir} folder does not exist.")
@@ -103,7 +101,7 @@ def reload_gallery(ctrl_inp=None, fpage_num=1, subctrl=0):
     start_index = (fpage_num * 16) - 16
     end_index = min(start_index + 16, len(image_files))
     for file_name in image_files[start_index:end_index]:
-        image_path = os.path.join(img_dir, file_name)
+        image_path = img_dir + file_name
         image = Image.open(image_path)
         imgs.append(image)
     page_num = fpage_num
@@ -135,7 +133,7 @@ def goto_gallery(fpage_num=1):
     start_index = (fpage_num * 16) - 16
     end_index = min(start_index + 16, len(image_files))
     for file_name in image_files[start_index:end_index]:
-        image_path = os.path.join(img_dir, file_name)
+        image_path = img_dir + file_name
         image = Image.open(image_path)
         imgs.append(image)
     page_num = fpage_num
@@ -217,7 +215,7 @@ def img_info(sel_img: gr.SelectData):
     for root, dirs, files in os.walk(img_dir):
         for file in files:
             if file.lower().endswith(('.png', '.jpg')):
-                file_paths.append(os.path.join(root, file))
+                file_paths.append(root + file)
     file_paths.sort()
     try:
         img_path = file_paths[img_index]
@@ -251,9 +249,9 @@ def img_info(sel_img: gr.SelectData):
 
 def get_next_img(subctrl):
     if subctrl == 0:
-        fimg_out = os.path.join(current_dir, txt2img_dir)
+        fimg_out = txt2img_dir
     elif subctrl == 1:
-        fimg_out = os.path.join(current_dir, img2img_dir)
+        fimg_out = img2img_dir
     files = os.listdir(fimg_out)
     png_files = [file for file in files if file.endswith('.png') and
                  file[:-4].isdigit()]
@@ -270,16 +268,15 @@ def txt2img(model, vae, taesd, cnnet, control_img, control_strength,
             batch_count, cfg, seed, clip_skip, threads, vae_tiling,
             cont_net_cpu, rng, output, verbose):
     if model != "None":
-        fmodel = os.path.join(current_dir, f'{model_dir}/{model}')
+        fmodel = f'{model_dir}{model}'
     if vae != "None":
-        fvae = os.path.join(current_dir, f'{vae_dir}/{vae}')
-    fembed = os.path.join(current_dir, f'{emb_dir}/')
-    flora = os.path.join(current_dir, f'{lora_dir}/')
+        fvae = f'{vae_dir}{vae}'
+    fembed = f'{emb_dir}'
+    flora = f'{lora_dir}'
     if taesd:
-        ftaesd = os.path.join(current_dir, f'{taesd_dir}/{taesd}')
+        ftaesd = f'{taesd_dir}{taesd}'
     if cnnet:
-        fcnnet = os.path.join(current_dir,
-                              f'{cnnet_dir}/{cnnet}')
+        fcnnet = f'{cnnet_dir}{cnnet}'
         fcontrol_img = f'{control_img}'
         fcontrol_strength = str(control_strength)
     fpprompt = f'"{ppromt}"'
@@ -301,10 +298,9 @@ def txt2img(model, vae, taesd, cnnet, control_img, control_strength,
         fcont_net_cpu = cont_net_cpu
     frng = f'{rng}'
     if output is None or '""':
-        foutput = os.path.join(current_dir, txt2img_dir + "/" +
-                               get_next_img(subctrl=0))
+        foutput = txt2img_dir + get_next_img(subctrl=0)
     else:
-        foutput = os.path.join(current_dir, f'"{txt2img_dir}/{output}.png"')
+        foutput = f'"{txt2img_dir}{output}.png"'
     if verbose:
         fverbose = verbose
 
@@ -362,17 +358,16 @@ def img2img(model, vae, taesd, img_inp, cnnet, control_img,
             control_strength, ppromt, nprompt, sampling, steps, schedule,
             width, height, batch_count, strenght, cfg, seed, clip_skip,
             threads, vae_tiling, cont_net_cpu, rng, output, verbose):
-    fmodel = os.path.join(current_dir, f'{model_dir}/{model}')
+    fmodel = f'{model_dir}{model}'
     if vae:
-        fvae = os.path.join(current_dir, f'{vae_dir}/{vae}')
-    fembed = os.path.join(current_dir, f'{emb_dir}/')
-    flora = os.path.join(current_dir, f'{lora_dir}/')
+        fvae = f'{vae_dir}{vae}'
+    fembed = f'{emb_dir}'
+    flora = f'{lora_dir}'
     if taesd:
-        ftaesd = os.path.join(current_dir, f'{taesd_dir}/{taesd}')
+        ftaesd = f'{taesd_dir}{taesd}'
     fimg_inp = f'{img_inp}'
     if cnnet:
-        fcnnet = os.path.join(current_dir,
-                              f'{cnnet_dir}/{cnnet}')
+        fcnnet = f'{cnnet_dir}{cnnet}'
         fcontrol_img = f'{control_img}'
         fcontrol_strength = str(control_strength)
     fpprompt = f'"{ppromt}"'
@@ -395,10 +390,9 @@ def img2img(model, vae, taesd, img_inp, cnnet, control_img,
         fcont_net_cpu = cont_net_cpu
     frng = f'{rng}'
     if output is None or '""':
-        foutput = os.path.join(current_dir, img2img_dir + "/" +
-                               get_next_img(subctrl=1))
+        foutput = img2img_dir + get_next_img(subctrl=1)
     else:
-        foutput = os.path.join(current_dir, f'"{img2img_dir}/{output}.png"')
+        foutput = f'"{img2img_dir}{output}.png"'
     if verbose:
         fverbose = verbose
 
@@ -451,14 +445,13 @@ def img2img(model, vae, taesd, img_inp, cnnet, control_img,
 
 
 def convert(og_model, type, gguf_model, verbose):
-    model_dir = os.path.join(current_dir, f"{model_dir}/")
-    fog_model = os.path.join(model_dir, og_model)
+    fog_model = model_dir + og_model
     ftype = f'{type}'
     if gguf_model == '':
         model_name, ext = os.path.splitext(og_model)
-        fgguf_model = os.path.join(model_dir, f"{model_name}.{type}.gguf")
+        fgguf_model = f"{model_dir}{model_name}.{type}.gguf"
     else:
-        fgguf_model = os.path.join(model_dir, gguf_model)
+        fgguf_model = model_dir + gguf_model
     if verbose:
         fverbose = verbose
 
@@ -490,7 +483,18 @@ def convert(og_model, type, gguf_model, verbose):
     return result
 
 
-def set_defaults(model, vae, sampling, steps, schedule, width, height):
+def set_defaults(model, vae, sampling, steps, schedule, width, height,
+                 model_dir_txt, vae_dir_txt, emb_dir_txt, lora_dir_txt,
+                 taesd_dir_txt, cnnet_dir_txt, txt2img_dir_txt,
+                 img2img_dir_txt):
+    data['model_dir'] = model_dir_txt
+    data['vae_dir'] = vae_dir_txt
+    data['emb_dir'] = emb_dir_txt
+    data['lora_dir'] = lora_dir_txt
+    data['taesd_dir'] = taesd_dir_txt
+    data['cnnet_dir'] = cnnet_dir_txt
+    data['txt2img_dir'] = txt2img_dir_txt
+    data['img2img_dir'] = img2img_dir_txt
     if model:
         data['def_model'] = model
     if vae:
@@ -507,6 +511,15 @@ def set_defaults(model, vae, sampling, steps, schedule, width, height):
 
 
 def rst_def():
+    data['model_dir'] = "os.path.join(current_dir,"\
+                        "\"models/Stable-Diffusion/\")"
+    data['vae_dir'] = "os.path.join(current_dir, \"models/VAE/\")"
+    data['emb_dir'] = "os.path.join(current_dir, \"models/Embeddings/\")"
+    data['lora_dir'] = "os.path.join(current_dir, \"models/Lora/\")"
+    data['taesd_dir'] = "os.path.join(current_dir, \"models/TAESD/\")"
+    data['cnnet_dir'] = "os.path.join(current_dir, \"models/ControlNet/\")"
+    data['txt2img_dir'] = "os.path.join(current_dir, \"outputs/txt2img/\")"
+    data['img2img_dir'] = "os.path.join(current_dir, \"outputs/img2img/\")"
     if 'def_model' in data:
         del data['def_model']
     if 'def_vae' in data:
@@ -827,10 +840,31 @@ with gr.Blocks() as options_block:
                           value=def_width, step=1)
         height = gr.Slider(label="Height", minimum=1, maximum=2048,
                            value=def_height, step=1)
+        with gr.Accordion(label="Folders", open=False):
+            model_dir_txt = gr.Textbox(label="Models folder", value=model_dir,
+                                       interactive=True)
+            vae_dir_txt = gr.Textbox(label="VAE folder", value=vae_dir,
+                                     interactive=True)
+            emb_dir_txt = gr.Textbox(label="Embeddings folder", value=emb_dir,
+                                     interactive=True)
+            lora_dir_txt = gr.Textbox(label="Lora folder", value=lora_dir,
+                                      interactive=True)
+            taesd_dir_txt = gr.Textbox(label="TAESD folder", value=taesd_dir,
+                                       interactive=True)
+            cnnet_dir_txt = gr.Textbox(label="ControlNet folder",
+                                       value=cnnet_dir, interactive=True)
+            txt2img_dir_txt = gr.Textbox(label="txt2img outputs folder",
+                                         value=txt2img_dir, interactive=True)
+            img2img_dir_txt = gr.Textbox(label="img2img outputs folder",
+                                         value=img2img_dir, interactive=True)
         with gr.Row():
             set_btn = gr.Button(value="Set Defaults")
             set_btn.click(set_defaults, [model, vae, sampling, steps, schedule,
-                                         width, height], [])
+                                         width, height, model_dir_txt,
+                                         vae_dir_txt, emb_dir_txt,
+                                         lora_dir_txt, taesd_dir_txt,
+                                         cnnet_dir_txt, txt2img_dir_txt,
+                                         img2img_dir_txt], [])
             rst_btn = gr.Button(value="Restore Defaults")
             rst_btn.click(rst_def, [], [])
 
