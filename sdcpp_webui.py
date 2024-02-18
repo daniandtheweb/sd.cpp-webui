@@ -596,9 +596,9 @@ with gr.Blocks() as txt2img_block:
             with gr.Row():
                 with gr.Column():
                     width = gr.Slider(label="Width", minimum=1, maximum=2048,
-                                      value=def_width, step=1)
+                                      value=def_width, step=8)
                     height = gr.Slider(label="Height", minimum=1, maximum=2048,
-                                       value=def_height, step=1)
+                                       value=def_height, step=8)
                 batch_count = gr.Slider(label="Batch count", minimum=1,
                                         maximum=99, value=1, step=1)
             cfg = gr.Slider(label="CFG Scale", minimum=1, maximum=30,
@@ -705,9 +705,9 @@ with gr.Blocks()as img2img_block:
             with gr.Row():
                 with gr.Column():
                     width = gr.Slider(label="Width", minimum=1, maximum=2048,
-                                      value=def_width, step=1)
+                                      value=def_width, step=8)
                     height = gr.Slider(label="Height", minimum=1, maximum=2048,
-                                       value=def_height, step=1)
+                                       value=def_height, step=8)
                 batch_count = gr.Slider(label="Batch count", minimum=1,
                                         maximum=99, step=1, value=1)
             strenght = gr.Slider(label="Noise strenght", minimum=0, maximum=1,
