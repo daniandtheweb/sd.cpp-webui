@@ -76,7 +76,7 @@ def get_hf_models():
     if os.path.isdir(fmodels_dir):
         return [model for model in os.listdir(fmodels_dir)
                 if os.path.isfile(os.path.join(fmodels_dir, model)) and
-                (model.endswith((".safetensors", ".ckpt", ".gguf")))]
+                (model.endswith((".safetensors", ".ckpt", ".pth", ".gguf")))]
     else:
         print(f"The {fmodels_dir} folder does not exist.")
         return []
@@ -292,7 +292,7 @@ def txt2img(model, vae, taesd, cnnet, control_img, control_strength,
         command.extend(['--taesd', ftaesd])
     if 'fcnnet' in locals():
         command.extend(['--control-net', fcnnet])
-        command.extend(['--control_image', fcontrol_img])
+        command.extend(['--control-image', fcontrol_img])
         command.extend(['--control-strength', fcontrol_strength])
     if 'fnprompt' in locals():
         command.extend(['-n', fnprompt])
@@ -387,7 +387,7 @@ def img2img(model, vae, taesd, img_inp, cnnet, control_img,
         command.extend(['--taesd', ftaesd])
     if 'fcnnet' in locals():
         command.extend(['--control-net', fcnnet])
-        command.extend(['--control_image', fcontrol_img])
+        command.extend(['--control-image', fcontrol_img])
         command.extend(['--control-strength', fcontrol_strength])
     if 'fnprompt' in locals():
         command.extend(['-n', fnprompt])
