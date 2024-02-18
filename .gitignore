@@ -9,4 +9,6 @@ __pycache__
 sd
 sd.exe
 /venv
+/outputs
+/models
 config.json
