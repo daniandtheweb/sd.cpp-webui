@@ -595,9 +595,9 @@ with gr.Blocks() as txt2img_block:
                                        value=def_schedule)
             with gr.Row():
                 with gr.Column():
-                    width = gr.Slider(label="Width", minimum=1, maximum=2048,
+                    width = gr.Slider(label="Width", minimum=64, maximum=2048,
                                       value=def_width, step=8)
-                    height = gr.Slider(label="Height", minimum=1, maximum=2048,
+                    height = gr.Slider(label="Height", minimum=64, maximum=2048,
                                        value=def_height, step=8)
                 batch_count = gr.Slider(label="Batch count", minimum=1,
                                         maximum=99, value=1, step=1)
@@ -704,9 +704,9 @@ with gr.Blocks()as img2img_block:
                                        value="discrete")
             with gr.Row():
                 with gr.Column():
-                    width = gr.Slider(label="Width", minimum=1, maximum=2048,
+                    width = gr.Slider(label="Width", minimum=64, maximum=2048,
                                       value=def_width, step=8)
-                    height = gr.Slider(label="Height", minimum=1, maximum=2048,
+                    height = gr.Slider(label="Height", minimum=64, maximum=2048,
                                        value=def_height, step=8)
                 batch_count = gr.Slider(label="Batch count", minimum=1,
                                         maximum=99, step=1, value=1)
@@ -836,9 +836,9 @@ with gr.Blocks() as options_block:
         schedule = gr.Dropdown(label="Schedule",
                                choices=["discrete", "karras"],
                                value="discrete")
-        width = gr.Slider(label="Width", minimum=1, maximum=2048,
+        width = gr.Slider(label="Width", minimum=64, maximum=2048,
                           value=def_width, step=8)
-        height = gr.Slider(label="Height", minimum=1, maximum=2048,
+        height = gr.Slider(label="Height", minimum=64, maximum=2048,
                            value=def_height, step=8)
         with gr.Accordion(label="Folders", open=False):
             model_dir_txt = gr.Textbox(label="Models folder", value=model_dir,
