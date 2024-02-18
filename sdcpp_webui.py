@@ -617,14 +617,11 @@ with gr.Blocks() as txt2img_block:
                 control_strength = gr.Slider(label="ControlNet strength",
                                              minimum=0, maximum=1, step=0.01,
                                              value=0.9)
+                cont_net_cpu = gr.Checkbox(label="ControlNet on CPU")
             with gr.Accordion(label="Extra", open=False):
                 threads = gr.Number(label="Threads", minimum=0,
                                     maximum=os.cpu_count(), value=0)
-                with gr.Row():
-                    with gr.Column(scale=1):
-                        vae_tiling = gr.Checkbox(label="Vae Tiling")
-                    with gr.Column(scale=1):
-                        cont_net_cpu = gr.Checkbox(label="ControlNet on CPU")
+                vae_tiling = gr.Checkbox(label="Vae Tiling")                        
                 rng = gr.Dropdown(label="RNG", choices=["std_default", "cuda"],
                                   value="cuda")
                 output = gr.Textbox(label="Output Name",
@@ -728,14 +725,11 @@ with gr.Blocks()as img2img_block:
                 control_strength = gr.Slider(label="ControlNet strength",
                                              minimum=0, maximum=1, step=0.01,
                                              value=0.9)
+                cont_net_cpu = gr.Checkbox(label="ControlNet on CPU")
             with gr.Accordion(label="Extra", open=False):
                 threads = gr.Number(label="Threads", minimum=0,
                                     maximum=os.cpu_count(), value=0)
-                with gr.Row():
-                    with gr.Column(scale=1):
-                        vae_tiling = gr.Checkbox(label="Vae Tiling")
-                    with gr.Column(scale=1):
-                        cont_net_cpu = gr.Checkbox(label="ControlNet on CPU")
+                vae_tiling = gr.Checkbox(label="Vae Tiling")
                 rng = gr.Dropdown(label="RNG", choices=["std_default", "cuda"],
                                   value="cuda")
                 output = gr.Textbox(label="Output Name (optional)", value="")
