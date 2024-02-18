@@ -109,7 +109,7 @@ def reload_gallery(fpage_num=1, subctrl=0):
         files = os.listdir(img2img_dir)
     image_files = [file for file in files if file.endswith(('.jpg', '.png'))]
     image_files.sort()
-    start_index = fpage_num * 16 - 16
+    start_index = (fpage_num * 16) - 16
     end_index = min(start_index + 16, len(image_files))
     for file_name in image_files[start_index:end_index]:
         image_path = os.path.join(txt2img_dir, file_name)
@@ -132,7 +132,7 @@ def next_page():
         files = os.listdir(txt2img_dir)
     elif ctrl == 1:
         files = os.listdir(img2img_dir)
-    total_imgs = len([file for file in files if file.endswith('.jpg')])
+    total_imgs = len([file for file in files if file.endswith(('.png', '.jpg'))])
     total_pages = (total_imgs + 15) // 16
     if next_page_num > total_pages:
         page_num = 1
@@ -153,7 +153,7 @@ def prev_page():
         files = os.listdir(txt2img_dir)
     elif ctrl == 1:
         files = os.listdir(img2img_dir)
-    total_imgs = len([file for file in files if file.endswith('.jpg')])
+    total_imgs = len([file for file in files if file.endswith(('.png', '.jpg'))])
     total_pages = (total_imgs + 15) // 16
     if prev_page_num < 1:
         page_num = total_pages
@@ -172,7 +172,7 @@ def last_page():
         files = os.listdir(txt2img_dir)
     elif ctrl == 1:
         files = os.listdir(img2img_dir)
-    total_imgs = len([file for file in files if file.endswith('.jpg')])
+    total_imgs = len([file for file in files if file.endswith(('.png', '.jpg'))])
     total_pages = (total_imgs + 15) // 16
     imgs = reload_gallery(total_pages, subctrl)
     page_num = total_pages
@@ -182,7 +182,7 @@ def last_page():
 def img_info(sel_img: gr.SelectData):
     global ctrl
     global page_num
-    img_index = (page_num - 1) * 16 + sel_img.index
+    img_index = (page_num * 16) - 16 + sel_img.index
     if ctrl == 0:
         img_dir = txt2img_dir
     elif ctrl == 1:
@@ -223,9 +223,12 @@ def img_info(sel_img: gr.SelectData):
         return
 
 
-def get_next_txt2img():
-    ftxt2img_out = os.path.join(current_dir, "outputs/txt2img")
-    files = os.listdir(ftxt2img_out)
+def get_next_img(subctrl):
+    if subctrl == 0:
+        fimg_out = os.path.join(current_dir, txt2img_dir)
+    elif subctrl == 1:
+        fimg_out = os.path.join(current_dir, img2img_dir)
+    files = os.listdir(fimg_out)
     png_files = [file for file in files if file.endswith('.png')]
 
     if not png_files:
@@ -233,7 +236,8 @@ def get_next_txt2img():
 
     highest_number = max([int(file.split('.')[0]) for file in png_files])
     next_number = highest_number + 1
-    return f"{next_number}.png"
+    fnext_img = f"{next_number}.png"
+    return fnext_img
 
 
 def txt2img(model, vae, taesd, cnnet, control_img, control_strength,
@@ -241,16 +245,16 @@ def txt2img(model, vae, taesd, cnnet, control_img, control_strength,
             batch_count, cfg, seed, clip_skip, threads, vae_tiling,
             cont_net_cpu, rng, output, verbose):
     if model != "None":
-        fmodel = os.path.join(current_dir, f'models/Stable-Diffusion/{model}')
+        fmodel = os.path.join(current_dir, f'{model_dir}/{model}')
     if vae != "None":
-        fvae = os.path.join(current_dir, f'models/VAE/{vae}')
-    fembed = os.path.join(current_dir, f'models/Embeddings')
-    flora = os.path.join(current_dir, f'models/Lora')
+        fvae = os.path.join(current_dir, f'{vae_dir}/{vae}')
+    fembed = os.path.join(current_dir, f'{emb_dir}/')
+    flora = os.path.join(current_dir, f'{lora_dir}/')
     if taesd:
-        ftaesd = os.path.join(current_dir, f'models/TAESD/{taesd}')
+        ftaesd = os.path.join(current_dir, f'{taesd_dir}/{taesd}')
     if cnnet:
         fcnnet = os.path.join(current_dir,
-                              f'models/ControlNet/{cnnet}')
+                              f'{cnnet_dir}/{cnnet}')
         fcontrol_img = f'{control_img}'
         fcontrol_strength = str(control_strength)
     fpprompt = f'"{ppromt}"'
@@ -272,10 +276,10 @@ def txt2img(model, vae, taesd, cnnet, control_img, control_strength,
         fcont_net_cpu = cont_net_cpu
     frng = f'{rng}'
     if output is None or '""':
-        foutput = os.path.join(current_dir, "outputs/txt2img/" +
-                               get_next_txt2img())
+        foutput = os.path.join(current_dir, txt2img_dir + "/" +
+                               get_next_img(subctrl = 0))
     else:
-        foutput = os.path.join(current_dir, f'"outputs/txt2img/{output}.png"')
+        foutput = os.path.join(current_dir, f'"{txt2img_dir}/{output}.png"')
     if verbose:
         fverbose = verbose
 
@@ -333,17 +337,17 @@ def img2img(model, vae, taesd, img_inp, cnnet, control_img,
             control_strength, ppromt, nprompt, sampling, steps, schedule,
             width, height, batch_count, strenght, cfg, seed, clip_skip,
             threads, vae_tiling, cont_net_cpu, rng, output, verbose):
-    fmodel = os.path.join(current_dir, f'models/Stable-Diffusion/{model}')
+    fmodel = os.path.join(current_dir, f'{model_dir}/{model}')
     if vae:
-        fvae = os.path.join(current_dir, f'models/VAE/{vae}')
-    fembed = os.path.join(current_dir, f'models/Embeddings/')
-    flora = os.path.join(current_dir, f'models/Lora/')
+        fvae = os.path.join(current_dir, f'{vae_dir}/{vae}')
+    fembed = os.path.join(current_dir, f'{emb_dir}/')
+    flora = os.path.join(current_dir, f'{lora_dir}/')
     if taesd:
-        ftaesd = os.path.join(current_dir, f'models/TAESD/{taesd}')
+        ftaesd = os.path.join(current_dir, f'{taesd_dir}/{taesd}')
     fimg_inp = f'{img_inp}'
     if cnnet:
         fcnnet = os.path.join(current_dir,
-                              f'models/ControlNet/{cnnet}')
+                              f'{cnnet_dir}/{cnnet}')
         fcontrol_img = f'{control_img}'
         fcontrol_strength = str(control_strength)
     fpprompt = f'"{ppromt}"'
@@ -366,10 +370,10 @@ def img2img(model, vae, taesd, img_inp, cnnet, control_img,
         fcont_net_cpu = cont_net_cpu
     frng = f'{rng}'
     if output is None or '""':
-        foutput = os.path.join(current_dir, "outputs/txt2img/" +
-                               get_next_txt2img())
+        foutput = os.path.join(current_dir, img2img_dir + "/" +
+                               get_next_img(subctrl = 1))
     else:
-        foutput = os.path.join(current_dir, f'"outputs/txt2img/{output}.png"')
+        foutput = os.path.join(current_dir, f'"{img2img_dir}/{output}.png"')
     if verbose:
         fverbose = verbose
 
@@ -418,11 +422,11 @@ def img2img(model, vae, taesd, img_inp, cnnet, control_img,
     if errors:
         print("Errors:", errors)
     img_final = [foutput]
-    return foutput
+    return img_final
 
 
 def convert(og_model, type, gguf_model, verbose):
-    model_dir = os.path.join(current_dir, "models/Stable-Diffusion/")
+    model_dir = os.path.join(current_dir, f"{model_dir}/")
     fog_model = os.path.join(model_dir, og_model)
     ftype = f'{type}'
     if gguf_model == '':
