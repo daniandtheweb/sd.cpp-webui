@@ -837,9 +837,9 @@ with gr.Blocks() as options_block:
                                choices=["discrete", "karras"],
                                value="discrete")
         width = gr.Slider(label="Width", minimum=1, maximum=2048,
-                          value=def_width, step=1)
+                          value=def_width, step=8)
         height = gr.Slider(label="Height", minimum=1, maximum=2048,
-                           value=def_height, step=1)
+                           value=def_height, step=8)
         with gr.Accordion(label="Folders", open=False):
             model_dir_txt = gr.Textbox(label="Models folder", value=model_dir,
                                        interactive=True)
