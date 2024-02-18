@@ -87,21 +87,11 @@ def reload_hf_models():
     return refreshed_models
 
 
-def txt2img_ctrl():
-    global ctrl
-    ctrl = 0
-    return
-
-
-def img2img_ctrl():
-    global ctrl
-    ctrl = 1
-    return
-
-
-def reload_gallery(fpage_num=1, subctrl=0):
+def reload_gallery(ctrl_inp=None, fpage_num=1, subctrl=0):
     global ctrl
     global page_num
+    if ctrl_inp is not None:
+        ctrl = int(ctrl_inp)
     imgs = []
     if ctrl == 0:
         img_dir = txt2img_dir
@@ -123,9 +113,38 @@ def reload_gallery(fpage_num=1, subctrl=0):
         return imgs
 
 
+def goto_gallery(fpage_num=1):
+    global ctrl
+    global page_num
+    imgs = []
+    if ctrl == 0:
+        img_dir = txt2img_dir
+    elif ctrl == 1:
+        img_dir = img2img_dir
+    files = os.listdir(img_dir)
+    total_imgs = len([file for file in files if file.endswith(('.png', '.jpg'))])
+    total_pages = (total_imgs + 15) // 16
+    if fpage_num is None:
+        fpage_num = 1
+    if fpage_num > total_pages:
+        fpage_num = total_pages
+    files = os.listdir(img_dir)
+    image_files = [file for file in files if file.endswith(('.jpg', '.png'))]
+    image_files.sort()
+    start_index = (fpage_num * 16) - 16
+    end_index = min(start_index + 16, len(image_files))
+    for file_name in image_files[start_index:end_index]:
+        image_path = os.path.join(img_dir, file_name)
+        image = Image.open(image_path)
+        imgs.append(image)
+    page_num = fpage_num
+    return imgs, page_num
+
+
 def next_page():
     global ctrl
     global page_num
+    ctrl_inp = ctrl
     subctrl = 1
     imgs = []
     next_page_num = page_num + 1
@@ -137,16 +156,17 @@ def next_page():
     total_pages = (total_imgs + 15) // 16
     if next_page_num > total_pages:
         page_num = 1
-        imgs = reload_gallery(page_num, subctrl)
+        imgs = reload_gallery(ctrl_inp, page_num, subctrl)
     else:
         page_num = next_page_num
-        imgs = reload_gallery(next_page_num, subctrl)
+        imgs = reload_gallery(ctrl_inp, next_page_num, subctrl)
     return imgs, page_num
 
 
 def prev_page():
     global ctrl
     global page_num
+    ctrl_inp = ctrl
     subctrl = 1
     imgs = []
     prev_page_num = page_num - 1
@@ -158,16 +178,17 @@ def prev_page():
     total_pages = (total_imgs + 15) // 16
     if prev_page_num < 1:
         page_num = total_pages
-        imgs = reload_gallery(total_pages, subctrl)
+        imgs = reload_gallery(ctrl_inp, total_pages, subctrl)
     else:
         page_num = prev_page_num
-        imgs = reload_gallery(prev_page_num, subctrl)
+        imgs = reload_gallery(ctrl_inp, prev_page_num, subctrl)
     return imgs, page_num
 
 
 def last_page():
     global ctrl
     global page_num
+    ctrl_inp = ctrl
     subctrl = 1
     if ctrl == 0:
         files = os.listdir(txt2img_dir)
@@ -175,7 +196,7 @@ def last_page():
         files = os.listdir(img2img_dir)
     total_imgs = len([file for file in files if file.endswith(('.png', '.jpg'))])
     total_pages = (total_imgs + 15) // 16
-    imgs = reload_gallery(total_pages, subctrl)
+    imgs = reload_gallery(ctrl_inp, total_pages, subctrl)
     page_num = total_pages
     return imgs, page_num
 
@@ -718,6 +739,8 @@ with gr.Blocks()as img2img_block:
 
 
 with gr.Blocks() as gallery_block:
+    txt2img_ctrl = gr.Textbox(value=0, visible=False)
+    img2img_ctrl = gr.Textbox(value=1, visible=False)
     with gr.Row():
         glr_txt2img = gr.Button(value="txt2img")
         glr_img2img = gr.Button(value="img2img")
@@ -734,11 +757,9 @@ with gr.Blocks() as gallery_block:
                          object_fit="contain", height="auto")
     img_info_txt = gr.Textbox(label="Metadata", value="", interactive=False)
     gallery.select(img_info, inputs=[], outputs=[img_info_txt])
-    glr_txt2img.click(txt2img_ctrl)
-    glr_txt2img.click(reload_gallery, inputs=[],
+    glr_txt2img.click(reload_gallery, inputs=[txt2img_ctrl],
                       outputs=[gallery, page_num_select])
-    glr_img2img.click(img2img_ctrl)
-    glr_img2img.click(reload_gallery, inputs=[],
+    glr_img2img.click(reload_gallery, inputs=[img2img_ctrl],
                       outputs=[gallery, page_num_select])
     glr_pvw.click(prev_page, inputs=[], outputs=[gallery, page_num_select])
     glr_nxt.click(next_page, inputs=[], outputs=[gallery, page_num_select])
@@ -746,7 +767,7 @@ with gr.Blocks() as gallery_block:
                     outputs=[gallery, page_num_select])
     glr_last.click(last_page, inputs=[],
                    outputs=[gallery, page_num_select])
-    page_num_btn.click(reload_gallery, inputs=[page_num_select],
+    page_num_btn.click(goto_gallery, inputs=[page_num_select],
                        outputs=[gallery, page_num_select])
 
 
