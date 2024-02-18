@@ -597,8 +597,8 @@ with gr.Blocks() as txt2img_block:
                 with gr.Column():
                     width = gr.Slider(label="Width", minimum=64, maximum=2048,
                                       value=def_width, step=8)
-                    height = gr.Slider(label="Height", minimum=64, maximum=2048,
-                                       value=def_height, step=8)
+                    height = gr.Slider(label="Height", minimum=64,
+                                       maximum=2048, value=def_height, step=8)
                 batch_count = gr.Slider(label="Batch count", minimum=1,
                                         maximum=99, value=1, step=1)
             cfg = gr.Slider(label="CFG Scale", minimum=1, maximum=30,
@@ -621,7 +621,7 @@ with gr.Blocks() as txt2img_block:
             with gr.Accordion(label="Extra", open=False):
                 threads = gr.Number(label="Threads", minimum=0,
                                     maximum=os.cpu_count(), value=0)
-                vae_tiling = gr.Checkbox(label="Vae Tiling")                        
+                vae_tiling = gr.Checkbox(label="Vae Tiling")
                 rng = gr.Dropdown(label="RNG", choices=["std_default", "cuda"],
                                   value="cuda")
                 output = gr.Textbox(label="Output Name",
@@ -703,8 +703,8 @@ with gr.Blocks()as img2img_block:
                 with gr.Column():
                     width = gr.Slider(label="Width", minimum=64, maximum=2048,
                                       value=def_width, step=8)
-                    height = gr.Slider(label="Height", minimum=64, maximum=2048,
-                                       value=def_height, step=8)
+                    height = gr.Slider(label="Height", minimum=64,
+                                       maximum=2048, value=def_height, step=8)
                 batch_count = gr.Slider(label="Batch count", minimum=1,
                                         maximum=99, step=1, value=1)
             strenght = gr.Slider(label="Noise strenght", minimum=0, maximum=1,
@@ -752,18 +752,19 @@ with gr.Blocks()as img2img_block:
 with gr.Blocks() as gallery_block:
     txt2img_ctrl = gr.Textbox(value=0, visible=False)
     img2img_ctrl = gr.Textbox(value=1, visible=False)
+    gallery_title = gr.Markdown('# Gallery')
     with gr.Row():
         glr_txt2img = gr.Button(value="txt2img")
         glr_img2img = gr.Button(value="img2img")
-    gallery_title = gr.Markdown('# Gallery')
     with gr.Row():
-        glr_first = gr.Button(value="First page")
         glr_pvw = gr.Button(value="Previous")
         page_num_select = gr.Number(label="Page:", minimum=1, value=1,
                                     interactive=True)
         page_num_btn = gr.Button(value="Go")
         glr_nxt = gr.Button(value="Next")
-        glr_last = gr.Button(value="End page")
+    with gr.Row():
+        glr_first = gr.Button(value="First page")
+        glr_last = gr.Button(value="Last page")
     gallery = gr.Gallery(label="txt2img", columns=[4], rows=[4],
                          object_fit="contain", height="auto")
     img_info_txt = gr.Textbox(label="Metadata", value="", interactive=False)
