@@ -122,7 +122,8 @@ def goto_gallery(fpage_num=1):
     elif ctrl == 1:
         img_dir = img2img_dir
     files = os.listdir(img_dir)
-    total_imgs = len([file for file in files if file.endswith(('.png', '.jpg'))])
+    total_imgs = len([file for file in files if
+                      file.endswith(('.png', '.jpg'))])
     total_pages = (total_imgs + 15) // 16
     if fpage_num is None:
         fpage_num = 1
@@ -152,7 +153,8 @@ def next_page():
         files = os.listdir(txt2img_dir)
     elif ctrl == 1:
         files = os.listdir(img2img_dir)
-    total_imgs = len([file for file in files if file.endswith(('.png', '.jpg'))])
+    total_imgs = len([file for file in files if
+                      file.endswith(('.png', '.jpg'))])
     total_pages = (total_imgs + 15) // 16
     if next_page_num > total_pages:
         page_num = 1
@@ -174,7 +176,8 @@ def prev_page():
         files = os.listdir(txt2img_dir)
     elif ctrl == 1:
         files = os.listdir(img2img_dir)
-    total_imgs = len([file for file in files if file.endswith(('.png', '.jpg'))])
+    total_imgs = len([file for file in files if
+                      file.endswith(('.png', '.jpg'))])
     total_pages = (total_imgs + 15) // 16
     if prev_page_num < 1:
         page_num = total_pages
@@ -194,7 +197,8 @@ def last_page():
         files = os.listdir(txt2img_dir)
     elif ctrl == 1:
         files = os.listdir(img2img_dir)
-    total_imgs = len([file for file in files if file.endswith(('.png', '.jpg'))])
+    total_imgs = len([file for file in files if
+                      file.endswith(('.png', '.jpg'))])
     total_pages = (total_imgs + 15) // 16
     imgs = reload_gallery(ctrl_inp, total_pages, subctrl)
     page_num = total_pages
@@ -298,7 +302,7 @@ def txt2img(model, vae, taesd, cnnet, control_img, control_strength,
     frng = f'{rng}'
     if output is None or '""':
         foutput = os.path.join(current_dir, txt2img_dir + "/" +
-                               get_next_img(subctrl = 0))
+                               get_next_img(subctrl=0))
     else:
         foutput = os.path.join(current_dir, f'"{txt2img_dir}/{output}.png"')
     if verbose:
@@ -392,7 +396,7 @@ def img2img(model, vae, taesd, img_inp, cnnet, control_img,
     frng = f'{rng}'
     if output is None or '""':
         foutput = os.path.join(current_dir, img2img_dir + "/" +
-                               get_next_img(subctrl = 1))
+                               get_next_img(subctrl=1))
     else:
         foutput = os.path.join(current_dir, f'"{img2img_dir}/{output}.png"')
     if verbose:
