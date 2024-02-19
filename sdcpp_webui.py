@@ -403,16 +403,17 @@ def img2img(model, vae, taesd, img_inp, cnnet, control_img,
     return [foutput]
 
 
-def convert(og_model, type, gguf_model, verbose):
-    fog_model = os.path.join(model_dir, og_model)
-    if not gguf_model:
-        model_name, ext = os.path.splitext(og_model)
-        fgguf_model = f"{os.path.join(model_dir, model_name)}.{type}.gguf"
+def convert(orig_model, quant_type, gguf_name, verbose):
+    forig_model = os.path.join(model_dir, orig_model)
+    if not gguf_name:
+        model_name, ext = os.path.splitext(orig_model)
+        fgguf_name = f"{os.path.join(model_dir, model_name)}"\
+                     f".{quant_type}.gguf"
     else:
-        fgguf_model = os.path.join(model_dir, gguf_model)
+        fgguf_name = os.path.join(model_dir, gguf_name)
 
-    command = [sd, '-M', 'convert', '-m', fog_model,
-               '-o', fgguf_model, '--type', type]
+    command = [sd, '-M', 'convert', '-m', forig_model,
+               '-o', fgguf_name, '--type', quant_type]
 
     if verbose:
         command.extend(['-v'])
@@ -693,59 +694,84 @@ with gr.Blocks()as img2img_block:
 
 
 with gr.Blocks() as gallery_block:
+    # Controls
     txt2img_ctrl = gr.Textbox(value=0, visible=False)
     img2img_ctrl = gr.Textbox(value=1, visible=False)
+
+    # Title
     gallery_title = gr.Markdown('# Gallery')
+
+    # Gallery Navigation Buttons
     with gr.Row():
-        glr_txt2img = gr.Button(value="txt2img")
-        glr_img2img = gr.Button(value="img2img")
+        txt2img_btn = gr.Button(value="txt2img")
+        img2img_btn = gr.Button(value="img2img")
+
     with gr.Row():
-        glr_pvw = gr.Button(value="Previous")
+        pvw_btn = gr.Button(value="Previous")
         page_num_select = gr.Number(label="Page:", minimum=1, value=1,
                                     interactive=True)
-        page_num_btn = gr.Button(value="Go")
-        glr_nxt = gr.Button(value="Next")
+        go_btn = gr.Button(value="Go")
+        nxt_btn = gr.Button(value="Next")
+
     with gr.Row():
-        glr_first = gr.Button(value="First page")
-        glr_last = gr.Button(value="Last page")
+        first_btn = gr.Button(value="First page")
+        last_btn = gr.Button(value="Last page")
+
+    # Gallery Display
     gallery = gr.Gallery(label="txt2img", columns=[4], rows=[4],
                          object_fit="contain", height="auto")
+
+    # Image Information Display
     img_info_txt = gr.Textbox(label="Metadata", value="", interactive=False)
+
+    # Interactive bindings
     gallery.select(img_info, inputs=[], outputs=[img_info_txt])
-    glr_txt2img.click(reload_gallery, inputs=[txt2img_ctrl],
+    txt2img_btn.click(reload_gallery, inputs=[txt2img_ctrl],
                       outputs=[gallery, page_num_select])
-    glr_img2img.click(reload_gallery, inputs=[img2img_ctrl],
+    img2img_btn.click(reload_gallery, inputs=[img2img_ctrl],
                       outputs=[gallery, page_num_select])
-    glr_pvw.click(prev_page, inputs=[], outputs=[gallery, page_num_select])
-    glr_nxt.click(next_page, inputs=[], outputs=[gallery, page_num_select])
-    glr_first.click(reload_gallery, inputs=[],
+    pvw_btn.click(prev_page, inputs=[], outputs=[gallery, page_num_select])
+    nxt_btn.click(next_page, inputs=[], outputs=[gallery, page_num_select])
+    first_btn.click(reload_gallery, inputs=[],
                     outputs=[gallery, page_num_select])
-    glr_last.click(last_page, inputs=[],
+    last_btn.click(last_page, inputs=[],
                    outputs=[gallery, page_num_select])
-    page_num_btn.click(goto_gallery, inputs=[page_num_select],
-                       outputs=[gallery, page_num_select])
+    go_btn.click(goto_gallery, inputs=[page_num_select],
+                 outputs=[gallery, page_num_select])
 
 
 with gr.Blocks() as convert_block:
+    # Title
     convert_title = gr.Markdown("# Convert and Quantize")
+
     with gr.Row():
+        # Input
         with gr.Column(scale=1):
             with gr.Row():
-                og_model = gr.Dropdown(label="Original Model",
-                                       choices=get_hf_models(), scale=5)
-                rl_model = gr.Button(reload_symbol, scale=1)
-                rl_model.click(reload_hf_models, inputs=[], outputs=[og_model])
-            type = gr.Dropdown(label="Type",
-                               choices=["f32", "f16", "q8_0", "q5_1", "q5_0",
-                                        "q4_1", "q4_0"], value="f32")
+                orig_model = gr.Dropdown(label="Original Model",
+                                         choices=get_hf_models(), scale=5)
+                reload_btn = gr.Button(reload_symbol, scale=1)
+                reload_btn.click(reload_hf_models, inputs=[],
+                                 outputs=[orig_model])
+
+            quant_type = gr.Dropdown(label="Type",
+                                     choices=["f32", "f16", "q8_0", "q5_1",
+                                              "q5_0", "q4_1", "q4_0"],
+                                     value="f32")
+
             verbose = gr.Checkbox(label="Verbose")
-            gguf_model = gr.Textbox(label="Output Name (optional, must end "
-                                    "with .gguf)", value="")
+
+            gguf_name = gr.Textbox(label="Output Name (optional, must end "
+                                   "with .gguf)", value="")
+
             convert_btn = gr.Button(value="Convert")
+
+        # Output
         with gr.Column(scale=1):
             result = gr.Textbox(interactive=False, value="")
-    convert_btn.click(convert, inputs=[og_model, type, gguf_model, verbose],
-                      outputs=[result])
+
+    convert_btn.click(convert, inputs=[orig_model, quant_type, gguf_name,
+                                       verbose], outputs=[result])
 
 
 with gr.Blocks() as options_block:
