@@ -8,8 +8,11 @@ import piexif
 import piexif.helper
 
 
-current_dir = os.getcwd()
 json_path = 'config.json'
+current_dir = os.getcwd()
+
+samplers = ["euler", "euler_a", "heun", "dpm2", "dpm2++2s_a", "dpm++2m",
+            "dpm++2mv2", "lcm"]
 reload_symbol = '\U0001f504'
 page_num = 0
 ctrl = 0
@@ -83,6 +86,21 @@ def get_hf_models():
 def reload_hf_models():
     refreshed_models = gr.update(choices=get_hf_models())
     return refreshed_models
+
+
+def run_subprocess(command):
+    with subprocess.Popen(command, stdout=subprocess.PIPE,
+                          stderr=subprocess.PIPE,
+                          universal_newlines=True) as process:
+
+        # Read the output line by line in real-time
+        for output_line in process.stdout:
+            print(output_line.strip())
+
+        # Wait for the process to finish and capture its errors and print them
+        _, errors = process.communicate()
+        if errors:
+            print("Errors:", errors)
 
 
 def reload_gallery(ctrl_inp=None, fpage_num=1, subctrl=0):
@@ -211,23 +229,24 @@ def img_info(sel_img: gr.SelectData):
         img_dir = txt2img_dir
     elif ctrl == 1:
         img_dir = img2img_dir
-    file_paths = []
-    for root, dirs, files in os.walk(img_dir):
-        for file in files:
-            if file.lower().endswith(('.png', '.jpg')):
-                file_paths.append(root + file)
+
+    file_paths = [os.path.join(img_dir, file) for file in os.listdir(img_dir)
+                  if os.path.isfile(os.path.join(img_dir, file)) and
+                  file.lower().endswith(('.png', '.jpg'))]
     file_paths.sort()
+
     try:
         img_path = file_paths[img_index]
     except IndexError:
         print("Image index is out of range.")
         return
+
     if img_path.endswith(('.jpg', '.jpeg')):
         exif_data = piexif.load(img_path)
         user_comment = piexif.helper.UserComment.load(
                        exif_data["Exif"][piexif.ExifIFD.UserComment])
-        metadata = f"JPG: Exif\nPositive prompt: {user_comment}"
-        return metadata
+        return f"JPG: Exif\nPositive prompt: {user_comment}"
+
     elif img_path.endswith('.png'):
         with open(img_path, 'rb') as f:
             header = f.read(8)
@@ -242,9 +261,8 @@ def img_info(sel_img: gr.SelectData):
                 if chunk_type == 'tEXt':
                     keyword, value = data.split(b'\x00', 1)
                     tEXt = f"{value.decode('utf-8')}"
-                    metadata = f"PNG: tEXt\nPositive prompt: {tEXt}"
-                    return metadata
-        return
+                    return f"PNG: tEXt\nPositive prompt: {tEXt}"
+        return ""
 
 
 def get_next_img(subctrl):
@@ -267,22 +285,15 @@ def txt2img(model, vae, taesd, cnnet, control_img, control_strength,
             ppromt, nprompt, sampling, steps, schedule, width, height,
             batch_count, cfg, seed, clip_skip, threads, vae_tiling,
             cont_net_cpu, rng, output, verbose):
-    if model != "None":
-        fmodel = f'{model_dir}{model}'
-    if vae != "None":
-        fvae = f'{vae_dir}{vae}'
-    fembed = f'{emb_dir}'
-    flora = f'{lora_dir}'
-    if taesd:
-        ftaesd = f'{taesd_dir}{taesd}'
-    if cnnet:
-        fcnnet = f'{cnnet_dir}{cnnet}'
-        fcontrol_img = f'{control_img}'
-        fcontrol_strength = str(control_strength)
+    fmodel = os.path.join(model_dir, model) if model != "None" else None
+    fvae = os.path.join(vae_dir, vae) if vae != "None" else None
+    ftaesd = os.path.join(taesd_dir, taesd) if taesd else None
+    fcnnet = os.path.join(cnnet_dir, cnnet) if cnnet else None
+    fcontrol_img = control_img if cnnet else None
+    fcontrol_strength = str(control_strength) if cnnet else None
     fpprompt = f'"{ppromt}"'
-    if nprompt:
-        fnprompt = f'"{nprompt}"'
-    fsampling = f'{sampling}'
+    fnprompt = f'"{nprompt}"' if nprompt else None
+    fsampling = str(sampling)
     fsteps = str(steps)
     fschedule = f'{schedule}'
     fwidth = str(width)
@@ -292,88 +303,57 @@ def txt2img(model, vae, taesd, cnnet, control_img, control_strength,
     fseed = str(seed)
     fclip_skip = str(clip_skip + 1)
     fthreads = str(threads)
-    if vae_tiling:
-        fvae_tiling = vae_tiling
-    if cont_net_cpu:
-        fcont_net_cpu = cont_net_cpu
-    frng = f'{rng}'
-    if output is None or '""':
-        foutput = txt2img_dir + get_next_img(subctrl=0)
-    else:
-        foutput = f'"{txt2img_dir}{output}.png"'
-    if verbose:
-        fverbose = verbose
+    fvae_tiling = vae_tiling if vae_tiling else None
+    fcont_net_cpu = cont_net_cpu if cont_net_cpu else None
+    frng = str(rng)
+    foutput = (os.path.join(txt2img_dir, f"{output}.png")
+               if output
+               else os.path.join(txt2img_dir, get_next_img(subctrl=0)))
 
     command = [sd, '-M', 'txt2img', '-m', fmodel, '-p', fpprompt,
                '--sampling-method', fsampling, '--steps', fsteps,
                '--schedule', fschedule, '-W', fwidth, '-H', fheight, '-b',
                fbatch_count, '--cfg-scale', fcfg, '-s', fseed, '--clip-skip',
-               fclip_skip, '--embd-dir', fembed, '--lora-model-dir', flora,
+               fclip_skip, '--embd-dir', emb_dir, '--lora-model-dir', lora_dir,
                '-t', fthreads, '--rng', frng, '-o', foutput]
 
-    if 'fvae' in locals():
+    if fvae:
         command.extend(['--vae', fvae])
-    if 'ftaesd' in locals():
+    if ftaesd:
         command.extend(['--taesd', ftaesd])
-    if 'fcnnet' in locals():
-        command.extend(['--control-net', fcnnet])
-        command.extend(['--control-image', fcontrol_img])
-        command.extend(['--control-strength', fcontrol_strength])
-    if 'fnprompt' in locals():
+    if fcnnet:
+        command.extend(['--control-net', fcnnet, '--control-image',
+                        fcontrol_img, '--control-strength', fcontrol_strength])
+    if fnprompt:
         command.extend(['-n', fnprompt])
-    if 'fvae_tiling' in locals():
+    if fvae_tiling:
         command.extend(['--vae-tiling'])
-    if 'fcont_net_cpu' in locals():
+    if fcont_net_cpu:
         command.extend(['--cont_net_cpu'])
-    if 'fverbose' in locals():
+    if verbose:
         command.extend(['-v'])
 
-    fcommand = ' '.join(str(arg) for arg in command)
+    fcommand = ' '.join(map(str, command))
 
     print(fcommand)
-    # Run the command
-    process = subprocess.Popen(command, stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE, universal_newlines=True)
+    run_subprocess(command)
 
-    # Read the output line by line in real-time
-    while True:
-        output_line = process.stdout.readline()
-        if output_line == '' and process.poll() is not None:
-            break
-        if output_line:
-            print(output_line.strip())
-
-    # Wait for the process to finish and capture its errors
-    _, errors = process.communicate()
-
-    # Print any remaining errors (if any)
-    if errors:
-        print("Errors:", errors)
-
-    img_final = [foutput]
-    return img_final
+    return [foutput]
 
 
 def img2img(model, vae, taesd, img_inp, cnnet, control_img,
             control_strength, ppromt, nprompt, sampling, steps, schedule,
             width, height, batch_count, strenght, cfg, seed, clip_skip,
             threads, vae_tiling, cont_net_cpu, rng, output, verbose):
-    fmodel = f'{model_dir}{model}'
-    if vae:
-        fvae = f'{vae_dir}{vae}'
-    fembed = f'{emb_dir}'
-    flora = f'{lora_dir}'
-    if taesd:
-        ftaesd = f'{taesd_dir}{taesd}'
-    fimg_inp = f'{img_inp}'
-    if cnnet:
-        fcnnet = f'{cnnet_dir}{cnnet}'
-        fcontrol_img = f'{control_img}'
-        fcontrol_strength = str(control_strength)
+    fmodel = os.path.join(model_dir, model) if model != "None" else None
+    fvae = os.path.join(vae_dir, vae) if vae != "None" else None
+    ftaesd = os.path.join(taesd_dir, taesd) if taesd else None
+    fcnnet = os.path.join(cnnet_dir, cnnet) if cnnet else None
+    fcontrol_img = control_img if cnnet else None
+    fcontrol_strength = str(control_strength) if cnnet else None
     fpprompt = f'"{ppromt}"'
-    if nprompt:
-        fnprompt = f'"{nprompt}"'
-    fsampling = f'{sampling}'
+    fnprompt = f'"{nprompt}"' if nprompt else None
+    fsampling = str(sampling)
     fsteps = str(steps)
     fschedule = f'{schedule}'
     fwidth = str(width)
@@ -384,126 +364,92 @@ def img2img(model, vae, taesd, img_inp, cnnet, control_img,
     fseed = str(seed)
     fclip_skip = str(clip_skip + 1)
     fthreads = str(threads)
-    if vae_tiling:
-        fvae_tiling = vae_tiling
-    if cont_net_cpu:
-        fcont_net_cpu = cont_net_cpu
-    frng = f'{rng}'
-    if output is None or '""':
-        foutput = img2img_dir + get_next_img(subctrl=1)
-    else:
-        foutput = f'"{img2img_dir}{output}.png"'
-    if verbose:
-        fverbose = verbose
+    fvae_tiling = vae_tiling if vae_tiling else None
+    fcont_net_cpu = cont_net_cpu if cont_net_cpu else None
+    frng = str(rng)
+    foutput = (os.path.join(img2img_dir, f"{output}.png")
+               if output
+               else os.path.join(img2img_dir, get_next_img(subctrl=1)))
 
-    command = [sd, '-M', 'img2img', '-m', fmodel, '-i', fimg_inp, '-p',
+    command = [sd, '-M', 'img2img', '-m', fmodel, '-i', img_inp, '-p',
                fpprompt, '--sampling-method', fsampling, '--steps', fsteps,
                '--schedule', fschedule, '-W', fwidth, '-H', fheight, '-b',
                fbatch_count, '--strength', fstrenght, '--cfg-scale', fcfg,
-               '-s', fseed, '--clip-skip', fclip_skip, '--embd-dir', fembed,
-               '--lora-model-dir', flora, '-t', fthreads, '--rng', frng, '-o',
-               foutput]
+               '-s', fseed, '--clip-skip', fclip_skip, '--embd-dir', emb_dir,
+               '--lora-model-dir', lora_dir, '-t', fthreads, '--rng', frng,
+               '-o', foutput]
 
-    if 'fvae' in locals():
+    if fvae:
         command.extend(['--vae', fvae])
-    if 'ftaesd' in locals():
+    if ftaesd:
         command.extend(['--taesd', ftaesd])
-    if 'fcnnet' in locals():
-        command.extend(['--control-net', fcnnet])
-        command.extend(['--control-image', fcontrol_img])
-        command.extend(['--control-strength', fcontrol_strength])
-    if 'fnprompt' in locals():
+    if fcnnet:
+        command.extend(['--control-net', fcnnet, '--control-image',
+                        fcontrol_img, '--control-strength', fcontrol_strength])
+    if fnprompt:
         command.extend(['-n', fnprompt])
-    if 'fvae_tiling' in locals():
+    if fvae_tiling:
         command.extend(['--vae-tiling'])
-    if 'fcont_net_cpu' in locals():
+    if fcont_net_cpu:
         command.extend(['--cont_net_cpu'])
-    if 'fverbose' in locals():
+    if verbose:
         command.extend(['-v'])
 
-    print(command)
-    # Run the command
-    process = subprocess.Popen(command, stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE, universal_newlines=True)
+    fcommand = ' '.join(map(str, command))
 
-    # Read the output line by line in real-time
-    while True:
-        output_line = process.stdout.readline()
-        if output_line == '' and process.poll() is not None:
-            break
-        if output_line:
-            print(output_line.strip())
+    print(fcommand)
+    run_subprocess(command)
 
-    # Wait for the process to finish and capture its errors
-    _, errors = process.communicate()
-
-    # Print any remaining errors (if any)
-    if errors:
-        print("Errors:", errors)
-    img_final = [foutput]
-    return img_final
+    return [foutput]
 
 
 def convert(og_model, type, gguf_model, verbose):
-    fog_model = model_dir + og_model
-    ftype = f'{type}'
-    if gguf_model == '':
+    fog_model = os.path.join(model_dir, og_model)
+    if not gguf_model:
         model_name, ext = os.path.splitext(og_model)
-        fgguf_model = f"{model_dir}{model_name}.{type}.gguf"
+        fgguf_model = f"{os.path.join(model_dir, model_name)}.{type}.gguf"
     else:
-        fgguf_model = model_dir + gguf_model
-    if verbose:
-        fverbose = verbose
+        fgguf_model = os.path.join(model_dir, gguf_model)
 
     command = [sd, '-M', 'convert', '-m', fog_model,
-               '-o', fgguf_model, '--type', ftype]
+               '-o', fgguf_model, '--type', type]
 
-    if 'fverbose' in locals():
+    if verbose:
         command.extend(['-v'])
 
-    # Run the command
-    process = subprocess.Popen(command, stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE, universal_newlines=True)
+    fcommand = ' '.join(map(str, command))
 
-    # Read the output line by line in real-time
-    while True:
-        output_line = process.stdout.readline()
-        if output_line == '' and process.poll() is not None:
-            break
-        if output_line:
-            print(output_line.strip())
+    print(fcommand)
+    run_subprocess(command)
 
-    # Wait for the process to finish and capture its errors
-    _, errors = process.communicate()
-
-    # Print any remaining errors (if any)
-    if errors:
-        print("Errors:", errors)
-    result = "Process completed."
-    return result
+    return "Process completed."
 
 
 def set_defaults(model, vae, sampling, steps, schedule, width, height,
                  model_dir_txt, vae_dir_txt, emb_dir_txt, lora_dir_txt,
                  taesd_dir_txt, cnnet_dir_txt, txt2img_dir_txt,
                  img2img_dir_txt):
-    data['model_dir'] = model_dir_txt
-    data['vae_dir'] = vae_dir_txt
-    data['emb_dir'] = emb_dir_txt
-    data['lora_dir'] = lora_dir_txt
-    data['taesd_dir'] = taesd_dir_txt
-    data['cnnet_dir'] = cnnet_dir_txt
-    data['txt2img_dir'] = txt2img_dir_txt
-    data['img2img_dir'] = img2img_dir_txt
+    data.update({
+        'model_dir': model_dir_txt,
+        'vae_dir': vae_dir_txt,
+        'emb_dir': emb_dir_txt,
+        'lora_dir': lora_dir_txt,
+        'taesd_dir': taesd_dir_txt,
+        'cnnet_dir': cnnet_dir_txt,
+        'txt2img_dir': txt2img_dir_txt,
+        'img2img_dir': img2img_dir_txt,
+        'def_sampling': sampling,
+        'def_steps': steps,
+        'def_schedule': schedule,
+        'def_width': width,
+        'def_height': height
+    })
+
     if model:
         data['def_model'] = model
     if vae:
         data['def_vae'] = vae
-    data['def_sampling'] = sampling
-    data['def_steps'] = steps
-    data['def_schedule'] = schedule
-    data['def_width'] = width
-    data['def_height'] = height
+
     with open(json_path, 'w') as json_file:
         json.dump(data, json_file, indent=4)
     print("Set new defaults completed.")
@@ -511,26 +457,28 @@ def set_defaults(model, vae, sampling, steps, schedule, width, height,
 
 
 def rst_def():
-    data['model_dir'] = "os.path.join(current_dir,"\
-                        "\"models/Stable-Diffusion/\")"
-    data['vae_dir'] = "os.path.join(current_dir, \"models/VAE/\")"
-    data['emb_dir'] = "os.path.join(current_dir, \"models/Embeddings/\")"
-    data['lora_dir'] = "os.path.join(current_dir, \"models/Lora/\")"
-    data['taesd_dir'] = "os.path.join(current_dir, \"models/TAESD/\")"
-    data['cnnet_dir'] = "os.path.join(current_dir, \"models/ControlNet/\")"
-    data['txt2img_dir'] = "os.path.join(current_dir, \"outputs/txt2img/\")"
-    data['img2img_dir'] = "os.path.join(current_dir, \"outputs/img2img/\")"
-    if 'def_model' in data:
-        del data['def_model']
-    if 'def_vae' in data:
-        del data['def_vae']
-    data['def_sampling'] = "euler_a"
-    data['def_steps'] = 20
-    data['def_schedule'] = "discrete"
-    data['def_width'] = 512
-    data['def_height'] = 512
+    data.update({
+        'model_dir': 'os.path.join(current_dir, "models/Stable-Diffusion/")',
+        'vae_dir': 'os.path.join(current_dir, "models/VAE/")',
+        'emb_dir': 'os.path.join(current_dir, "models/Embeddings/")',
+        'lora_dir': 'os.path.join(current_dir, "models/Lora/")',
+        'taesd_dir': 'os.path.join(current_dir, "models/TAESD/")',
+        'cnnet_dir': 'os.path.join(current_dir, "models/ControlNet/")',
+        'txt2img_dir': 'os.path.join(current_dir, "outputs/txt2img/")',
+        'img2img_dir': 'os.path.join(current_dir, "outputs/img2img/")',
+        'def_sampling': "euler_a",
+        'def_steps': 20,
+        'def_schedule': "discrete",
+        'def_width': 512,
+        'def_height': 512
+    })
+
+    data.pop('def_model', None)
+    data.pop('def_vae', None)
+
     with open(json_path, 'w') as json_file:
         json.dump(data, json_file, indent=4)
+
     print("Reset defaults completed.")
     return
 
@@ -582,10 +530,8 @@ with gr.Blocks() as txt2img_block:
             with gr.Row():
                 with gr.Column(scale=1):
                     sampling = gr.Dropdown(label="Sampling method",
-                                           choices=["euler", "euler_a", "heun",
-                                                    "dpm2", "dpm2++2s_a",
-                                                    "dpm++2m", "dpm++2mv2",
-                                                    "lcm"], value=def_sampling)
+                                           choices=samplers,
+                                           value=def_sampling)
                 with gr.Column(scale=1):
                     steps = gr.Slider(label="Steps", minimum=1, maximum=99,
                                       value=def_steps, step=1)
@@ -688,10 +634,7 @@ with gr.Blocks()as img2img_block:
             with gr.Row():
                 with gr.Column(scale=1):
                     sampling = gr.Dropdown(label="Sampling method",
-                                           choices=["euler", "euler_a", "heun",
-                                                    "dpm2", "dpm2++2s_a",
-                                                    "dpm++2m", "dpm++2mv2",
-                                                    "lcm"], value="euler_a")
+                                           choices=samplers, value="euler_a")
                 with gr.Column(scale=1):
                     steps = gr.Slider(label="Steps", minimum=1, maximum=99,
                                       value=def_steps, step=1)
@@ -822,10 +765,7 @@ with gr.Blocks() as options_block:
             rl_vae.click(reload_models, inputs=[vae_dir_txt], outputs=[vae])
             clear_vae = gr.ClearButton(vae)
         sampling = gr.Dropdown(label="Sampling method",
-                               choices=["euler", "euler_a", "heun",
-                                        "dpm2", "dpm2++2s_a",
-                                        "dpm++2m", "dpm++2mv2",
-                                        "lcm"], value=def_sampling)
+                               choices=samplers, value=def_sampling)
         steps = gr.Slider(label="Steps", minimum=1, maximum=99,
                           value=def_steps, step=1)
         schedule = gr.Dropdown(label="Schedule",
