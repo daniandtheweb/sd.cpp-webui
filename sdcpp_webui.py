@@ -4,8 +4,6 @@ import subprocess
 import gradio as gr
 from PIL import Image
 import json
-import piexif
-import piexif.helper
 
 
 json_path = 'config.json'
@@ -221,6 +219,24 @@ def last_page():
     return imgs, page_num
 
 
+def extract_exif_from_jpg(img_path):
+    if img_path.endswith(('.jpg', '.jpeg')):
+        img = Image.open(img_path)
+        exif_data = img._getexif()
+
+        if exif_data is not None:
+            user_comment = exif_data.get(37510)  # 37510 = UserComment tag
+            if user_comment:
+                return f"JPG: Exif\nPositive prompt: "\
+                       f"{user_comment.decode('utf-8')[9::2]}"
+            else:
+                return "JPG: Exif\nPositive prompt: No User Comment found."
+        else:
+            return "JPG: Exif\nPositive prompt: No EXIF data found."
+    else:
+        return "Not a JPG image."
+
+
 def img_info(sel_img: gr.SelectData):
     global ctrl
     global page_num
@@ -242,10 +258,7 @@ def img_info(sel_img: gr.SelectData):
         return
 
     if img_path.endswith(('.jpg', '.jpeg')):
-        exif_data = piexif.load(img_path)
-        user_comment = piexif.helper.UserComment.load(
-                       exif_data["Exif"][piexif.ExifIFD.UserComment])
-        return f"JPG: Exif\nPositive prompt: {user_comment}"
+        return extract_exif_from_jpg(img_path)
 
     elif img_path.endswith('.png'):
         with open(img_path, 'rb') as f:
