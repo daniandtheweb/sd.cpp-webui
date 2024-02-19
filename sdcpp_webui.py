@@ -485,7 +485,7 @@ def rst_def():
 
 
 with gr.Blocks() as txt2img_block:
-    txt2img_title = gr.Markdown("# Text to Image"),
+    # Directory Textboxes
     model_dir_txt = gr.Textbox(value=model_dir, visible=False)
     vae_dir_txt = gr.Textbox(value=vae_dir, visible=False)
     emb_dir_txt = gr.Textbox(value=emb_dir, visible=False)
@@ -493,28 +493,32 @@ with gr.Blocks() as txt2img_block:
     taesd_dir_txt = gr.Textbox(value=taesd_dir, visible=False)
     cnnet_dir_txt = gr.Textbox(value=cnnet_dir, visible=False)
 
+    # Title
+    txt2img_title = gr.Markdown("# Text to Image"),
+
+    # Model & VAE Selection
     with gr.Row():
         model = gr.Dropdown(label="Model",
                             choices=get_models(model_dir), scale=7,
                             value=def_model)
-        rl_model = gr.Button(value=reload_symbol, scale=1)
-        rl_model.click(reload_models, inputs=[model_dir_txt], outputs=[model])
+        reload_model_btn = gr.Button(value=reload_symbol, scale=1)
         vae = gr.Dropdown(label="VAE", choices=get_models(vae_dir), scale=7,
                           value=def_vae)
         with gr.Column(scale=1):
-            rl_vae = gr.Button(value=reload_symbol)
-            rl_vae.click(reload_models, inputs=[vae_dir_txt], outputs=[vae])
+            reload_vae_btn = gr.Button(value=reload_symbol)
             clear_vae = gr.ClearButton(vae)
+
+    # Extra Networks Selection
     with gr.Row():
         with gr.Accordion(label="Extra Networks", open=False):
             with gr.Row():
                 taesd = gr.Dropdown(label="TAESD",
                                     choices=get_models(taesd_dir), scale=7)
                 with gr.Column():
-                    rl_taesd = gr.Button(value=reload_symbol, scale=1)
-                    rl_taesd.click(reload_models, inputs=[taesd_dir_txt],
-                                   outputs=[taesd])
+                    reload_taesd_btn = gr.Button(value=reload_symbol, scale=1)
                     clear_taesd = gr.ClearButton(taesd, scale=1)
+
+    # Prompts
     with gr.Row():
         with gr.Column(scale=3):
             pprompt = gr.Textbox(placeholder="Positive prompt",
@@ -526,6 +530,7 @@ with gr.Blocks() as txt2img_block:
         with gr.Column(scale=1):
             gen_btn = gr.Button(value="Generate", size="lg")
 
+    # Settings
     with gr.Row():
         with gr.Column(scale=1):
             with gr.Row():
@@ -553,18 +558,20 @@ with gr.Blocks() as txt2img_block:
             seed = gr.Number(label="Seed", minimum=-1, maximum=2**32, value=-1)
             clip_skip = gr.Slider(label="CLIP skip", minimum=0, maximum=12,
                                   value=0, step=0.1)
+
+            # ControlNet
             with gr.Accordion(label="ControlNet", open=False):
                 cnnet = gr.Dropdown(label="ControlNet",
                                     choices=get_models(cnnet_dir))
-                rl_connet = gr.Button(value=reload_symbol)
-                rl_connet.click(reload_models, inputs=[cnnet_dir_txt],
-                                outputs=[cnnet])
-                clear_connet = gr.ClearButton(cnnet)
+                reload_cnnet_btn = gr.Button(value=reload_symbol)
+                clear_cnnet = gr.ClearButton(cnnet)
                 control_img = gr.Image(sources="upload", type="filepath")
                 control_strength = gr.Slider(label="ControlNet strength",
                                              minimum=0, maximum=1, step=0.01,
                                              value=0.9)
-                cont_net_cpu = gr.Checkbox(label="ControlNet on CPU")
+                cnnet_cpu = gr.Checkbox(label="ControlNet on CPU")
+
+            # Extra Settings
             with gr.Accordion(label="Extra", open=False):
                 threads = gr.Number(label="Threads", minimum=0,
                                     maximum=os.cpu_count(), value=0)
@@ -574,22 +581,34 @@ with gr.Blocks() as txt2img_block:
                 output = gr.Textbox(label="Output Name",
                                     placeholder="Optional")
                 verbose = gr.Checkbox(label="Verbose")
+
+        # Output
         with gr.Column(scale=1):
             img_final = gr.Gallery(label="Generated images", show_label=False,
                                    columns=[3], rows=[1], object_fit="contain",
                                    height="auto")
-            gen_btn.click(txt2img, inputs=[model, vae, taesd, cnnet,
-                                           control_img, control_strength,
-                                           pprompt, nprompt, sampling, steps,
-                                           schedule, width, height,
-                                           batch_count, cfg, seed, clip_skip,
-                                           threads, vae_tiling, cont_net_cpu,
-                                           rng, output, verbose],
-                          outputs=[img_final])
+
+    # Generate
+    gen_btn.click(txt2img, inputs=[model, vae, taesd, cnnet,
+                                   control_img, control_strength,
+                                   pprompt, nprompt, sampling, steps,
+                                   schedule, width, height,
+                                   batch_count, cfg, seed, clip_skip,
+                                   threads, vae_tiling, cnnet_cpu,
+                                   rng, output, verbose], outputs=[img_final])
+
+    # Interactive Bindings
+    reload_model_btn.click(reload_models, inputs=[model_dir_txt],
+                           outputs=[model])
+    reload_vae_btn.click(reload_models, inputs=[vae_dir_txt], outputs=[vae])
+    reload_taesd_btn.click(reload_models, inputs=[taesd_dir_txt],
+                           outputs=[taesd])
+    reload_cnnet_btn.click(reload_models, inputs=[cnnet_dir_txt],
+                           outputs=[cnnet])
 
 
 with gr.Blocks()as img2img_block:
-    img2img_title = gr.Markdown("# Image to Image")
+    # Directory Textboxes
     model_dir_txt = gr.Textbox(value=model_dir, visible=False)
     vae_dir_txt = gr.Textbox(value=vae_dir, visible=False)
     emb_dir_txt = gr.Textbox(value=emb_dir, visible=False)
@@ -597,28 +616,32 @@ with gr.Blocks()as img2img_block:
     taesd_dir_txt = gr.Textbox(value=taesd_dir, visible=False)
     cnnet_dir_txt = gr.Textbox(value=cnnet_dir, visible=False)
 
+    # Title
+    img2img_title = gr.Markdown("# Image to Image")
+
+    # Model & VAE Selection
     with gr.Row():
         model = gr.Dropdown(label="Model",
                             choices=get_models(model_dir), scale=7,
                             value=def_model)
-        rl_model = gr.Button(value=reload_symbol, scale=1)
-        rl_model.click(reload_models, inputs=[model_dir_txt], outputs=[model])
+        reload_model_btn = gr.Button(value=reload_symbol, scale=1)
         vae = gr.Dropdown(label="VAE", choices=get_models(vae_dir), scale=7,
                           value=def_vae)
         with gr.Column(scale=1):
-            rl_vae = gr.Button(value=reload_symbol)
-            rl_vae.click(reload_models, inputs=[vae_dir_txt], outputs=[vae])
+            reload_vae_btn = gr.Button(value=reload_symbol)
             clear_vae = gr.ClearButton(vae)
+
+    # Extra Networks Selection
     with gr.Row():
         with gr.Accordion(label="Extra Networks", open=False):
             with gr.Row():
                 taesd = gr.Dropdown(label="TAESD",
                                     choices=get_models(taesd_dir), scale=7)
                 with gr.Column():
-                    rl_taesd = gr.Button(value=reload_symbol, scale=1)
-                    rl_taesd.click(reload_models, inputs=[taesd_dir_txt],
-                                   outputs=[taesd])
+                    reload_taesd_btn = gr.Button(value=reload_symbol, scale=1)
                     clear_taesd = gr.ClearButton(taesd, scale=1)
+
+    # Prompts
     with gr.Row():
         with gr.Column(scale=3):
             pprompt = gr.Textbox(placeholder="Positive prompt",
@@ -630,6 +653,8 @@ with gr.Blocks()as img2img_block:
         with gr.Column(scale=1):
             gen_btn = gr.Button(value="Generate")
             img_inp = gr.Image(sources="upload", type="filepath")
+
+    # Settings
     with gr.Row():
         with gr.Column(scale=1):
             with gr.Row():
@@ -658,18 +683,20 @@ with gr.Blocks()as img2img_block:
             seed = gr.Number(label="Seed", minimum=-1, maximum=2**32, value=-1)
             clip_skip = gr.Slider(label="CLIP skip", minimum=0, maximum=12,
                                   value=0, step=0.1)
+
+            # ControlNet
             with gr.Accordion(label="ControlNet", open=False):
                 cnnet = gr.Dropdown(label="ControlNet",
                                     choices=get_models(cnnet_dir))
-                rl_connet = gr.Button(value=reload_symbol)
-                rl_connet.click(reload_models, inputs=[cnnet_dir_txt],
-                                outputs=[cnnet])
+                reload_cnnet_btn = gr.Button(value=reload_symbol)
                 clear_connet = gr.ClearButton(cnnet)
                 control_img = gr.Image(sources="upload", type="filepath")
                 control_strength = gr.Slider(label="ControlNet strength",
                                              minimum=0, maximum=1, step=0.01,
                                              value=0.9)
-                cont_net_cpu = gr.Checkbox(label="ControlNet on CPU")
+                cnnet_cpu = gr.Checkbox(label="ControlNet on CPU")
+
+            # Extra Settings
             with gr.Accordion(label="Extra", open=False):
                 threads = gr.Number(label="Threads", minimum=0,
                                     maximum=os.cpu_count(), value=0)
@@ -682,15 +709,25 @@ with gr.Blocks()as img2img_block:
             img_final = gr.Gallery(label="Generated images", show_label=False,
                                    columns=[3], rows=[1], object_fit="contain",
                                    height="auto")
-            gen_btn.click(img2img, inputs=[model, vae, taesd, img_inp,
-                                           cnnet, control_img,
-                                           control_strength, pprompt,
-                                           nprompt, sampling, steps, schedule,
-                                           width, height, batch_count,
-                                           strenght, cfg, seed, clip_skip,
-                                           threads, vae_tiling, cont_net_cpu,
-                                           rng, output, verbose],
-                          outputs=[img_final])
+
+    # Generate
+    gen_btn.click(img2img, inputs=[model, vae, taesd, img_inp,
+                                   cnnet, control_img,
+                                   control_strength, pprompt,
+                                   nprompt, sampling, steps, schedule,
+                                   width, height, batch_count,
+                                   strenght, cfg, seed, clip_skip,
+                                   threads, vae_tiling, cnnet_cpu,
+                                   rng, output, verbose], outputs=[img_final])
+
+    # Interactive Bindings
+    reload_model_btn.click(reload_models, inputs=[model_dir_txt],
+                           outputs=[model])
+    reload_vae_btn.click(reload_models, inputs=[vae_dir_txt], outputs=[vae])
+    reload_taesd_btn.click(reload_models, inputs=[taesd_dir_txt],
+                           outputs=[taesd])
+    reload_cnnet_btn.click(reload_models, inputs=[cnnet_dir_txt],
+                           outputs=[cnnet])
 
 
 with gr.Blocks() as gallery_block:
@@ -770,37 +807,54 @@ with gr.Blocks() as convert_block:
         with gr.Column(scale=1):
             result = gr.Textbox(interactive=False, value="")
 
+    # Interactive Bindings
     convert_btn.click(convert, inputs=[orig_model, quant_type, gguf_name,
                                        verbose], outputs=[result])
 
 
 with gr.Blocks() as options_block:
+    # Title
     options_title = gr.Markdown("# Options")
+
     with gr.Column():
+        # Model Dropdown
         model = gr.Dropdown(label="Model",
                             choices=get_models(model_dir), scale=7,
                             value=def_model)
         with gr.Column(scale=1):
-            rl_model = gr.Button(value=reload_symbol, scale=1)
-            rl_model.click(reload_models, inputs=[model_dir_txt],
-                           outputs=[model])
+            reload_model_btn = gr.Button(value=reload_symbol, scale=1)
+            reload_model_btn.click(reload_models, inputs=[model_dir_txt],
+                                   outputs=[model])
+
+        # VAE Dropdown
         vae = gr.Dropdown(label="VAE", choices=get_models(vae_dir), scale=7,
                           value=def_vae)
         with gr.Column(scale=1):
-            rl_vae = gr.Button(value=reload_symbol)
-            rl_vae.click(reload_models, inputs=[vae_dir_txt], outputs=[vae])
+            reload_vae_btn = gr.Button(value=reload_symbol)
+            reload_vae_btn.click(reload_models, inputs=[vae_dir_txt],
+                                 outputs=[vae])
             clear_vae = gr.ClearButton(vae)
+
+        # Sampling Method Dropdown
         sampling = gr.Dropdown(label="Sampling method",
                                choices=samplers, value=def_sampling)
+
+        # Steps Slider
         steps = gr.Slider(label="Steps", minimum=1, maximum=99,
                           value=def_steps, step=1)
+
+        # Schedule Dropdown
         schedule = gr.Dropdown(label="Schedule",
                                choices=["discrete", "karras"],
                                value="discrete")
+
+        # Size Sliders
         width = gr.Slider(label="Width", minimum=64, maximum=2048,
                           value=def_width, step=8)
         height = gr.Slider(label="Height", minimum=64, maximum=2048,
                            value=def_height, step=8)
+
+        # Folders Accordion
         with gr.Accordion(label="Folders", open=False):
             model_dir_txt = gr.Textbox(label="Models folder", value=model_dir,
                                        interactive=True)
@@ -818,6 +872,8 @@ with gr.Blocks() as options_block:
                                          value=txt2img_dir, interactive=True)
             img2img_dir_txt = gr.Textbox(label="img2img outputs folder",
                                          value=img2img_dir, interactive=True)
+
+        # Set Defaults and Restore Defaults Buttons
         with gr.Row():
             set_btn = gr.Button(value="Set Defaults")
             set_btn.click(set_defaults, [model, vae, sampling, steps, schedule,
@@ -826,8 +882,8 @@ with gr.Blocks() as options_block:
                                          lora_dir_txt, taesd_dir_txt,
                                          cnnet_dir_txt, txt2img_dir_txt,
                                          img2img_dir_txt], [])
-            rst_btn = gr.Button(value="Restore Defaults")
-            rst_btn.click(rst_def, [], [])
+            restore_btn = gr.Button(value="Restore Defaults")
+            restore_btn.click(rst_def, [], [])
 
 sdcpp = gr.TabbedInterface(
     [txt2img_block, img2img_block, gallery_block, convert_block,
