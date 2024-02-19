@@ -885,6 +885,7 @@ with gr.Blocks() as options_block:
             restore_btn = gr.Button(value="Restore Defaults")
             restore_btn.click(rst_def, [], [])
 
+
 sdcpp = gr.TabbedInterface(
     [txt2img_block, img2img_block, gallery_block, convert_block,
      options_block],
