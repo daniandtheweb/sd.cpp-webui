@@ -298,8 +298,8 @@ def txt2img(model, vae, taesd, cnnet, control_img, control_strength,
             ppromt, nprompt, sampling, steps, schedule, width, height,
             batch_count, cfg, seed, clip_skip, threads, vae_tiling,
             cont_net_cpu, rng, output, verbose):
-    fmodel = os.path.join(model_dir, model) if model != "None" else None
-    fvae = os.path.join(vae_dir, vae) if vae != "None" else None
+    fmodel = os.path.join(model_dir, model) if model else None
+    fvae = os.path.join(vae_dir, vae) if vae else None
     ftaesd = os.path.join(taesd_dir, taesd) if taesd else None
     fcnnet = os.path.join(cnnet_dir, cnnet) if cnnet else None
     fcontrol_img = control_img if cnnet else None
@@ -358,8 +358,8 @@ def img2img(model, vae, taesd, img_inp, cnnet, control_img,
             control_strength, ppromt, nprompt, sampling, steps, schedule,
             width, height, batch_count, strenght, cfg, seed, clip_skip,
             threads, vae_tiling, cont_net_cpu, rng, output, verbose):
-    fmodel = os.path.join(model_dir, model) if model != "None" else None
-    fvae = os.path.join(vae_dir, vae) if vae != "None" else None
+    fmodel = os.path.join(model_dir, model) if model else None
+    fvae = os.path.join(vae_dir, vae) if vae else None
     ftaesd = os.path.join(taesd_dir, taesd) if taesd else None
     fcnnet = os.path.join(cnnet_dir, cnnet) if cnnet else None
     fcontrol_img = control_img if cnnet else None
