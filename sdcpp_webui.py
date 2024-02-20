@@ -113,7 +113,6 @@ def reload_gallery(ctrl_inp=None, fpage_num=1, subctrl=0):
         img_dir = img2img_dir
     files = os.listdir(img_dir)
     image_files = [file for file in files if file.endswith(('.jpg', '.png'))]
-    image_files.sort()
     start_index = (fpage_num * 16) - 16
     end_index = min(start_index + 16, len(image_files))
     for file_name in image_files[start_index:end_index]:
@@ -145,7 +144,6 @@ def goto_gallery(fpage_num=1):
         fpage_num = total_pages
     files = os.listdir(img_dir)
     image_files = [file for file in files if file.endswith(('.jpg', '.png'))]
-    image_files.sort()
     start_index = (fpage_num * 16) - 16
     end_index = min(start_index + 16, len(image_files))
     for file_name in image_files[start_index:end_index]:
@@ -249,7 +247,7 @@ def img_info(sel_img: gr.SelectData):
     file_paths = [os.path.join(img_dir, file) for file in os.listdir(img_dir)
                   if os.path.isfile(os.path.join(img_dir, file)) and
                   file.lower().endswith(('.png', '.jpg'))]
-    file_paths.sort()
+    file_paths.sort(key=os.path.getctime)
 
     try:
         img_path = file_paths[img_index]
@@ -342,7 +340,7 @@ def txt2img(model, vae, taesd, cnnet, control_img, control_strength,
     if fvae_tiling:
         command.extend(['--vae-tiling'])
     if fcont_net_cpu:
-        command.extend(['--cont_net_cpu'])
+        command.extend(['--control-net-cpu'])
     if verbose:
         command.extend(['-v'])
 
@@ -404,7 +402,7 @@ def img2img(model, vae, taesd, img_inp, cnnet, control_img,
     if fvae_tiling:
         command.extend(['--vae-tiling'])
     if fcont_net_cpu:
-        command.extend(['--cont_net_cpu'])
+        command.extend(['--control-net-cpu'])
     if verbose:
         command.extend(['-v'])
 
