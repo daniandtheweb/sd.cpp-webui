@@ -5,7 +5,6 @@ import argparse
 import subprocess
 import json
 from PIL import Image
-# pylint: disable=import-error
 import gradio as gr
 
 
@@ -15,7 +14,6 @@ current_dir = os.getcwd()
 samplers = ["euler", "euler_a", "heun", "dpm2", "dpm2++2s_a", "dpm++2m",
             "dpm++2mv2", "lcm"]
 RELOAD_SYMBOL = '\U0001f504'
-# pylint: disable=invalid-name
 page_num = 0
 ctrl = 0
 
@@ -24,7 +22,6 @@ with open(JSON_PATH, 'r', encoding='utf-8') as json_file_r:
     data = json.load(json_file_r)
 
 
-# pylint: disable=eval-used
 model_dir = eval(data['model_dir'])
 vae_dir = eval(data['vae_dir'])
 emb_dir = eval(data['emb_dir'])
@@ -110,7 +107,6 @@ def run_subprocess(command):
             print("Errors:", errors)
 
 
-# pylint: disable=global-statement
 def reload_gallery(ctrl_inp=None, fpage_num=1, subctrl=0):
     """Reloads gallery_block"""
     global ctrl
@@ -137,7 +133,6 @@ def reload_gallery(ctrl_inp=None, fpage_num=1, subctrl=0):
     return imgs
 
 
-# pylint: disable=global-statement
 def goto_gallery(fpage_num=1):
     """Loads a specific gallery page"""
     global page_num
@@ -164,7 +159,6 @@ def goto_gallery(fpage_num=1):
     return imgs, page_num, gr.Gallery(selected_index=None)
 
 
-# pylint: disable=global-statement
 def next_page():
     """Moves to the next gallery page"""
     global page_num
@@ -188,7 +182,6 @@ def next_page():
     return imgs, page_num, gr.Gallery(selected_index=None)
 
 
-# pylint: disable=global-statement
 def prev_page():
     """Moves to the previous gallery page"""
     global page_num
@@ -212,7 +205,6 @@ def prev_page():
     return imgs, page_num, gr.Gallery(selected_index=None)
 
 
-# pylint: disable=global-statement
 def last_page():
     """Moves to the last gallery page"""
     global page_num
@@ -233,7 +225,6 @@ def last_page():
 def extract_exif_from_jpg(img_path):
     """Extracts exif data from jpg"""
     img = Image.open(img_path)
-    # pylint: disable=protected-access
     exif_data = img._getexif()
 
     if exif_data is not None:
@@ -304,8 +295,6 @@ def get_next_img(subctrl):
     return fnext_img
 
 
-# pylint: disable=too-many-arguments
-# pylint: disable=too-many-locals
 def txt2img(in_model, in_vae, in_taesd, in_cnnet, in_control_img,
             in_control_strength, in_ppromt, in_nprompt, in_sampling,
             in_steps, in_schedule, in_width, in_height, in_batch_count,
@@ -354,8 +343,6 @@ def txt2img(in_model, in_vae, in_taesd, in_cnnet, in_control_img,
     return [foutput]
 
 
-# pylint: disable=too-many-arguments
-# pylint: disable=too-many-locals
 def img2img(in_model, in_vae, in_taesd, in_img_inp, in_cnnet, in_control_img,
             in_control_strength, in_ppromt, in_nprompt, in_sampling,
             in_steps, in_schedule, in_width, in_height, in_batch_count,
@@ -428,7 +415,6 @@ def convert(in_orig_model, in_quant_type, in_gguf_name, in_verbose):
     return "Process completed."
 
 
-# pylint: disable=too-many-locals
 def set_defaults(in_model, in_vae, in_sampling, in_steps, in_schedule,
                  in_width, in_height, in_model_dir_txt, in_vae_dir_txt,
                  in_emb_dir_txt, in_lora_dir_txt, in_taesd_dir_txt,
