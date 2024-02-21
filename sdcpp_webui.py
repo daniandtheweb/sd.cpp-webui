@@ -1,25 +1,30 @@
+"""sd.cpp-webui - Main module"""
+
 import os
 import argparse
 import subprocess
-import gradio as gr
-from PIL import Image
 import json
+from PIL import Image
+# pylint: disable=import-error
+import gradio as gr
 
 
-json_path = 'config.json'
+JSON_PATH = 'config.json'
 current_dir = os.getcwd()
 
 samplers = ["euler", "euler_a", "heun", "dpm2", "dpm2++2s_a", "dpm++2m",
             "dpm++2mv2", "lcm"]
-reload_symbol = '\U0001f504'
+RELOAD_SYMBOL = '\U0001f504'
+# pylint: disable=invalid-name
 page_num = 0
 ctrl = 0
 
 
-with open(json_path, 'r') as json_file:
-    data = json.load(json_file)
+with open(JSON_PATH, 'r', encoding='utf-8') as json_file_r:
+    data = json.load(json_file_r)
 
 
+# pylint: disable=eval-used
 model_dir = eval(data['model_dir'])
 vae_dir = eval(data['vae_dir'])
 emb_dir = eval(data['emb_dir'])
@@ -54,39 +59,43 @@ else:
     sd = "./sd"
 
 
-def get_models(model_dir):
-    fmodels_dir = model_dir
-    if os.path.isdir(fmodels_dir):
-        return [model for model in os.listdir(fmodels_dir)
-                if os.path.isfile(fmodels_dir + model) and
+def get_models(models_folder):
+    """Lists models in a folder"""
+    if os.path.isdir(models_folder):
+        return [model for model in os.listdir(models_folder)
+                if os.path.isfile(models_folder + model) and
                 (model.endswith((".gguf", ".safetensors", ".pth")))]
-    else:
-        print(f"The {fmodels_dir} folder does not exist.")
-        return []
+
+    print(f"The {models_folder} folder does not exist.")
+    return []
 
 
-def reload_models(model_dir):
-    refreshed_models = gr.update(choices=get_models(model_dir))
+def reload_models(models_folder):
+    """Reloads models list"""
+    refreshed_models = gr.update(choices=get_models(models_folder))
     return refreshed_models
 
 
 def get_hf_models():
+    """Lists convertible models in a folder"""
     fmodels_dir = model_dir
     if os.path.isdir(fmodels_dir):
         return [model for model in os.listdir(fmodels_dir)
                 if os.path.isfile(fmodels_dir + model) and
                 (model.endswith((".safetensors", ".ckpt", ".pth", ".gguf")))]
-    else:
-        print(f"The {fmodels_dir} folder does not exist.")
-        return []
+
+    print(f"The {fmodels_dir} folder does not exist.")
+    return []
 
 
 def reload_hf_models():
+    """Reloads convertible models list"""
     refreshed_models = gr.update(choices=get_hf_models())
     return refreshed_models
 
 
 def run_subprocess(command):
+    """Runs subprocess"""
     with subprocess.Popen(command, stdout=subprocess.PIPE,
                           stderr=subprocess.PIPE,
                           universal_newlines=True) as process:
@@ -101,7 +110,9 @@ def run_subprocess(command):
             print("Errors:", errors)
 
 
+# pylint: disable=global-statement
 def reload_gallery(ctrl_inp=None, fpage_num=1, subctrl=0):
+    """Reloads gallery_block"""
     global ctrl
     global page_num
     if ctrl_inp is not None:
@@ -121,13 +132,14 @@ def reload_gallery(ctrl_inp=None, fpage_num=1, subctrl=0):
         imgs.append(image)
     page_num = fpage_num
     if subctrl == 0:
-        return imgs, page_num
-    else:
-        return imgs
+        return imgs, page_num, gr.Gallery(selected_index=None)
+
+    return imgs
 
 
+# pylint: disable=global-statement
 def goto_gallery(fpage_num=1):
-    global ctrl
+    """Loads a specific gallery page"""
     global page_num
     imgs = []
     if ctrl == 0:
@@ -140,22 +152,21 @@ def goto_gallery(fpage_num=1):
     total_pages = (total_imgs + 15) // 16
     if fpage_num is None:
         fpage_num = 1
-    if fpage_num > total_pages:
-        fpage_num = total_pages
+    page_num = fpage_num if fpage_num < total_pages else total_pages
     files = os.listdir(img_dir)
     image_files = [file for file in files if file.endswith(('.jpg', '.png'))]
-    start_index = (fpage_num * 16) - 16
+    start_index = (page_num * 16) - 16
     end_index = min(start_index + 16, len(image_files))
     for file_name in image_files[start_index:end_index]:
         image_path = img_dir + file_name
         image = Image.open(image_path)
         imgs.append(image)
-    page_num = fpage_num
-    return imgs, page_num
+    return imgs, page_num, gr.Gallery(selected_index=None)
 
 
+# pylint: disable=global-statement
 def next_page():
-    global ctrl
+    """Moves to the next gallery page"""
     global page_num
     ctrl_inp = ctrl
     subctrl = 1
@@ -174,11 +185,12 @@ def next_page():
     else:
         page_num = next_page_num
         imgs = reload_gallery(ctrl_inp, next_page_num, subctrl)
-    return imgs, page_num
+    return imgs, page_num, gr.Gallery(selected_index=None)
 
 
+# pylint: disable=global-statement
 def prev_page():
-    global ctrl
+    """Moves to the previous gallery page"""
     global page_num
     ctrl_inp = ctrl
     subctrl = 1
@@ -197,11 +209,12 @@ def prev_page():
     else:
         page_num = prev_page_num
         imgs = reload_gallery(ctrl_inp, prev_page_num, subctrl)
-    return imgs, page_num
+    return imgs, page_num, gr.Gallery(selected_index=None)
 
 
+# pylint: disable=global-statement
 def last_page():
-    global ctrl
+    """Moves to the last gallery page"""
     global page_num
     ctrl_inp = ctrl
     subctrl = 1
@@ -214,30 +227,28 @@ def last_page():
     total_pages = (total_imgs + 15) // 16
     imgs = reload_gallery(ctrl_inp, total_pages, subctrl)
     page_num = total_pages
-    return imgs, page_num
+    return imgs, page_num, gr.Gallery(selected_index=None)
 
 
 def extract_exif_from_jpg(img_path):
-    if img_path.endswith(('.jpg', '.jpeg')):
-        img = Image.open(img_path)
-        exif_data = img._getexif()
+    """Extracts exif data from jpg"""
+    img = Image.open(img_path)
+    # pylint: disable=protected-access
+    exif_data = img._getexif()
 
-        if exif_data is not None:
-            user_comment = exif_data.get(37510)  # 37510 = UserComment tag
-            if user_comment:
-                return f"JPG: Exif\nPositive prompt: "\
-                       f"{user_comment.decode('utf-8')[9::2]}"
-            else:
-                return "JPG: Exif\nPositive prompt: No User Comment found."
-        else:
-            return "JPG: Exif\nPositive prompt: No EXIF data found."
-    else:
-        return "Not a JPG image."
+    if exif_data is not None:
+        user_comment = exif_data.get(37510)  # 37510 = UserComment tag
+        if user_comment:
+            return f"JPG: Exif\nPositive prompt: "\
+                   f"{user_comment.decode('utf-8')[9::2]}"
+
+        return "JPG: No User Comment found."
+
+    return "JPG: Exif\nNo EXIF data found."
 
 
 def img_info(sel_img: gr.SelectData):
-    global ctrl
-    global page_num
+    """Reads generation data from an image"""
     img_index = (page_num * 16) - 16 + sel_img.index
     if ctrl == 0:
         img_dir = txt2img_dir
@@ -252,31 +263,32 @@ def img_info(sel_img: gr.SelectData):
     try:
         img_path = file_paths[img_index]
     except IndexError:
-        print("Image index is out of range.")
-        return
+        return print("Image index is out of range.")
 
     if img_path.endswith(('.jpg', '.jpeg')):
         return extract_exif_from_jpg(img_path)
 
-    elif img_path.endswith('.png'):
-        with open(img_path, 'rb') as f:
-            header = f.read(8)
+    if img_path.endswith('.png'):
+        with open(img_path, 'rb') as file:
+            if file.read(8) != b'\x89PNG\r\n\x1a\n':
+                return None
             while True:
-                length_chunk = f.read(4)
+                length_chunk = file.read(4)
                 if not length_chunk:
-                    break
+                    return None
                 length = int.from_bytes(length_chunk, byteorder='big')
-                chunk_type = f.read(4).decode('utf-8')
-                data = f.read(length)
-                crc = f.read(4)
+                chunk_type = file.read(4).decode('utf-8')
+                png_block = file.read(length)
+                _ = file.read(4)
                 if chunk_type == 'tEXt':
-                    keyword, value = data.split(b'\x00', 1)
-                    tEXt = f"{value.decode('utf-8')}"
-                    return f"PNG: tEXt\nPositive prompt: {tEXt}"
-        return ""
+                    _, value = png_block.split(b'\x00', 1)
+                    png_exif = f"{value.decode('utf-8')}"
+                    return f"PNG: tEXt\nPositive prompt: {png_exif}"
+    return None
 
 
 def get_next_img(subctrl):
+    """Creates a new image name"""
     if subctrl == 0:
         fimg_out = txt2img_dir
     elif subctrl == 1:
@@ -286,47 +298,36 @@ def get_next_img(subctrl):
                  file[:-4].isdigit()]
     if not png_files:
         return "1.png"
-    highest_number = max([int(file[:-4]) for file in png_files])
+    highest_number = max(int(file[:-4]) for file in png_files)
     next_number = highest_number + 1
     fnext_img = f"{next_number}.png"
     return fnext_img
 
 
-def txt2img(model, vae, taesd, cnnet, control_img, control_strength,
-            ppromt, nprompt, sampling, steps, schedule, width, height,
-            batch_count, cfg, seed, clip_skip, threads, vae_tiling,
-            cont_net_cpu, rng, output, verbose):
-    fmodel = os.path.join(model_dir, model) if model else None
-    fvae = os.path.join(vae_dir, vae) if vae else None
-    ftaesd = os.path.join(taesd_dir, taesd) if taesd else None
-    fcnnet = os.path.join(cnnet_dir, cnnet) if cnnet else None
-    fcontrol_img = control_img if cnnet else None
-    fcontrol_strength = str(control_strength) if cnnet else None
-    fpprompt = f'"{ppromt}"'
-    fnprompt = f'"{nprompt}"' if nprompt else None
-    fsampling = str(sampling)
-    fsteps = str(steps)
-    fschedule = f'{schedule}'
-    fwidth = str(width)
-    fheight = str(height)
-    fbatch_count = str(batch_count)
-    fcfg = str(cfg)
-    fseed = str(seed)
-    fclip_skip = str(clip_skip + 1)
-    fthreads = str(threads)
-    fvae_tiling = vae_tiling if vae_tiling else None
-    fcont_net_cpu = cont_net_cpu if cont_net_cpu else None
-    frng = str(rng)
-    foutput = (os.path.join(txt2img_dir, f"{output}.png")
-               if output
+# pylint: disable=too-many-arguments
+# pylint: disable=too-many-locals
+def txt2img(in_model, in_vae, in_taesd, in_cnnet, in_control_img,
+            in_control_strength, in_ppromt, in_nprompt, in_sampling,
+            in_steps, in_schedule, in_width, in_height, in_batch_count,
+            in_cfg, in_seed, in_clip_skip, in_threads, in_vae_tiling,
+            in_cnnet_cpu, in_rng, in_output, in_verbose):
+    """Text to image command creator"""
+    fmodel = os.path.join(model_dir, in_model) if in_model else None
+    fvae = os.path.join(vae_dir, in_vae) if in_vae else None
+    ftaesd = os.path.join(taesd_dir, in_taesd) if in_taesd else None
+    fcnnet = os.path.join(cnnet_dir, in_cnnet) if in_cnnet else None
+    foutput = (os.path.join(txt2img_dir, f"{in_output}.png")
+               if in_output
                else os.path.join(txt2img_dir, get_next_img(subctrl=0)))
 
-    command = [sd, '-M', 'txt2img', '-m', fmodel, '-p', fpprompt,
-               '--sampling-method', fsampling, '--steps', fsteps,
-               '--schedule', fschedule, '-W', fwidth, '-H', fheight, '-b',
-               fbatch_count, '--cfg-scale', fcfg, '-s', fseed, '--clip-skip',
-               fclip_skip, '--embd-dir', emb_dir, '--lora-model-dir', lora_dir,
-               '-t', fthreads, '--rng', frng, '-o', foutput]
+    command = [sd, '-M', 'txt2img', '-m', fmodel, '-p', f'"{in_ppromt}"',
+               '--sampling-method', str(in_sampling), '--steps', str(in_steps),
+               '--schedule', f'{in_schedule}', '-W', str(in_width), '-H',
+               str(in_height), '-b', str(in_batch_count), '--cfg-scale',
+               str(in_cfg), '-s', str(in_seed), '--clip-skip',
+               str(in_clip_skip + 1), '--embd-dir', emb_dir,
+               '--lora-model-dir', lora_dir, '-t', str(in_threads), '--rng',
+               str(in_rng), '-o', foutput]
 
     if fvae:
         command.extend(['--vae', fvae])
@@ -334,14 +335,15 @@ def txt2img(model, vae, taesd, cnnet, control_img, control_strength,
         command.extend(['--taesd', ftaesd])
     if fcnnet:
         command.extend(['--control-net', fcnnet, '--control-image',
-                        fcontrol_img, '--control-strength', fcontrol_strength])
-    if fnprompt:
-        command.extend(['-n', fnprompt])
-    if fvae_tiling:
+                        in_control_img, '--control-strength',
+                        str(in_control_strength)])
+    if in_nprompt:
+        command.extend(['-n', f'"{in_nprompt}"'])
+    if in_vae_tiling:
         command.extend(['--vae-tiling'])
-    if fcont_net_cpu:
+    if in_cnnet_cpu:
         command.extend(['--control-net-cpu'])
-    if verbose:
+    if in_verbose:
         command.extend(['-v'])
 
     fcommand = ' '.join(map(str, command))
@@ -352,43 +354,30 @@ def txt2img(model, vae, taesd, cnnet, control_img, control_strength,
     return [foutput]
 
 
-def img2img(model, vae, taesd, img_inp, cnnet, control_img,
-            control_strength, ppromt, nprompt, sampling, steps, schedule,
-            width, height, batch_count, strenght, cfg, seed, clip_skip,
-            threads, vae_tiling, cont_net_cpu, rng, output, verbose):
-    fmodel = os.path.join(model_dir, model) if model else None
-    fvae = os.path.join(vae_dir, vae) if vae else None
-    ftaesd = os.path.join(taesd_dir, taesd) if taesd else None
-    fcnnet = os.path.join(cnnet_dir, cnnet) if cnnet else None
-    fcontrol_img = control_img if cnnet else None
-    fcontrol_strength = str(control_strength) if cnnet else None
-    fpprompt = f'"{ppromt}"'
-    fnprompt = f'"{nprompt}"' if nprompt else None
-    fsampling = str(sampling)
-    fsteps = str(steps)
-    fschedule = f'{schedule}'
-    fwidth = str(width)
-    fheight = str(height)
-    fbatch_count = str(batch_count)
-    fstrenght = str(strenght)
-    fcfg = str(cfg)
-    fseed = str(seed)
-    fclip_skip = str(clip_skip + 1)
-    fthreads = str(threads)
-    fvae_tiling = vae_tiling if vae_tiling else None
-    fcont_net_cpu = cont_net_cpu if cont_net_cpu else None
-    frng = str(rng)
-    foutput = (os.path.join(img2img_dir, f"{output}.png")
-               if output
+# pylint: disable=too-many-arguments
+# pylint: disable=too-many-locals
+def img2img(in_model, in_vae, in_taesd, in_img_inp, in_cnnet, in_control_img,
+            in_control_strength, in_ppromt, in_nprompt, in_sampling,
+            in_steps, in_schedule, in_width, in_height, in_batch_count,
+            in_strenght, in_cfg, in_seed, in_clip_skip, in_threads,
+            in_vae_tiling, in_cnnet_cpu, in_rng, in_output, in_verbose):
+    """Image to image command creator"""
+    fmodel = os.path.join(model_dir, in_model) if in_model else None
+    fvae = os.path.join(vae_dir, in_vae) if in_vae else None
+    ftaesd = os.path.join(taesd_dir, in_taesd) if in_taesd else None
+    fcnnet = os.path.join(cnnet_dir, in_cnnet) if in_cnnet else None
+    foutput = (os.path.join(img2img_dir, f"{in_output}.png")
+               if in_output
                else os.path.join(img2img_dir, get_next_img(subctrl=1)))
 
-    command = [sd, '-M', 'img2img', '-m', fmodel, '-i', img_inp, '-p',
-               fpprompt, '--sampling-method', fsampling, '--steps', fsteps,
-               '--schedule', fschedule, '-W', fwidth, '-H', fheight, '-b',
-               fbatch_count, '--strength', fstrenght, '--cfg-scale', fcfg,
-               '-s', fseed, '--clip-skip', fclip_skip, '--embd-dir', emb_dir,
-               '--lora-model-dir', lora_dir, '-t', fthreads, '--rng', frng,
-               '-o', foutput]
+    command = [sd, '-M', 'img2img', '-m', fmodel, '-i', in_img_inp, '-p',
+               f'"{in_ppromt}"', '--sampling-method', str(in_sampling),
+               '--steps', str(in_steps), '--schedule', f'{in_schedule}', '-W',
+               str(in_width), '-H', str(in_height), '-b', str(in_batch_count),
+               '--strength', str(in_strenght), '--cfg-scale', str(in_cfg),
+               '-s', str(in_seed), '--clip-skip', str(in_clip_skip + 1),
+               '--embd-dir', emb_dir, '--lora-model-dir', lora_dir, '-t',
+               str(in_threads), '--rng', str(in_rng), '-o', foutput]
 
     if fvae:
         command.extend(['--vae', fvae])
@@ -396,14 +385,15 @@ def img2img(model, vae, taesd, img_inp, cnnet, control_img,
         command.extend(['--taesd', ftaesd])
     if fcnnet:
         command.extend(['--control-net', fcnnet, '--control-image',
-                        fcontrol_img, '--control-strength', fcontrol_strength])
-    if fnprompt:
-        command.extend(['-n', fnprompt])
-    if fvae_tiling:
+                        in_control_img, '--control-strength',
+                        str(in_control_strength)])
+    if in_nprompt:
+        command.extend(['-n', f'"{in_nprompt}"'])
+    if in_vae_tiling:
         command.extend(['--vae-tiling'])
-    if fcont_net_cpu:
+    if in_cnnet_cpu:
         command.extend(['--control-net-cpu'])
-    if verbose:
+    if in_verbose:
         command.extend(['-v'])
 
     fcommand = ' '.join(map(str, command))
@@ -414,19 +404,20 @@ def img2img(model, vae, taesd, img_inp, cnnet, control_img,
     return [foutput]
 
 
-def convert(orig_model, quant_type, gguf_name, verbose):
-    forig_model = os.path.join(model_dir, orig_model)
-    if not gguf_name:
-        model_name, ext = os.path.splitext(orig_model)
+def convert(in_orig_model, in_quant_type, in_gguf_name, in_verbose):
+    """Convert model command creator"""
+    forig_model = os.path.join(model_dir, in_orig_model)
+    if not in_gguf_name:
+        model_name, _ = os.path.splitext(in_orig_model)
         fgguf_name = f"{os.path.join(model_dir, model_name)}"\
-                     f".{quant_type}.gguf"
+                     f".{in_quant_type}.gguf"
     else:
-        fgguf_name = os.path.join(model_dir, gguf_name)
+        fgguf_name = os.path.join(model_dir, in_gguf_name)
 
     command = [sd, '-M', 'convert', '-m', forig_model,
-               '-o', fgguf_name, '--type', quant_type]
+               '-o', fgguf_name, '--type', in_quant_type]
 
-    if verbose:
+    if in_verbose:
         command.extend(['-v'])
 
     fcommand = ' '.join(map(str, command))
@@ -437,38 +428,41 @@ def convert(orig_model, quant_type, gguf_name, verbose):
     return "Process completed."
 
 
-def set_defaults(model, vae, sampling, steps, schedule, width, height,
-                 model_dir_txt, vae_dir_txt, emb_dir_txt, lora_dir_txt,
-                 taesd_dir_txt, cnnet_dir_txt, txt2img_dir_txt,
-                 img2img_dir_txt):
+# pylint: disable=too-many-locals
+def set_defaults(in_model, in_vae, in_sampling, in_steps, in_schedule,
+                 in_width, in_height, in_model_dir_txt, in_vae_dir_txt,
+                 in_emb_dir_txt, in_lora_dir_txt, in_taesd_dir_txt,
+                 in_cnnet_dir_txt, in_txt2img_dir_txt, in_img2img_dir_txt):
+    """Sets new defaults"""
     data.update({
-        'model_dir': model_dir_txt,
-        'vae_dir': vae_dir_txt,
-        'emb_dir': emb_dir_txt,
-        'lora_dir': lora_dir_txt,
-        'taesd_dir': taesd_dir_txt,
-        'cnnet_dir': cnnet_dir_txt,
-        'txt2img_dir': txt2img_dir_txt,
-        'img2img_dir': img2img_dir_txt,
-        'def_sampling': sampling,
-        'def_steps': steps,
-        'def_schedule': schedule,
-        'def_width': width,
-        'def_height': height
+        'model_dir': in_model_dir_txt,
+        'vae_dir': in_vae_dir_txt,
+        'emb_dir': in_emb_dir_txt,
+        'lora_dir': in_lora_dir_txt,
+        'taesd_dir': in_taesd_dir_txt,
+        'cnnet_dir': in_cnnet_dir_txt,
+        'txt2img_dir': in_txt2img_dir_txt,
+        'img2img_dir': in_img2img_dir_txt,
+        'def_sampling': in_sampling,
+        'def_steps': in_steps,
+        'def_schedule': in_schedule,
+        'def_width': in_width,
+        'def_height': in_height
     })
 
-    if model:
-        data['def_model'] = model
-    if vae:
-        data['def_vae'] = vae
+    if in_model:
+        data['def_model'] = in_model
+    if in_vae:
+        data['def_vae'] = in_vae
 
-    with open(json_path, 'w') as json_file:
-        json.dump(data, json_file, indent=4)
+    with open(JSON_PATH, 'w', encoding='utf-8') as json_file_w:
+        json.dump(data, json_file_w, indent=4)
+
     print("Set new defaults completed.")
-    return
 
 
 def rst_def():
+    """Restores factory defaults"""
     data.update({
         'model_dir': 'os.path.join(current_dir, "models/Stable-Diffusion/")',
         'vae_dir': 'os.path.join(current_dir, "models/VAE/")',
@@ -488,11 +482,10 @@ def rst_def():
     data.pop('def_model', None)
     data.pop('def_vae', None)
 
-    with open(json_path, 'w') as json_file:
-        json.dump(data, json_file, indent=4)
+    with open(JSON_PATH, 'w', encoding='utf-8') as json_file_w:
+        json.dump(data, json_file_w, indent=4)
 
     print("Reset defaults completed.")
-    return
 
 
 with gr.Blocks() as txt2img_block:
@@ -505,18 +498,18 @@ with gr.Blocks() as txt2img_block:
     cnnet_dir_txt = gr.Textbox(value=cnnet_dir, visible=False)
 
     # Title
-    txt2img_title = gr.Markdown("# Text to Image"),
+    txt2img_title = gr.Markdown("# Text to Image")
 
     # Model & VAE Selection
     with gr.Row():
         model = gr.Dropdown(label="Model",
                             choices=get_models(model_dir), scale=7,
                             value=def_model)
-        reload_model_btn = gr.Button(value=reload_symbol, scale=1)
+        reload_model_btn = gr.Button(value=RELOAD_SYMBOL, scale=1)
         vae = gr.Dropdown(label="VAE", choices=get_models(vae_dir), scale=7,
                           value=def_vae)
         with gr.Column(scale=1):
-            reload_vae_btn = gr.Button(value=reload_symbol)
+            reload_vae_btn = gr.Button(value=RELOAD_SYMBOL)
             clear_vae = gr.ClearButton(vae)
 
     # Extra Networks Selection
@@ -526,7 +519,7 @@ with gr.Blocks() as txt2img_block:
                 taesd = gr.Dropdown(label="TAESD",
                                     choices=get_models(taesd_dir), scale=7)
                 with gr.Column():
-                    reload_taesd_btn = gr.Button(value=reload_symbol, scale=1)
+                    reload_taesd_btn = gr.Button(value=RELOAD_SYMBOL, scale=1)
                     clear_taesd = gr.ClearButton(taesd, scale=1)
 
     # Prompts
@@ -574,7 +567,7 @@ with gr.Blocks() as txt2img_block:
             with gr.Accordion(label="ControlNet", open=False):
                 cnnet = gr.Dropdown(label="ControlNet",
                                     choices=get_models(cnnet_dir))
-                reload_cnnet_btn = gr.Button(value=reload_symbol)
+                reload_cnnet_btn = gr.Button(value=RELOAD_SYMBOL)
                 clear_cnnet = gr.ClearButton(cnnet)
                 control_img = gr.Image(sources="upload", type="filepath")
                 control_strength = gr.Slider(label="ControlNet strength",
@@ -635,11 +628,11 @@ with gr.Blocks()as img2img_block:
         model = gr.Dropdown(label="Model",
                             choices=get_models(model_dir), scale=7,
                             value=def_model)
-        reload_model_btn = gr.Button(value=reload_symbol, scale=1)
+        reload_model_btn = gr.Button(value=RELOAD_SYMBOL, scale=1)
         vae = gr.Dropdown(label="VAE", choices=get_models(vae_dir), scale=7,
                           value=def_vae)
         with gr.Column(scale=1):
-            reload_vae_btn = gr.Button(value=reload_symbol)
+            reload_vae_btn = gr.Button(value=RELOAD_SYMBOL)
             clear_vae = gr.ClearButton(vae)
 
     # Extra Networks Selection
@@ -649,7 +642,7 @@ with gr.Blocks()as img2img_block:
                 taesd = gr.Dropdown(label="TAESD",
                                     choices=get_models(taesd_dir), scale=7)
                 with gr.Column():
-                    reload_taesd_btn = gr.Button(value=reload_symbol, scale=1)
+                    reload_taesd_btn = gr.Button(value=RELOAD_SYMBOL, scale=1)
                     clear_taesd = gr.ClearButton(taesd, scale=1)
 
     # Prompts
@@ -699,7 +692,7 @@ with gr.Blocks()as img2img_block:
             with gr.Accordion(label="ControlNet", open=False):
                 cnnet = gr.Dropdown(label="ControlNet",
                                     choices=get_models(cnnet_dir))
-                reload_cnnet_btn = gr.Button(value=reload_symbol)
+                reload_cnnet_btn = gr.Button(value=RELOAD_SYMBOL)
                 clear_connet = gr.ClearButton(cnnet)
                 control_img = gr.Image(sources="upload", type="filepath")
                 control_strength = gr.Slider(label="ControlNet strength",
@@ -775,17 +768,19 @@ with gr.Blocks() as gallery_block:
     # Interactive bindings
     gallery.select(img_info, inputs=[], outputs=[img_info_txt])
     txt2img_btn.click(reload_gallery, inputs=[txt2img_ctrl],
-                      outputs=[gallery, page_num_select])
+                      outputs=[gallery, page_num_select, gallery])
     img2img_btn.click(reload_gallery, inputs=[img2img_ctrl],
-                      outputs=[gallery, page_num_select])
-    pvw_btn.click(prev_page, inputs=[], outputs=[gallery, page_num_select])
-    nxt_btn.click(next_page, inputs=[], outputs=[gallery, page_num_select])
+                      outputs=[gallery, page_num_select, gallery])
+    pvw_btn.click(prev_page, inputs=[], outputs=[gallery, page_num_select,
+                                                 gallery])
+    nxt_btn.click(next_page, inputs=[], outputs=[gallery, page_num_select,
+                                                 gallery])
     first_btn.click(reload_gallery, inputs=[],
-                    outputs=[gallery, page_num_select])
+                    outputs=[gallery, page_num_select, gallery])
     last_btn.click(last_page, inputs=[],
-                   outputs=[gallery, page_num_select])
+                   outputs=[gallery, page_num_select, gallery])
     go_btn.click(goto_gallery, inputs=[page_num_select],
-                 outputs=[gallery, page_num_select])
+                 outputs=[gallery, page_num_select, gallery])
 
 
 with gr.Blocks() as convert_block:
@@ -798,7 +793,7 @@ with gr.Blocks() as convert_block:
             with gr.Row():
                 orig_model = gr.Dropdown(label="Original Model",
                                          choices=get_hf_models(), scale=5)
-                reload_btn = gr.Button(reload_symbol, scale=1)
+                reload_btn = gr.Button(RELOAD_SYMBOL, scale=1)
                 reload_btn.click(reload_hf_models, inputs=[],
                                  outputs=[orig_model])
 
@@ -833,7 +828,7 @@ with gr.Blocks() as options_block:
                             choices=get_models(model_dir), scale=7,
                             value=def_model)
         with gr.Column(scale=1):
-            reload_model_btn = gr.Button(value=reload_symbol, scale=1)
+            reload_model_btn = gr.Button(value=RELOAD_SYMBOL, scale=1)
             reload_model_btn.click(reload_models, inputs=[model_dir_txt],
                                    outputs=[model])
 
@@ -841,7 +836,7 @@ with gr.Blocks() as options_block:
         vae = gr.Dropdown(label="VAE", choices=get_models(vae_dir), scale=7,
                           value=def_vae)
         with gr.Column(scale=1):
-            reload_vae_btn = gr.Button(value=reload_symbol)
+            reload_vae_btn = gr.Button(value=RELOAD_SYMBOL)
             reload_vae_btn.click(reload_models, inputs=[vae_dir_txt],
                                  outputs=[vae])
             clear_vae = gr.ClearButton(vae)
