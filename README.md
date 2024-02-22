@@ -38,7 +38,7 @@ git clone https://github.com/leejet/stable-diffusion.cpp.git
 If you want to share the WebUI locally on your newtork run the script with `--listen`.
 
 
-![sd_cpp-webui](https://github.com/DaniAndTheWeb/sd.cpp-webui/assets/57776841/0fa8e459-61db-4993-bead-cfc9032532b3)
+![sd cpp-webui_screenshot](https://github.com/DaniAndTheWeb/sd.cpp-webui/assets/57776841/0d991f6e-5b41-4b59-8412-39c738177f68)
 
 
 ## Credits
