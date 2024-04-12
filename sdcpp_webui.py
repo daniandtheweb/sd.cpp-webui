@@ -11,7 +11,7 @@ import gradio as gr
 JSON_PATH = 'config.json'
 current_dir = os.getcwd()
 
-samplers = ["euler", "euler_a", "heun", "dpm2", "dpm2++2s_a", "dpm++2m",
+samplers = ["euler", "euler_a", "heun", "dpm2", "dpm++2s_a", "dpm++2m",
             "dpm++2mv2", "lcm"]
 RELOAD_SYMBOL = '\U0001f504'
 page_num = 0
