@@ -13,6 +13,7 @@ current_dir = os.getcwd()
 
 samplers = ["euler", "euler_a", "heun", "dpm2", "dpm++2s_a", "dpm++2m",
             "dpm++2mv2", "lcm"]
+schedulers = ["discrete", "karras", "ays"]
 RELOAD_SYMBOL = '\U0001f504'
 page_num = 0
 ctrl = 0
@@ -299,7 +300,7 @@ def txt2img(in_model, in_vae, in_taesd, in_cnnet, in_control_img,
             in_control_strength, in_ppromt, in_nprompt, in_sampling,
             in_steps, in_schedule, in_width, in_height, in_batch_count,
             in_cfg, in_seed, in_clip_skip, in_threads, in_vae_tiling,
-            in_cnnet_cpu, in_rng, in_output, in_verbose):
+            in_cnnet_cpu, in_rng, in_output, in_color, in_verbose):
     """Text to image command creator"""
     fmodel = os.path.join(model_dir, in_model) if in_model else None
     fvae = os.path.join(vae_dir, in_vae) if in_vae else None
@@ -332,6 +333,8 @@ def txt2img(in_model, in_vae, in_taesd, in_cnnet, in_control_img,
         command.extend(['--vae-tiling'])
     if in_cnnet_cpu:
         command.extend(['--control-net-cpu'])
+    if in_color:
+        command.extend(['--color'])
     if in_verbose:
         command.extend(['-v'])
 
@@ -347,7 +350,8 @@ def img2img(in_model, in_vae, in_taesd, in_img_inp, in_cnnet, in_control_img,
             in_control_strength, in_ppromt, in_nprompt, in_sampling,
             in_steps, in_schedule, in_width, in_height, in_batch_count,
             in_strenght, in_cfg, in_seed, in_clip_skip, in_threads,
-            in_vae_tiling, in_cnnet_cpu, in_rng, in_output, in_verbose):
+            in_vae_tiling, in_cnnet_cpu, in_canny, in_rng, in_output,
+            in_color, in_verbose):
     """Image to image command creator"""
     fmodel = os.path.join(model_dir, in_model) if in_model else None
     fvae = os.path.join(vae_dir, in_vae) if in_vae else None
@@ -380,6 +384,10 @@ def img2img(in_model, in_vae, in_taesd, in_img_inp, in_cnnet, in_control_img,
         command.extend(['--vae-tiling'])
     if in_cnnet_cpu:
         command.extend(['--control-net-cpu'])
+    if in_canny:
+        command.extend(['--canny'])
+    if in_color:
+        command.extend(['--color'])
     if in_verbose:
         command.extend(['-v'])
 
@@ -532,8 +540,7 @@ with gr.Blocks() as txt2img_block:
                     steps = gr.Slider(label="Steps", minimum=1, maximum=99,
                                       value=def_steps, step=1)
             with gr.Row():
-                schedule = gr.Dropdown(label="Schedule", choices=["discrete",
-                                                                  "karras"],
+                schedule = gr.Dropdown(label="Schedule", choices=schedulers,
                                        value=def_schedule)
             with gr.Row():
                 with gr.Column():
@@ -570,6 +577,7 @@ with gr.Blocks() as txt2img_block:
                                   value="cuda")
                 output = gr.Textbox(label="Output Name",
                                     placeholder="Optional")
+                color = gr.Checkbox(label="Color", value="true")
                 verbose = gr.Checkbox(label="Verbose")
 
         # Output
@@ -582,10 +590,11 @@ with gr.Blocks() as txt2img_block:
     gen_btn.click(txt2img, inputs=[model, vae, taesd, cnnet,
                                    control_img, control_strength,
                                    pprompt, nprompt, sampling, steps,
-                                   schedule, width, height,
-                                   batch_count, cfg, seed, clip_skip,
-                                   threads, vae_tiling, cnnet_cpu,
-                                   rng, output, verbose], outputs=[img_final])
+                                   schedule, width, height, batch_count,
+                                   cfg, seed, clip_skip, threads,
+                                   vae_tiling, cnnet_cpu, rng, output,
+                                   color, verbose],
+                  outputs=[img_final])
 
     # Interactive Bindings
     reload_model_btn.click(reload_models, inputs=[model_dir_txt],
@@ -656,7 +665,7 @@ with gr.Blocks()as img2img_block:
                                       value=def_steps, step=1)
             with gr.Row():
                 schedule = gr.Dropdown(label="Schedule",
-                                       choices=["discrete", "karras"],
+                                       choices=schedulers,
                                        value="discrete")
             with gr.Row():
                 with gr.Column():
@@ -685,6 +694,7 @@ with gr.Blocks()as img2img_block:
                                              minimum=0, maximum=1, step=0.01,
                                              value=0.9)
                 cnnet_cpu = gr.Checkbox(label="ControlNet on CPU")
+                canny = gr.Checkbox(label="Canny (edge detection)")
 
             # Extra Settings
             with gr.Accordion(label="Extra", open=False):
@@ -694,6 +704,7 @@ with gr.Blocks()as img2img_block:
                 rng = gr.Dropdown(label="RNG", choices=["std_default", "cuda"],
                                   value="cuda")
                 output = gr.Textbox(label="Output Name (optional)", value="")
+                color = gr.Checkbox(label="Color", value="true")
                 verbose = gr.Checkbox(label="Verbose")
         with gr.Column(scale=1):
             img_final = gr.Gallery(label="Generated images", show_label=False,
@@ -707,8 +718,9 @@ with gr.Blocks()as img2img_block:
                                    nprompt, sampling, steps, schedule,
                                    width, height, batch_count,
                                    strenght, cfg, seed, clip_skip,
-                                   threads, vae_tiling, cnnet_cpu,
-                                   rng, output, verbose], outputs=[img_final])
+                                   threads, vae_tiling, cnnet_cpu, canny,
+                                   rng, output, color, verbose],
+                  outputs=[img_final])
 
     # Interactive Bindings
     reload_model_btn.click(reload_models, inputs=[model_dir_txt],
@@ -837,7 +849,7 @@ with gr.Blocks() as options_block:
 
         # Schedule Dropdown
         schedule = gr.Dropdown(label="Schedule",
-                               choices=["discrete", "karras"],
+                               choices=schedulers,
                                value="discrete")
 
         # Size Sliders
