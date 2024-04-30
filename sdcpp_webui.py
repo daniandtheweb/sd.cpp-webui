@@ -577,7 +577,7 @@ with gr.Blocks() as txt2img_block:
                                   value="cuda")
                 output = gr.Textbox(label="Output Name",
                                     placeholder="Optional")
-                color = gr.Checkbox(label="Color", value="true")
+                color = gr.Checkbox(label="Color", value=True)
                 verbose = gr.Checkbox(label="Verbose")
 
         # Output
@@ -704,7 +704,7 @@ with gr.Blocks()as img2img_block:
                 rng = gr.Dropdown(label="RNG", choices=["std_default", "cuda"],
                                   value="cuda")
                 output = gr.Textbox(label="Output Name (optional)", value="")
-                color = gr.Checkbox(label="Color", value="true")
+                color = gr.Checkbox(label="Color", value=True)
                 verbose = gr.Checkbox(label="Verbose")
         with gr.Column(scale=1):
             img_final = gr.Gallery(label="Generated images", show_label=False,
