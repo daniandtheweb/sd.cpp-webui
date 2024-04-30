@@ -57,6 +57,33 @@ else:
     sd = "./sd"
 
 
+def main():
+    """Main"""
+    parser = argparse.ArgumentParser(description='Process optional arguments')
+    parser.add_argument('--listen', action='store_true',
+                        help='Listen on 0.0.0.0')
+    parser.add_argument('--autostart', action='store_true',
+                        help='Automatically launch in a new browser tab')
+    args = parser.parse_args()
+    sdcpp_launch(args.listen, args.autostart)
+
+
+def sdcpp_launch(listen=False, autostart=False):
+    """Logic for launching sdcpp based on arguments"""
+    if listen and autostart:
+        print("Launching sdcpp with --listen --autostart")
+        sdcpp.launch(server_name="0.0.0.0", inbrowser=True)
+    elif listen:
+        print("Launching sdcpp with --listen")
+        sdcpp.launch(server_name="0.0.0.0")
+    elif autostart:
+        print("Launching sdcpp with --autostart")
+        sdcpp.launch(inbrowser=True)
+    else:
+        print("Launching sdcpp without any specific options")
+        sdcpp.launch()
+
+
 def get_models(models_folder):
     """Lists models in a folder"""
     if os.path.isdir(models_folder):
@@ -900,11 +927,4 @@ sdcpp = gr.TabbedInterface(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Process optional arguments')
-    parser.add_argument('--listen', action='store_true',
-                        help='Listen on 0.0.0.0')
-    args = parser.parse_args()
-    if args.listen:
-        sdcpp.launch(server_name="0.0.0.0")
-    else:
-        sdcpp.launch()
+    main()
