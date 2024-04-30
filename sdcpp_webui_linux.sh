@@ -28,8 +28,5 @@ else
 fi
 
 echo "Starting the WebUI..."
-if [[ "$1" == "--listen" ]]; then
-    python sdcpp_webui.py --listen
-else
-    python sdcpp_webui.py
-fi
+
+python3 sdcpp_webui.py $@
