@@ -32,10 +32,7 @@ if %errorlevel% equ 0 (
 )
 
 echo Starting the WebUI...
-if "%~1"=="--listen" (
-    python sdcpp_webui.py --listen
-) else (
-    python sdcpp_webui.py
-)
+
+python sdcpp_webui.py %*
 
 endlocal
