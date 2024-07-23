@@ -47,6 +47,13 @@ def_schedule = data['def_schedule']
 def_width = data['def_width']
 def_height = data['def_height']
 
+if not os.path.isfile('prompts.json'):
+        # Create an empty JSON file
+    with open('prompts.json', 'w') as file:
+        # Write an empty JSON object
+        json.dump({}, file, indent=4)
+    print(f"File 'prompts.json' created and initialized as an empty JSON file.")
+
 
 if not os.system("which lspci > /dev/null") == 0:
     if os.name == "nt":
@@ -87,9 +94,10 @@ def sdcpp_launch(listen=False, autostart=False):
 def get_models(models_folder):
     """Lists models in a folder"""
     if os.path.isdir(models_folder):
-        return [model for model in os.listdir(models_folder)
-                if os.path.isfile(models_folder + model) and
-                (model.endswith((".gguf", ".safetensors", ".pth")))]
+        models = [model for model in os.listdir(models_folder)
+                 if os.path.isfile(models_folder + model) and
+                 (model.endswith((".gguf", ".safetensors", ".pth")))] 
+        return models 
 
     print(f"The {models_folder} folder does not exist.")
     return []
@@ -99,6 +107,69 @@ def reload_models(models_folder):
     """Reloads models list"""
     refreshed_models = gr.update(choices=get_models(models_folder))
     return refreshed_models
+
+
+def get_prompts():
+    """Lists saved prompts"""
+    with open('prompts.json', 'r') as file:
+        prompts_data = json.load(file)
+
+    prompts_keys = list(prompts_data.keys())
+
+    return prompts_keys
+
+
+def save_prompts(prompts, pprompt, nprompt):
+    """Saves a prompt"""
+    with open('prompts.json', 'r') as file:
+        prompts_data = json.load(file)
+
+    prompts_data[prompts] = {
+        'positive': pprompt,
+        'negative': nprompt
+    }
+
+    with open('prompts.json', 'w') as file:
+        json.dump(prompts_data, file, indent=4)
+
+    return
+
+def delete_prompts(prompt):
+    """Deletes a saved prompt"""
+    with open('prompts.json', 'r') as file:
+        prompts_data = json.load(file)
+
+    if prompt in prompts_data:
+        del prompts_data[prompt]
+        print(f"Key '{prompt}' deleted.")
+    else:
+        print(f"Key '{prompt}' not found.")
+    
+    with open('prompts.json', 'w') as file:
+        json.dump(prompts_data, file, indent=4)
+
+    return
+
+
+def reload_prompts():
+    """Reloads prompts list"""
+    refreshed_prompts = gr.update(choices=get_prompts())
+    return refreshed_prompts
+
+
+def load_prompts(prompt):
+    """Loads a saved prompt"""
+    with open('prompts.json', 'r') as file:
+        prompts_data = json.load(file)
+    positive_prompts = []
+    negative_prompts = []
+    key_data = prompts_data.get(prompt, {})
+    positive_prompts = key_data.get('positive', '')
+    negative_prompts = key_data.get('negative', '')
+
+    pprompt_load = gr.update(value=positive_prompts)
+    nprompt_load = gr.update(value=negative_prompts)
+    return pprompt_load, nprompt_load
 
 
 def get_hf_models():
@@ -554,6 +625,18 @@ with gr.Blocks() as txt2img_block:
                                  show_copy_button=True)
         with gr.Column(scale=1):
             gen_btn = gr.Button(value="Generate", size="lg")
+            saved_prompts = gr.Dropdown(label="Prompts",
+                                        choices=get_prompts(),
+                                        interactive=True,
+                                        allow_custom_value=True)
+            with gr.Row():
+                save_prompt_btn = gr.Button(value="Save prompt", size="lg")
+                del_prompt_btn = gr.Button(value="Delete prompt", size="lg")
+                reload_prompts_btn = gr.Button(value=RELOAD_SYMBOL)
+            with gr.Row():
+                load_prompt_btn = gr.Button(value="Load prompt", size="lg")
+             
+
 
     # Settings
     with gr.Row():
@@ -631,6 +714,14 @@ with gr.Blocks() as txt2img_block:
                            outputs=[taesd])
     reload_cnnet_btn.click(reload_models, inputs=[cnnet_dir_txt],
                            outputs=[cnnet])
+    save_prompt_btn.click(save_prompts, inputs=[saved_prompts, pprompt,
+                                                nprompt], outputs=[])
+    del_prompt_btn.click(delete_prompts, inputs=[saved_prompts],
+                         outputs=[])
+    reload_prompts_btn.click(reload_prompts, inputs=[],
+                             outputs=[saved_prompts])
+    load_prompt_btn.click(load_prompts, inputs=[saved_prompts],
+                          outputs=[pprompt, nprompt])
 
 
 with gr.Blocks()as img2img_block:
