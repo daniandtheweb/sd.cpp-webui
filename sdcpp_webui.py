@@ -69,7 +69,7 @@ def save_prompts(prompts, pprompt, nprompt):
         with open('prompts.json', 'r') as file:
             prompts_data = json.load(file)
 
-        prompts_data[prompts] = {
+        prompts_data[prompts.strip()] = {
             'positive': pprompt,
             'negative': nprompt
         }
