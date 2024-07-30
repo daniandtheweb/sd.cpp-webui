@@ -8,62 +8,6 @@ from PIL import Image
 import gradio as gr
 
 
-JSON_PATH = 'config.json'
-current_dir = os.getcwd()
-
-samplers = ["euler", "euler_a", "heun", "dpm2", "dpm++2s_a", "dpm++2m",
-            "dpm++2mv2", "lcm"]
-schedulers = ["discrete", "karras", "ays"]
-RELOAD_SYMBOL = '\U0001f504'
-page_num = 0
-ctrl = 0
-
-
-with open(JSON_PATH, 'r', encoding='utf-8') as json_file_r:
-    data = json.load(json_file_r)
-
-
-model_dir = eval(data['model_dir'])
-vae_dir = eval(data['vae_dir'])
-emb_dir = eval(data['emb_dir'])
-lora_dir = eval(data['lora_dir'])
-taesd_dir = eval(data['taesd_dir'])
-cnnet_dir = eval(data['cnnet_dir'])
-txt2img_dir = eval(data['txt2img_dir'])
-img2img_dir = eval(data['img2img_dir'])
-
-
-if 'def_model' in data:
-    def_model = data['def_model']
-else:
-    def_model = None
-if 'def_vae' in data:
-    def_vae = data['def_vae']
-else:
-    def_vae = None
-def_sampling = data['def_sampling']
-def_steps = data['def_steps']
-def_schedule = data['def_schedule']
-def_width = data['def_width']
-def_height = data['def_height']
-
-if not os.path.isfile('prompts.json'):
-        # Create an empty JSON file
-    with open('prompts.json', 'w') as file:
-        # Write an empty JSON object
-        json.dump({}, file, indent=4)
-    print(f"File 'prompts.json' created and initialized as an empty JSON file.")
-
-
-if not os.system("which lspci > /dev/null") == 0:
-    if os.name == "nt":
-        sd = "sd.exe"
-    elif os.name == "posix":
-        sd = "./sd"
-else:
-    sd = "./sd"
-
-
 def main():
     """Main"""
     parser = argparse.ArgumentParser(description='Process optional arguments')
@@ -96,8 +40,8 @@ def get_models(models_folder):
     if os.path.isdir(models_folder):
         models = [model for model in os.listdir(models_folder)
                  if os.path.isfile(models_folder + model) and
-                 (model.endswith((".gguf", ".safetensors", ".pth")))] 
-        return models 
+                 (model.endswith((".gguf", ".safetensors", ".pth")))]
+        return models
 
     print(f"The {models_folder} folder does not exist.")
     return []
@@ -121,18 +65,18 @@ def get_prompts():
 
 def save_prompts(prompts, pprompt, nprompt):
     """Saves a prompt"""
-    with open('prompts.json', 'r') as file:
-        prompts_data = json.load(file)
+    if prompts is not None and prompts.strip():
+        with open('prompts.json', 'r') as file:
+            prompts_data = json.load(file)
 
-    prompts_data[prompts] = {
-        'positive': pprompt,
-        'negative': nprompt
-    }
+        prompts_data[prompts] = {
+            'positive': pprompt,
+            'negative': nprompt
+        }
 
-    with open('prompts.json', 'w') as file:
-        json.dump(prompts_data, file, indent=4)
+        with open('prompts.json', 'w') as file:
+            json.dump(prompts_data, file, indent=4)
 
-    return
 
 def delete_prompts(prompt):
     """Deletes a saved prompt"""
@@ -394,7 +338,7 @@ def get_next_img(subctrl):
     return fnext_img
 
 
-def txt2img(in_model, in_vae, in_taesd, in_cnnet, in_control_img,
+def txt2img(in_model, in_vae, in_taesd, in_upscl, in_cnnet, in_control_img,
             in_control_strength, in_ppromt, in_nprompt, in_sampling,
             in_steps, in_schedule, in_width, in_height, in_batch_count,
             in_cfg, in_seed, in_clip_skip, in_threads, in_vae_tiling,
@@ -403,6 +347,7 @@ def txt2img(in_model, in_vae, in_taesd, in_cnnet, in_control_img,
     fmodel = os.path.join(model_dir, in_model) if in_model else None
     fvae = os.path.join(vae_dir, in_vae) if in_vae else None
     ftaesd = os.path.join(taesd_dir, in_taesd) if in_taesd else None
+    fupscl = os.path.join(upscl_dir, in_upscl) if in_upscl else None
     fcnnet = os.path.join(cnnet_dir, in_cnnet) if in_cnnet else None
     foutput = (os.path.join(txt2img_dir, f"{in_output}.png")
                if in_output
@@ -421,6 +366,8 @@ def txt2img(in_model, in_vae, in_taesd, in_cnnet, in_control_img,
         command.extend(['--vae', fvae])
     if ftaesd:
         command.extend(['--taesd', ftaesd])
+    if fupscl:
+        command.extend(['--upscale-model', fupscl])
     if fcnnet:
         command.extend(['--control-net', fcnnet, '--control-image',
                         in_control_img, '--control-strength',
@@ -444,16 +391,17 @@ def txt2img(in_model, in_vae, in_taesd, in_cnnet, in_control_img,
     return [foutput]
 
 
-def img2img(in_model, in_vae, in_taesd, in_img_inp, in_cnnet, in_control_img,
-            in_control_strength, in_ppromt, in_nprompt, in_sampling,
-            in_steps, in_schedule, in_width, in_height, in_batch_count,
-            in_strenght, in_cfg, in_seed, in_clip_skip, in_threads,
-            in_vae_tiling, in_cnnet_cpu, in_canny, in_rng, in_output,
-            in_color, in_verbose):
+def img2img(in_model, in_vae, in_taesd, in_img_inp, in_upscl, in_cnnet,
+            in_control_img, in_control_strength, in_ppromt, in_nprompt,
+            in_sampling, in_steps, in_schedule, in_width, in_height,
+            in_batch_count, in_strenght, in_cfg, in_seed, in_clip_skip,
+            in_threads, in_vae_tiling, in_cnnet_cpu, in_canny, in_rng,
+            in_output, in_color, in_verbose):
     """Image to image command creator"""
     fmodel = os.path.join(model_dir, in_model) if in_model else None
     fvae = os.path.join(vae_dir, in_vae) if in_vae else None
     ftaesd = os.path.join(taesd_dir, in_taesd) if in_taesd else None
+    fupscl = os.path.join(upscl_dir, in_upscl) if in_upscl else None
     fcnnet = os.path.join(cnnet_dir, in_cnnet) if in_cnnet else None
     foutput = (os.path.join(img2img_dir, f"{in_output}.png")
                if in_output
@@ -472,6 +420,8 @@ def img2img(in_model, in_vae, in_taesd, in_img_inp, in_cnnet, in_control_img,
         command.extend(['--vae', fvae])
     if ftaesd:
         command.extend(['--taesd', ftaesd])
+    if fupscl:
+        command.extend(['--upscale-model', fupscl])
     if fcnnet:
         command.extend(['--control-net', fcnnet, '--control-image',
                         in_control_img, '--control-strength',
@@ -524,7 +474,8 @@ def convert(in_orig_model, in_quant_type, in_gguf_name, in_verbose):
 def set_defaults(in_model, in_vae, in_sampling, in_steps, in_schedule,
                  in_width, in_height, in_model_dir_txt, in_vae_dir_txt,
                  in_emb_dir_txt, in_lora_dir_txt, in_taesd_dir_txt,
-                 in_cnnet_dir_txt, in_txt2img_dir_txt, in_img2img_dir_txt):
+                 in_upscl_dir_txt, in_cnnet_dir_txt, in_txt2img_dir_txt,
+                 in_img2img_dir_txt):
     """Sets new defaults"""
     data.update({
         'model_dir': in_model_dir_txt,
@@ -532,6 +483,7 @@ def set_defaults(in_model, in_vae, in_sampling, in_steps, in_schedule,
         'emb_dir': in_emb_dir_txt,
         'lora_dir': in_lora_dir_txt,
         'taesd_dir': in_taesd_dir_txt,
+        'upscl_dir' : in_upscl_dir_txt,
         'cnnet_dir': in_cnnet_dir_txt,
         'txt2img_dir': in_txt2img_dir_txt,
         'img2img_dir': in_img2img_dir_txt,
@@ -547,7 +499,7 @@ def set_defaults(in_model, in_vae, in_sampling, in_steps, in_schedule,
     if in_vae:
         data['def_vae'] = in_vae
 
-    with open(JSON_PATH, 'w', encoding='utf-8') as json_file_w:
+    with open(CONFIG_PATH, 'w', encoding='utf-8') as json_file_w:
         json.dump(data, json_file_w, indent=4)
 
     print("Set new defaults completed.")
@@ -561,6 +513,7 @@ def rst_def():
         'emb_dir': 'os.path.join(current_dir, "models/Embeddings/")',
         'lora_dir': 'os.path.join(current_dir, "models/Lora/")',
         'taesd_dir': 'os.path.join(current_dir, "models/TAESD/")',
+        'upscl_dir' : 'os.path.join(current_dir, "models/Upscalers/")',
         'cnnet_dir': 'os.path.join(current_dir, "models/ControlNet/")',
         'txt2img_dir': 'os.path.join(current_dir, "outputs/txt2img/")',
         'img2img_dir': 'os.path.join(current_dir, "outputs/img2img/")',
@@ -574,10 +527,76 @@ def rst_def():
     data.pop('def_model', None)
     data.pop('def_vae', None)
 
-    with open(JSON_PATH, 'w', encoding='utf-8') as json_file_w:
+    with open(CONFIG_PATH, 'w', encoding='utf-8') as json_file_w:
         json.dump(data, json_file_w, indent=4)
 
     print("Reset defaults completed.")
+
+
+CONFIG_PATH = 'config.json'
+current_dir = os.getcwd()
+
+samplers = ["euler", "euler_a", "heun", "dpm2", "dpm++2s_a", "dpm++2m",
+            "dpm++2mv2", "lcm"]
+schedulers = ["discrete", "karras", "ays"]
+RELOAD_SYMBOL = '\U0001f504'
+page_num = 0
+ctrl = 0
+
+if not os.path.isfile('config.json'):
+        # Create an empty JSON file
+    with open('config.json', 'w') as file:
+        # Write an empty JSON object
+        json.dump({}, file, indent=4)
+    with open(CONFIG_PATH, 'r', encoding='utf-8') as json_file_r:
+        data = json.load(json_file_r)
+    rst_def()
+    print(f"File 'config.json' created and initialized.")
+
+with open(CONFIG_PATH, 'r', encoding='utf-8') as json_file_r:
+    data = json.load(json_file_r)
+
+
+model_dir = eval(data['model_dir'])
+vae_dir = eval(data['vae_dir'])
+emb_dir = eval(data['emb_dir'])
+lora_dir = eval(data['lora_dir'])
+taesd_dir = eval(data['taesd_dir'])
+upscl_dir = eval(data['upscl_dir'])
+cnnet_dir = eval(data['cnnet_dir'])
+txt2img_dir = eval(data['txt2img_dir'])
+img2img_dir = eval(data['img2img_dir'])
+
+
+if 'def_model' in data:
+    def_model = data['def_model']
+else:
+    def_model = None
+if 'def_vae' in data:
+    def_vae = data['def_vae']
+else:
+    def_vae = None
+def_sampling = data['def_sampling']
+def_steps = data['def_steps']
+def_schedule = data['def_schedule']
+def_width = data['def_width']
+def_height = data['def_height']
+
+if not os.path.isfile('prompts.json'):
+        # Create an empty JSON file
+    with open('prompts.json', 'w') as file:
+        # Write an empty JSON object
+        json.dump({}, file, indent=4)
+    print(f"File 'prompts.json' created and initialized as an empty JSON file.")
+
+
+if not os.system("which lspci > /dev/null") == 0:
+    if os.name == "nt":
+        sd = "sd.exe"
+    elif os.name == "posix":
+        sd = "./sd"
+else:
+    sd = "./sd"
 
 
 with gr.Blocks() as txt2img_block:
@@ -587,6 +606,7 @@ with gr.Blocks() as txt2img_block:
     emb_dir_txt = gr.Textbox(value=emb_dir, visible=False)
     lora_dir_txt = gr.Textbox(value=lora_dir, visible=False)
     taesd_dir_txt = gr.Textbox(value=taesd_dir, visible=False)
+    upscl_dir_txt = gr.Textbox(value=upscl_dir, visible=False)
     cnnet_dir_txt = gr.Textbox(value=cnnet_dir, visible=False)
 
     # Title
@@ -616,15 +636,7 @@ with gr.Blocks() as txt2img_block:
 
     # Prompts
     with gr.Row():
-        with gr.Column(scale=3):
-            pprompt = gr.Textbox(placeholder="Positive prompt",
-                                 label="Positive Prompt", lines=3,
-                                 show_copy_button=True)
-            nprompt = gr.Textbox(placeholder="Negative prompt",
-                                 label="Negative Prompt", lines=3,
-                                 show_copy_button=True)
-        with gr.Column(scale=1):
-            gen_btn = gr.Button(value="Generate", size="lg")
+        with gr.Accordion(label="Saved prompts", open=False):
             saved_prompts = gr.Dropdown(label="Prompts",
                                         choices=get_prompts(),
                                         interactive=True,
@@ -635,8 +647,16 @@ with gr.Blocks() as txt2img_block:
                 reload_prompts_btn = gr.Button(value=RELOAD_SYMBOL)
             with gr.Row():
                 load_prompt_btn = gr.Button(value="Load prompt", size="lg")
-             
-
+    with gr.Row():
+        with gr.Column(scale=3):
+            pprompt = gr.Textbox(placeholder="Positive prompt",
+                                 label="Positive Prompt", lines=3,
+                                 show_copy_button=True)
+            nprompt = gr.Textbox(placeholder="Negative prompt",
+                                 label="Negative Prompt", lines=3,
+                                 show_copy_button=True)
+        with gr.Column(scale=1):
+            gen_btn = gr.Button(value="Generate", size="lg")
 
     # Settings
     with gr.Row():
@@ -655,9 +675,9 @@ with gr.Blocks() as txt2img_block:
             with gr.Row():
                 with gr.Column():
                     width = gr.Slider(label="Width", minimum=64, maximum=2048,
-                                      value=def_width, step=8)
+                                      value=def_width, step=64)
                     height = gr.Slider(label="Height", minimum=64,
-                                       maximum=2048, value=def_height, step=8)
+                                       maximum=2048, value=def_height, step=64)
                 batch_count = gr.Slider(label="Batch count", minimum=1,
                                         maximum=99, value=1, step=1)
             cfg = gr.Slider(label="CFG Scale", minimum=1, maximum=30,
@@ -665,6 +685,13 @@ with gr.Blocks() as txt2img_block:
             seed = gr.Number(label="Seed", minimum=-1, maximum=2**32, value=-1)
             clip_skip = gr.Slider(label="CLIP skip", minimum=0, maximum=12,
                                   value=0, step=0.1)
+
+            # Upscale
+            with gr.Accordion(label="Upscale", open=False):
+                upscl = gr.Dropdown(label="Upscaler",
+                                    choices=get_models(upscl_dir))
+                reload_upscl_btn = gr.Button(value=RELOAD_SYMBOL)
+                clear_upscl = gr.ClearButton(upscl)
 
             # ControlNet
             with gr.Accordion(label="ControlNet", open=False):
@@ -697,7 +724,7 @@ with gr.Blocks() as txt2img_block:
                                    height="auto")
 
     # Generate
-    gen_btn.click(txt2img, inputs=[model, vae, taesd, cnnet,
+    gen_btn.click(txt2img, inputs=[model, vae, taesd, upscl, cnnet,
                                    control_img, control_strength,
                                    pprompt, nprompt, sampling, steps,
                                    schedule, width, height, batch_count,
@@ -712,6 +739,8 @@ with gr.Blocks() as txt2img_block:
     reload_vae_btn.click(reload_models, inputs=[vae_dir_txt], outputs=[vae])
     reload_taesd_btn.click(reload_models, inputs=[taesd_dir_txt],
                            outputs=[taesd])
+    reload_upscl_btn.click(reload_models, inputs=[upscl_dir_txt],
+                           outputs=[upscl])
     reload_cnnet_btn.click(reload_models, inputs=[cnnet_dir_txt],
                            outputs=[cnnet])
     save_prompt_btn.click(save_prompts, inputs=[saved_prompts, pprompt,
@@ -731,6 +760,7 @@ with gr.Blocks()as img2img_block:
     emb_dir_txt = gr.Textbox(value=emb_dir, visible=False)
     lora_dir_txt = gr.Textbox(value=lora_dir, visible=False)
     taesd_dir_txt = gr.Textbox(value=taesd_dir, visible=False)
+    upscl_dir_txt = gr.Textbox(value=upscl_dir, visible=False)
     cnnet_dir_txt = gr.Textbox(value=cnnet_dir, visible=False)
 
     # Title
@@ -759,6 +789,18 @@ with gr.Blocks()as img2img_block:
                     clear_taesd = gr.ClearButton(taesd, scale=1)
 
     # Prompts
+    with gr.Row():
+        with gr.Accordion(label="Saved prompts", open=False):
+            saved_prompts = gr.Dropdown(label="Prompts",
+                                        choices=get_prompts(),
+                                        interactive=True,
+                                        allow_custom_value=True)
+            with gr.Row():
+                save_prompt_btn = gr.Button(value="Save prompt", size="lg")
+                del_prompt_btn = gr.Button(value="Delete prompt", size="lg")
+                reload_prompts_btn = gr.Button(value=RELOAD_SYMBOL)
+            with gr.Row():
+                load_prompt_btn = gr.Button(value="Load prompt", size="lg")
     with gr.Row():
         with gr.Column(scale=3):
             pprompt = gr.Textbox(placeholder="Positive prompt",
@@ -801,6 +843,13 @@ with gr.Blocks()as img2img_block:
             clip_skip = gr.Slider(label="CLIP skip", minimum=0, maximum=12,
                                   value=0, step=0.1)
 
+            # Upscale
+            with gr.Accordion(label="Upscale", open=False):
+                upscl = gr.Dropdown(label="Upscaler",
+                                    choices=get_models(upscl_dir))
+                reload_upscl_btn = gr.Button(value=RELOAD_SYMBOL)
+                clear_upscl = gr.ClearButton(upscl)
+
             # ControlNet
             with gr.Accordion(label="ControlNet", open=False):
                 cnnet = gr.Dropdown(label="ControlNet",
@@ -831,7 +880,7 @@ with gr.Blocks()as img2img_block:
 
     # Generate
     gen_btn.click(img2img, inputs=[model, vae, taesd, img_inp,
-                                   cnnet, control_img,
+                                   upscl, cnnet, control_img,
                                    control_strength, pprompt,
                                    nprompt, sampling, steps, schedule,
                                    width, height, batch_count,
@@ -846,6 +895,8 @@ with gr.Blocks()as img2img_block:
     reload_vae_btn.click(reload_models, inputs=[vae_dir_txt], outputs=[vae])
     reload_taesd_btn.click(reload_models, inputs=[taesd_dir_txt],
                            outputs=[taesd])
+    reload_upscl_btn.click(reload_models, inputs=[upscl_dir_txt],
+                           outputs=[upscl])
     reload_cnnet_btn.click(reload_models, inputs=[cnnet_dir_txt],
                            outputs=[cnnet])
 
@@ -988,6 +1039,8 @@ with gr.Blocks() as options_block:
                                       interactive=True)
             taesd_dir_txt = gr.Textbox(label="TAESD folder", value=taesd_dir,
                                        interactive=True)
+            upscl_dir_txt = gr.Textbox(label="Upscaler folder", value=upscl_dir,
+                                       interactive=True)
             cnnet_dir_txt = gr.Textbox(label="ControlNet folder",
                                        value=cnnet_dir, interactive=True)
             txt2img_dir_txt = gr.Textbox(label="txt2img outputs folder",
@@ -1002,8 +1055,8 @@ with gr.Blocks() as options_block:
                                          width, height, model_dir_txt,
                                          vae_dir_txt, emb_dir_txt,
                                          lora_dir_txt, taesd_dir_txt,
-                                         cnnet_dir_txt, txt2img_dir_txt,
-                                         img2img_dir_txt], [])
+                                         upscl_dir_txt, cnnet_dir_txt,
+                                         txt2img_dir_txt, img2img_dir_txt], [])
             restore_btn = gr.Button(value="Restore Defaults")
             restore_btn.click(rst_def, [], [])
 
