@@ -10,10 +10,7 @@ import gradio as gr
 
 from modules.sdcpp import txt2img, img2img, convert
 from modules.utility import kill_subprocess
-from modules.gallery import (
-    reload_gallery, goto_gallery, next_page, prev_page,
-    last_page, img_info,
-        )
+from modules.gallery import GalleryManager
 from modules.config import (
     set_defaults, rst_def, model_dir, vae_dir, emb_dir, lora_dir,
     taesd_dir, upscl_dir, cnnet_dir, txt2img_dir, img2img_dir,
@@ -89,7 +86,7 @@ def save_prompts(prompt, pos_prompt, neg_prompt):
         with open('prompts.json', 'r', encoding="utf-8") as prompts_file:
             prompts_data = json.load(prompts_file)
 
-        prompts_data[prompt.strip()] = {
+        prompts_data[prompts_file.strip()] = {
             'positive': pos_prompt,
             'negative': neg_prompt
         }
@@ -500,20 +497,21 @@ with gr.Blocks() as gallery_block:
     img_info_txt = gr.Textbox(label="Metadata", value="", interactive=False)
 
     # Interactive bindings
-    gallery.select(img_info, inputs=[], outputs=[img_info_txt])
-    txt2img_btn.click(reload_gallery, inputs=[txt2img_ctrl],
+    gallery_manager = GalleryManager(txt2img_dir, img2img_dir)
+    gallery.select(gallery_manager.img_info, inputs=[], outputs=[img_info_txt])
+    txt2img_btn.click(gallery_manager.reload_gallery, inputs=[txt2img_ctrl],
                       outputs=[gallery, page_num_select, gallery])
-    img2img_btn.click(reload_gallery, inputs=[img2img_ctrl],
+    img2img_btn.click(gallery_manager.reload_gallery, inputs=[img2img_ctrl],
                       outputs=[gallery, page_num_select, gallery])
-    pvw_btn.click(prev_page, inputs=[], outputs=[gallery, page_num_select,
+    pvw_btn.click(gallery_manager.prev_page, inputs=[], outputs=[gallery, page_num_select,
                                                  gallery])
-    nxt_btn.click(next_page, inputs=[], outputs=[gallery, page_num_select,
+    nxt_btn.click(gallery_manager.next_page, inputs=[], outputs=[gallery, page_num_select,
                                                  gallery])
-    first_btn.click(reload_gallery, inputs=[],
+    first_btn.click(gallery_manager.reload_gallery, inputs=[],
                     outputs=[gallery, page_num_select, gallery])
-    last_btn.click(last_page, inputs=[],
+    last_btn.click(gallery_manager.last_page, inputs=[],
                    outputs=[gallery, page_num_select, gallery])
-    go_btn.click(goto_gallery, inputs=[page_num_select],
+    go_btn.click(gallery_manager.goto_gallery, inputs=[page_num_select],
                  outputs=[gallery, page_num_select, gallery])
 
 
