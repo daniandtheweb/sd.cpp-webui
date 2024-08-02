@@ -1,11 +1,31 @@
+#!/usr/bin/env python3
+
 """sd.cpp-webui - Main module"""
 
 import os
 import argparse
-import subprocess
 import json
-from PIL import Image
+
 import gradio as gr
+
+from modules.sdcpp import txt2img, img2img, convert
+from modules.utility import kill_subprocess
+from modules.gallery import (
+    reload_gallery, goto_gallery, next_page, prev_page,
+    last_page, img_info,
+        )
+from modules.config import (
+    set_defaults, rst_def, model_dir, vae_dir, emb_dir, lora_dir,
+    taesd_dir, upscl_dir, cnnet_dir, txt2img_dir, img2img_dir,
+    def_model, def_vae, def_sampling, def_steps, def_scheduler,
+    def_width, def_height
+)
+
+CURRENT_DIR = os.getcwd()
+SAMPLERS = ["euler", "euler_a", "heun", "dpm2", "dpm++2s_a", "dpm++2m",
+            "dpm++2mv2", "lcm"]
+SCHEDULERS = ["discrete", "karras", "ays"]
+RELOAD_SYMBOL = '\U0001f504'
 
 
 def main():
@@ -134,454 +154,6 @@ def reload_hf_models():
     return refreshed_models
 
 
-def run_subprocess(command):
-    """Runs subprocess"""
-    with subprocess.Popen(command, stdout=subprocess.PIPE,
-                          stderr=subprocess.PIPE,
-                          universal_newlines=True) as process:
-
-        # Read the output line by line in real-time
-        for output_line in process.stdout:
-            print(output_line.strip())
-
-        # Wait for the process to finish and capture its errors and print them
-        _, errors = process.communicate()
-        if errors:
-            print("Errors:", errors)
-
-
-def reload_gallery(ctrl_inp=None, fpage_num=1, subctrl=0):
-    """Reloads gallery_block"""
-    global ctrl
-    global page_num
-    if ctrl_inp is not None:
-        ctrl = int(ctrl_inp)
-    imgs = []
-    if ctrl == 0:
-        img_dir = txt2img_dir
-    elif ctrl == 1:
-        img_dir = img2img_dir
-    files = os.listdir(img_dir)
-    image_files = [file for file in files if file.endswith(('.jpg', '.png'))]
-    start_index = (fpage_num * 16) - 16
-    end_index = min(start_index + 16, len(image_files))
-    for file_name in image_files[start_index:end_index]:
-        image_path = img_dir + file_name
-        image = Image.open(image_path)
-        imgs.append(image)
-    page_num = fpage_num
-    if subctrl == 0:
-        return imgs, page_num, gr.Gallery(selected_index=None)
-
-    return imgs
-
-
-def goto_gallery(fpage_num=1):
-    """Loads a specific gallery page"""
-    global page_num
-    imgs = []
-    if ctrl == 0:
-        img_dir = txt2img_dir
-    elif ctrl == 1:
-        img_dir = img2img_dir
-    files = os.listdir(img_dir)
-    total_imgs = len([file for file in files if
-                      file.endswith(('.png', '.jpg'))])
-    total_pages = (total_imgs + 15) // 16
-    if fpage_num is None:
-        fpage_num = 1
-    page_num = fpage_num if fpage_num < total_pages else total_pages
-    files = os.listdir(img_dir)
-    image_files = [file for file in files if file.endswith(('.jpg', '.png'))]
-    start_index = (page_num * 16) - 16
-    end_index = min(start_index + 16, len(image_files))
-    for file_name in image_files[start_index:end_index]:
-        image_path = img_dir + file_name
-        image = Image.open(image_path)
-        imgs.append(image)
-    return imgs, page_num, gr.Gallery(selected_index=None)
-
-
-def next_page():
-    """Moves to the next gallery page"""
-    global page_num
-    ctrl_inp = ctrl
-    subctrl = 1
-    imgs = []
-    next_page_num = page_num + 1
-    if ctrl == 0:
-        files = os.listdir(txt2img_dir)
-    elif ctrl == 1:
-        files = os.listdir(img2img_dir)
-    total_imgs = len([file for file in files if
-                      file.endswith(('.png', '.jpg'))])
-    total_pages = (total_imgs + 15) // 16
-    if next_page_num > total_pages:
-        page_num = 1
-        imgs = reload_gallery(ctrl_inp, page_num, subctrl)
-    else:
-        page_num = next_page_num
-        imgs = reload_gallery(ctrl_inp, next_page_num, subctrl)
-    return imgs, page_num, gr.Gallery(selected_index=None)
-
-
-def prev_page():
-    """Moves to the previous gallery page"""
-    global page_num
-    ctrl_inp = ctrl
-    subctrl = 1
-    imgs = []
-    prev_page_num = page_num - 1
-    if ctrl == 0:
-        files = os.listdir(txt2img_dir)
-    elif ctrl == 1:
-        files = os.listdir(img2img_dir)
-    total_imgs = len([file for file in files if
-                      file.endswith(('.png', '.jpg'))])
-    total_pages = (total_imgs + 15) // 16
-    if prev_page_num < 1:
-        page_num = total_pages
-        imgs = reload_gallery(ctrl_inp, total_pages, subctrl)
-    else:
-        page_num = prev_page_num
-        imgs = reload_gallery(ctrl_inp, prev_page_num, subctrl)
-    return imgs, page_num, gr.Gallery(selected_index=None)
-
-
-def last_page():
-    """Moves to the last gallery page"""
-    global page_num
-    ctrl_inp = ctrl
-    subctrl = 1
-    if ctrl == 0:
-        files = os.listdir(txt2img_dir)
-    elif ctrl == 1:
-        files = os.listdir(img2img_dir)
-    total_imgs = len([file for file in files if
-                      file.endswith(('.png', '.jpg'))])
-    total_pages = (total_imgs + 15) // 16
-    imgs = reload_gallery(ctrl_inp, total_pages, subctrl)
-    page_num = total_pages
-    return imgs, page_num, gr.Gallery(selected_index=None)
-
-
-def extract_exif_from_jpg(img_path):
-    """Extracts exif data from jpg"""
-    img = Image.open(img_path)
-    exif_data = img._getexif()
-
-    if exif_data is not None:
-        user_comment = exif_data.get(37510)  # 37510 = UserComment tag
-        if user_comment:
-            return f"JPG: Exif\nPositive prompt: "\
-                   f"{user_comment.decode('utf-8')[9::2]}"
-
-        return "JPG: No User Comment found."
-
-    return "JPG: Exif\nNo EXIF data found."
-
-
-def img_info(sel_img: gr.SelectData):
-    """Reads generation data from an image"""
-    img_index = (page_num * 16) - 16 + sel_img.index
-    if ctrl == 0:
-        img_dir = txt2img_dir
-    elif ctrl == 1:
-        img_dir = img2img_dir
-
-    file_paths = [os.path.join(img_dir, file) for file in os.listdir(img_dir)
-                  if os.path.isfile(os.path.join(img_dir, file)) and
-                  file.lower().endswith(('.png', '.jpg'))]
-    file_paths.sort(key=os.path.getctime)
-
-    try:
-        img_path = file_paths[img_index]
-    except IndexError:
-        return print("Image index is out of range.")
-
-    if img_path.endswith(('.jpg', '.jpeg')):
-        return extract_exif_from_jpg(img_path)
-
-    if img_path.endswith('.png'):
-        with open(img_path, 'rb') as file:
-            if file.read(8) != b'\x89PNG\r\n\x1a\n':
-                return None
-            while True:
-                length_chunk = file.read(4)
-                if not length_chunk:
-                    return None
-                length = int.from_bytes(length_chunk, byteorder='big')
-                chunk_type = file.read(4).decode('utf-8')
-                png_block = file.read(length)
-                _ = file.read(4)
-                if chunk_type == 'tEXt':
-                    _, value = png_block.split(b'\x00', 1)
-                    png_exif = f"{value.decode('utf-8')}"
-                    return f"PNG: tEXt\nPositive prompt: {png_exif}"
-    return None
-
-
-def get_next_img(subctrl):
-    """Creates a new image name"""
-    if subctrl == 0:
-        fimg_out = txt2img_dir
-    elif subctrl == 1:
-        fimg_out = img2img_dir
-    files = os.listdir(fimg_out)
-    png_files = [file for file in files if file.endswith('.png') and
-                 file[:-4].isdigit()]
-    if not png_files:
-        return "1.png"
-    highest_number = max(int(file[:-4]) for file in png_files)
-    next_number = highest_number + 1
-    fnext_img = f"{next_number}.png"
-    return fnext_img
-
-
-def txt2img(in_model, in_vae, in_taesd, in_upscl, in_cnnet, in_control_img,
-            in_control_strength, in_ppromt, in_nprompt, in_sampling,
-            in_steps, in_schedule, in_width, in_height, in_batch_count,
-            in_cfg, in_seed, in_clip_skip, in_threads, in_vae_tiling,
-            in_cnnet_cpu, in_rng, in_output, in_color, in_verbose):
-    """Text to image command creator"""
-    fmodel = os.path.join(model_dir, in_model) if in_model else None
-    fvae = os.path.join(vae_dir, in_vae) if in_vae else None
-    ftaesd = os.path.join(taesd_dir, in_taesd) if in_taesd else None
-    fupscl = os.path.join(upscl_dir, in_upscl) if in_upscl else None
-    fcnnet = os.path.join(cnnet_dir, in_cnnet) if in_cnnet else None
-    foutput = (os.path.join(txt2img_dir, f"{in_output}.png")
-               if in_output
-               else os.path.join(txt2img_dir, get_next_img(subctrl=0)))
-
-    command = [sd, '-M', 'txt2img', '-m', fmodel, '-p', f'"{in_ppromt}"',
-               '--sampling-method', str(in_sampling), '--steps', str(in_steps),
-               '--schedule', f'{in_schedule}', '-W', str(in_width), '-H',
-               str(in_height), '-b', str(in_batch_count), '--cfg-scale',
-               str(in_cfg), '-s', str(in_seed), '--clip-skip',
-               str(in_clip_skip + 1), '--embd-dir', emb_dir,
-               '--lora-model-dir', lora_dir, '-t', str(in_threads), '--rng',
-               str(in_rng), '-o', foutput]
-
-    if fvae:
-        command.extend(['--vae', fvae])
-    if ftaesd:
-        command.extend(['--taesd', ftaesd])
-    if fupscl:
-        command.extend(['--upscale-model', fupscl])
-    if fcnnet:
-        command.extend(['--control-net', fcnnet, '--control-image',
-                        in_control_img, '--control-strength',
-                        str(in_control_strength)])
-    if in_nprompt:
-        command.extend(['-n', f'"{in_nprompt}"'])
-    if in_vae_tiling:
-        command.extend(['--vae-tiling'])
-    if in_cnnet_cpu:
-        command.extend(['--control-net-cpu'])
-    if in_color:
-        command.extend(['--color'])
-    if in_verbose:
-        command.extend(['-v'])
-
-    fcommand = ' '.join(map(str, command))
-
-    print(fcommand)
-    run_subprocess(command)
-
-    return [foutput]
-
-
-def img2img(in_model, in_vae, in_taesd, in_img_inp, in_upscl, in_cnnet,
-            in_control_img, in_control_strength, in_ppromt, in_nprompt,
-            in_sampling, in_steps, in_schedule, in_width, in_height,
-            in_batch_count, in_strenght, in_cfg, in_seed, in_clip_skip,
-            in_threads, in_vae_tiling, in_cnnet_cpu, in_canny, in_rng,
-            in_output, in_color, in_verbose):
-    """Image to image command creator"""
-    fmodel = os.path.join(model_dir, in_model) if in_model else None
-    fvae = os.path.join(vae_dir, in_vae) if in_vae else None
-    ftaesd = os.path.join(taesd_dir, in_taesd) if in_taesd else None
-    fupscl = os.path.join(upscl_dir, in_upscl) if in_upscl else None
-    fcnnet = os.path.join(cnnet_dir, in_cnnet) if in_cnnet else None
-    foutput = (os.path.join(img2img_dir, f"{in_output}.png")
-               if in_output
-               else os.path.join(img2img_dir, get_next_img(subctrl=1)))
-
-    command = [sd, '-M', 'img2img', '-m', fmodel, '-i', in_img_inp, '-p',
-               f'"{in_ppromt}"', '--sampling-method', str(in_sampling),
-               '--steps', str(in_steps), '--schedule', f'{in_schedule}', '-W',
-               str(in_width), '-H', str(in_height), '-b', str(in_batch_count),
-               '--strength', str(in_strenght), '--cfg-scale', str(in_cfg),
-               '-s', str(in_seed), '--clip-skip', str(in_clip_skip + 1),
-               '--embd-dir', emb_dir, '--lora-model-dir', lora_dir, '-t',
-               str(in_threads), '--rng', str(in_rng), '-o', foutput]
-
-    if fvae:
-        command.extend(['--vae', fvae])
-    if ftaesd:
-        command.extend(['--taesd', ftaesd])
-    if fupscl:
-        command.extend(['--upscale-model', fupscl])
-    if fcnnet:
-        command.extend(['--control-net', fcnnet, '--control-image',
-                        in_control_img, '--control-strength',
-                        str(in_control_strength)])
-    if in_nprompt:
-        command.extend(['-n', f'"{in_nprompt}"'])
-    if in_vae_tiling:
-        command.extend(['--vae-tiling'])
-    if in_cnnet_cpu:
-        command.extend(['--control-net-cpu'])
-    if in_canny:
-        command.extend(['--canny'])
-    if in_color:
-        command.extend(['--color'])
-    if in_verbose:
-        command.extend(['-v'])
-
-    fcommand = ' '.join(map(str, command))
-
-    print(fcommand)
-    run_subprocess(command)
-
-    return [foutput]
-
-
-def convert(in_orig_model, in_quant_type, in_gguf_name, in_verbose):
-    """Convert model command creator"""
-    forig_model = os.path.join(model_dir, in_orig_model)
-    if not in_gguf_name:
-        model_name, _ = os.path.splitext(in_orig_model)
-        fgguf_name = f"{os.path.join(model_dir, model_name)}"\
-                     f".{in_quant_type}.gguf"
-    else:
-        fgguf_name = os.path.join(model_dir, in_gguf_name)
-
-    command = [sd, '-M', 'convert', '-m', forig_model,
-               '-o', fgguf_name, '--type', in_quant_type]
-
-    if in_verbose:
-        command.extend(['-v'])
-
-    fcommand = ' '.join(map(str, command))
-
-    print(fcommand)
-    run_subprocess(command)
-
-    return "Process completed."
-
-
-def set_defaults(in_model, in_vae, in_sampling, in_steps, in_schedule,
-                 in_width, in_height, in_model_dir_txt, in_vae_dir_txt,
-                 in_emb_dir_txt, in_lora_dir_txt, in_taesd_dir_txt,
-                 in_upscl_dir_txt, in_cnnet_dir_txt, in_txt2img_dir_txt,
-                 in_img2img_dir_txt):
-    """Sets new defaults"""
-    data.update({
-        'model_dir': in_model_dir_txt,
-        'vae_dir': in_vae_dir_txt,
-        'emb_dir': in_emb_dir_txt,
-        'lora_dir': in_lora_dir_txt,
-        'taesd_dir': in_taesd_dir_txt,
-        'upscl_dir' : in_upscl_dir_txt,
-        'cnnet_dir': in_cnnet_dir_txt,
-        'txt2img_dir': in_txt2img_dir_txt,
-        'img2img_dir': in_img2img_dir_txt,
-        'def_sampling': in_sampling,
-        'def_steps': in_steps,
-        'def_schedule': in_schedule,
-        'def_width': in_width,
-        'def_height': in_height
-    })
-
-    if in_model:
-        data['def_model'] = in_model
-    if in_vae:
-        data['def_vae'] = in_vae
-
-    with open(CONFIG_PATH, 'w', encoding='utf-8') as json_file_w:
-        json.dump(data, json_file_w, indent=4)
-
-    print("Set new defaults completed.")
-
-
-def rst_def():
-    """Restores factory defaults"""
-    data.update({
-        'model_dir': 'os.path.join(current_dir, "models/Stable-Diffusion/")',
-        'vae_dir': 'os.path.join(current_dir, "models/VAE/")',
-        'emb_dir': 'os.path.join(current_dir, "models/Embeddings/")',
-        'lora_dir': 'os.path.join(current_dir, "models/Lora/")',
-        'taesd_dir': 'os.path.join(current_dir, "models/TAESD/")',
-        'upscl_dir' : 'os.path.join(current_dir, "models/Upscalers/")',
-        'cnnet_dir': 'os.path.join(current_dir, "models/ControlNet/")',
-        'txt2img_dir': 'os.path.join(current_dir, "outputs/txt2img/")',
-        'img2img_dir': 'os.path.join(current_dir, "outputs/img2img/")',
-        'def_sampling': "euler_a",
-        'def_steps': 20,
-        'def_schedule': "discrete",
-        'def_width': 512,
-        'def_height': 512
-    })
-
-    data.pop('def_model', None)
-    data.pop('def_vae', None)
-
-    with open(CONFIG_PATH, 'w', encoding='utf-8') as json_file_w:
-        json.dump(data, json_file_w, indent=4)
-
-    print("Reset defaults completed.")
-
-
-CONFIG_PATH = 'config.json'
-current_dir = os.getcwd()
-
-samplers = ["euler", "euler_a", "heun", "dpm2", "dpm++2s_a", "dpm++2m",
-            "dpm++2mv2", "lcm"]
-schedulers = ["discrete", "karras", "ays"]
-RELOAD_SYMBOL = '\U0001f504'
-page_num = 0
-ctrl = 0
-
-if not os.path.isfile('config.json'):
-        # Create an empty JSON file
-    with open('config.json', 'w') as file:
-        # Write an empty JSON object
-        json.dump({}, file, indent=4)
-    with open(CONFIG_PATH, 'r', encoding='utf-8') as json_file_r:
-        data = json.load(json_file_r)
-    rst_def()
-    print(f"File 'config.json' created and initialized.")
-
-with open(CONFIG_PATH, 'r', encoding='utf-8') as json_file_r:
-    data = json.load(json_file_r)
-
-
-model_dir = eval(data['model_dir'])
-vae_dir = eval(data['vae_dir'])
-emb_dir = eval(data['emb_dir'])
-lora_dir = eval(data['lora_dir'])
-taesd_dir = eval(data['taesd_dir'])
-upscl_dir = eval(data['upscl_dir'])
-cnnet_dir = eval(data['cnnet_dir'])
-txt2img_dir = eval(data['txt2img_dir'])
-img2img_dir = eval(data['img2img_dir'])
-
-
-if 'def_model' in data:
-    def_model = data['def_model']
-else:
-    def_model = None
-if 'def_vae' in data:
-    def_vae = data['def_vae']
-else:
-    def_vae = None
-def_sampling = data['def_sampling']
-def_steps = data['def_steps']
-def_schedule = data['def_schedule']
-def_width = data['def_width']
-def_height = data['def_height']
-
 if not os.path.isfile('prompts.json'):
         # Create an empty JSON file
     with open('prompts.json', 'w') as file:
@@ -589,14 +161,6 @@ if not os.path.isfile('prompts.json'):
         json.dump({}, file, indent=4)
     print(f"File 'prompts.json' created and initialized as an empty JSON file.")
 
-
-if not os.system("which lspci > /dev/null") == 0:
-    if os.name == "nt":
-        sd = "sd.exe"
-    elif os.name == "posix":
-        sd = "./sd"
-else:
-    sd = "./sd"
 
 
 with gr.Blocks() as txt2img_block:
@@ -656,7 +220,9 @@ with gr.Blocks() as txt2img_block:
                                  label="Negative Prompt", lines=3,
                                  show_copy_button=True)
         with gr.Column(scale=1):
-            gen_btn = gr.Button(value="Generate", size="lg")
+            with gr.Row():
+                gen_btn = gr.Button(value="Generate", size="lg")
+                kill_btn = gr.Button(value="Stop", size="lg")
 
     # Settings
     with gr.Row():
@@ -664,14 +230,14 @@ with gr.Blocks() as txt2img_block:
             with gr.Row():
                 with gr.Column(scale=1):
                     sampling = gr.Dropdown(label="Sampling method",
-                                           choices=samplers,
+                                           choices=SAMPLERS,
                                            value=def_sampling)
                 with gr.Column(scale=1):
                     steps = gr.Slider(label="Steps", minimum=1, maximum=99,
                                       value=def_steps, step=1)
             with gr.Row():
-                schedule = gr.Dropdown(label="Schedule", choices=schedulers,
-                                       value=def_schedule)
+                schedule = gr.Dropdown(label="Schedule", choices=SCHEDULERS,
+                                       value=def_scheduler)
             with gr.Row():
                 with gr.Column():
                     width = gr.Slider(label="Width", minimum=64, maximum=2048,
@@ -709,7 +275,8 @@ with gr.Blocks() as txt2img_block:
             with gr.Accordion(label="Extra", open=False):
                 threads = gr.Number(label="Threads", minimum=0,
                                     maximum=os.cpu_count(), value=0)
-                vae_tiling = gr.Checkbox(label="Vae Tiling")
+                vae_tiling = gr.Checkbox(label="VAE Tiling")
+                vae_cpu = gr.Checkbox(label="VAE on CPU")
                 rng = gr.Dropdown(label="RNG", choices=["std_default", "cuda"],
                                   value="cuda")
                 output = gr.Textbox(label="Output Name",
@@ -729,9 +296,10 @@ with gr.Blocks() as txt2img_block:
                                    pprompt, nprompt, sampling, steps,
                                    schedule, width, height, batch_count,
                                    cfg, seed, clip_skip, threads,
-                                   vae_tiling, cnnet_cpu, rng, output,
-                                   color, verbose],
+                                   vae_tiling, vae_cpu, cnnet_cpu, rng,
+                                   output, color, verbose],
                   outputs=[img_final])
+    kill_btn.click(kill_subprocess, inputs=[], outputs=[])
 
     # Interactive Bindings
     reload_model_btn.click(reload_models, inputs=[model_dir_txt],
@@ -819,14 +387,14 @@ with gr.Blocks()as img2img_block:
             with gr.Row():
                 with gr.Column(scale=1):
                     sampling = gr.Dropdown(label="Sampling method",
-                                           choices=samplers, value="euler_a")
+                                           choices=SAMPLERS, value=def_sampling)
                 with gr.Column(scale=1):
                     steps = gr.Slider(label="Steps", minimum=1, maximum=99,
                                       value=def_steps, step=1)
             with gr.Row():
                 schedule = gr.Dropdown(label="Schedule",
-                                       choices=schedulers,
-                                       value="discrete")
+                                       choices=SCHEDULERS,
+                                       value=def_scheduler)
             with gr.Row():
                 with gr.Column():
                     width = gr.Slider(label="Width", minimum=64, maximum=2048,
@@ -867,7 +435,8 @@ with gr.Blocks()as img2img_block:
             with gr.Accordion(label="Extra", open=False):
                 threads = gr.Number(label="Threads", minimum=0,
                                     maximum=os.cpu_count(), value=0)
-                vae_tiling = gr.Checkbox(label="Vae Tiling")
+                vae_tiling = gr.Checkbox(label="VAE Tiling")
+                vae_cpu = gr.Checkbox(label="VAE on CPU")
                 rng = gr.Dropdown(label="RNG", choices=["std_default", "cuda"],
                                   value="cuda")
                 output = gr.Textbox(label="Output Name (optional)", value="")
@@ -885,8 +454,8 @@ with gr.Blocks()as img2img_block:
                                    nprompt, sampling, steps, schedule,
                                    width, height, batch_count,
                                    strenght, cfg, seed, clip_skip,
-                                   threads, vae_tiling, cnnet_cpu, canny,
-                                   rng, output, color, verbose],
+                                   threads, vae_tiling, vae_cpu, cnnet_cpu,
+                                   canny, rng, output, color, verbose],
                   outputs=[img_final])
 
     # Interactive Bindings
@@ -1010,7 +579,7 @@ with gr.Blocks() as options_block:
 
         # Sampling Method Dropdown
         sampling = gr.Dropdown(label="Sampling method",
-                               choices=samplers, value=def_sampling)
+                               choices=SAMPLERS, value=def_sampling)
 
         # Steps Slider
         steps = gr.Slider(label="Steps", minimum=1, maximum=99,
@@ -1018,7 +587,7 @@ with gr.Blocks() as options_block:
 
         # Schedule Dropdown
         schedule = gr.Dropdown(label="Schedule",
-                               choices=schedulers,
+                               choices=SCHEDULERS,
                                value="discrete")
 
         # Size Sliders
