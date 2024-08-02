@@ -1,8 +1,21 @@
 """sd.cpp-webui - Utility module"""
 
+import os
+import shutil
 import subprocess
 
 global_process = None
+
+
+def exe_name():
+    """Returns the stable-diffusion executable name"""
+    lspci_exists = shutil.which("lspci") is not None
+    if not lspci_exists:
+        if os.name == "nt":
+            return "sd.exe"
+        return "./sd"
+    return "./sd"
+
 
 def run_subprocess(command):
     """Runs subprocess"""

@@ -2,7 +2,7 @@
 
 import os
 
-from modules.utility import run_subprocess
+from modules.utility import run_subprocess, exe_name
 from modules.gallery import get_next_img
 
 from modules.config import (
@@ -10,14 +10,7 @@ from modules.config import (
     cnnet_dir, txt2img_dir, img2img_dir
     )
 
-if not os.system("which lspci > /dev/null") == 0:
-    if os.name == "nt":
-        SD = "sd.exe"
-    elif os.name == "posix":
-        SD = "./sd"
-else:
-    SD = "./sd"
-
+SD = exe_name()
 
 def txt2img(in_model, in_vae, in_taesd, in_upscl, in_cnnet, in_control_img,
             in_control_strength, in_ppromt, in_nprompt, in_sampling,
