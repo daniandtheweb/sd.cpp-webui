@@ -43,15 +43,15 @@ def set_defaults(in_model, in_vae, in_sampling, in_steps, in_schedule,
 def rst_def():
     """Restores factory defaults"""
     data.update({
-        'model_dir': 'os.path.join(CURRENT_DIR, "models/Stable-Diffusion/")',
-        'vae_dir': 'os.path.join(CURRENT_DIR, "models/VAE/")',
-        'emb_dir': 'os.path.join(CURRENT_DIR, "models/Embeddings/")',
-        'lora_dir': 'os.path.join(CURRENT_DIR, "models/Lora/")',
-        'taesd_dir': 'os.path.join(CURRENT_DIR, "models/TAESD/")',
-        'upscl_dir' : 'os.path.join(CURRENT_DIR, "models/Upscalers/")',
-        'cnnet_dir': 'os.path.join(CURRENT_DIR, "models/ControlNet/")',
-        'txt2img_dir': 'os.path.join(CURRENT_DIR, "outputs/txt2img/")',
-        'img2img_dir': 'os.path.join(CURRENT_DIR, "outputs/img2img/")',
+        'model_dir': os.path.join(CURRENT_DIR, "models/Stable-Diffusion/"),
+        'vae_dir': os.path.join(CURRENT_DIR, "models/VAE/"),
+        'emb_dir': os.path.join(CURRENT_DIR, "models/Embeddings/"),
+        'lora_dir': os.path.join(CURRENT_DIR, "models/Lora/"),
+        'taesd_dir': os.path.join(CURRENT_DIR, "models/TAESD/"),
+        'upscl_dir' : os.path.join(CURRENT_DIR, "models/Upscalers/"),
+        'cnnet_dir': os.path.join(CURRENT_DIR, "models/ControlNet/"),
+        'txt2img_dir': os.path.join(CURRENT_DIR, "outputs/txt2img/"),
+        'img2img_dir': os.path.join(CURRENT_DIR, "outputs/img2img/"),
         'def_sampling': "euler_a",
         'def_steps': 20,
         'def_scheduler': "discrete",
@@ -70,27 +70,27 @@ def rst_def():
 
 if not os.path.isfile('config.json'):
         # Create an empty JSON file
-    with open('config.json', 'w') as file:
+    with open(CONFIG_PATH, 'w', encoding="utf-8") as config_file:
         # Write an empty JSON object
-        json.dump({}, file, indent=4)
-    with open(CONFIG_PATH, 'r', encoding='utf-8') as json_file_r:
-        data = json.load(json_file_r)
+        json.dump({}, config_file, indent=4)
+    with open(CONFIG_PATH, 'r', encoding='utf-8') as config_file:
+        data = json.load(config_file)
     rst_def()
-    print(f"File 'config.json' created and initialized.")
+    print("File 'config.json' created and initialized.")
 
-with open(CONFIG_PATH, 'r', encoding='utf-8') as json_file_r:
-    data = json.load(json_file_r)
+with open(CONFIG_PATH, 'r', encoding='utf-8') as config_file:
+    data = json.load(config_file)
 
 
-model_dir = eval(data['model_dir'])
-vae_dir = eval(data['vae_dir'])
-emb_dir = eval(data['emb_dir'])
-lora_dir = eval(data['lora_dir'])
-taesd_dir = eval(data['taesd_dir'])
-upscl_dir = eval(data['upscl_dir'])
-cnnet_dir = eval(data['cnnet_dir'])
-txt2img_dir = eval(data['txt2img_dir'])
-img2img_dir = eval(data['img2img_dir'])
+model_dir = data['model_dir']
+vae_dir = data['vae_dir']
+emb_dir = data['emb_dir']
+lora_dir = data['lora_dir']
+taesd_dir = data['taesd_dir']
+upscl_dir = data['upscl_dir']
+cnnet_dir = data['cnnet_dir']
+txt2img_dir = data['txt2img_dir']
+img2img_dir = data['img2img_dir']
 
 
 if 'def_model' in data:
