@@ -75,44 +75,42 @@ def reload_models(models_folder):
 
 def get_prompts():
     """Lists saved prompts"""
-    with open('prompts.json', 'r') as file:
-        prompts_data = json.load(file)
+    with open('prompts.json', 'r', encoding="utf-8") as prompts_file:
+        prompts_data = json.load(prompts_file)
 
     prompts_keys = list(prompts_data.keys())
 
     return prompts_keys
 
 
-def save_prompts(prompts, pprompt, nprompt):
+def save_prompts(prompt, pos_prompt, neg_prompt):
     """Saves a prompt"""
-    if prompts is not None and prompts.strip():
-        with open('prompts.json', 'r') as file:
-            prompts_data = json.load(file)
+    if prompt is not None and prompt.strip():
+        with open('prompts.json', 'r', encoding="utf-8") as prompts_file:
+            prompts_data = json.load(prompts_file)
 
-        prompts_data[prompts.strip()] = {
-            'positive': pprompt,
-            'negative': nprompt
+        prompts_data[prompt.strip()] = {
+            'positive': pos_prompt,
+            'negative': neg_prompt
         }
 
-        with open('prompts.json', 'w') as file:
-            json.dump(prompts_data, file, indent=4)
+        with open('prompts.json', 'w', encoding="utf-8") as prompts_file:
+            json.dump(prompts_data, prompts_file, indent=4)
 
 
 def delete_prompts(prompt):
     """Deletes a saved prompt"""
-    with open('prompts.json', 'r') as file:
-        prompts_data = json.load(file)
+    with open('prompts.json', 'r', encoding="utf-8") as prompts_file:
+        prompts_data = json.load(prompts_file)
 
     if prompt in prompts_data:
         del prompts_data[prompt]
         print(f"Key '{prompt}' deleted.")
     else:
         print(f"Key '{prompt}' not found.")
-    
-    with open('prompts.json', 'w') as file:
-        json.dump(prompts_data, file, indent=4)
 
-    return
+    with open('prompts.json', 'w', encoding="utf-8") as prompts_file:
+        json.dump(prompts_data, prompts_file, indent=4)
 
 
 def reload_prompts():
@@ -123,8 +121,8 @@ def reload_prompts():
 
 def load_prompts(prompt):
     """Loads a saved prompt"""
-    with open('prompts.json', 'r') as file:
-        prompts_data = json.load(file)
+    with open('prompts.json', 'r', encoding="utf-8") as prompts_file:
+        prompts_data = json.load(prompts_file)
     positive_prompts = []
     negative_prompts = []
     key_data = prompts_data.get(prompt, {})
@@ -156,10 +154,10 @@ def reload_hf_models():
 
 if not os.path.isfile('prompts.json'):
         # Create an empty JSON file
-    with open('prompts.json', 'w') as file:
+    with open('prompts.json', 'w', encoding="utf-8") as prompts:
         # Write an empty JSON object
-        json.dump({}, file, indent=4)
-    print(f"File 'prompts.json' created and initialized as an empty JSON file.")
+        json.dump({}, prompts, indent=4)
+    print("File 'prompts.json' created and initialized as an empty JSON file.")
 
 
 
