@@ -4,7 +4,6 @@
 
 import os
 import argparse
-import json
 
 import gradio as gr
 
@@ -12,10 +11,14 @@ from modules.sdcpp import txt2img, img2img, convert
 from modules.utility import kill_subprocess
 from modules.gallery import GalleryManager
 from modules.config import (
-    set_defaults, rst_def, model_dir, vae_dir, emb_dir, lora_dir,
+    set_defaults, rst_def, get_prompts, reload_prompts, save_prompts,
+    delete_prompts, load_prompts, model_dir, vae_dir, emb_dir, lora_dir,
     taesd_dir, upscl_dir, cnnet_dir, txt2img_dir, img2img_dir,
     def_model, def_vae, def_sampling, def_steps, def_scheduler,
     def_width, def_height
+)
+from modules.loader import (
+    get_models, reload_models, get_hf_models, reload_hf_models
 )
 
 CURRENT_DIR = os.getcwd()
@@ -50,112 +53,6 @@ def sdcpp_launch(listen=False, autostart=False):
     else:
         print("Launching sdcpp without any specific options")
         sdcpp.launch()
-
-
-def get_models(models_folder):
-    """Lists models in a folder"""
-    if os.path.isdir(models_folder):
-        models = [model for model in os.listdir(models_folder)
-                 if os.path.isfile(models_folder + model) and
-                 (model.endswith((".gguf", ".safetensors", ".pth")))]
-        return models
-
-    print(f"The {models_folder} folder does not exist.")
-    return []
-
-
-def reload_models(models_folder):
-    """Reloads models list"""
-    refreshed_models = gr.update(choices=get_models(models_folder))
-    return refreshed_models
-
-
-def get_prompts():
-    """Lists saved prompts"""
-    with open('prompts.json', 'r', encoding="utf-8") as prompts_file:
-        prompts_data = json.load(prompts_file)
-
-    prompts_keys = list(prompts_data.keys())
-
-    return prompts_keys
-
-
-def save_prompts(prompt, pos_prompt, neg_prompt):
-    """Saves a prompt"""
-    if prompt is not None and prompt.strip():
-        with open('prompts.json', 'r', encoding="utf-8") as prompts_file:
-            prompts_data = json.load(prompts_file)
-
-        prompts_data[prompts_file.strip()] = {
-            'positive': pos_prompt,
-            'negative': neg_prompt
-        }
-
-        with open('prompts.json', 'w', encoding="utf-8") as prompts_file:
-            json.dump(prompts_data, prompts_file, indent=4)
-
-
-def delete_prompts(prompt):
-    """Deletes a saved prompt"""
-    with open('prompts.json', 'r', encoding="utf-8") as prompts_file:
-        prompts_data = json.load(prompts_file)
-
-    if prompt in prompts_data:
-        del prompts_data[prompt]
-        print(f"Key '{prompt}' deleted.")
-    else:
-        print(f"Key '{prompt}' not found.")
-
-    with open('prompts.json', 'w', encoding="utf-8") as prompts_file:
-        json.dump(prompts_data, prompts_file, indent=4)
-
-
-def reload_prompts():
-    """Reloads prompts list"""
-    refreshed_prompts = gr.update(choices=get_prompts())
-    return refreshed_prompts
-
-
-def load_prompts(prompt):
-    """Loads a saved prompt"""
-    with open('prompts.json', 'r', encoding="utf-8") as prompts_file:
-        prompts_data = json.load(prompts_file)
-    positive_prompts = []
-    negative_prompts = []
-    key_data = prompts_data.get(prompt, {})
-    positive_prompts = key_data.get('positive', '')
-    negative_prompts = key_data.get('negative', '')
-
-    pprompt_load = gr.update(value=positive_prompts)
-    nprompt_load = gr.update(value=negative_prompts)
-    return pprompt_load, nprompt_load
-
-
-def get_hf_models():
-    """Lists convertible models in a folder"""
-    fmodels_dir = model_dir
-    if os.path.isdir(fmodels_dir):
-        return [model for model in os.listdir(fmodels_dir)
-                if os.path.isfile(fmodels_dir + model) and
-                (model.endswith((".safetensors", ".ckpt", ".pth", ".gguf")))]
-
-    print(f"The {fmodels_dir} folder does not exist.")
-    return []
-
-
-def reload_hf_models():
-    """Reloads convertible models list"""
-    refreshed_models = gr.update(choices=get_hf_models())
-    return refreshed_models
-
-
-if not os.path.isfile('prompts.json'):
-        # Create an empty JSON file
-    with open('prompts.json', 'w', encoding="utf-8") as prompts:
-        # Write an empty JSON object
-        json.dump({}, prompts, indent=4)
-    print("File 'prompts.json' created and initialized as an empty JSON file.")
-
 
 
 with gr.Blocks() as txt2img_block:

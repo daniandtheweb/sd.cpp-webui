@@ -3,8 +3,11 @@
 import os
 import json
 
+import gradio as gr
+
 CURRENT_DIR = os.getcwd()
 CONFIG_PATH = 'config.json'
+PROMPTS_PATH = 'prompts.json'
 
 def set_defaults(in_model, in_vae, in_sampling, in_steps, in_schedule,
                  in_width, in_height, in_model_dir_txt, in_vae_dir_txt,
@@ -68,7 +71,68 @@ def rst_def():
     print("Reset defaults completed.")
 
 
-if not os.path.isfile('config.json'):
+def get_prompts():
+    """Lists saved prompts"""
+    with open(PROMPTS_PATH, 'r', encoding="utf-8") as prompts_file:
+        prompts_data = json.load(prompts_file)
+
+    prompts_keys = list(prompts_data.keys())
+
+    return prompts_keys
+
+
+def reload_prompts():
+    """Reloads prompts list"""
+    refreshed_prompts = gr.update(choices=get_prompts())
+    return refreshed_prompts
+
+
+def save_prompts(prompt, pos_prompt, neg_prompt):
+    """Saves a prompt"""
+    if prompt is not None and prompt.strip():
+        with open(PROMPTS_PATH, 'r', encoding="utf-8") as prompts_file:
+            prompts_data = json.load(prompts_file)
+
+        prompts_data[prompts_file.strip()] = {
+            'positive': pos_prompt,
+            'negative': neg_prompt
+        }
+
+        with open(PROMPTS_PATH, 'w', encoding="utf-8") as prompts_file:
+            json.dump(prompts_data, prompts_file, indent=4)
+
+
+def delete_prompts(prompt):
+    """Deletes a saved prompt"""
+    with open(PROMPTS_PATH, 'r', encoding="utf-8") as prompts_file:
+        prompts_data = json.load(prompts_file)
+
+    if prompt in prompts_data:
+        del prompts_data[prompt]
+        print(f"Key '{prompt}' deleted.")
+    else:
+        print(f"Key '{prompt}' not found.")
+
+    with open(PROMPTS_PATH, 'w', encoding="utf-8") as prompts_file:
+        json.dump(prompts_data, prompts_file, indent=4)
+
+
+def load_prompts(prompt):
+    """Loads a saved prompt"""
+    with open(PROMPTS_PATH, 'r', encoding="utf-8") as prompts_file:
+        prompts_data = json.load(prompts_file)
+    positive_prompts = []
+    negative_prompts = []
+    key_data = prompts_data.get(prompt, {})
+    positive_prompts = key_data.get('positive', '')
+    negative_prompts = key_data.get('negative', '')
+
+    pprompt_load = gr.update(value=positive_prompts)
+    nprompt_load = gr.update(value=negative_prompts)
+    return pprompt_load, nprompt_load
+
+
+if not os.path.isfile(CONFIG_PATH):
         # Create an empty JSON file
     with open(CONFIG_PATH, 'w', encoding="utf-8") as config_file:
         # Write an empty JSON object
@@ -76,7 +140,7 @@ if not os.path.isfile('config.json'):
     with open(CONFIG_PATH, 'r', encoding='utf-8') as config_file:
         data = json.load(config_file)
     rst_def()
-    print("File 'config.json' created and initialized.")
+    print("File 'config.json' created.")
 
 with open(CONFIG_PATH, 'r', encoding='utf-8') as config_file:
     data = json.load(config_file)
@@ -106,3 +170,11 @@ def_steps = data['def_steps']
 def_scheduler = data['def_scheduler']
 def_width = data['def_width']
 def_height = data['def_height']
+
+
+if not os.path.isfile(PROMPTS_PATH):
+        # Create an empty JSON file
+    with open('prompts.json', 'w', encoding="utf-8") as prompts:
+        # Write an empty JSON object
+        json.dump({}, prompts, indent=4)
+    print("File 'prompts.json' created.")
