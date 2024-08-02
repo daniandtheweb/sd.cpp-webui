@@ -9,122 +9,129 @@ from modules.config import (
     txt2img_dir, img2img_dir
 )
 
-page_num = 0
-ctrl = 0
 
-def reload_gallery(ctrl_inp=None, fpage_num=1, subctrl=0):
-    """Reloads gallery_block"""
-    global ctrl
-    global page_num
-    if ctrl_inp is not None:
-        ctrl = int(ctrl_inp)
-    imgs = []
-    if ctrl == 0:
-        img_dir = txt2img_dir
-    elif ctrl == 1:
-        img_dir = img2img_dir
-    files = os.listdir(img_dir)
-    image_files = [file for file in files if file.endswith(('.jpg', '.png'))]
-    start_index = (fpage_num * 16) - 16
-    end_index = min(start_index + 16, len(image_files))
-    for file_name in image_files[start_index:end_index]:
-        image_path = img_dir + file_name
-        image = Image.open(image_path)
-        imgs.append(image)
-    page_num = fpage_num
-    if subctrl == 0:
-        return imgs, page_num, gr.Gallery(selected_index=None)
-
-    return imgs
+class GalleryManager:
+    """Controls the gallery block"""
+    def __init__(self, txt2img_gallery, img2img_gallery):
+        self.page_num = 1
+        self.ctrl = 0
+        self.txt2img_dir = txt2img_gallery
+        self.img2img_dir = img2img_gallery
 
 
-def goto_gallery(fpage_num=1):
-    """Loads a specific gallery page"""
-    global page_num
-    imgs = []
-    if ctrl == 0:
-        img_dir = txt2img_dir
-    elif ctrl == 1:
-        img_dir = img2img_dir
-    files = os.listdir(img_dir)
-    total_imgs = len([file for file in files if
-                      file.endswith(('.png', '.jpg'))])
-    total_pages = (total_imgs + 15) // 16
-    if fpage_num is None:
-        fpage_num = 1
-    page_num = fpage_num if fpage_num < total_pages else total_pages
-    files = os.listdir(img_dir)
-    image_files = [file for file in files if file.endswith(('.jpg', '.png'))]
-    start_index = (page_num * 16) - 16
-    end_index = min(start_index + 16, len(image_files))
-    for file_name in image_files[start_index:end_index]:
-        image_path = img_dir + file_name
-        image = Image.open(image_path)
-        imgs.append(image)
-    return imgs, page_num, gr.Gallery(selected_index=None)
+    def _get_img_dir(self):
+        """Determines the directory based on the control value"""
+        if self.ctrl == 0:
+            return self.txt2img_dir
+        if self.ctrl == 1:
+            return self.img2img_dir
+        return self.txt2img_dir
 
 
-def next_page():
-    """Moves to the next gallery page"""
-    global page_num
-    ctrl_inp = ctrl
-    subctrl = 1
-    imgs = []
-    next_page_num = page_num + 1
-    if ctrl == 0:
-        files = os.listdir(txt2img_dir)
-    elif ctrl == 1:
-        files = os.listdir(img2img_dir)
-    total_imgs = len([file for file in files if
-                      file.endswith(('.png', '.jpg'))])
-    total_pages = (total_imgs + 15) // 16
-    if next_page_num > total_pages:
-        page_num = 1
-        imgs = reload_gallery(ctrl_inp, page_num, subctrl)
-    else:
-        page_num = next_page_num
-        imgs = reload_gallery(ctrl_inp, next_page_num, subctrl)
-    return imgs, page_num, gr.Gallery(selected_index=None)
+    def reload_gallery(self, ctrl_inp=None, fpage_num=1, subctrl=0):
+        """Reloads the gallery block"""
+        if ctrl_inp is not None:
+            self.ctrl = int(ctrl_inp)
+        img_dir = self._get_img_dir()
+        imgs = []
+        files = os.listdir(img_dir)
+        image_files = [file for file in files if file.endswith(('.jpg', '.png'))]
+        start_index = (fpage_num * 16) - 16
+        end_index = min(start_index + 16, len(image_files))
+        for file_name in image_files[start_index:end_index]:
+            image_path = os.path.join(img_dir, file_name)
+            image = Image.open(image_path)
+            imgs.append(image)
+        self.page_num = fpage_num
+        if subctrl == 0:
+            return imgs, self.page_num, gr.Gallery(selected_index=None)
+        return imgs
 
 
-def prev_page():
-    """Moves to the previous gallery page"""
-    global page_num
-    ctrl_inp = ctrl
-    subctrl = 1
-    imgs = []
-    prev_page_num = page_num - 1
-    if ctrl == 0:
-        files = os.listdir(txt2img_dir)
-    elif ctrl == 1:
-        files = os.listdir(img2img_dir)
-    total_imgs = len([file for file in files if
-                      file.endswith(('.png', '.jpg'))])
-    total_pages = (total_imgs + 15) // 16
-    if prev_page_num < 1:
-        page_num = total_pages
-        imgs = reload_gallery(ctrl_inp, total_pages, subctrl)
-    else:
-        page_num = prev_page_num
-        imgs = reload_gallery(ctrl_inp, prev_page_num, subctrl)
-    return imgs, page_num, gr.Gallery(selected_index=None)
+    def goto_gallery(self, fpage_num=1):
+        """Loads a specific gallery page"""
+        img_dir = self._get_img_dir()
+        files = os.listdir(img_dir)
+        total_imgs = len([file for file in files if file.endswith(('.png', '.jpg'))])
+        total_pages = (total_imgs + 15) // 16
+        if fpage_num is None:
+            fpage_num = 1
+        self.page_num = min(fpage_num, total_pages)
+        return self.reload_gallery(self.ctrl, self.page_num, subctrl=0)
 
 
-def last_page():
-    """Moves to the last gallery page"""
-    global page_num
-    ctrl_inp = ctrl
-    subctrl = 1
-    if ctrl == 0:
-        files = os.listdir(txt2img_dir)
-    elif ctrl == 1:
-        files = os.listdir(img2img_dir)
-    total_imgs = len([file for file in files if
-                      file.endswith(('.png', '.jpg'))])
-    total_pages = (total_imgs + 15) // 16
-    imgs = reload_gallery(ctrl_inp, total_pages, subctrl)
-    page_num = total_pages
-    return imgs, page_num, gr.Gallery(selected_index=None)
+    def next_page(self):
+        """Moves to the next gallery page"""
+        next_page_num = self.page_num + 1
+        img_dir = self._get_img_dir()
+        files = os.listdir(img_dir)
+        total_imgs = len([file for file in files if file.endswith(('.png', '.jpg'))])
+        total_pages = (total_imgs + 15) // 16
+        if next_page_num > total_pages:
+            self.page_num = 1
+        else:
+            self.page_num = next_page_num
+        imgs = self.reload_gallery(self.ctrl, self.page_num, subctrl=1)
+        return imgs, self.page_num, gr.Gallery(selected_index=None)
+
+
+    def prev_page(self):
+        """Moves to the previous gallery page"""
+        prev_page_num = self.page_num - 1
+        img_dir = self._get_img_dir()
+        files = os.listdir(img_dir)
+        total_imgs = len([file for file in files if file.endswith(('.png', '.jpg'))])
+        total_pages = (total_imgs + 15) // 16
+        if prev_page_num < 1:
+            self.page_num = total_pages
+        else:
+            self.page_num = prev_page_num
+        imgs = self.reload_gallery(self.ctrl, self.page_num, subctrl=1)
+        return imgs, self.page_num, gr.Gallery(selected_index=None)
+
+
+    def last_page(self):
+        """Moves to the last gallery page"""
+        img_dir = self._get_img_dir()
+        files = os.listdir(img_dir)
+        total_imgs = len([file for file in files if file.endswith(('.png', '.jpg'))])
+        total_pages = (total_imgs + 15) // 16
+        self.page_num = total_pages
+        imgs = self.reload_gallery(self.ctrl, self.page_num, subctrl=1)
+        return imgs, self.page_num, gr.Gallery(selected_index=None)
+
+
+    def img_info(self, sel_img: gr.SelectData):
+        """Reads generation data from an image"""
+        img_index = (self.page_num * 16) - 16 + sel_img.index
+        img_dir = self._get_img_dir()
+        file_paths = [os.path.join(img_dir, file) for file in os.listdir(img_dir)
+                      if os.path.isfile(os.path.join(img_dir, file)) and
+                      file.lower().endswith(('.png', '.jpg'))]
+        file_paths.sort(key=os.path.getctime)
+        try:
+            img_path = file_paths[img_index]
+        except IndexError:
+            return "Image index is out of range."
+        if img_path.endswith(('.jpg', '.jpeg')):
+            return extract_exif_from_jpg(img_path)
+        if img_path.endswith('.png'):
+            with open(img_path, 'rb') as file:
+                if file.read(8) != b'\x89PNG\r\n\x1a\n':
+                    return None
+                while True:
+                    length_chunk = file.read(4)
+                    if not length_chunk:
+                        return None
+                    length = int.from_bytes(length_chunk, byteorder='big')
+                    chunk_type = file.read(4).decode('utf-8')
+                    png_block = file.read(length)
+                    _ = file.read(4)
+                    if chunk_type == 'tEXt':
+                        _, value = png_block.split(b'\x00', 1)
+                        png_exif = f"{value.decode('utf-8')}"
+                        return f"PNG: tEXt\nPositive prompt: {png_exif}"
+        return None
 
 
 def extract_exif_from_jpg(img_path):
@@ -143,52 +150,14 @@ def extract_exif_from_jpg(img_path):
     return "JPG: Exif\nNo EXIF data found."
 
 
-def img_info(sel_img: gr.SelectData):
-    """Reads generation data from an image"""
-    img_index = (page_num * 16) - 16 + sel_img.index
-    if ctrl == 0:
-        img_dir = txt2img_dir
-    elif ctrl == 1:
-        img_dir = img2img_dir
-
-    file_paths = [os.path.join(img_dir, file) for file in os.listdir(img_dir)
-                  if os.path.isfile(os.path.join(img_dir, file)) and
-                  file.lower().endswith(('.png', '.jpg'))]
-    file_paths.sort(key=os.path.getctime)
-
-    try:
-        img_path = file_paths[img_index]
-    except IndexError:
-        return print("Image index is out of range.")
-
-    if img_path.endswith(('.jpg', '.jpeg')):
-        return extract_exif_from_jpg(img_path)
-
-    if img_path.endswith('.png'):
-        with open(img_path, 'rb') as file:
-            if file.read(8) != b'\x89PNG\r\n\x1a\n':
-                return None
-            while True:
-                length_chunk = file.read(4)
-                if not length_chunk:
-                    return None
-                length = int.from_bytes(length_chunk, byteorder='big')
-                chunk_type = file.read(4).decode('utf-8')
-                png_block = file.read(length)
-                _ = file.read(4)
-                if chunk_type == 'tEXt':
-                    _, value = png_block.split(b'\x00', 1)
-                    png_exif = f"{value.decode('utf-8')}"
-                    return f"PNG: tEXt\nPositive prompt: {png_exif}"
-    return None
-
-
 def get_next_img(subctrl):
     """Creates a new image name"""
     if subctrl == 0:
         fimg_out = txt2img_dir
     elif subctrl == 1:
         fimg_out = img2img_dir
+    else:
+        fimg_out = txt2img_dir
     files = os.listdir(fimg_out)
     png_files = [file for file in files if file.endswith('.png') and
                  file[:-4].isdigit()]
