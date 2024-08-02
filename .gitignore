@@ -1,4 +1,4 @@
-__pycache__
+/__pycache__
 *.ckpt
 *.safetensors
 *.pth
@@ -6,10 +6,6 @@ __pycache__
 *.gguf
 *.png
 *.jpg
-sd
-sd.exe
+*.json
+sd*
 /venv
-/outputs
-/models
-config.json
-prompts.json
