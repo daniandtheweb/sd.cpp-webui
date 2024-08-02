@@ -173,22 +173,28 @@ with gr.Blocks() as txt2img_block:
 
     # Model & VAE Selection
     with gr.Row():
-        model = gr.Dropdown(label="Model",
-                            choices=get_models(model_dir), scale=7,
-                            value=def_model)
-        reload_model_btn = gr.Button(value=RELOAD_SYMBOL, scale=1)
-        vae = gr.Dropdown(label="VAE", choices=get_models(vae_dir), scale=7,
-                          value=def_vae)
-        with gr.Column(scale=1):
-            reload_vae_btn = gr.Button(value=RELOAD_SYMBOL)
-            clear_vae = gr.ClearButton(vae)
+        with gr.Column():
+            with gr.Row():
+                model = gr.Dropdown(label="Model",
+                                    choices=get_models(model_dir), scale=7,
+                                    value=def_model)
+            with gr.Row():
+                reload_model_btn = gr.Button(value=RELOAD_SYMBOL, scale=1)
+        with gr.Column():
+            with gr.Row():
+                vae = gr.Dropdown(label="VAE", choices=get_models(vae_dir),
+                                  scale=7, value=def_vae)
+            with gr.Row():
+                reload_vae_btn = gr.Button(value=RELOAD_SYMBOL, scale=1)
+                clear_vae = gr.ClearButton(vae, scale=1)
 
     # Extra Networks Selection
     with gr.Row():
         with gr.Accordion(label="Extra Networks", open=False):
             with gr.Row():
-                taesd = gr.Dropdown(label="TAESD",
-                                    choices=get_models(taesd_dir), scale=7)
+                with gr.Column():
+                    taesd = gr.Dropdown(label="TAESD",
+                                        choices=get_models(taesd_dir), scale=7)
                 with gr.Column():
                     reload_taesd_btn = gr.Button(value=RELOAD_SYMBOL, scale=1)
                     clear_taesd = gr.ClearButton(taesd, scale=1)
@@ -196,28 +202,26 @@ with gr.Blocks() as txt2img_block:
     # Prompts
     with gr.Row():
         with gr.Accordion(label="Saved prompts", open=False):
-            saved_prompts = gr.Dropdown(label="Prompts",
-                                        choices=get_prompts(),
-                                        interactive=True,
-                                        allow_custom_value=True)
-            with gr.Row():
-                save_prompt_btn = gr.Button(value="Save prompt", size="lg")
-                del_prompt_btn = gr.Button(value="Delete prompt", size="lg")
-                reload_prompts_btn = gr.Button(value=RELOAD_SYMBOL)
-            with gr.Row():
-                load_prompt_btn = gr.Button(value="Load prompt", size="lg")
+            with gr.Column():
+                saved_prompts = gr.Dropdown(label="Prompts",
+                                            choices=get_prompts(),
+                                            interactive=True,
+                                            allow_custom_value=True)
+            with gr.Column():
+                with gr.Row():
+                    load_prompt_btn = gr.Button(value="Load prompt", size="lg")
+                    reload_prompts_btn = gr.Button(value=RELOAD_SYMBOL)
+                with gr.Row():
+                    save_prompt_btn = gr.Button(value="Save prompt", size="lg")
+                    del_prompt_btn = gr.Button(value="Delete prompt", size="lg")
     with gr.Row():
-        with gr.Column(scale=3):
-            pprompt = gr.Textbox(placeholder="Positive prompt",
-                                 label="Positive Prompt", lines=3,
-                                 show_copy_button=True)
-            nprompt = gr.Textbox(placeholder="Negative prompt",
-                                 label="Negative Prompt", lines=3,
-                                 show_copy_button=True)
-        with gr.Column(scale=1):
-            with gr.Row():
-                gen_btn = gr.Button(value="Generate", size="lg")
-                kill_btn = gr.Button(value="Stop", size="lg")
+        pprompt = gr.Textbox(placeholder="Positive prompt",
+                             label="Positive Prompt", lines=3,
+                             show_copy_button=True)
+    with gr.Row():
+        nprompt = gr.Textbox(placeholder="Negative prompt",
+                             label="Negative Prompt", lines=3,
+                             show_copy_button=True)
 
     # Settings
     with gr.Row():
@@ -281,7 +285,11 @@ with gr.Blocks() as txt2img_block:
 
         # Output
         with gr.Column(scale=1):
-            img_final = gr.Gallery(label="Generated images", show_label=False,
+            with gr.Row():
+                gen_btn = gr.Button(value="Generate", size="lg")
+                kill_btn = gr.Button(value="Stop", size="lg")
+            with gr.Row():
+                img_final = gr.Gallery(label="Generated images", show_label=False,
                                    columns=[3], rows=[1], object_fit="contain",
                                    height="auto")
 
@@ -331,22 +339,28 @@ with gr.Blocks()as img2img_block:
 
     # Model & VAE Selection
     with gr.Row():
-        model = gr.Dropdown(label="Model",
-                            choices=get_models(model_dir), scale=7,
-                            value=def_model)
-        reload_model_btn = gr.Button(value=RELOAD_SYMBOL, scale=1)
-        vae = gr.Dropdown(label="VAE", choices=get_models(vae_dir), scale=7,
-                          value=def_vae)
-        with gr.Column(scale=1):
-            reload_vae_btn = gr.Button(value=RELOAD_SYMBOL)
-            clear_vae = gr.ClearButton(vae)
+        with gr.Column():
+            with gr.Row():
+                model = gr.Dropdown(label="Model",
+                                    choices=get_models(model_dir), scale=7,
+                                    value=def_model)
+            with gr.Row():
+                reload_model_btn = gr.Button(value=RELOAD_SYMBOL, scale=1)
+        with gr.Column():
+            with gr.Row():
+                vae = gr.Dropdown(label="VAE", choices=get_models(vae_dir),
+                                  scale=7, value=def_vae)
+            with gr.Row():
+                reload_vae_btn = gr.Button(value=RELOAD_SYMBOL, scale=1)
+                clear_vae = gr.ClearButton(vae, scale=1)
 
     # Extra Networks Selection
     with gr.Row():
         with gr.Accordion(label="Extra Networks", open=False):
             with gr.Row():
-                taesd = gr.Dropdown(label="TAESD",
-                                    choices=get_models(taesd_dir), scale=7)
+                with gr.Column():
+                    taesd = gr.Dropdown(label="TAESD",
+                                        choices=get_models(taesd_dir), scale=7)
                 with gr.Column():
                     reload_taesd_btn = gr.Button(value=RELOAD_SYMBOL, scale=1)
                     clear_taesd = gr.ClearButton(taesd, scale=1)
@@ -358,23 +372,21 @@ with gr.Blocks()as img2img_block:
                                         choices=get_prompts(),
                                         interactive=True,
                                         allow_custom_value=True)
-            with gr.Row():
-                save_prompt_btn = gr.Button(value="Save prompt", size="lg")
-                del_prompt_btn = gr.Button(value="Delete prompt", size="lg")
-                reload_prompts_btn = gr.Button(value=RELOAD_SYMBOL)
-            with gr.Row():
-                load_prompt_btn = gr.Button(value="Load prompt", size="lg")
+            with gr.Column():
+                with gr.Row():
+                    load_prompt_btn = gr.Button(value="Load prompt", size="lg")
+                    reload_prompts_btn = gr.Button(value=RELOAD_SYMBOL)
+                with gr.Row():
+                    save_prompt_btn = gr.Button(value="Save prompt", size="lg")
+                    del_prompt_btn = gr.Button(value="Delete prompt", size="lg")
     with gr.Row():
-        with gr.Column(scale=3):
-            pprompt = gr.Textbox(placeholder="Positive prompt",
-                                 label="Positive Prompt", lines=3,
-                                 show_copy_button=True)
-            nprompt = gr.Textbox(placeholder="Negative prompt",
-                                 label="Negative Prompt", lines=3,
-                                 show_copy_button=True)
-        with gr.Column(scale=1):
-            gen_btn = gr.Button(value="Generate")
-            img_inp = gr.Image(sources="upload", type="filepath")
+        pprompt = gr.Textbox(placeholder="Positive prompt",
+                             label="Positive Prompt", lines=3,
+                             show_copy_button=True)
+    with gr.Row():
+        nprompt = gr.Textbox(placeholder="Negative prompt",
+                             label="Negative Prompt", lines=3,
+                             show_copy_button=True)
 
     # Settings
     with gr.Row():
@@ -438,9 +450,15 @@ with gr.Blocks()as img2img_block:
                 color = gr.Checkbox(label="Color", value=True)
                 verbose = gr.Checkbox(label="Verbose")
         with gr.Column(scale=1):
-            img_final = gr.Gallery(label="Generated images", show_label=False,
-                                   columns=[3], rows=[1], object_fit="contain",
-                                   height="auto")
+            with gr.Row():
+                gen_btn = gr.Button(value="Generate")
+                kill_btn = gr.Button(value="Stop")
+            with gr.Row():
+                img_inp = gr.Image(sources="upload", type="filepath")
+            with gr.Row():
+                img_final = gr.Gallery(label="Generated images", show_label=False,
+                                       columns=[3], rows=[1], object_fit="contain",
+                                       height="auto")
 
     # Generate
     gen_btn.click(img2img, inputs=[model, vae, taesd, img_inp,
@@ -452,6 +470,7 @@ with gr.Blocks()as img2img_block:
                                    threads, vae_tiling, vae_cpu, cnnet_cpu,
                                    canny, rng, output, color, verbose],
                   outputs=[img_final])
+    kill_btn.click(kill_subprocess, inputs=[], outputs=[])
 
     # Interactive Bindings
     reload_model_btn.click(reload_models, inputs=[model_dir_txt],
@@ -480,21 +499,25 @@ with gr.Blocks() as gallery_block:
 
     with gr.Row():
         pvw_btn = gr.Button(value="Previous")
-        page_num_select = gr.Number(label="Page:", minimum=1, value=1,
-                                    interactive=True)
-        go_btn = gr.Button(value="Go")
         nxt_btn = gr.Button(value="Next")
 
     with gr.Row():
         first_btn = gr.Button(value="First page")
         last_btn = gr.Button(value="Last page")
 
-    # Gallery Display
-    gallery = gr.Gallery(label="txt2img", columns=[4], rows=[4],
-                         object_fit="contain", height="auto")
+    with gr.Row():
+        page_num_select = gr.Number(label="Page:", minimum=1, value=1,
+                                    interactive=True, scale=7)
+        go_btn = gr.Button(value="Go", scale=1)
 
-    # Image Information Display
-    img_info_txt = gr.Textbox(label="Metadata", value="", interactive=False)
+    with gr.Row():
+        # Gallery Display
+        gallery = gr.Gallery(label="txt2img", columns=[4], rows=[4],
+                             object_fit="contain", height="auto",
+                             scale=2, min_width=500)
+        # Image Information Display
+        img_info_txt = gr.Textbox(label="Metadata", value="", interactive=False,
+                                  scale=1, min_width=300)
 
     # Interactive bindings
     gallery_manager = GalleryManager(txt2img_dir, img2img_dir)
