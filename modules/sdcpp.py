@@ -6,18 +6,19 @@ from modules.utility import run_subprocess, exe_name
 from modules.gallery import get_next_img
 
 from modules.config import (
-    model_dir, vae_dir,emb_dir, lora_dir,taesd_dir, upscl_dir,
+    model_dir, vae_dir, emb_dir, lora_dir, taesd_dir, upscl_dir,
     cnnet_dir, txt2img_dir, img2img_dir
     )
 
 SD = exe_name()
 
-def txt2img(in_model, in_vae, in_taesd, in_upscl, in_upscl_rep, in_cnnet, in_control_img,
-            in_control_strength, in_ppromt, in_nprompt, in_sampling,
-            in_steps, in_schedule, in_width, in_height, in_batch_count,
-            in_cfg, in_seed, in_clip_skip, in_threads, in_vae_tiling,
-            in_vae_cpu, in_cnnet_cpu, in_rng, in_output, in_color,
-            in_verbose):
+
+def txt2img(in_model, in_vae, in_taesd, in_upscl, in_upscl_rep, in_cnnet,
+            in_control_img, in_control_strength, in_ppromt, in_nprompt,
+            in_sampling, in_steps, in_schedule, in_width, in_height,
+            in_batch_count, in_cfg, in_seed, in_clip_skip, in_threads,
+            in_vae_tiling, in_vae_cpu, in_cnnet_cpu, in_rng, in_output,
+            in_color, in_verbose):
     """Text to image command creator"""
     fmodel = os.path.join(model_dir, in_model) if in_model else None
     fvae = os.path.join(vae_dir, in_vae) if in_vae else None
@@ -69,12 +70,12 @@ def txt2img(in_model, in_vae, in_taesd, in_upscl, in_upscl_rep, in_cnnet, in_con
     return [foutput]
 
 
-def img2img(in_model, in_vae, in_taesd, in_img_inp, in_upscl, in_upscl_rep, in_cnnet,
-            in_control_img, in_control_strength, in_ppromt, in_nprompt,
-            in_sampling, in_steps, in_schedule, in_width, in_height,
-            in_batch_count, in_strenght, in_cfg, in_seed, in_clip_skip,
-            in_threads, in_vae_tiling, in_vae_cpu, in_cnnet_cpu, in_canny,
-            in_rng, in_output, in_color, in_verbose):
+def img2img(in_model, in_vae, in_taesd, in_img_inp, in_upscl, in_upscl_rep,
+            in_cnnet, in_control_img, in_control_strength, in_ppromt,
+            in_nprompt, in_sampling, in_steps, in_schedule, in_width,
+            in_height, in_batch_count, in_strenght, in_cfg, in_seed,
+            in_clip_skip, in_threads, in_vae_tiling, in_vae_cpu, in_cnnet_cpu,
+            in_canny, in_rng, in_output, in_color, in_verbose):
     """Image to image command creator"""
     fmodel = os.path.join(model_dir, in_model) if in_model else None
     fvae = os.path.join(vae_dir, in_vae) if in_vae else None

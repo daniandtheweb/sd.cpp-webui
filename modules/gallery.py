@@ -18,7 +18,6 @@ class GalleryManager:
         self.txt2img_dir = txt2img_gallery
         self.img2img_dir = img2img_gallery
 
-
     def _get_img_dir(self):
         """Determines the directory based on the control value"""
         if self.ctrl == 0:
@@ -27,7 +26,6 @@ class GalleryManager:
             return self.img2img_dir
         return self.txt2img_dir
 
-
     def reload_gallery(self, ctrl_inp=None, fpage_num=1, subctrl=0):
         """Reloads the gallery block"""
         if ctrl_inp is not None:
@@ -35,7 +33,8 @@ class GalleryManager:
         img_dir = self._get_img_dir()
         imgs = []
         files = os.listdir(img_dir)
-        image_files = [file for file in files if file.endswith(('.jpg', '.png'))]
+        image_files = [file for file in files
+                       if file.endswith(('.jpg', '.png'))]
         start_index = (fpage_num * 16) - 16
         end_index = min(start_index + 16, len(image_files))
         for file_name in image_files[start_index:end_index]:
@@ -47,25 +46,25 @@ class GalleryManager:
             return imgs, self.page_num, gr.Gallery(selected_index=None)
         return imgs
 
-
     def goto_gallery(self, fpage_num=1):
         """Loads a specific gallery page"""
         img_dir = self._get_img_dir()
         files = os.listdir(img_dir)
-        total_imgs = len([file for file in files if file.endswith(('.png', '.jpg'))])
+        total_imgs = len([file for file in files
+                         if file.endswith(('.png', '.jpg'))])
         total_pages = (total_imgs + 15) // 16
         if fpage_num is None:
             fpage_num = 1
         self.page_num = min(fpage_num, total_pages)
         return self.reload_gallery(self.ctrl, self.page_num, subctrl=0)
 
-
     def next_page(self):
         """Moves to the next gallery page"""
         next_page_num = self.page_num + 1
         img_dir = self._get_img_dir()
         files = os.listdir(img_dir)
-        total_imgs = len([file for file in files if file.endswith(('.png', '.jpg'))])
+        total_imgs = len([file for file in files
+                         if file.endswith(('.png', '.jpg'))])
         total_pages = (total_imgs + 15) // 16
         if next_page_num > total_pages:
             self.page_num = 1
@@ -74,13 +73,13 @@ class GalleryManager:
         imgs = self.reload_gallery(self.ctrl, self.page_num, subctrl=1)
         return imgs, self.page_num, gr.Gallery(selected_index=None)
 
-
     def prev_page(self):
         """Moves to the previous gallery page"""
         prev_page_num = self.page_num - 1
         img_dir = self._get_img_dir()
         files = os.listdir(img_dir)
-        total_imgs = len([file for file in files if file.endswith(('.png', '.jpg'))])
+        total_imgs = len([file for file in files
+                         if file.endswith(('.png', '.jpg'))])
         total_pages = (total_imgs + 15) // 16
         if prev_page_num < 1:
             self.page_num = total_pages
@@ -89,23 +88,23 @@ class GalleryManager:
         imgs = self.reload_gallery(self.ctrl, self.page_num, subctrl=1)
         return imgs, self.page_num, gr.Gallery(selected_index=None)
 
-
     def last_page(self):
         """Moves to the last gallery page"""
         img_dir = self._get_img_dir()
         files = os.listdir(img_dir)
-        total_imgs = len([file for file in files if file.endswith(('.png', '.jpg'))])
+        total_imgs = len([file for file in files
+                         if file.endswith(('.png', '.jpg'))])
         total_pages = (total_imgs + 15) // 16
         self.page_num = total_pages
         imgs = self.reload_gallery(self.ctrl, self.page_num, subctrl=1)
         return imgs, self.page_num, gr.Gallery(selected_index=None)
 
-
     def img_info(self, sel_img: gr.SelectData):
         """Reads generation data from an image"""
         img_index = (self.page_num * 16) - 16 + sel_img.index
         img_dir = self._get_img_dir()
-        file_paths = [os.path.join(img_dir, file) for file in os.listdir(img_dir)
+        file_paths = [os.path.join(img_dir, file)
+                      for file in os.listdir(img_dir)
                       if os.path.isfile(os.path.join(img_dir, file)) and
                       file.lower().endswith(('.png', '.jpg'))]
         file_paths.sort(key=os.path.getctime)

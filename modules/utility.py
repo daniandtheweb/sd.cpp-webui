@@ -40,7 +40,7 @@ def kill_subprocess():
     global global_process
     if global_process is not None:
         global_process.terminate()
-        global_process=None
+        global_process = None
         print("Subprocess terminated.")
     else:
         print("No subprocess running.")

@@ -110,7 +110,8 @@ with gr.Blocks() as txt2img_block:
                     reload_prompts_btn = gr.Button(value=RELOAD_SYMBOL)
                 with gr.Row():
                     save_prompt_btn = gr.Button(value="Save prompt", size="lg")
-                    del_prompt_btn = gr.Button(value="Delete prompt", size="lg")
+                    del_prompt_btn = gr.Button(value="Delete prompt",
+                                               size="lg")
     with gr.Row():
         pprompt = gr.Textbox(placeholder="Positive prompt",
                              label="Positive Prompt", lines=3,
@@ -188,9 +189,9 @@ with gr.Blocks() as txt2img_block:
                 gen_btn = gr.Button(value="Generate", size="lg")
                 kill_btn = gr.Button(value="Stop", size="lg")
             with gr.Row():
-                img_final = gr.Gallery(label="Generated images", show_label=False,
-                                   columns=[3], rows=[1], object_fit="contain",
-                                   height="auto")
+                img_final = gr.Gallery(label="Generated images",
+                                       show_label=False, columns=[3], rows=[1],
+                                       object_fit="contain", height="auto")
 
     # Generate
     gen_btn.click(txt2img, inputs=[model, vae, taesd, upscl, upscl_rep, cnnet,
@@ -277,7 +278,8 @@ with gr.Blocks()as img2img_block:
                     reload_prompts_btn = gr.Button(value=RELOAD_SYMBOL)
                 with gr.Row():
                     save_prompt_btn = gr.Button(value="Save prompt", size="lg")
-                    del_prompt_btn = gr.Button(value="Delete prompt", size="lg")
+                    del_prompt_btn = gr.Button(value="Delete prompt",
+                                               size="lg")
     with gr.Row():
         pprompt = gr.Textbox(placeholder="Positive prompt",
                              label="Positive Prompt", lines=3,
@@ -293,7 +295,8 @@ with gr.Blocks()as img2img_block:
             with gr.Row():
                 with gr.Column(scale=1):
                     sampling = gr.Dropdown(label="Sampling method",
-                                           choices=SAMPLERS, value=def_sampling)
+                                           choices=SAMPLERS,
+                                           value=def_sampling)
                 with gr.Column(scale=1):
                     steps = gr.Slider(label="Steps", minimum=1, maximum=99,
                                       value=def_steps, step=1)
@@ -357,9 +360,9 @@ with gr.Blocks()as img2img_block:
             with gr.Row():
                 img_inp = gr.Image(sources="upload", type="filepath")
             with gr.Row():
-                img_final = gr.Gallery(label="Generated images", show_label=False,
-                                       columns=[3], rows=[1], object_fit="contain",
-                                       height="auto")
+                img_final = gr.Gallery(label="Generated images",
+                                       show_label=False, columns=[3], rows=[1],
+                                       object_fit="contain", height="auto")
 
     # Generate
     gen_btn.click(img2img, inputs=[model, vae, taesd, img_inp,
@@ -417,8 +420,9 @@ with gr.Blocks() as gallery_block:
                              object_fit="contain", height="auto",
                              scale=2, min_width=500)
         # Image Information Display
-        img_info_txt = gr.Textbox(label="Metadata", value="", interactive=False,
-                                  scale=1, min_width=300)
+        img_info_txt = gr.Textbox(label="Metadata", value="",
+                                  interactive=False, scale=1,
+                                  min_width=300)
 
     # Interactive bindings
     gallery_manager = GalleryManager(txt2img_dir, img2img_dir)
@@ -427,10 +431,10 @@ with gr.Blocks() as gallery_block:
                       outputs=[gallery, page_num_select, gallery])
     img2img_btn.click(gallery_manager.reload_gallery, inputs=[img2img_ctrl],
                       outputs=[gallery, page_num_select, gallery])
-    pvw_btn.click(gallery_manager.prev_page, inputs=[], outputs=[gallery, page_num_select,
-                                                 gallery])
-    nxt_btn.click(gallery_manager.next_page, inputs=[], outputs=[gallery, page_num_select,
-                                                 gallery])
+    pvw_btn.click(gallery_manager.prev_page, inputs=[],
+                  outputs=[gallery, page_num_select, gallery])
+    nxt_btn.click(gallery_manager.next_page, inputs=[],
+                  outputs=[gallery, page_num_select, gallery])
     first_btn.click(gallery_manager.reload_gallery, inputs=[],
                     outputs=[gallery, page_num_select, gallery])
     last_btn.click(gallery_manager.last_page, inputs=[],
@@ -528,8 +532,8 @@ with gr.Blocks() as options_block:
                                       interactive=True)
             taesd_dir_txt = gr.Textbox(label="TAESD folder", value=taesd_dir,
                                        interactive=True)
-            upscl_dir_txt = gr.Textbox(label="Upscaler folder", value=upscl_dir,
-                                       interactive=True)
+            upscl_dir_txt = gr.Textbox(label="Upscaler folder",
+                                       value=upscl_dir, interactive=True)
             cnnet_dir_txt = gr.Textbox(label="ControlNet folder",
                                        value=cnnet_dir, interactive=True)
             txt2img_dir_txt = gr.Textbox(label="txt2img outputs folder",

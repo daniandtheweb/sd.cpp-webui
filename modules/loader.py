@@ -6,12 +6,13 @@ import gradio as gr
 
 from modules.config import model_dir
 
+
 def get_models(models_folder):
     """Lists models in a folder"""
     if os.path.isdir(models_folder):
         models = [model for model in os.listdir(models_folder)
-                 if os.path.isfile(models_folder + model) and
-                 (model.endswith((".gguf", ".safetensors", ".pth")))]
+                  if os.path.isfile(models_folder + model) and
+                  (model.endswith((".gguf", ".safetensors", ".pth")))]
         return models
 
     print(f"The {models_folder} folder does not exist.")

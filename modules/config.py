@@ -9,6 +9,7 @@ CURRENT_DIR = os.getcwd()
 CONFIG_PATH = 'config.json'
 PROMPTS_PATH = 'prompts.json'
 
+
 def set_defaults(in_model, in_vae, in_sampling, in_steps, in_schedule,
                  in_width, in_height, in_model_dir_txt, in_vae_dir_txt,
                  in_emb_dir_txt, in_lora_dir_txt, in_taesd_dir_txt,
@@ -21,7 +22,7 @@ def set_defaults(in_model, in_vae, in_sampling, in_steps, in_schedule,
         'emb_dir': in_emb_dir_txt,
         'lora_dir': in_lora_dir_txt,
         'taesd_dir': in_taesd_dir_txt,
-        'upscl_dir' : in_upscl_dir_txt,
+        'upscl_dir': in_upscl_dir_txt,
         'cnnet_dir': in_cnnet_dir_txt,
         'txt2img_dir': in_txt2img_dir_txt,
         'img2img_dir': in_img2img_dir_txt,
@@ -51,7 +52,7 @@ def rst_def():
         'emb_dir': os.path.join(CURRENT_DIR, "models/Embeddings/"),
         'lora_dir': os.path.join(CURRENT_DIR, "models/Lora/"),
         'taesd_dir': os.path.join(CURRENT_DIR, "models/TAESD/"),
-        'upscl_dir' : os.path.join(CURRENT_DIR, "models/Upscalers/"),
+        'upscl_dir': os.path.join(CURRENT_DIR, "models/Upscalers/"),
         'cnnet_dir': os.path.join(CURRENT_DIR, "models/ControlNet/"),
         'txt2img_dir': os.path.join(CURRENT_DIR, "outputs/txt2img/"),
         'img2img_dir': os.path.join(CURRENT_DIR, "outputs/img2img/"),
@@ -133,7 +134,7 @@ def load_prompts(prompt):
 
 
 if not os.path.isfile(CONFIG_PATH):
-        # Create an empty JSON file
+    # Create an empty JSON file
     with open(CONFIG_PATH, 'w', encoding="utf-8") as config_file:
         # Write an empty JSON object
         json.dump({}, config_file, indent=4)
@@ -173,7 +174,7 @@ def_height = data['def_height']
 
 
 if not os.path.isfile(PROMPTS_PATH):
-        # Create an empty JSON file
+    # Create an empty JSON file
     with open('prompts.json', 'w', encoding="utf-8") as prompts:
         # Write an empty JSON object
         json.dump({}, prompts, indent=4)
