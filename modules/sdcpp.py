@@ -12,7 +12,7 @@ from modules.config import (
 
 SD = exe_name()
 
-def txt2img(in_model, in_vae, in_taesd, in_upscl, in_cnnet, in_control_img,
+def txt2img(in_model, in_vae, in_taesd, in_upscl, in_upscl_rep, in_cnnet, in_control_img,
             in_control_strength, in_ppromt, in_nprompt, in_sampling,
             in_steps, in_schedule, in_width, in_height, in_batch_count,
             in_cfg, in_seed, in_clip_skip, in_threads, in_vae_tiling,
@@ -42,7 +42,8 @@ def txt2img(in_model, in_vae, in_taesd, in_upscl, in_cnnet, in_control_img,
     if ftaesd:
         command.extend(['--taesd', ftaesd])
     if fupscl:
-        command.extend(['--upscale-model', fupscl])
+        command.extend(['--upscale-model', fupscl,
+                        '--upscale-repeats', str(in_upscl_rep)])
     if fcnnet:
         command.extend(['--control-net', fcnnet, '--control-image',
                         in_control_img, '--control-strength',
@@ -68,7 +69,7 @@ def txt2img(in_model, in_vae, in_taesd, in_upscl, in_cnnet, in_control_img,
     return [foutput]
 
 
-def img2img(in_model, in_vae, in_taesd, in_img_inp, in_upscl, in_cnnet,
+def img2img(in_model, in_vae, in_taesd, in_img_inp, in_upscl, in_upscl_rep, in_cnnet,
             in_control_img, in_control_strength, in_ppromt, in_nprompt,
             in_sampling, in_steps, in_schedule, in_width, in_height,
             in_batch_count, in_strenght, in_cfg, in_seed, in_clip_skip,
@@ -98,7 +99,8 @@ def img2img(in_model, in_vae, in_taesd, in_img_inp, in_upscl, in_cnnet,
     if ftaesd:
         command.extend(['--taesd', ftaesd])
     if fupscl:
-        command.extend(['--upscale-model', fupscl])
+        command.extend(['--upscale-model', fupscl,
+                        '--upscale-repeats', str(in_upscl_rep)])
     if fcnnet:
         command.extend(['--control-net', fcnnet, '--control-image',
                         in_control_img, '--control-strength',

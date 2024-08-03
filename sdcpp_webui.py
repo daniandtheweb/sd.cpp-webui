@@ -154,6 +154,8 @@ with gr.Blocks() as txt2img_block:
                                     choices=get_models(upscl_dir))
                 reload_upscl_btn = gr.Button(value=RELOAD_SYMBOL)
                 clear_upscl = gr.ClearButton(upscl)
+                upscl_rep = gr.Slider(label="Upscaler repeats", minimum=1,
+                                      maximum=5, value=1, step=0.1)
 
             # ControlNet
             with gr.Accordion(label="ControlNet", open=False):
@@ -191,7 +193,7 @@ with gr.Blocks() as txt2img_block:
                                    height="auto")
 
     # Generate
-    gen_btn.click(txt2img, inputs=[model, vae, taesd, upscl, cnnet,
+    gen_btn.click(txt2img, inputs=[model, vae, taesd, upscl, upscl_rep, cnnet,
                                    control_img, control_strength,
                                    pprompt, nprompt, sampling, steps,
                                    schedule, width, height, batch_count,
@@ -321,6 +323,8 @@ with gr.Blocks()as img2img_block:
                                     choices=get_models(upscl_dir))
                 reload_upscl_btn = gr.Button(value=RELOAD_SYMBOL)
                 clear_upscl = gr.ClearButton(upscl)
+                upscl_rep = gr.Slider(label="Upscaler repeats", minimum=1,
+                                      maximum=5, value=1, step=0.1)
 
             # ControlNet
             with gr.Accordion(label="ControlNet", open=False):
@@ -359,7 +363,7 @@ with gr.Blocks()as img2img_block:
 
     # Generate
     gen_btn.click(img2img, inputs=[model, vae, taesd, img_inp,
-                                   upscl, cnnet, control_img,
+                                   upscl, upscl_rep, cnnet, control_img,
                                    control_strength, pprompt,
                                    nprompt, sampling, steps, schedule,
                                    width, height, batch_count,
