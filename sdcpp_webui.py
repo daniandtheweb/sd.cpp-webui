@@ -314,6 +314,9 @@ with gr.Blocks()as img2img_block:
                                         maximum=99, step=1, value=1)
             strenght = gr.Slider(label="Noise strenght", minimum=0, maximum=1,
                                  step=0.01, value=0.75)
+            style_ratio_btn = gr.Checkbox(label="Enable style-ratio")
+            style_ratio = gr.Slider(label="Style ratio", minimum=0,
+                                    maximum=100, step=1, value=20)
             cfg = gr.Slider(label="CFG Scale", minimum=1, maximum=30,
                             step=0.1, value=7.0)
             seed = gr.Number(label="Seed", minimum=-1, maximum=2**32, value=-1)
@@ -370,9 +373,10 @@ with gr.Blocks()as img2img_block:
                                    control_strength, pprompt,
                                    nprompt, sampling, steps, schedule,
                                    width, height, batch_count,
-                                   strenght, cfg, seed, clip_skip,
-                                   threads, vae_tiling, vae_cpu, cnnet_cpu,
-                                   canny, rng, output, color, verbose],
+                                   strenght, style_ratio, style_ratio_btn,
+                                   cfg, seed, clip_skip, threads, vae_tiling,
+                                   vae_cpu, cnnet_cpu, canny, rng, output,
+                                   color, verbose],
                   outputs=[img_final])
     kill_btn.click(kill_subprocess, inputs=[], outputs=[])
 

@@ -73,9 +73,10 @@ def txt2img(in_model, in_vae, in_taesd, in_upscl, in_upscl_rep, in_cnnet,
 def img2img(in_model, in_vae, in_taesd, in_img_inp, in_upscl, in_upscl_rep,
             in_cnnet, in_control_img, in_control_strength, in_ppromt,
             in_nprompt, in_sampling, in_steps, in_schedule, in_width,
-            in_height, in_batch_count, in_strenght, in_cfg, in_seed,
-            in_clip_skip, in_threads, in_vae_tiling, in_vae_cpu, in_cnnet_cpu,
-            in_canny, in_rng, in_output, in_color, in_verbose):
+            in_height, in_batch_count, in_strenght, in_style_ratio,
+            in_style_ratio_btn, in_cfg, in_seed, in_clip_skip, in_threads,
+            in_vae_tiling, in_vae_cpu, in_cnnet_cpu, in_canny, in_rng,
+            in_output, in_color, in_verbose):
     """Image to image command creator"""
     fmodel = os.path.join(model_dir, in_model) if in_model else None
     fvae = os.path.join(vae_dir, in_vae) if in_vae else None
@@ -99,6 +100,8 @@ def img2img(in_model, in_vae, in_taesd, in_img_inp, in_upscl, in_upscl_rep,
         command.extend(['--vae', fvae])
     if ftaesd:
         command.extend(['--taesd', ftaesd])
+    if in_style_ratio_btn:
+        command.extend(['--style-ratio', str(in_style_ratio)])
     if fupscl:
         command.extend(['--upscale-model', fupscl,
                         '--upscale-repeats', str(in_upscl_rep)])
