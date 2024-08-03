@@ -4,6 +4,8 @@ A simple interface based on Gradio library for [stable-diffusion.cpp](https://gi
 
 This program is essentially a command generator for **stable-diffusion.cpp** with some extra functions.
 
+> [!IMPORTANT]
+[2024 Aug 3] There's been a lot of refactoring around the project, to avoid any issues delete the old `config.json` file, the program will create a new one on the next start.
 
 ## Features
 
