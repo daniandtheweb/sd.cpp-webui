@@ -90,17 +90,18 @@ def reload_prompts():
 
 def save_prompts(prompt, pos_prompt, neg_prompt):
     """Saves a prompt"""
-    if prompt is not None and prompt.strip():
+    if prompt is not None:
         with open(PROMPTS_PATH, 'r', encoding="utf-8") as prompts_file:
             prompts_data = json.load(prompts_file)
 
-        prompts_data[prompts_file.strip()] = {
+        prompts_data[prompt.strip()] = {
             'positive': pos_prompt,
             'negative': neg_prompt
         }
 
         with open(PROMPTS_PATH, 'w', encoding="utf-8") as prompts_file:
             json.dump(prompts_data, prompts_file, indent=4)
+        print(f"Prompt '{prompt}' saved.")
 
 
 def delete_prompts(prompt):
@@ -110,12 +111,11 @@ def delete_prompts(prompt):
 
     if prompt in prompts_data:
         del prompts_data[prompt]
-        print(f"Key '{prompt}' deleted.")
+        with open(PROMPTS_PATH, 'w', encoding="utf-8") as prompts_file:
+            json.dump(prompts_data, prompts_file, indent=4)
+        print(f"Prompt '{prompt}' deleted.")
     else:
-        print(f"Key '{prompt}' not found.")
-
-    with open(PROMPTS_PATH, 'w', encoding="utf-8") as prompts_file:
-        json.dump(prompts_data, prompts_file, indent=4)
+        print(f"Prompt '{prompt}' not found.")
 
 
 def load_prompts(prompt):

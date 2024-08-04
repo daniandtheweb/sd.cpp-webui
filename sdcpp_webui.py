@@ -147,7 +147,7 @@ with gr.Blocks() as txt2img_block:
                             value=7.0, step=0.1)
             seed = gr.Number(label="Seed", minimum=-1, maximum=2**32, value=-1)
             clip_skip = gr.Slider(label="CLIP skip", minimum=0, maximum=12,
-                                  value=0, step=0.1)
+                                  value=0, step=1)
 
             # Upscale
             with gr.Accordion(label="Upscale", open=False):
