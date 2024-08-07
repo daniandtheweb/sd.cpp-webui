@@ -17,6 +17,7 @@ class GalleryManager:
         self.ctrl = 0
         self.txt2img_dir = txt2img_gallery
         self.img2img_dir = img2img_gallery
+        self.img_sel = ""
 
     def _get_img_dir(self):
         """Determines the directory based on the control value"""
@@ -112,6 +113,7 @@ class GalleryManager:
             img_path = file_paths[img_index]
         except IndexError:
             return "Image index is out of range."
+        self.img_sel = file_paths[img_index]
         if img_path.endswith(('.jpg', '.jpeg')):
             return extract_exif_from_jpg(img_path)
         if img_path.endswith('.png'):
@@ -131,6 +133,12 @@ class GalleryManager:
                         png_exif = f"{value.decode('utf-8')}"
                         return f"PNG: tEXt\nPositive prompt: {png_exif}"
         return None
+
+    def delete_img(self):
+        """Deletes a selected image"""
+        os.remove(self.img_sel)
+        print(f"Deleted {self.img_sel}")
+        return self.reload_gallery(None, self.page_num)
 
 
 def extract_exif_from_jpg(img_path):

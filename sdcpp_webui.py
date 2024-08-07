@@ -427,14 +427,19 @@ with gr.Blocks() as gallery_block:
         go_btn = gr.Button(value="Go", scale=1)
 
     with gr.Row():
-        # Gallery Display
-        gallery = gr.Gallery(label="txt2img", columns=[4], rows=[4],
-                             object_fit="contain", height="auto",
-                             scale=2, min_width=500)
-        # Image Information Display
-        img_info_txt = gr.Textbox(label="Metadata", value="",
-                                  interactive=False, scale=1,
-                                  min_width=300)
+        with gr.Column():
+            # Gallery Display
+            gallery = gr.Gallery(label="txt2img", columns=[4], rows=[4],
+                                 object_fit="contain", height="auto",
+                                 scale=2, min_width=500)
+
+        with gr.Column():
+            # Image Information Display
+            img_info_txt = gr.Textbox(label="Metadata", value="",
+                                      interactive=False, scale=1,
+                                      min_width=300)
+            # Delete image Button
+            del_img = gr.Button(value="Delete")
 
     # Interactive bindings
     gallery_manager = GalleryManager(txt2img_dir, img2img_dir)
@@ -453,6 +458,8 @@ with gr.Blocks() as gallery_block:
                    outputs=[gallery, page_num_select, gallery])
     go_btn.click(gallery_manager.goto_gallery, inputs=[page_num_select],
                  outputs=[gallery, page_num_select, gallery])
+    del_img.click(gallery_manager.delete_img, inputs=[],
+                  outputs=[gallery, page_num_select, gallery])
 
 
 with gr.Blocks() as convert_block:
