@@ -1,6 +1,7 @@
 """sd.cpp-webui - Gallery module"""
 
 import os
+import re
 from PIL import Image
 
 import gradio as gr
@@ -18,6 +19,7 @@ class GalleryManager:
         self.txt2img_dir = txt2img_gallery
         self.img2img_dir = img2img_gallery
         self.img_sel = ""
+        self.exif = ""
 
     def _get_img_dir(self):
         """Determines the directory based on the control value"""
@@ -89,6 +91,22 @@ class GalleryManager:
         imgs = self.reload_gallery(self.ctrl, self.page_num, subctrl=1)
         return imgs, self.page_num, gr.Gallery(selected_index=None)
 
+    def extract_exif_from_jpg(self, img_path):
+        """Extracts exif data from jpg"""
+        img = Image.open(img_path)
+        exif_data = img._getexif()
+
+        if exif_data is not None:
+            user_comment = exif_data.get(37510)  # 37510 = UserComment tag
+            if user_comment:
+                self.exif = f"JPG: Exif\nPositive prompt: "\
+                            f"{user_comment.decode('utf-8')[9::2]}"
+                return self.exif
+
+            return "JPG: No User Comment found."
+
+        return "JPG: Exif\nNo EXIF data found."
+
     def last_page(self):
         """Moves to the last gallery page"""
         img_dir = self._get_img_dir()
@@ -115,7 +133,10 @@ class GalleryManager:
             return "Image index is out of range."
         self.img_sel = file_paths[img_index]
         if img_path.endswith(('.jpg', '.jpeg')):
-            return extract_exif_from_jpg(img_path)
+            pprompt_out = ""
+            nprompt_out = ""
+            exif = self.extract_exif_from_jpg(img_path)
+            return [pprompt_out, nprompt_out, exif]
         if img_path.endswith('.png'):
             with open(img_path, 'rb') as file:
                 if file.read(8) != b'\x89PNG\r\n\x1a\n':
@@ -131,7 +152,18 @@ class GalleryManager:
                     if chunk_type == 'tEXt':
                         _, value = png_block.split(b'\x00', 1)
                         png_exif = f"{value.decode('utf-8')}"
-                        return f"PNG: tEXt\nPositive prompt: {png_exif}"
+                        exif = f"PNG: tEXt\nPositive prompt: {png_exif}"
+                        ppattern = r'Positive prompt:\s*"([^"]*)"'
+                        npattern = r'Negative prompt:\s*"([^"]*)"'
+                        pmatch = re.search(ppattern, exif)
+                        nmatch = re.search(npattern, exif)
+
+                        pprompt = pmatch.group(1) if pmatch else "Not found"
+                        nprompt = nmatch.group(1) if nmatch else "Not found"
+
+                        pprompt_out = gr.update(value=pprompt)
+                        nprompt_out = gr.update(value=nprompt)
+                        return [pprompt_out, nprompt_out, exif]
         return None
 
     def delete_img(self):
@@ -139,22 +171,6 @@ class GalleryManager:
         os.remove(self.img_sel)
         print(f"Deleted {self.img_sel}")
         return self.reload_gallery(None, self.page_num)
-
-
-def extract_exif_from_jpg(img_path):
-    """Extracts exif data from jpg"""
-    img = Image.open(img_path)
-    exif_data = img._getexif()
-
-    if exif_data is not None:
-        user_comment = exif_data.get(37510)  # 37510 = UserComment tag
-        if user_comment:
-            return f"JPG: Exif\nPositive prompt: "\
-                   f"{user_comment.decode('utf-8')[9::2]}"
-
-        return "JPG: No User Comment found."
-
-    return "JPG: Exif\nNo EXIF data found."
 
 
 def get_next_img(subctrl):

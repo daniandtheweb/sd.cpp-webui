@@ -434,16 +434,27 @@ with gr.Blocks() as gallery_block:
                                  scale=2, min_width=500)
 
         with gr.Column():
+            # Positive prompts
+            pprompt = gr.Textbox(label="Positive prompt:", value="",
+                                 interactive=False, scale=1,
+                                 min_width=300, show_copy_button=True,
+                                 max_lines=4)
+            nprompt = gr.Textbox(label="Negative prompt:", value="",
+                                 interactive=False, scale=1,
+                                 min_width=300, show_copy_button=True,
+                                 max_lines=4)
+            # Negative prompts
             # Image Information Display
             img_info_txt = gr.Textbox(label="Metadata", value="",
                                       interactive=False, scale=1,
-                                      min_width=300)
+                                      min_width=300, max_lines=4)
             # Delete image Button
             del_img = gr.Button(value="Delete")
 
     # Interactive bindings
     gallery_manager = GalleryManager(txt2img_dir, img2img_dir)
-    gallery.select(gallery_manager.img_info, inputs=[], outputs=[img_info_txt])
+    gallery.select(gallery_manager.img_info, inputs=[],
+                   outputs=[pprompt, nprompt, img_info_txt])
     txt2img_btn.click(gallery_manager.reload_gallery, inputs=[txt2img_ctrl],
                       outputs=[gallery, page_num_select, gallery])
     img2img_btn.click(gallery_manager.reload_gallery, inputs=[img2img_ctrl],
