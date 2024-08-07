@@ -178,6 +178,9 @@ with gr.Blocks() as txt2img_block:
                 vae_cpu = gr.Checkbox(label="VAE on CPU")
                 rng = gr.Dropdown(label="RNG", choices=["std_default", "cuda"],
                                   value="cuda")
+                predict = gr.Dropdown(label="Prediction", choices=["eps", "v",
+                                                                   "flow"],
+                                      value="eps")
                 output = gr.Textbox(label="Output Name",
                                     placeholder="Optional")
                 color = gr.Checkbox(label="Color", value=True)
@@ -200,7 +203,7 @@ with gr.Blocks() as txt2img_block:
                                    schedule, width, height, batch_count,
                                    cfg, seed, clip_skip, threads,
                                    vae_tiling, vae_cpu, cnnet_cpu, rng,
-                                   output, color, verbose],
+                                   predict, output, color, verbose],
                   outputs=[img_final])
     kill_btn.click(kill_subprocess, inputs=[], outputs=[])
 
@@ -357,6 +360,9 @@ with gr.Blocks()as img2img_block:
                 vae_cpu = gr.Checkbox(label="VAE on CPU")
                 rng = gr.Dropdown(label="RNG", choices=["std_default", "cuda"],
                                   value="cuda")
+                predict = gr.Dropdown(label="Prediction", choices=["eps", "v",
+                                                                   "flow"],
+                                      value="eps")
                 output = gr.Textbox(label="Output Name (optional)", value="")
                 color = gr.Checkbox(label="Color", value=True)
                 verbose = gr.Checkbox(label="Verbose")
@@ -377,8 +383,8 @@ with gr.Blocks()as img2img_block:
                                    width, height, batch_count,
                                    strenght, style_ratio, style_ratio_btn,
                                    cfg, seed, clip_skip, threads, vae_tiling,
-                                   vae_cpu, cnnet_cpu, canny, rng, output,
-                                   color, verbose],
+                                   vae_cpu, cnnet_cpu, canny, rng, predict,
+                                   output, color, verbose],
                   outputs=[img_final])
     kill_btn.click(kill_subprocess, inputs=[], outputs=[])
 

@@ -17,8 +17,8 @@ def txt2img(in_model, in_vae, in_taesd, in_upscl, in_upscl_rep, in_cnnet,
             in_control_img, in_control_strength, in_ppromt, in_nprompt,
             in_sampling, in_steps, in_schedule, in_width, in_height,
             in_batch_count, in_cfg, in_seed, in_clip_skip, in_threads,
-            in_vae_tiling, in_vae_cpu, in_cnnet_cpu, in_rng, in_output,
-            in_color, in_verbose):
+            in_vae_tiling, in_vae_cpu, in_cnnet_cpu, in_rng, in_predict,
+            in_output, in_color, in_verbose):
     """Text to image command creator"""
     fmodel = os.path.join(model_dir, in_model) if in_model else None
     fvae = os.path.join(vae_dir, in_vae) if in_vae else None
@@ -36,7 +36,7 @@ def txt2img(in_model, in_vae, in_taesd, in_upscl, in_upscl_rep, in_cnnet,
                str(in_cfg), '-s', str(in_seed), '--clip-skip',
                str(in_clip_skip + 1), '--embd-dir', emb_dir,
                '--lora-model-dir', lora_dir, '-t', str(in_threads), '--rng',
-               str(in_rng), '-o', foutput]
+               str(in_rng), '--prediction', str(in_predict), '-o', foutput]
 
     if fvae:
         command.extend(['--vae', fvae])
@@ -76,7 +76,7 @@ def img2img(in_model, in_vae, in_taesd, in_img_inp, in_upscl, in_upscl_rep,
             in_height, in_batch_count, in_strenght, in_style_ratio,
             in_style_ratio_btn, in_cfg, in_seed, in_clip_skip, in_threads,
             in_vae_tiling, in_vae_cpu, in_cnnet_cpu, in_canny, in_rng,
-            in_output, in_color, in_verbose):
+            in_predict, in_output, in_color, in_verbose):
     """Image to image command creator"""
     fmodel = os.path.join(model_dir, in_model) if in_model else None
     fvae = os.path.join(vae_dir, in_vae) if in_vae else None
@@ -94,7 +94,8 @@ def img2img(in_model, in_vae, in_taesd, in_img_inp, in_upscl, in_upscl_rep,
                '--strength', str(in_strenght), '--cfg-scale', str(in_cfg),
                '-s', str(in_seed), '--clip-skip', str(in_clip_skip + 1),
                '--embd-dir', emb_dir, '--lora-model-dir', lora_dir, '-t',
-               str(in_threads), '--rng', str(in_rng), '-o', foutput]
+               str(in_threads), '--rng', str(in_rng), '--prediction',
+               str(in_predict), '-o', foutput]
 
     if fvae:
         command.extend(['--vae', fvae])
