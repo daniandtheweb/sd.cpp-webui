@@ -15,7 +15,7 @@ from modules.config import (
     delete_prompts, load_prompts, model_dir, vae_dir, emb_dir, lora_dir,
     taesd_dir, upscl_dir, cnnet_dir, txt2img_dir, img2img_dir,
     def_model, def_vae, def_sampling, def_steps, def_scheduler,
-    def_width, def_height
+    def_width, def_height, def_predict
 )
 from modules.loader import (
     get_models, reload_models, get_hf_models, reload_hf_models
@@ -180,7 +180,7 @@ with gr.Blocks() as txt2img_block:
                                   value="cuda")
                 predict = gr.Dropdown(label="Prediction", choices=["eps", "v",
                                                                    "flow"],
-                                      value="eps")
+                                      value=def_predict)
                 output = gr.Textbox(label="Output Name",
                                     placeholder="Optional")
                 color = gr.Checkbox(label="Color", value=True)
@@ -362,7 +362,7 @@ with gr.Blocks()as img2img_block:
                                   value="cuda")
                 predict = gr.Dropdown(label="Prediction", choices=["eps", "v",
                                                                    "flow"],
-                                      value="eps")
+                                      value=def_predict)
                 output = gr.Textbox(label="Output Name (optional)", value="")
                 color = gr.Checkbox(label="Color", value=True)
                 verbose = gr.Checkbox(label="Verbose")
@@ -532,6 +532,11 @@ with gr.Blocks() as options_block:
         height = gr.Slider(label="Height", minimum=64, maximum=2048,
                            value=def_height, step=8)
 
+        # Prediction mode
+        predict = gr.Dropdown(label="Prediction", choices=["eps", "v",
+                                                           "flow"],
+                              value=def_predict)
+
         # Folders Accordion
         with gr.Accordion(label="Folders", open=False):
             model_dir_txt = gr.Textbox(label="Models folder", value=model_dir,
@@ -557,11 +562,12 @@ with gr.Blocks() as options_block:
         with gr.Row():
             set_btn = gr.Button(value="Set Defaults")
             set_btn.click(set_defaults, [model, vae, sampling, steps, schedule,
-                                         width, height, model_dir_txt,
-                                         vae_dir_txt, emb_dir_txt,
-                                         lora_dir_txt, taesd_dir_txt,
-                                         upscl_dir_txt, cnnet_dir_txt,
-                                         txt2img_dir_txt, img2img_dir_txt], [])
+                                         width, height, predict,
+                                         model_dir_txt, vae_dir_txt,
+                                         emb_dir_txt, lora_dir_txt,
+                                         taesd_dir_txt, upscl_dir_txt,
+                                         cnnet_dir_txt, txt2img_dir_txt,
+                                         img2img_dir_txt], [])
             restore_btn = gr.Button(value="Restore Defaults")
             restore_btn.click(rst_def, [], [])
 

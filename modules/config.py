@@ -11,10 +11,10 @@ PROMPTS_PATH = 'prompts.json'
 
 
 def set_defaults(in_model, in_vae, in_sampling, in_steps, in_schedule,
-                 in_width, in_height, in_model_dir_txt, in_vae_dir_txt,
-                 in_emb_dir_txt, in_lora_dir_txt, in_taesd_dir_txt,
-                 in_upscl_dir_txt, in_cnnet_dir_txt, in_txt2img_dir_txt,
-                 in_img2img_dir_txt):
+                 in_width, in_height, in_predict, in_model_dir_txt,
+                 in_vae_dir_txt, in_emb_dir_txt, in_lora_dir_txt,
+                 in_taesd_dir_txt, in_upscl_dir_txt, in_cnnet_dir_txt,
+                 in_txt2img_dir_txt, in_img2img_dir_txt):
     """Sets new defaults"""
     data.update({
         'model_dir': in_model_dir_txt,
@@ -30,7 +30,8 @@ def set_defaults(in_model, in_vae, in_sampling, in_steps, in_schedule,
         'def_steps': in_steps,
         'def_scheduler': in_schedule,
         'def_width': in_width,
-        'def_height': in_height
+        'def_height': in_height,
+        'def_predict' : in_predict
     })
 
     if in_model:
@@ -60,7 +61,8 @@ def rst_def():
         'def_steps': 20,
         'def_scheduler': "discrete",
         'def_width': 512,
-        'def_height': 512
+        'def_height': 512,
+        'def_predict': "eps"
     })
 
     data.pop('def_model', None)
@@ -171,6 +173,7 @@ def_steps = data['def_steps']
 def_scheduler = data['def_scheduler']
 def_width = data['def_width']
 def_height = data['def_height']
+def_predict = data['def_predict']
 
 
 if not os.path.isfile(PROMPTS_PATH):
