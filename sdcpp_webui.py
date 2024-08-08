@@ -470,7 +470,8 @@ with gr.Blocks() as gallery_block:
     go_btn.click(gallery_manager.goto_gallery, inputs=[page_num_select],
                  outputs=[gallery, page_num_select, gallery])
     del_img.click(gallery_manager.delete_img, inputs=[],
-                  outputs=[gallery, page_num_select, gallery])
+                  outputs=[gallery, page_num_select, gallery,
+                           pprompt, nprompt, img_info_txt])
 
 
 with gr.Blocks() as convert_block:

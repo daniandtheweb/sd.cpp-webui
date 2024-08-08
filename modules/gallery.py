@@ -18,8 +18,10 @@ class GalleryManager:
         self.ctrl = 0
         self.txt2img_dir = txt2img_gallery
         self.img2img_dir = img2img_gallery
-        self.img_sel = ""
-        self.exif = ""
+        self.img_index = int
+        self.sel_img = int
+        self.img_path = str
+        self.exif = str
 
     def _get_img_dir(self):
         """Determines the directory based on the control value"""
@@ -120,7 +122,11 @@ class GalleryManager:
 
     def img_info(self, sel_img: gr.SelectData):
         """Reads generation data from an image"""
-        img_index = (self.page_num * 16) - 16 + sel_img.index
+        if hasattr(sel_img, 'index'):
+            self.img_index = (self.page_num * 16) - 16 + sel_img.index
+            self.sel_img = sel_img.index
+        else:
+            self.img_index = (self.page_num * 16) - 16 + sel_img
         img_dir = self._get_img_dir()
         file_paths = [os.path.join(img_dir, file)
                       for file in os.listdir(img_dir)
@@ -128,17 +134,16 @@ class GalleryManager:
                       file.lower().endswith(('.png', '.jpg'))]
         file_paths.sort(key=os.path.getctime)
         try:
-            img_path = file_paths[img_index]
+            self.img_path = file_paths[self.img_index]
         except IndexError:
             return "Image index is out of range."
-        self.img_sel = file_paths[img_index]
-        if img_path.endswith(('.jpg', '.jpeg')):
+        if self.img_path.endswith(('.jpg', '.jpeg')):
             pprompt_out = ""
             nprompt_out = ""
-            exif = self.extract_exif_from_jpg(img_path)
+            exif = self.extract_exif_from_jpg(self.img_path)
             return [pprompt_out, nprompt_out, exif]
-        if img_path.endswith('.png'):
-            with open(img_path, 'rb') as file:
+        if self.img_path.endswith('.png'):
+            with open(self.img_path, 'rb') as file:
                 if file.read(8) != b'\x89PNG\r\n\x1a\n':
                     return None
                 while True:
@@ -168,9 +173,41 @@ class GalleryManager:
 
     def delete_img(self):
         """Deletes a selected image"""
-        os.remove(self.img_sel)
-        print(f"Deleted {self.img_sel}")
-        return self.reload_gallery(None, self.page_num)
+        try:
+            os.remove(self.img_path)
+            print(f"Deleted {self.img_path}")
+            img_dir = self._get_img_dir()
+            files = os.listdir(img_dir)
+            total_imgs = len([file for file in files
+                             if file.endswith(('.png', '.jpg'))])
+            file_paths = [os.path.join(img_dir, file)
+                          for file in files
+                          if os.path.isfile(os.path.join(img_dir, file)) and
+                          file.lower().endswith(('.png', '.jpg'))]
+            file_paths.sort(key=os.path.getctime)
+
+            if self.img_index > total_imgs:
+                self.img_index -= 1
+
+            if total_imgs == 0:
+                self.sel_img = None
+            if self.img_index == total_imgs:
+                if self.sel_img == 0 or self.sel_img % 16 == 0:
+                    self.sel_img = 16
+                    self.page_num -= 1
+
+            try:
+                self.img_path = file_paths[self.img_index]
+            except IndexError:
+                return "Image index is out of range."
+
+            imgs, _, _ = self.reload_gallery(None, self.page_num)
+            pprompt_out, nprompt_out, exif = self.img_info(self.sel_img)
+            return [imgs, self.page_num, gr.update(self.sel_img),
+                    pprompt_out, nprompt_out, exif]
+        except FileNotFoundError as e:
+            print(f"Error deleting image: {e}")
+            return "An error occurred while deleting."
 
 
 def get_next_img(subctrl):
