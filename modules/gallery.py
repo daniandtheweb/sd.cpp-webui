@@ -157,12 +157,12 @@ class GalleryManager:
                     if chunk_type == 'tEXt':
                         _, value = png_block.split(b'\x00', 1)
                         png_exif = f"{value.decode('utf-8')}"
-                        comfypattern = r'(?s)\{\s*.*\}\s*\}'
-                        comfymatch = re.search(comfypattern, png_exif)
-                        if comfymatch:
+                        sdcpppattern = r'(?s).*Version: stable-diffusion.cpp'
+                        sdcppmatch = re.match(sdcpppattern, png_exif)
+                        if sdcppmatch is None:
                             exif = png_exif
-                            ppattern = r'"text":\s*"[^"]*"\s*,\s*"clip"'
-                            npattern = r'(?:.*?"text":\s*"[^"]*"\s*,\s*)("text":\s*"[^"]*?".*?",\s*"clip")'
+                            ppattern = r'.*?{"text":\s*"([^"]*)",\s"clip".*'
+                            npattern = r'(?=.*{"text":\s*"([^"]*)",\s"clip".*)(.*{"text":\s*"([^"]*)",\s*"clip".*)'
 
                         else:
                             exif = f"PNG: tEXt\nPositive prompt: {png_exif}"
@@ -172,8 +172,14 @@ class GalleryManager:
                         pmatch = re.search(ppattern, exif)
                         nmatch = re.search(npattern, exif)
 
-                        pprompt = pmatch.group(1) if pmatch else "Not found"
-                        nprompt = nmatch.group(1) if nmatch else "Not found"
+                        if pmatch and pmatch.lastindex is not None:
+                            pprompt = pmatch.group(1)
+                        else:
+                            pprompt = "Not found"
+                        if nmatch and nmatch.lastindex is not None:
+                            nprompt = nmatch.group(1)
+                        else:
+                            nprompt = "Not found"
 
                         pprompt_out = gr.update(value=pprompt)
                         nprompt_out = gr.update(value=nprompt)
