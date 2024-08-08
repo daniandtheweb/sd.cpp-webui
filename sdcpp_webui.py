@@ -25,6 +25,7 @@ CURRENT_DIR = os.getcwd()
 SAMPLERS = ["euler", "euler_a", "heun", "dpm2", "dpm++2s_a", "dpm++2m",
             "dpm++2mv2", "lcm"]
 SCHEDULERS = ["discrete", "karras", "ays"]
+PREDICTION = ["Default", "eps", "v", "flow"]
 RELOAD_SYMBOL = '\U0001f504'
 
 
@@ -178,8 +179,8 @@ with gr.Blocks() as txt2img_block:
                 vae_cpu = gr.Checkbox(label="VAE on CPU")
                 rng = gr.Dropdown(label="RNG", choices=["std_default", "cuda"],
                                   value="cuda")
-                predict = gr.Dropdown(label="Prediction", choices=["eps", "v",
-                                                                   "flow"],
+                predict = gr.Dropdown(label="Prediction",
+                                      choices=PREDICTION,
                                       value=def_predict)
                 output = gr.Textbox(label="Output Name",
                                     placeholder="Optional")
@@ -360,8 +361,8 @@ with gr.Blocks()as img2img_block:
                 vae_cpu = gr.Checkbox(label="VAE on CPU")
                 rng = gr.Dropdown(label="RNG", choices=["std_default", "cuda"],
                                   value="cuda")
-                predict = gr.Dropdown(label="Prediction", choices=["eps", "v",
-                                                                   "flow"],
+                predict = gr.Dropdown(label="Prediction",
+                                      choices=PREDICTION,
                                       value=def_predict)
                 output = gr.Textbox(label="Output Name (optional)", value="")
                 color = gr.Checkbox(label="Color", value=True)

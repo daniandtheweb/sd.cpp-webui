@@ -62,7 +62,7 @@ def rst_def():
         'def_scheduler': "discrete",
         'def_width': 512,
         'def_height': 512,
-        'def_predict': "eps"
+        'def_predict': "Default"
     })
 
     data.pop('def_model', None)

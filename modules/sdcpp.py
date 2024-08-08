@@ -36,12 +36,14 @@ def txt2img(in_model, in_vae, in_taesd, in_upscl, in_upscl_rep, in_cnnet,
                str(in_cfg), '-s', str(in_seed), '--clip-skip',
                str(in_clip_skip + 1), '--embd-dir', emb_dir,
                '--lora-model-dir', lora_dir, '-t', str(in_threads), '--rng',
-               str(in_rng), '--prediction', str(in_predict), '-o', foutput]
+               str(in_rng), '-o', foutput]
 
     if fvae:
         command.extend(['--vae', fvae])
     if ftaesd:
         command.extend(['--taesd', ftaesd])
+    if str(in_predict) != "Default":
+        command.extend(['--prediction', str(in_predict)])
     if fupscl:
         command.extend(['--upscale-model', fupscl,
                         '--upscale-repeats', str(in_upscl_rep)])
@@ -94,8 +96,7 @@ def img2img(in_model, in_vae, in_taesd, in_img_inp, in_upscl, in_upscl_rep,
                '--strength', str(in_strenght), '--cfg-scale', str(in_cfg),
                '-s', str(in_seed), '--clip-skip', str(in_clip_skip + 1),
                '--embd-dir', emb_dir, '--lora-model-dir', lora_dir, '-t',
-               str(in_threads), '--rng', str(in_rng), '--prediction',
-               str(in_predict), '-o', foutput]
+               str(in_threads), '--rng', str(in_rng), '-o', foutput]
 
     if fvae:
         command.extend(['--vae', fvae])
@@ -103,6 +104,8 @@ def img2img(in_model, in_vae, in_taesd, in_img_inp, in_upscl, in_upscl_rep,
         command.extend(['--taesd', ftaesd])
     if in_style_ratio_btn:
         command.extend(['--style-ratio', str(in_style_ratio)])
+    if str(in_predict) != "Default":
+        command.extend(['--prediction', str(in_predict)])
     if fupscl:
         command.extend(['--upscale-model', fupscl,
                         '--upscale-repeats', str(in_upscl_rep)])

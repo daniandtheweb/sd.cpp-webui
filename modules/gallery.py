@@ -157,9 +157,18 @@ class GalleryManager:
                     if chunk_type == 'tEXt':
                         _, value = png_block.split(b'\x00', 1)
                         png_exif = f"{value.decode('utf-8')}"
-                        exif = f"PNG: tEXt\nPositive prompt: {png_exif}"
-                        ppattern = r'Positive prompt:\s*"([^"]*)"'
-                        npattern = r'Negative prompt:\s*"([^"]*)"'
+                        comfypattern = r'(?s)\{\s*.*\}\s*\}'
+                        comfymatch = re.search(comfypattern, png_exif)
+                        if comfymatch:
+                            exif = png_exif
+                            ppattern = r'"text":\s*"[^"]*"\s*,\s*"clip"'
+                            npattern = r'(?:.*?"text":\s*"[^"]*"\s*,\s*)("text":\s*"[^"]*?".*?",\s*"clip")'
+
+                        else:
+                            exif = f"PNG: tEXt\nPositive prompt: {png_exif}"
+                            ppattern = r'Positive prompt:\s*"([^"]*)"'
+                            npattern = r'Negative prompt:\s*"([^"]*)"'
+
                         pmatch = re.search(ppattern, exif)
                         nmatch = re.search(npattern, exif)
 
