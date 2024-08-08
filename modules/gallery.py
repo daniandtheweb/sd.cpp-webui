@@ -126,7 +126,7 @@ class GalleryManager:
             self.img_index = (self.page_num * 16) - 16 + sel_img.index
             self.sel_img = sel_img.index
         else:
-            self.img_index = (self.page_num * 16) - 16 + sel_img
+            self.img_index = (self.page_num * 16) - 16 + self.sel_img
         img_dir = self._get_img_dir()
         file_paths = [os.path.join(img_dir, file)
                       for file in os.listdir(img_dir)
@@ -141,7 +141,7 @@ class GalleryManager:
             pprompt_out = ""
             nprompt_out = ""
             exif = self.extract_exif_from_jpg(self.img_path)
-            return [pprompt_out, nprompt_out, exif]
+            return pprompt_out, nprompt_out, exif
         if self.img_path.endswith('.png'):
             with open(self.img_path, 'rb') as file:
                 if file.read(8) != b'\x89PNG\r\n\x1a\n':
@@ -183,7 +183,7 @@ class GalleryManager:
 
                         pprompt_out = gr.update(value=pprompt)
                         nprompt_out = gr.update(value=nprompt)
-                        return [pprompt_out, nprompt_out, exif]
+                        return pprompt_out, nprompt_out, exif
         return None
 
     def delete_img(self):
@@ -191,6 +191,7 @@ class GalleryManager:
         try:
             os.remove(self.img_path)
             print(f"Deleted {self.img_path}")
+            self.img_index -= 1
             img_dir = self._get_img_dir()
             files = os.listdir(img_dir)
             total_imgs = len([file for file in files
@@ -200,10 +201,6 @@ class GalleryManager:
                           if os.path.isfile(os.path.join(img_dir, file)) and
                           file.lower().endswith(('.png', '.jpg'))]
             file_paths.sort(key=os.path.getctime)
-
-            if self.img_index > total_imgs:
-                self.img_index -= 1
-
             if total_imgs == 0:
                 self.sel_img = None
             if self.img_index == total_imgs:
@@ -211,13 +208,17 @@ class GalleryManager:
                     self.sel_img = 16
                     self.page_num -= 1
 
+                else:
+                    self.sel_img -= 1
+
             try:
                 self.img_path = file_paths[self.img_index]
             except IndexError:
                 return "Image index is out of range."
 
             imgs, _, _ = self.reload_gallery(None, self.page_num)
-            pprompt_out, nprompt_out, exif = self.img_info(self.sel_img)
+            img_info = self.img_info(self.sel_img)
+            pprompt_out, nprompt_out, exif = img_info[:3]
             return [imgs, self.page_num, gr.update(self.sel_img),
                     pprompt_out, nprompt_out, exif]
         except FileNotFoundError as e:
