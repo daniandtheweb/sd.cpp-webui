@@ -148,7 +148,7 @@ with gr.Blocks() as txt2img_block:
                                         maximum=99, value=1, step=1)
             cfg = gr.Slider(label="CFG Scale", minimum=1, maximum=30,
                             value=7.0, step=0.1)
-            seed = gr.Number(label="Seed", minimum=-1, maximum=2**32, value=-1)
+            seed = gr.Number(label="Seed", minimum=-1, maximum=10**16, value=-1)
             clip_skip = gr.Slider(label="CLIP skip", minimum=0, maximum=12,
                                   value=0, step=1)
 
@@ -329,7 +329,7 @@ with gr.Blocks()as img2img_block:
                                     maximum=100, step=1, value=20)
             cfg = gr.Slider(label="CFG Scale", minimum=1, maximum=30,
                             step=0.1, value=7.0)
-            seed = gr.Number(label="Seed", minimum=-1, maximum=2**32, value=-1)
+            seed = gr.Number(label="Seed", minimum=-1, maximum=10**16, value=-1)
             clip_skip = gr.Slider(label="CLIP skip", minimum=0, maximum=12,
                                   value=0, step=0.1)
 
