@@ -56,6 +56,8 @@ def sdcpp_launch(listen=False, autostart=False):
         sdcpp.launch()
 
 
+os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
+
 with gr.Blocks() as txt2img_block:
     # Directory Textboxes
     model_dir_txt = gr.Textbox(value=model_dir, visible=False)
