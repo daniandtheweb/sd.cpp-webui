@@ -23,8 +23,8 @@ from modules.loader import (
 
 CURRENT_DIR = os.getcwd()
 SAMPLERS = ["euler", "euler_a", "heun", "dpm2", "dpm++2s_a", "dpm++2m",
-            "dpm++2mv2", "lcm"]
-SCHEDULERS = ["discrete", "karras", "ays"]
+            "dpm++2mv2", "ipndm", "ipndm_v", "lcm"]
+SCHEDULERS = ["discrete", "karras", "exponential", "ays", "gits"]
 PREDICTION = ["Default", "eps", "v", "flow"]
 RELOAD_SYMBOL = '\U0001f504'
 
