@@ -26,6 +26,8 @@ SAMPLERS = ["euler", "euler_a", "heun", "dpm2", "dpm++2s_a", "dpm++2m",
             "dpm++2mv2", "ipndm", "ipndm_v", "lcm"]
 SCHEDULERS = ["discrete", "karras", "exponential", "ays", "gits"]
 PREDICTION = ["Default", "eps", "v", "flow"]
+QUANTS = ["f32", "f16", "q8_0", "q4_k", "q3_k", "q2_k", "q5_1", "q5_0",
+          "q4_1", "q4_0"]
 RELOAD_SYMBOL = '\U0001f504'
 
 
@@ -492,8 +494,7 @@ with gr.Blocks() as convert_block:
                                  outputs=[orig_model])
 
             quant_type = gr.Dropdown(label="Type",
-                                     choices=["f32", "f16", "q8_0", "q5_1",
-                                              "q5_0", "q4_1", "q4_0"],
+                                     choices=QUANTS,
                                      value="f32")
 
             verbose = gr.Checkbox(label="Verbose")
