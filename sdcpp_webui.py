@@ -502,7 +502,9 @@ with gr.Blocks() as convert_block:
             gguf_name = gr.Textbox(label="Output Name (optional, must end "
                                    "with .gguf)", value="")
 
-            convert_btn = gr.Button(value="Convert")
+            with gr.Row():
+                convert_btn = gr.Button(value="Convert")
+                kill_btn = gr.Button(value="Stop")
 
         # Output
         with gr.Column(scale=1):
@@ -511,6 +513,7 @@ with gr.Blocks() as convert_block:
     # Interactive Bindings
     convert_btn.click(convert, inputs=[orig_model, quant_type, gguf_name,
                                        verbose], outputs=[result])
+    kill_btn.click(kill_subprocess, [], [])
 
 
 with gr.Blocks() as options_block:
