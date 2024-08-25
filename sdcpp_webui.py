@@ -8,7 +8,7 @@ import argparse
 import gradio as gr
 
 from modules.sdcpp import txt2img, img2img, convert
-from modules.utility import kill_subprocess
+from modules.utility import kill_subprocess, random_seed
 from modules.gallery import GalleryManager
 from modules.config import (
     set_defaults, rst_def, get_prompts, reload_prompts, save_prompts,
@@ -29,6 +29,7 @@ PREDICTION = ["Default", "eps", "v", "flow"]
 QUANTS = ["f32", "f16", "q8_0", "q4_k", "q3_k", "q2_k", "q5_1", "q5_0",
           "q4_1", "q4_0"]
 RELOAD_SYMBOL = '\U0001f504'
+RANDOM_SYMBOL = '\U0001F3B2'
 
 
 def main():
@@ -150,7 +151,10 @@ with gr.Blocks() as txt2img_block:
                                         maximum=99, value=1, step=1)
             cfg = gr.Slider(label="CFG Scale", minimum=1, maximum=30,
                             value=7.0, step=0.1)
-            seed = gr.Number(label="Seed", minimum=-1, maximum=10**16, value=-1)
+            with gr.Row():
+                seed = gr.Number(label="Seed", minimum=-1, maximum=10**16,
+                                 value=-1, scale=5)
+                random_seed_btn = gr.Button(value=RANDOM_SYMBOL, scale=1)
             clip_skip = gr.Slider(label="CLIP skip", minimum=0, maximum=12,
                                   value=0, step=1)
 
@@ -230,6 +234,7 @@ with gr.Blocks() as txt2img_block:
                              outputs=[saved_prompts])
     load_prompt_btn.click(load_prompts, inputs=[saved_prompts],
                           outputs=[pprompt, nprompt])
+    random_seed_btn.click(random_seed, [], [seed])
 
 
 with gr.Blocks()as img2img_block:
@@ -331,7 +336,10 @@ with gr.Blocks()as img2img_block:
                                     maximum=100, step=1, value=20)
             cfg = gr.Slider(label="CFG Scale", minimum=1, maximum=30,
                             step=0.1, value=7.0)
-            seed = gr.Number(label="Seed", minimum=-1, maximum=10**16, value=-1)
+            with gr.Row():
+                seed = gr.Number(label="Seed", minimum=-1, maximum=10**16,
+                                 value=-1, scale=5)
+                random_seed_btn = gr.Button(value=RANDOM_SYMBOL, scale=1)
             clip_skip = gr.Slider(label="CLIP skip", minimum=0, maximum=12,
                                   value=0, step=0.1)
 
@@ -403,6 +411,7 @@ with gr.Blocks()as img2img_block:
                            outputs=[upscl])
     reload_cnnet_btn.click(reload_models, inputs=[cnnet_dir_txt],
                            outputs=[cnnet])
+    random_seed_btn.click(random_seed, [], [seed])
 
 
 with gr.Blocks() as gallery_block:

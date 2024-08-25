@@ -4,6 +4,8 @@ import os
 import shutil
 import subprocess
 
+import gradio as gr
+
 global_process = None
 
 
@@ -44,3 +46,8 @@ def kill_subprocess():
         print("Subprocess terminated.")
     else:
         print("No subprocess running.")
+
+
+def random_seed():
+    """Sets the seed to -1"""
+    return gr.update(value=-1)
