@@ -30,6 +30,7 @@ QUANTS = ["f32", "f16", "q8_0", "q4_k", "q3_k", "q2_k", "q5_1", "q5_0",
           "q4_1", "q4_0"]
 RELOAD_SYMBOL = '\U0001f504'
 RANDOM_SYMBOL = '\U0001F3B2'
+RECYCLE_SYMBOL = '\U0000267C'
 
 
 def main():
