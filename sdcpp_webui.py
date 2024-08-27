@@ -26,8 +26,8 @@ SAMPLERS = ["euler", "euler_a", "heun", "dpm2", "dpm++2s_a", "dpm++2m",
             "dpm++2mv2", "ipndm", "ipndm_v", "lcm"]
 SCHEDULERS = ["discrete", "karras", "exponential", "ays", "gits"]
 PREDICTION = ["Default", "eps", "v", "flow"]
-QUANTS = ["f32", "f16", "q8_0", "q4_k", "q3_k", "q2_k", "q5_1", "q5_0",
-          "q4_1", "q4_0"]
+QUANTS = ["Default", "f32", "f16", "q8_0", "q4_k", "q3_k", "q2_k", "q5_1",
+          "q5_0", "q4_1", "q4_0"]
 RELOAD_SYMBOL = '\U0001f504'
 RANDOM_SYMBOL = '\U0001F3B2'
 RECYCLE_SYMBOL = '\U0000267C'
@@ -91,6 +91,11 @@ with gr.Blocks() as txt2img_block:
             with gr.Row():
                 reload_vae_btn = gr.Button(value=RELOAD_SYMBOL, scale=1)
                 clear_vae = gr.ClearButton(vae, scale=1)
+
+    # Model Type Selection
+    with gr.Row():
+        model_type = gr.Dropdown(label="Quantization", choices=QUANTS,
+                                 value="Default")
 
     # Extra Networks Selection
     with gr.Row():
@@ -207,11 +212,11 @@ with gr.Blocks() as txt2img_block:
                                        object_fit="contain", height="auto")
 
     # Generate
-    gen_btn.click(txt2img, inputs=[model, vae, taesd, upscl, upscl_rep, cnnet,
-                                   control_img, control_strength,
-                                   pprompt, nprompt, sampling, steps,
-                                   schedule, width, height, batch_count,
-                                   cfg, seed, clip_skip, threads,
+    gen_btn.click(txt2img, inputs=[model, vae, model_type, taesd, upscl,
+                                   upscl_rep, cnnet, control_img,
+                                   control_strength, pprompt, nprompt,
+                                   sampling, steps, schedule, width, height,
+                                   batch_count, cfg, seed, clip_skip, threads,
                                    vae_tiling, vae_cpu, cnnet_cpu, rng,
                                    predict, output, color, verbose],
                   outputs=[img_final])
@@ -267,6 +272,11 @@ with gr.Blocks()as img2img_block:
             with gr.Row():
                 reload_vae_btn = gr.Button(value=RELOAD_SYMBOL, scale=1)
                 clear_vae = gr.ClearButton(vae, scale=1)
+
+    # Model Type Selection
+    with gr.Row():
+        model_type = gr.Dropdown(label="Quantization", choices=QUANTS,
+                                 value="Default")
 
     # Extra Networks Selection
     with gr.Row():
@@ -390,7 +400,7 @@ with gr.Blocks()as img2img_block:
                                        object_fit="contain", height="auto")
 
     # Generate
-    gen_btn.click(img2img, inputs=[model, vae, taesd, img_inp,
+    gen_btn.click(img2img, inputs=[model, vae, model_type, taesd, img_inp,
                                    upscl, upscl_rep, cnnet, control_img,
                                    control_strength, pprompt,
                                    nprompt, sampling, steps, schedule,

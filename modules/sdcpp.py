@@ -13,12 +13,13 @@ from modules.config import (
 SD = exe_name()
 
 
-def txt2img(in_model, in_vae, in_taesd, in_upscl, in_upscl_rep, in_cnnet,
-            in_control_img, in_control_strength, in_ppromt, in_nprompt,
-            in_sampling, in_steps, in_schedule, in_width, in_height,
-            in_batch_count, in_cfg, in_seed, in_clip_skip, in_threads,
-            in_vae_tiling, in_vae_cpu, in_cnnet_cpu, in_rng, in_predict,
-            in_output, in_color, in_verbose):
+def txt2img(in_model, in_vae, in_model_type, in_taesd, in_upscl,
+            in_upscl_rep, in_cnnet, in_control_img, in_control_strength,
+            in_ppromt, in_nprompt, in_sampling, in_steps, in_schedule,
+            in_width, in_height, in_batch_count, in_cfg, in_seed,
+            in_clip_skip, in_threads, in_vae_tiling, in_vae_cpu,
+            in_cnnet_cpu, in_rng, in_predict, in_output, in_color,
+            in_verbose):
     """Text to image command creator"""
     fmodel = os.path.join(model_dir, in_model) if in_model else None
     fvae = os.path.join(vae_dir, in_vae) if in_vae else None
@@ -40,6 +41,8 @@ def txt2img(in_model, in_vae, in_taesd, in_upscl, in_upscl_rep, in_cnnet,
 
     if fvae:
         command.extend(['--vae', fvae])
+    if str(in_model_type) != "Default":
+        command.extend(['--type', str(in_model_type)])
     if ftaesd:
         command.extend(['--taesd', ftaesd])
     if str(in_predict) != "Default":
@@ -72,13 +75,14 @@ def txt2img(in_model, in_vae, in_taesd, in_upscl, in_upscl_rep, in_cnnet,
     return [foutput]
 
 
-def img2img(in_model, in_vae, in_taesd, in_img_inp, in_upscl, in_upscl_rep,
-            in_cnnet, in_control_img, in_control_strength, in_ppromt,
-            in_nprompt, in_sampling, in_steps, in_schedule, in_width,
-            in_height, in_batch_count, in_strenght, in_style_ratio,
-            in_style_ratio_btn, in_cfg, in_seed, in_clip_skip, in_threads,
-            in_vae_tiling, in_vae_cpu, in_cnnet_cpu, in_canny, in_rng,
-            in_predict, in_output, in_color, in_verbose):
+def img2img(in_model, in_vae, in_model_type, in_taesd, in_img_inp,
+            in_upscl, in_upscl_rep, in_cnnet, in_control_img,
+            in_control_strength, in_ppromt, in_nprompt, in_sampling,
+            in_steps, in_schedule, in_width, in_height, in_batch_count,
+            in_strenght, in_style_ratio, in_style_ratio_btn, in_cfg,
+            in_seed, in_clip_skip, in_threads, in_vae_tiling, in_vae_cpu,
+            in_cnnet_cpu, in_canny, in_rng, in_predict, in_output,
+            in_color, in_verbose):
     """Image to image command creator"""
     fmodel = os.path.join(model_dir, in_model) if in_model else None
     fvae = os.path.join(vae_dir, in_vae) if in_vae else None
@@ -100,6 +104,8 @@ def img2img(in_model, in_vae, in_taesd, in_img_inp, in_upscl, in_upscl_rep,
 
     if fvae:
         command.extend(['--vae', fvae])
+    if str(in_model_type) != "Default":
+        command.extend(['--type', str(in_model_type)])
     if ftaesd:
         command.extend(['--taesd', ftaesd])
     if in_style_ratio_btn:
