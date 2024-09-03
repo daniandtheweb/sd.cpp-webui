@@ -596,7 +596,7 @@ with gr.Blocks() as convert_block:
     upscl_dir_txt = gr.Textbox(value=upscl_dir, visible=False)
     cnnet_dir_txt = gr.Textbox(value=cnnet_dir, visible=False)
     safety_false_txt = gr.Textbox(value=0, visible=False)
-    model_dir_txt = gr.Textbox(value="", visible=False)
+    model_dir_txt = gr.Textbox(value="Stable-Diffusion", visible=False)
     # Title
     convert_title = gr.Markdown("# Convert and Quantize")
 
@@ -638,7 +638,7 @@ with gr.Blocks() as convert_block:
             result = gr.Textbox(interactive=False, value="", label="LOG")
 
     # Interactive Bindings
-    convert_btn.click(convert, inputs=[sd_model, quant_type, gguf_name,
+    convert_btn.click(convert, inputs=[model, model_dir_txt, quant_type, gguf_name,
                                        verbose], outputs=[result])
     kill_btn.click(kill_subprocess, [], [])
 

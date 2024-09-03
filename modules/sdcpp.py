@@ -4,11 +4,11 @@ import os
 
 from modules.utility import run_subprocess, exe_name, get_path
 from modules.gallery import get_next_img
-
 from modules.config import (
     sd_dir, flux_dir, vae_dir, clip_l_dir, t5xxl_dir, emb_dir, lora_dir,
     taesd_dir, upscl_dir, cnnet_dir, txt2img_dir, img2img_dir
     )
+
 
 SD = exe_name()
 
@@ -181,23 +181,32 @@ def img2img(in_sd, in_sd_vae, in_model_type, in_taesd, in_img_inp,
     return [foutput]
 
 
-def convert(in_orig_model, in_quant_type, in_gguf_name, in_verbose):
+def convert(in_orig_model, in_model_dir, in_quant_type, in_gguf_name=None,
+            in_verbose=False):
     """Convert model command creator"""
-    forig_model = os.path.join(sd_dir, in_orig_model)
+    forig_model = os.path.join(in_model_dir, in_orig_model)
     if not in_gguf_name:
         model_name, _ = os.path.splitext(in_orig_model)
-        fgguf_name = f"{os.path.join(sd_dir, model_name)}"\
-                     f".{in_quant_type}.gguf"
+        fgguf_name = f"{os.path.join(in_model_dir, model_name)}.{in_quant_type}.gguf"
     else:
-        fgguf_name = os.path.join(sd_dir, in_gguf_name)
+        fgguf_name = os.path.join(in_model_dir, in_gguf_name)
 
-    command = [SD, '-M', 'convert', '-m', forig_model,
-               '-o', fgguf_name, '--type', in_quant_type]
+    # Initialize base command
+    command = [SD, '-M', 'convert']
 
+    # Add essential command options
+    command.extend([
+        '-m', forig_model,        # Original model path
+        '-o', fgguf_name,         # Output name
+        '--type', in_quant_type   # Quantization type
+    ])
+
+    # Add verbosity flag if enabled
     if in_verbose:
-        command.extend(['-v'])
+        command.append('-v')
 
-    fcommand = ' '.join(map(str, command))
+    # Convert command list to string format for printing
+    fcommand = ' '.join(command)
 
     print(fcommand)
     run_subprocess(command)
