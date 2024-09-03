@@ -8,14 +8,14 @@ import argparse
 import gradio as gr
 
 from modules.sdcpp import txt2img, img2img, convert
-from modules.utility import kill_subprocess, random_seed
+from modules.utility import kill_subprocess, random_seed, sd_tab_switch, flux_tab_switch
 from modules.gallery import GalleryManager
 from modules.config import (
     set_defaults, rst_def, get_prompts, reload_prompts, save_prompts,
-    delete_prompts, load_prompts, model_dir, vae_dir, emb_dir, lora_dir,
-    taesd_dir, upscl_dir, cnnet_dir, txt2img_dir, img2img_dir,
-    def_model, def_vae, def_sampling, def_steps, def_scheduler,
-    def_width, def_height, def_predict
+    delete_prompts, load_prompts, sd_dir, vae_dir, flux_dir, clip_l_dir,
+    t5xxl_dir, emb_dir, lora_dir, taesd_dir, upscl_dir, cnnet_dir, txt2img_dir,
+    img2img_dir, def_sd, def_flux, def_sd_vae, def_flux_vae, def_clip_l, def_t5xxl,
+    def_sampling, def_steps, def_scheduler, def_width, def_height, def_predict
 )
 from modules.loader import (
     get_models, reload_models, get_hf_models, reload_hf_models
@@ -64,8 +64,11 @@ os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
 
 with gr.Blocks() as txt2img_block:
     # Directory Textboxes
-    model_dir_txt = gr.Textbox(value=model_dir, visible=False)
+    sd_dir_txt = gr.Textbox(value=sd_dir, visible=False)
     vae_dir_txt = gr.Textbox(value=vae_dir, visible=False)
+    flux_dir_txt = gr.Textbox(value=flux_dir, visible=False)
+    clip_l_dir_txt = gr.Textbox(value=clip_l_dir, visible=False)
+    t5xxl_dir_txt = gr.Textbox(value=t5xxl_dir, visible=False)
     emb_dir_txt = gr.Textbox(value=emb_dir, visible=False)
     lora_dir_txt = gr.Textbox(value=lora_dir, visible=False)
     taesd_dir_txt = gr.Textbox(value=taesd_dir, visible=False)
@@ -77,20 +80,69 @@ with gr.Blocks() as txt2img_block:
 
     # Model & VAE Selection
     with gr.Row():
-        with gr.Column():
+        with gr.Tab("Stable Diffusion") as sd_tab:
             with gr.Row():
-                model = gr.Dropdown(label="Model",
-                                    choices=get_models(model_dir), scale=7,
-                                    value=def_model)
+                with gr.Column():
+                    with gr.Row():
+                        sd_model = gr.Dropdown(label="Stable Diffusion Model",
+                                               choices=get_models(sd_dir),
+                                               scale=7, value=def_sd,
+                                               interactive=True)
+                    with gr.Row():
+                        reload_sd_btn = gr.Button(value=RELOAD_SYMBOL, scale=1)
+                        clear_sd_model = gr.ClearButton(sd_model, scale=1)
+                with gr.Column():
+                    with gr.Row():
+                        sd_vae = gr.Dropdown(label="Stable Diffusion VAE",
+                                          choices=get_models(vae_dir), scale=7,
+                                          value=def_sd_vae, interactive=True)
+                    with gr.Row():
+                        reload_vae_btn = gr.Button(value=RELOAD_SYMBOL,
+                                                   scale=1)
+                        clear_vae = gr.ClearButton(sd_vae, scale=1)
+        with gr.Tab("Flux") as flux_tab:
             with gr.Row():
-                reload_model_btn = gr.Button(value=RELOAD_SYMBOL, scale=1)
-        with gr.Column():
+                with gr.Column():
+                    with gr.Row():
+                        flux_model = gr.Dropdown(label="Flux Model",
+                                                 choices=get_models(flux_dir),
+                                                 scale=7, value=def_flux,
+                                                 interactive=True)
+                    with gr.Row():
+                        reload_flux_btn = gr.Button(value=RELOAD_SYMBOL,
+                                                    scale=1)
+                        clear_flux_model = gr.ClearButton(flux_model, scale=1)
+                with gr.Column():
+                    with gr.Row():
+                        flux_vae = gr.Dropdown(label="Flux VAE",
+                                               choices=get_models(vae_dir),
+                                               scale=7, value=def_flux_vae,
+                                               interactive=True)
+                    with gr.Row():
+                        reload_vae_btn = gr.Button(value=RELOAD_SYMBOL,
+                                                   scale=1)
+                        clear_flux_vae = gr.ClearButton(flux_vae, scale=1)
             with gr.Row():
-                vae = gr.Dropdown(label="VAE", choices=get_models(vae_dir),
-                                  scale=7, value=def_vae)
-            with gr.Row():
-                reload_vae_btn = gr.Button(value=RELOAD_SYMBOL, scale=1)
-                clear_vae = gr.ClearButton(vae, scale=1)
+                with gr.Column():
+                    with gr.Row():
+                        clip_l = gr.Dropdown(label="clip_l",
+                                             choices=get_models(clip_l_dir),
+                                             scale=7, value=def_clip_l,
+                                             interactive=True)
+                    with gr.Row():
+                        reload_clip_l_btn = gr.Button(value=RELOAD_SYMBOL,
+                                                      scale=1)
+                        clear_clip_l = gr.ClearButton(clip_l, scale=1)
+                with gr.Column():
+                    with gr.Row():
+                        t5xxl = gr.Dropdown(label="t5xxl",
+                                            choices=get_models(t5xxl_dir),
+                                            scale=7, value=def_t5xxl,
+                                            interactive=True)
+                    with gr.Row():
+                        reload_t5xxl_btn = gr.Button(value=RELOAD_SYMBOL,
+                                                     scale=1)
+                        clear_t5xxl = gr.ClearButton(t5xxl, scale=1)
 
     # Model Type Selection
     with gr.Row():
@@ -212,20 +264,29 @@ with gr.Blocks() as txt2img_block:
                                        object_fit="contain", height="auto")
 
     # Generate
-    gen_btn.click(txt2img, inputs=[model, vae, model_type, taesd, upscl,
-                                   upscl_rep, cnnet, control_img,
-                                   control_strength, pprompt, nprompt,
-                                   sampling, steps, schedule, width, height,
-                                   batch_count, cfg, seed, clip_skip, threads,
-                                   vae_tiling, vae_cpu, cnnet_cpu, rng,
-                                   predict, output, color, verbose],
+    gen_btn.click(txt2img, inputs=[sd_model, flux_model, sd_vae, flux_vae, clip_l,
+                                   t5xxl, model_type, taesd, upscl, upscl_rep,
+                                   cnnet, control_img, control_strength,
+                                   pprompt, nprompt, sampling, steps, schedule,
+                                   width, height, batch_count, cfg, seed,
+                                   clip_skip, threads, vae_tiling, vae_cpu,
+                                   cnnet_cpu, rng, predict, output, color,
+                                   verbose],
                   outputs=[img_final])
     kill_btn.click(kill_subprocess, inputs=[], outputs=[])
 
     # Interactive Bindings
-    reload_model_btn.click(reload_models, inputs=[model_dir_txt],
-                           outputs=[model])
-    reload_vae_btn.click(reload_models, inputs=[vae_dir_txt], outputs=[vae])
+    sd_tab.select(sd_tab_switch, inputs=[flux_model, flux_vae, clip_l, t5xxl], outputs=[sd_model, flux_model, sd_vae, flux_vae, clip_l, t5xxl])
+    flux_tab.select(flux_tab_switch, inputs=[sd_model, sd_vae], outputs=[sd_model, flux_model, sd_vae, flux_vae, clip_l, t5xxl])
+    reload_sd_btn.click(reload_models, inputs=[sd_dir_txt],
+                        outputs=[sd_model])
+    reload_flux_btn.click(reload_models, inputs=[flux_dir_txt],
+                          outputs=[flux_model])
+    reload_vae_btn.click(reload_models, inputs=[vae_dir_txt], outputs=[sd_vae])
+    reload_clip_l_btn.click(reload_models, inputs=[clip_l_dir_txt],
+                            outputs=[clip_l])
+    reload_t5xxl_btn.click(reload_models, inputs=[t5xxl_dir_txt],
+                           outputs=[t5xxl])
     reload_taesd_btn.click(reload_models, inputs=[taesd_dir_txt],
                            outputs=[taesd])
     reload_upscl_btn.click(reload_models, inputs=[upscl_dir_txt],
@@ -245,7 +306,7 @@ with gr.Blocks() as txt2img_block:
 
 with gr.Blocks()as img2img_block:
     # Directory Textboxes
-    model_dir_txt = gr.Textbox(value=model_dir, visible=False)
+    sd_dir_txt = gr.Textbox(value=sd_dir, visible=False)
     vae_dir_txt = gr.Textbox(value=vae_dir, visible=False)
     emb_dir_txt = gr.Textbox(value=emb_dir, visible=False)
     lora_dir_txt = gr.Textbox(value=lora_dir, visible=False)
@@ -261,17 +322,17 @@ with gr.Blocks()as img2img_block:
         with gr.Column():
             with gr.Row():
                 model = gr.Dropdown(label="Model",
-                                    choices=get_models(model_dir), scale=7,
-                                    value=def_model)
+                                    choices=get_models(sd_dir), scale=7,
+                                    value=def_sd)
             with gr.Row():
-                reload_model_btn = gr.Button(value=RELOAD_SYMBOL, scale=1)
+                reload_sd_btn = gr.Button(value=RELOAD_SYMBOL, scale=1)
         with gr.Column():
             with gr.Row():
-                vae = gr.Dropdown(label="VAE", choices=get_models(vae_dir),
-                                  scale=7, value=def_vae)
+                sd_vae = gr.Dropdown(label="VAE", choices=get_models(vae_dir),
+                                  scale=7, value=def_sd_vae)
             with gr.Row():
                 reload_vae_btn = gr.Button(value=RELOAD_SYMBOL, scale=1)
-                clear_vae = gr.ClearButton(vae, scale=1)
+                clear_vae = gr.ClearButton(sd_vae, scale=1)
 
     # Model Type Selection
     with gr.Row():
@@ -400,7 +461,7 @@ with gr.Blocks()as img2img_block:
                                        object_fit="contain", height="auto")
 
     # Generate
-    gen_btn.click(img2img, inputs=[model, vae, model_type, taesd, img_inp,
+    gen_btn.click(img2img, inputs=[model, sd_vae, model_type, taesd, img_inp,
                                    upscl, upscl_rep, cnnet, control_img,
                                    control_strength, pprompt,
                                    nprompt, sampling, steps, schedule,
@@ -413,9 +474,9 @@ with gr.Blocks()as img2img_block:
     kill_btn.click(kill_subprocess, inputs=[], outputs=[])
 
     # Interactive Bindings
-    reload_model_btn.click(reload_models, inputs=[model_dir_txt],
-                           outputs=[model])
-    reload_vae_btn.click(reload_models, inputs=[vae_dir_txt], outputs=[vae])
+    reload_sd_btn.click(reload_models, inputs=[sd_dir_txt],
+                        outputs=[model])
+    reload_vae_btn.click(reload_models, inputs=[vae_dir_txt], outputs=[sd_vae])
     reload_taesd_btn.click(reload_models, inputs=[taesd_dir_txt],
                            outputs=[taesd])
     reload_upscl_btn.click(reload_models, inputs=[upscl_dir_txt],
@@ -542,26 +603,27 @@ with gr.Blocks() as options_block:
 
     with gr.Column():
         # Model Dropdown
-        model = gr.Dropdown(label="Model",
-                            choices=get_models(model_dir), scale=7,
-                            value=def_model)
+        model = gr.Dropdown(label="Stable-Diffusion Model",
+                            choices=get_models(sd_dir), scale=7,
+                            value=def_sd, interactive=True)
         with gr.Column(scale=1):
             reload_model_btn = gr.Button(value=RELOAD_SYMBOL, scale=1)
-            reload_model_btn.click(reload_models, inputs=[model_dir_txt],
+            reload_model_btn.click(reload_models, inputs=[sd_dir_txt],
                                    outputs=[model])
 
         # VAE Dropdown
-        vae = gr.Dropdown(label="VAE", choices=get_models(vae_dir), scale=7,
-                          value=def_vae)
+        sd_vae = gr.Dropdown(label="VAE", choices=get_models(vae_dir), scale=7,
+                          value=def_sd_vae, interactive=True)
         with gr.Column(scale=1):
             reload_vae_btn = gr.Button(value=RELOAD_SYMBOL)
             reload_vae_btn.click(reload_models, inputs=[vae_dir_txt],
-                                 outputs=[vae])
-            clear_vae = gr.ClearButton(vae)
+                                 outputs=[sd_vae])
+            clear_vae = gr.ClearButton(sd_vae)
 
         # Sampling Method Dropdown
         sampling = gr.Dropdown(label="Sampling method",
-                               choices=SAMPLERS, value=def_sampling)
+                               choices=SAMPLERS, value=def_sampling,
+                               interactive=True)
 
         # Steps Slider
         steps = gr.Slider(label="Steps", minimum=1, maximum=99,
@@ -570,7 +632,7 @@ with gr.Blocks() as options_block:
         # Schedule Dropdown
         schedule = gr.Dropdown(label="Schedule",
                                choices=SCHEDULERS,
-                               value="discrete")
+                               value="discrete", interactive=True)
 
         # Size Sliders
         width = gr.Slider(label="Width", minimum=64, maximum=2048,
@@ -579,14 +641,15 @@ with gr.Blocks() as options_block:
                            value=def_height, step=8)
 
         # Prediction mode
-        predict = gr.Dropdown(label="Prediction", choices=["eps", "v",
-                                                           "flow"],
-                              value=def_predict)
+        predict = gr.Dropdown(label="Prediction", choices=PREDICTION,
+                              value=def_predict, interactive=True)
 
         # Folders Accordion
         with gr.Accordion(label="Folders", open=False):
-            model_dir_txt = gr.Textbox(label="Models folder", value=model_dir,
-                                       interactive=True)
+            sd_dir_txt = gr.Textbox(label="Stable Diffusion folder",
+                                    value=sd_dir, interactive=True)
+            flux_dir_txt = gr.Textbox(label="Flux folder", value=flux_dir,
+                                      interactive=True)
             vae_dir_txt = gr.Textbox(label="VAE folder", value=vae_dir,
                                      interactive=True)
             emb_dir_txt = gr.Textbox(label="Embeddings folder", value=emb_dir,
@@ -607,9 +670,11 @@ with gr.Blocks() as options_block:
         # Set Defaults and Restore Defaults Buttons
         with gr.Row():
             set_btn = gr.Button(value="Set Defaults")
-            set_btn.click(set_defaults, [model, vae, sampling, steps, schedule,
+            set_btn.click(set_defaults, [sd_model, flux_model, sd_vae, flux_vae, clip_l,
+                                         t5xxl, sampling, steps, schedule,
                                          width, height, predict,
-                                         model_dir_txt, vae_dir_txt,
+                                         sd_dir_txt, flux_dir_txt, vae_dir_txt,
+                                         clip_l_dir_txt, t5xxl_dir_txt,
                                          emb_dir_txt, lora_dir_txt,
                                          taesd_dir_txt, upscl_dir_txt,
                                          cnnet_dir_txt, txt2img_dir_txt,

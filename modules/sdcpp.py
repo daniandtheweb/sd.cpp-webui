@@ -2,35 +2,44 @@
 
 import os
 
-from modules.utility import run_subprocess, exe_name
+from modules.utility import run_subprocess, exe_name, get_path
 from modules.gallery import get_next_img
 
 from modules.config import (
-    model_dir, vae_dir, emb_dir, lora_dir, taesd_dir, upscl_dir,
-    cnnet_dir, txt2img_dir, img2img_dir
+    sd_dir, flux_dir, vae_dir, clip_l_dir, t5xxl_dir, emb_dir, lora_dir,
+    taesd_dir, upscl_dir, cnnet_dir, txt2img_dir, img2img_dir
     )
 
 SD = exe_name()
 
 
-def txt2img(in_model, in_vae, in_model_type, in_taesd, in_upscl,
-            in_upscl_rep, in_cnnet, in_control_img, in_control_strength,
-            in_ppromt, in_nprompt, in_sampling, in_steps, in_schedule,
-            in_width, in_height, in_batch_count, in_cfg, in_seed,
-            in_clip_skip, in_threads, in_vae_tiling, in_vae_cpu,
-            in_cnnet_cpu, in_rng, in_predict, in_output, in_color,
-            in_verbose):
+def txt2img(in_sd_model=None, in_flux_model=None, in_sd_vae=None,
+            in_flux_vae=None, in_clip_l=None, in_t5xxl=None,
+            in_model_type="Default", in_taesd=None, in_upscl=None,
+            in_upscl_rep=1, in_cnnet=None, in_control_img=None,
+            in_control_strength=1.0, in_ppromt="", in_nprompt="",
+            in_sampling="default", in_steps=50, in_schedule="default",
+            in_width=512, in_height=512, in_batch_count=1,
+            in_cfg=7.5, in_seed=42, in_clip_skip=0, in_threads=1,
+            in_vae_tiling=None, in_vae_cpu=None, in_cnnet_cpu=None,
+            in_rng="default", in_predict="Default", in_output=None,
+            in_color=None, in_verbose=None):
+
     """Text to image command creator"""
-    fmodel = os.path.join(model_dir, in_model) if in_model else None
-    fvae = os.path.join(vae_dir, in_vae) if in_vae else None
-    ftaesd = os.path.join(taesd_dir, in_taesd) if in_taesd else None
-    fupscl = os.path.join(upscl_dir, in_upscl) if in_upscl else None
-    fcnnet = os.path.join(cnnet_dir, in_cnnet) if in_cnnet else None
+    fsd_model = get_path(sd_dir, in_sd_model)
+    fflux_model = get_path(flux_dir, in_flux_model)
+    fsd_vae = get_path(vae_dir, in_sd_vae)
+    fflux_vae = get_path(vae_dir, in_flux_vae)
+    fclip_l = get_path(clip_l_dir, in_clip_l)
+    ft5xxl = get_path(t5xxl_dir, in_t5xxl)
+    ftaesd = get_path(taesd_dir, in_taesd)
+    fupscl = get_path(upscl_dir, in_upscl)
+    fcnnet = get_path(cnnet_dir, in_cnnet)
     foutput = (os.path.join(txt2img_dir, f"{in_output}.png")
                if in_output
                else os.path.join(txt2img_dir, get_next_img(subctrl=0)))
 
-    command = [SD, '-M', 'txt2img', '-m', fmodel, '-p', f'"{in_ppromt}"',
+    command = [SD, '-M', 'txt2img', '-p', f'"{in_ppromt}"',
                '--sampling-method', str(in_sampling), '--steps', str(in_steps),
                '--schedule', f'{in_schedule}', '-W', str(in_width), '-H',
                str(in_height), '-b', str(in_batch_count), '--cfg-scale',
@@ -39,33 +48,45 @@ def txt2img(in_model, in_vae, in_model_type, in_taesd, in_upscl,
                '--lora-model-dir', lora_dir, '-t', str(in_threads), '--rng',
                str(in_rng), '-o', foutput]
 
-    if fvae:
-        command.extend(['--vae', fvae])
-    if str(in_model_type) != "Default":
-        command.extend(['--type', str(in_model_type)])
-    if ftaesd:
-        command.extend(['--taesd', ftaesd])
-    if str(in_predict) != "Default":
-        command.extend(['--prediction', str(in_predict)])
-    if fupscl:
-        command.extend(['--upscale-model', fupscl,
-                        '--upscale-repeats', str(in_upscl_rep)])
-    if fcnnet:
-        command.extend(['--control-net', fcnnet, '--control-image',
-                        in_control_img, '--control-strength',
-                        str(in_control_strength)])
-    if in_nprompt:
-        command.extend(['-n', f'"{in_nprompt}"'])
-    if in_vae_tiling:
-        command.extend(['--vae-tiling'])
-    if in_vae_cpu:
-        command.extend(['--vae-on-cpu'])
-    if in_cnnet_cpu:
-        command.extend(['--control-net-cpu'])
-    if in_color:
-        command.extend(['--color'])
-    if in_verbose:
-        command.extend(['-v'])
+    # Handle VAE options
+    vae_option = fsd_vae if fsd_vae else fflux_vae
+
+    # Optional parameters in dictionaries
+    options = {
+        '-m': fsd_model,
+        '--diffusion-model': fflux_model,
+        '--vae': vae_option,
+        '--clip_l': fclip_l,
+        '--t5xxl': ft5xxl,
+        '--type': in_model_type if in_model_type != "Default" else None,
+        '--taesd': ftaesd,
+        '--prediction': in_predict if in_predict != "Default" else None,
+        '--upscale-model': fupscl,
+        '--upscale-repeats': str(in_upscl_rep) if fupscl else None,
+        '--control-net': fcnnet,
+        '--control-image': in_control_img if fcnnet else None,
+        '--control-strength': str(in_control_strength) if fcnnet else None,
+        '-n': f'"{in_nprompt}"' if in_nprompt else None
+    }
+
+    # Boolean flags
+    flags = {
+        '--vae-tiling': in_vae_tiling,
+        '--vae-on-cpu': in_vae_cpu,
+        '--control-net-cpu': in_cnnet_cpu,
+        '--color': in_color,
+        '-v': in_verbose
+    }
+
+    # Extend the command with options and their values
+    for opt, value in options.items():
+        if value is not None:
+            command.extend([opt, value])
+
+    # Add boolean flags
+    for flag, condition in flags.items():
+        if condition:
+            command.append(flag)
 
     fcommand = ' '.join(map(str, command))
 
@@ -75,7 +96,7 @@ def txt2img(in_model, in_vae, in_model_type, in_taesd, in_upscl,
     return [foutput]
 
 
-def img2img(in_model, in_vae, in_model_type, in_taesd, in_img_inp,
+def img2img(in_sd, in_sd_vae, in_model_type, in_taesd, in_img_inp,
             in_upscl, in_upscl_rep, in_cnnet, in_control_img,
             in_control_strength, in_ppromt, in_nprompt, in_sampling,
             in_steps, in_schedule, in_width, in_height, in_batch_count,
@@ -84,8 +105,8 @@ def img2img(in_model, in_vae, in_model_type, in_taesd, in_img_inp,
             in_cnnet_cpu, in_canny, in_rng, in_predict, in_output,
             in_color, in_verbose):
     """Image to image command creator"""
-    fmodel = os.path.join(model_dir, in_model) if in_model else None
-    fvae = os.path.join(vae_dir, in_vae) if in_vae else None
+    fmodel = os.path.join(sd_dir, in_sd) if in_sd else None
+    fsd_vae = os.path.join(vae_dir, in_sd_vae) if in_sd_vae else None
     ftaesd = os.path.join(taesd_dir, in_taesd) if in_taesd else None
     fupscl = os.path.join(upscl_dir, in_upscl) if in_upscl else None
     fcnnet = os.path.join(cnnet_dir, in_cnnet) if in_cnnet else None
@@ -102,8 +123,8 @@ def img2img(in_model, in_vae, in_model_type, in_taesd, in_img_inp,
                '--embd-dir', emb_dir, '--lora-model-dir', lora_dir, '-t',
                str(in_threads), '--rng', str(in_rng), '-o', foutput]
 
-    if fvae:
-        command.extend(['--vae', fvae])
+    if fsd_vae:
+        command.extend(['--vae', fsd_vae])
     if str(in_model_type) != "Default":
         command.extend(['--type', str(in_model_type)])
     if ftaesd:
@@ -144,13 +165,13 @@ def img2img(in_model, in_vae, in_model_type, in_taesd, in_img_inp,
 
 def convert(in_orig_model, in_quant_type, in_gguf_name, in_verbose):
     """Convert model command creator"""
-    forig_model = os.path.join(model_dir, in_orig_model)
+    forig_model = os.path.join(sd_dir, in_orig_model)
     if not in_gguf_name:
         model_name, _ = os.path.splitext(in_orig_model)
-        fgguf_name = f"{os.path.join(model_dir, model_name)}"\
+        fgguf_name = f"{os.path.join(sd_dir, model_name)}"\
                      f".{in_quant_type}.gguf"
     else:
-        fgguf_name = os.path.join(model_dir, in_gguf_name)
+        fgguf_name = os.path.join(sd_dir, in_gguf_name)
 
     command = [SD, '-M', 'convert', '-m', forig_model,
                '-o', fgguf_name, '--type', in_quant_type]

@@ -10,15 +10,19 @@ CONFIG_PATH = 'config.json'
 PROMPTS_PATH = 'prompts.json'
 
 
-def set_defaults(in_model, in_vae, in_sampling, in_steps, in_schedule,
-                 in_width, in_height, in_predict, in_model_dir_txt,
-                 in_vae_dir_txt, in_emb_dir_txt, in_lora_dir_txt,
-                 in_taesd_dir_txt, in_upscl_dir_txt, in_cnnet_dir_txt,
-                 in_txt2img_dir_txt, in_img2img_dir_txt):
+def set_defaults(in_sd, in_flux, in_sd_vae, in_flux_vae, in_clip_l, in_t5xxl, in_sampling,
+                 in_steps, in_schedule, in_width, in_height, in_predict,
+                 in_sd_dir_txt, in_flux_dir_txt, in_vae_dir_txt,
+                 in_clip_l_dir_txt, in_t5xxl_dir_txt, in_emb_dir_txt,
+                 in_lora_dir_txt, in_taesd_dir_txt, in_upscl_dir_txt,
+                 in_cnnet_dir_txt, in_txt2img_dir_txt, in_img2img_dir_txt):
     """Sets new defaults"""
     data.update({
-        'model_dir': in_model_dir_txt,
+        'sd_dir': in_sd_dir_txt,
         'vae_dir': in_vae_dir_txt,
+        'flux_dir': in_flux_dir_txt,
+        'clip_l_dir': in_clip_l_dir_txt,
+        't5xxl_dir': in_t5xxl_dir_txt,
         'emb_dir': in_emb_dir_txt,
         'lora_dir': in_lora_dir_txt,
         'taesd_dir': in_taesd_dir_txt,
@@ -31,13 +35,21 @@ def set_defaults(in_model, in_vae, in_sampling, in_steps, in_schedule,
         'def_scheduler': in_schedule,
         'def_width': in_width,
         'def_height': in_height,
-        'def_predict' : in_predict
+        'def_predict': in_predict
     })
 
-    if in_model:
-        data['def_model'] = in_model
-    if in_vae:
-        data['def_vae'] = in_vae
+    if in_sd:
+        data['def_sd'] = in_sd
+    if in_flux:
+        data['def_flux'] = in_flux
+    if in_sd_vae:
+        data['def_sd_vae'] = in_sd_vae
+    if in_flux_vae:
+        data['def_flux_vae'] = in_flux_vae
+    if in_clip_l:
+        data['def_clip_l'] = in_clip_l
+    if in_t5xxl:
+        data['def_t5xxl'] = in_t5xxl
 
     with open(CONFIG_PATH, 'w', encoding='utf-8') as json_file_w:
         json.dump(data, json_file_w, indent=4)
@@ -48,8 +60,11 @@ def set_defaults(in_model, in_vae, in_sampling, in_steps, in_schedule,
 def rst_def():
     """Restores factory defaults"""
     data.update({
-        'model_dir': os.path.join(CURRENT_DIR, "models/Stable-Diffusion/"),
+        'sd_dir': os.path.join(CURRENT_DIR, "models/Stable-Diffusion/"),
+        'flux_dir': os.path.join(CURRENT_DIR, "models/FLUX/"),
         'vae_dir': os.path.join(CURRENT_DIR, "models/VAE/"),
+        'clip_l_dir': os.path.join(CURRENT_DIR, "models/clip_l/"),
+        't5xxl_dir': os.path.join(CURRENT_DIR, "models/t5xxl/"),
         'emb_dir': os.path.join(CURRENT_DIR, "models/Embeddings/"),
         'lora_dir': os.path.join(CURRENT_DIR, "models/Lora/"),
         'taesd_dir': os.path.join(CURRENT_DIR, "models/TAESD/"),
@@ -65,8 +80,12 @@ def rst_def():
         'def_predict': "Default"
     })
 
-    data.pop('def_model', None)
-    data.pop('def_vae', None)
+    data.pop('def_sd', None)
+    data.pop('def_flux', None)
+    data.pop('def_sd_vae', None)
+    data.pop('def_flux_vae', None)
+    data.pop('def_clip_l', None)
+    data.pop('def_t5xxl', None)
 
     with open(CONFIG_PATH, 'w', encoding='utf-8') as json_file_w:
         json.dump(data, json_file_w, indent=4)
@@ -149,8 +168,11 @@ with open(CONFIG_PATH, 'r', encoding='utf-8') as config_file:
     data = json.load(config_file)
 
 
-model_dir = data['model_dir']
+sd_dir = data['sd_dir']
+flux_dir = data['flux_dir']
 vae_dir = data['vae_dir']
+clip_l_dir = data['clip_l_dir']
+t5xxl_dir = data['t5xxl_dir']
 emb_dir = data['emb_dir']
 lora_dir = data['lora_dir']
 taesd_dir = data['taesd_dir']
@@ -160,14 +182,30 @@ txt2img_dir = data['txt2img_dir']
 img2img_dir = data['img2img_dir']
 
 
-if 'def_model' in data:
-    def_model = data['def_model']
+if 'def_sd' in data:
+    def_sd = data['def_sd']
 else:
-    def_model = None
-if 'def_vae' in data:
-    def_vae = data['def_vae']
+    def_sd = None
+if 'def_flux' in data:
+    def_flux = data['def_flux']
 else:
-    def_vae = None
+    def_flux = None
+if 'def_sd_vae' in data:
+    def_vae = data['def_sd_vae']
+else:
+    def_sd_vae = None
+if 'def_flux_vae' in data:
+    def_flux_vae = data['def_flux_vae']
+else:
+    def_flux_vae = None
+if 'def_clip_l' in data:
+    def_clip_l = data['def_clip_l']
+else:
+    def_clip_l = None
+if 'def_t5xxl' in data:
+    def_t5xxl = data['def_t5xxl']
+else:
+    def_t5xxl = None
 def_sampling = data['def_sampling']
 def_steps = data['def_steps']
 def_scheduler = data['def_scheduler']

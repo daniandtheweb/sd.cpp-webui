@@ -4,7 +4,7 @@ import os
 
 import gradio as gr
 
-from modules.config import model_dir
+from modules.config import sd_dir
 
 
 def get_models(models_folder):
@@ -27,7 +27,7 @@ def reload_models(models_folder):
 
 def get_hf_models():
     """Lists convertible models in a folder"""
-    fmodels_dir = model_dir
+    fmodels_dir = sd_dir
     if os.path.isdir(fmodels_dir):
         return [model for model in os.listdir(fmodels_dir)
                 if os.path.isfile(fmodels_dir + model) and
