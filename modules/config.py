@@ -15,7 +15,8 @@ def set_defaults(in_sd, in_sd_vae, in_flux, in_flux_vae, in_clip_l, in_t5xxl,
                  in_predict, in_sd_dir_txt, in_flux_dir_txt, in_vae_dir_txt,
                  in_clip_l_dir_txt, in_t5xxl_dir_txt, in_emb_dir_txt,
                  in_lora_dir_txt, in_taesd_dir_txt, in_upscl_dir_txt,
-                 in_cnnet_dir_txt, in_txt2img_dir_txt, in_img2img_dir_txt):
+                 in_cnnet_dir_txt, in_txt2img_dir_txt, in_img2img_dir_txt,
+                 in_safety):
     """Sets new defaults"""
     data.update({
         'sd_dir': in_sd_dir_txt,
@@ -50,6 +51,8 @@ def set_defaults(in_sd, in_sd_vae, in_flux, in_flux_vae, in_clip_l, in_t5xxl,
         data['def_clip_l'] = in_clip_l
     if in_t5xxl:
         data['def_t5xxl'] = in_t5xxl
+    if in_safety:
+        data['safety'] = in_safety
 
     with open(CONFIG_PATH, 'w', encoding='utf-8') as json_file_w:
         json.dump(data, json_file_w, indent=4)
@@ -86,6 +89,7 @@ def rst_def():
     data.pop('def_flux_vae', None)
     data.pop('def_clip_l', None)
     data.pop('def_t5xxl', None)
+    data.pop('safety', None)
 
     with open(CONFIG_PATH, 'w', encoding='utf-8') as json_file_w:
         json.dump(data, json_file_w, indent=4)
@@ -206,6 +210,10 @@ if 'def_t5xxl' in data:
     def_t5xxl = data['def_t5xxl']
 else:
     def_t5xxl = None
+if 'safety' in data:
+    safety = data['safety']
+else:
+    safety = 1
 def_sampling = data['def_sampling']
 def_steps = data['def_steps']
 def_scheduler = data['def_scheduler']

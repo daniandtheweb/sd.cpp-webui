@@ -18,10 +18,10 @@ from modules.config import (
     t5xxl_dir, emb_dir, lora_dir, taesd_dir, upscl_dir, cnnet_dir, txt2img_dir,
     img2img_dir, def_sd, def_sd_vae, def_flux, def_flux_vae, def_clip_l,
     def_t5xxl, def_sampling, def_steps, def_scheduler, def_width, def_height,
-    def_predict
+    def_predict, safety
 )
 from modules.loader import (
-    get_models, reload_models, get_hf_models, reload_hf_models
+    get_models, reload_models, model_choice, model_dir
 )
 
 CURRENT_DIR = os.getcwd()
@@ -31,6 +31,8 @@ SCHEDULERS = ["discrete", "karras", "exponential", "ays", "gits"]
 PREDICTION = ["Default", "eps", "v", "flow"]
 QUANTS = ["Default", "f32", "f16", "q8_0", "q4_k", "q3_k", "q2_k", "q5_1",
           "q5_0", "q4_1", "q4_0"]
+MODELS = ["Stable-Diffusion", "FLUX", "VAE", "clip_l", "t5xxl", "TAESD",
+          "Lora", "Embeddings", "Upscaler", "ControlNet"]
 RELOAD_SYMBOL = '\U0001f504'
 RANDOM_SYMBOL = '\U0001F3B2'
 RECYCLE_SYMBOL = '\U0000267C'
@@ -77,6 +79,7 @@ with gr.Blocks() as txt2img_block:
     taesd_dir_txt = gr.Textbox(value=taesd_dir, visible=False)
     upscl_dir_txt = gr.Textbox(value=upscl_dir, visible=False)
     cnnet_dir_txt = gr.Textbox(value=cnnet_dir, visible=False)
+    safety_txt = gr.Textbox(value=safety, visible=False)
 
     # Title
     txt2img_title = gr.Markdown("# Text to Image")
@@ -88,7 +91,8 @@ with gr.Blocks() as txt2img_block:
                 with gr.Column():
                     with gr.Row():
                         sd_model = gr.Dropdown(label="Stable Diffusion Model",
-                                               choices=get_models(sd_dir),
+                                               choices=get_models(sd_dir,
+                                                                  safety),
                                                scale=7, value=def_sd,
                                                interactive=True)
                     with gr.Row():
@@ -97,7 +101,8 @@ with gr.Blocks() as txt2img_block:
                 with gr.Column():
                     with gr.Row():
                         sd_vae = gr.Dropdown(label="Stable Diffusion VAE",
-                                             choices=get_models(vae_dir),
+                                             choices=get_models(vae_dir,
+                                                                safety),
                                              scale=7, value=def_sd_vae,
                                              interactive=True)
                     with gr.Row():
@@ -109,7 +114,8 @@ with gr.Blocks() as txt2img_block:
                 with gr.Column():
                     with gr.Row():
                         flux_model = gr.Dropdown(label="Flux Model",
-                                                 choices=get_models(flux_dir),
+                                                 choices=get_models(flux_dir,
+                                                                    safety),
                                                  scale=7, value=def_flux,
                                                  interactive=True)
                     with gr.Row():
@@ -119,7 +125,8 @@ with gr.Blocks() as txt2img_block:
                 with gr.Column():
                     with gr.Row():
                         flux_vae = gr.Dropdown(label="Flux VAE",
-                                               choices=get_models(vae_dir),
+                                               choices=get_models(vae_dir,
+                                                                  safety),
                                                scale=7, value=def_flux_vae,
                                                interactive=True)
                     with gr.Row():
@@ -130,7 +137,8 @@ with gr.Blocks() as txt2img_block:
                 with gr.Column():
                     with gr.Row():
                         clip_l = gr.Dropdown(label="clip_l",
-                                             choices=get_models(clip_l_dir),
+                                             choices=get_models(clip_l_dir,
+                                                                safety),
                                              scale=7, value=def_clip_l,
                                              interactive=True)
                     with gr.Row():
@@ -140,7 +148,8 @@ with gr.Blocks() as txt2img_block:
                 with gr.Column():
                     with gr.Row():
                         t5xxl = gr.Dropdown(label="t5xxl",
-                                            choices=get_models(t5xxl_dir),
+                                            choices=get_models(t5xxl_dir,
+                                                               safety),
                                             scale=7, value=def_t5xxl,
                                             interactive=True)
                     with gr.Row():
@@ -159,7 +168,8 @@ with gr.Blocks() as txt2img_block:
             with gr.Row():
                 with gr.Column():
                     taesd = gr.Dropdown(label="TAESD",
-                                        choices=get_models(taesd_dir), scale=7)
+                                        choices=get_models(taesd_dir, safety),
+                                        scale=7)
                 with gr.Column():
                     reload_taesd_btn = gr.Button(value=RELOAD_SYMBOL, scale=1)
                     clear_taesd = gr.ClearButton(taesd, scale=1)
@@ -223,7 +233,7 @@ with gr.Blocks() as txt2img_block:
             # Upscale
             with gr.Accordion(label="Upscale", open=False):
                 upscl = gr.Dropdown(label="Upscaler",
-                                    choices=get_models(upscl_dir))
+                                    choices=get_models(upscl_dir, safety))
                 reload_upscl_btn = gr.Button(value=RELOAD_SYMBOL)
                 clear_upscl = gr.ClearButton(upscl)
                 upscl_rep = gr.Slider(label="Upscaler repeats", minimum=1,
@@ -232,7 +242,7 @@ with gr.Blocks() as txt2img_block:
             # ControlNet
             with gr.Accordion(label="ControlNet", open=False):
                 cnnet = gr.Dropdown(label="ControlNet",
-                                    choices=get_models(cnnet_dir))
+                                    choices=get_models(cnnet_dir, safety))
                 reload_cnnet_btn = gr.Button(value=RELOAD_SYMBOL)
                 clear_cnnet = gr.ClearButton(cnnet)
                 control_img = gr.Image(sources="upload", type="filepath")
@@ -286,20 +296,21 @@ with gr.Blocks() as txt2img_block:
     flux_tab.select(flux_tab_switch, inputs=[sd_model, sd_vae, nprompt],
                     outputs=[sd_model, flux_model, sd_vae, flux_vae, clip_l,
                              t5xxl, pprompt, nprompt])
-    reload_sd_btn.click(reload_models, inputs=[sd_dir_txt],
+    reload_sd_btn.click(reload_models, inputs=[sd_dir_txt, safety_txt],
                         outputs=[sd_model])
-    reload_flux_btn.click(reload_models, inputs=[flux_dir_txt],
+    reload_flux_btn.click(reload_models, inputs=[flux_dir_txt, safety_txt],
                           outputs=[flux_model])
-    reload_vae_btn.click(reload_models, inputs=[vae_dir_txt], outputs=[sd_vae])
-    reload_clip_l_btn.click(reload_models, inputs=[clip_l_dir_txt],
+    reload_vae_btn.click(reload_models, inputs=[vae_dir_txt, safety_txt],
+                         outputs=[sd_vae])
+    reload_clip_l_btn.click(reload_models, inputs=[clip_l_dir_txt, safety_txt],
                             outputs=[clip_l])
-    reload_t5xxl_btn.click(reload_models, inputs=[t5xxl_dir_txt],
+    reload_t5xxl_btn.click(reload_models, inputs=[t5xxl_dir_txt, safety_txt],
                            outputs=[t5xxl])
-    reload_taesd_btn.click(reload_models, inputs=[taesd_dir_txt],
+    reload_taesd_btn.click(reload_models, inputs=[taesd_dir_txt, safety_txt],
                            outputs=[taesd])
-    reload_upscl_btn.click(reload_models, inputs=[upscl_dir_txt],
+    reload_upscl_btn.click(reload_models, inputs=[upscl_dir_txt, safety_txt],
                            outputs=[upscl])
-    reload_cnnet_btn.click(reload_models, inputs=[cnnet_dir_txt],
+    reload_cnnet_btn.click(reload_models, inputs=[cnnet_dir_txt, safety_txt],
                            outputs=[cnnet])
     save_prompt_btn.click(save_prompts, inputs=[saved_prompts, pprompt,
                                                 nprompt], outputs=[])
@@ -321,6 +332,7 @@ with gr.Blocks()as img2img_block:
     taesd_dir_txt = gr.Textbox(value=taesd_dir, visible=False)
     upscl_dir_txt = gr.Textbox(value=upscl_dir, visible=False)
     cnnet_dir_txt = gr.Textbox(value=cnnet_dir, visible=False)
+    safety_txt = gr.Textbox(value=safety, visible=False)
 
     # Title
     img2img_title = gr.Markdown("# Image to Image")
@@ -330,13 +342,15 @@ with gr.Blocks()as img2img_block:
         with gr.Column():
             with gr.Row():
                 model = gr.Dropdown(label="Model",
-                                    choices=get_models(sd_dir), scale=7,
+                                    choices=get_models(sd_dir, safety),
+                                    scale=7,
                                     value=def_sd)
             with gr.Row():
                 reload_sd_btn = gr.Button(value=RELOAD_SYMBOL, scale=1)
         with gr.Column():
             with gr.Row():
-                sd_vae = gr.Dropdown(label="VAE", choices=get_models(vae_dir),
+                sd_vae = gr.Dropdown(label="VAE",
+                                     choices=get_models(vae_dir, safety),
                                      scale=7, value=def_sd_vae)
             with gr.Row():
                 reload_vae_btn = gr.Button(value=RELOAD_SYMBOL, scale=1)
@@ -353,7 +367,8 @@ with gr.Blocks()as img2img_block:
             with gr.Row():
                 with gr.Column():
                     taesd = gr.Dropdown(label="TAESD",
-                                        choices=get_models(taesd_dir), scale=7)
+                                        choices=get_models(taesd_dir, safety),
+                                        scale=7)
                 with gr.Column():
                     reload_taesd_btn = gr.Button(value=RELOAD_SYMBOL, scale=1)
                     clear_taesd = gr.ClearButton(taesd, scale=1)
@@ -426,7 +441,7 @@ with gr.Blocks()as img2img_block:
             # Upscale
             with gr.Accordion(label="Upscale", open=False):
                 upscl = gr.Dropdown(label="Upscaler",
-                                    choices=get_models(upscl_dir))
+                                    choices=get_models(upscl_dir, safety))
                 reload_upscl_btn = gr.Button(value=RELOAD_SYMBOL)
                 clear_upscl = gr.ClearButton(upscl)
                 upscl_rep = gr.Slider(label="Upscaler repeats", minimum=1,
@@ -435,7 +450,7 @@ with gr.Blocks()as img2img_block:
             # ControlNet
             with gr.Accordion(label="ControlNet", open=False):
                 cnnet = gr.Dropdown(label="ControlNet",
-                                    choices=get_models(cnnet_dir))
+                                    choices=get_models(cnnet_dir, safety))
                 reload_cnnet_btn = gr.Button(value=RELOAD_SYMBOL)
                 clear_connet = gr.ClearButton(cnnet)
                 control_img = gr.Image(sources="upload", type="filepath")
@@ -482,14 +497,15 @@ with gr.Blocks()as img2img_block:
     kill_btn.click(kill_subprocess, inputs=[], outputs=[])
 
     # Interactive Bindings
-    reload_sd_btn.click(reload_models, inputs=[sd_dir_txt],
+    reload_sd_btn.click(reload_models, inputs=[sd_dir_txt, safety_txt],
                         outputs=[model])
-    reload_vae_btn.click(reload_models, inputs=[vae_dir_txt], outputs=[sd_vae])
-    reload_taesd_btn.click(reload_models, inputs=[taesd_dir_txt],
+    reload_vae_btn.click(reload_models, inputs=[vae_dir_txt, safety_txt],
+                         outputs=[sd_vae])
+    reload_taesd_btn.click(reload_models, inputs=[taesd_dir_txt, safety_txt],
                            outputs=[taesd])
-    reload_upscl_btn.click(reload_models, inputs=[upscl_dir_txt],
+    reload_upscl_btn.click(reload_models, inputs=[upscl_dir_txt, safety_txt],
                            outputs=[upscl])
-    reload_cnnet_btn.click(reload_models, inputs=[cnnet_dir_txt],
+    reload_cnnet_btn.click(reload_models, inputs=[cnnet_dir_txt, safety_txt],
                            outputs=[cnnet])
     random_seed_btn.click(random_seed, [], [seed])
 
@@ -569,27 +585,49 @@ with gr.Blocks() as gallery_block:
 
 
 with gr.Blocks() as convert_block:
+    sd_dir_txt = gr.Textbox(value=sd_dir, visible=False)
+    vae_dir_txt = gr.Textbox(value=vae_dir, visible=False)
+    flux_dir_txt = gr.Textbox(value=flux_dir, visible=False)
+    clip_l_dir_txt = gr.Textbox(value=clip_l_dir, visible=False)
+    t5xxl_dir_txt = gr.Textbox(value=t5xxl_dir, visible=False)
+    emb_dir_txt = gr.Textbox(value=emb_dir, visible=False)
+    lora_dir_txt = gr.Textbox(value=lora_dir, visible=False)
+    taesd_dir_txt = gr.Textbox(value=taesd_dir, visible=False)
+    upscl_dir_txt = gr.Textbox(value=upscl_dir, visible=False)
+    cnnet_dir_txt = gr.Textbox(value=cnnet_dir, visible=False)
+    safety_false_txt = gr.Textbox(value=0, visible=False)
+    model_dir_txt = gr.Textbox(value="", visible=False)
     # Title
     convert_title = gr.Markdown("# Convert and Quantize")
 
     with gr.Row():
-        # Input
-        with gr.Column(scale=1):
-            with gr.Row():
-                orig_model = gr.Dropdown(label="Original Model",
-                                         choices=get_hf_models(), scale=5)
-                reload_btn = gr.Button(RELOAD_SYMBOL, scale=1)
-                reload_btn.click(reload_hf_models, inputs=[],
-                                 outputs=[orig_model])
+        with gr.Column():
+            model_type = gr.Dropdown(label="Model Type", choices=MODELS,
+                                     interactive=True,
+                                     value="Stable-Diffusion")
+            model_type.input(model_choice, inputs=[model_type],
+                             outputs=[model_dir_txt])
 
-            quant_type = gr.Dropdown(label="Type",
-                                     choices=QUANTS,
-                                     value="f32")
+    with gr.Row():
+        with gr.Column():
+            with gr.Row():
+                model = gr.Dropdown(label="Model",
+                                    choices=get_models(model_dir, 0), scale=5,
+                                    interactive=True)
+                reload_btn = gr.Button(RELOAD_SYMBOL, scale=1)
+                reload_btn.click(reload_models,
+                                 inputs=[model_dir_txt, safety_false_txt],
+                                 outputs=[model])
+            with gr.Row():
+                gguf_name = gr.Textbox(label="Output Name (optional, must end "
+                                       "with .gguf)", value="")
+
+        with gr.Column():
+            with gr.Row():
+                quant_type = gr.Dropdown(label="Type", choices=QUANTS,
+                                         value="f32")
 
             verbose = gr.Checkbox(label="Verbose")
-
-            gguf_name = gr.Textbox(label="Output Name (optional, must end "
-                                   "with .gguf)", value="")
 
             with gr.Row():
                 convert_btn = gr.Button(value="Convert")
@@ -597,12 +635,16 @@ with gr.Blocks() as convert_block:
 
         # Output
         with gr.Column(scale=1):
-            result = gr.Textbox(interactive=False, value="")
+            result = gr.Textbox(interactive=False, value="", label="LOG")
 
     # Interactive Bindings
-    convert_btn.click(convert, inputs=[orig_model, quant_type, gguf_name,
+    convert_btn.click(convert, inputs=[sd_model, quant_type, gguf_name,
                                        verbose], outputs=[result])
     kill_btn.click(kill_subprocess, [], [])
+
+    model_dir_txt.change(reload_models,
+                         inputs=[model_dir_txt, safety_false_txt],
+                         outputs=[model])
 
 
 with gr.Blocks() as options_block:
@@ -613,7 +655,7 @@ with gr.Blocks() as options_block:
         with gr.Column():
             with gr.Row():
                 sd_model = gr.Dropdown(label="Stable Diffusion Model",
-                                       choices=get_models(sd_dir),
+                                       choices=get_models(sd_dir, safety),
                                        scale=7, value=def_sd,
                                        interactive=True)
             with gr.Row():
@@ -622,8 +664,9 @@ with gr.Blocks() as options_block:
         with gr.Column():
             with gr.Row():
                 sd_vae = gr.Dropdown(label="Stable Diffusion VAE",
-                                     choices=get_models(vae_dir), scale=7,
-                                     value=def_sd_vae, interactive=True)
+                                     choices=get_models(vae_dir, safety),
+                                     scale=7, value=def_sd_vae,
+                                     interactive=True)
             with gr.Row():
                 reload_vae_btn = gr.Button(value=RELOAD_SYMBOL,
                                            scale=1)
@@ -632,7 +675,7 @@ with gr.Blocks() as options_block:
         with gr.Column():
             with gr.Row():
                 flux_model = gr.Dropdown(label="Flux Model",
-                                         choices=get_models(flux_dir),
+                                         choices=get_models(flux_dir, safety),
                                          scale=7, value=def_flux,
                                          interactive=True)
             with gr.Row():
@@ -642,7 +685,7 @@ with gr.Blocks() as options_block:
         with gr.Column():
             with gr.Row():
                 flux_vae = gr.Dropdown(label="Flux VAE",
-                                       choices=get_models(vae_dir),
+                                       choices=get_models(vae_dir, safety),
                                        scale=7, value=def_flux_vae,
                                        interactive=True)
             with gr.Row():
@@ -653,7 +696,7 @@ with gr.Blocks() as options_block:
         with gr.Column():
             with gr.Row():
                 clip_l = gr.Dropdown(label="clip_l",
-                                     choices=get_models(clip_l_dir),
+                                     choices=get_models(clip_l_dir, safety),
                                      scale=7, value=def_clip_l,
                                      interactive=True)
             with gr.Row():
@@ -663,7 +706,7 @@ with gr.Blocks() as options_block:
         with gr.Column():
             with gr.Row():
                 t5xxl = gr.Dropdown(label="t5xxl",
-                                    choices=get_models(t5xxl_dir),
+                                    choices=get_models(t5xxl_dir, safety),
                                     scale=7, value=def_t5xxl,
                                     interactive=True)
             with gr.Row():
@@ -699,6 +742,10 @@ with gr.Blocks() as options_block:
         # Prediction mode
         predict = gr.Dropdown(label="Prediction", choices=PREDICTION,
                               value=def_predict, interactive=True)
+
+    with gr.Row():
+        # Safety Box
+        safety_box = gr.Checkbox(label="Safety", value=safety)
 
     with gr.Row():
         # Folders Accordion
@@ -739,7 +786,7 @@ with gr.Blocks() as options_block:
                                      emb_dir_txt, lora_dir_txt,
                                      taesd_dir_txt, upscl_dir_txt,
                                      cnnet_dir_txt, txt2img_dir_txt,
-                                     img2img_dir_txt], [])
+                                     img2img_dir_txt, safety_box], [])
         restore_btn = gr.Button(value="Restore Defaults")
         restore_btn.click(rst_def, [], [])
 
