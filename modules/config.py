@@ -10,7 +10,7 @@ CONFIG_PATH = 'config.json'
 PROMPTS_PATH = 'prompts.json'
 
 
-def set_defaults(in_sd, in_flux, in_sd_vae, in_flux_vae, in_clip_l, in_t5xxl, in_sampling,
+def set_defaults(in_sd, in_sd_vae, in_flux, in_flux_vae, in_clip_l, in_t5xxl, in_sampling,
                  in_steps, in_schedule, in_width, in_height, in_predict,
                  in_sd_dir_txt, in_flux_dir_txt, in_vae_dir_txt,
                  in_clip_l_dir_txt, in_t5xxl_dir_txt, in_emb_dir_txt,
@@ -40,10 +40,10 @@ def set_defaults(in_sd, in_flux, in_sd_vae, in_flux_vae, in_clip_l, in_t5xxl, in
 
     if in_sd:
         data['def_sd'] = in_sd
-    if in_flux:
-        data['def_flux'] = in_flux
     if in_sd_vae:
         data['def_sd_vae'] = in_sd_vae
+    if in_flux:
+        data['def_flux'] = in_flux
     if in_flux_vae:
         data['def_flux_vae'] = in_flux_vae
     if in_clip_l:
@@ -186,14 +186,14 @@ if 'def_sd' in data:
     def_sd = data['def_sd']
 else:
     def_sd = None
-if 'def_flux' in data:
-    def_flux = data['def_flux']
-else:
-    def_flux = None
 if 'def_sd_vae' in data:
     def_vae = data['def_sd_vae']
 else:
     def_sd_vae = None
+if 'def_flux' in data:
+    def_flux = data['def_flux']
+else:
+    def_flux = None
 if 'def_flux_vae' in data:
     def_flux_vae = data['def_flux_vae']
 else:

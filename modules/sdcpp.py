@@ -13,7 +13,7 @@ from modules.config import (
 SD = exe_name()
 
 
-def txt2img(in_sd_model=None, in_flux_model=None, in_sd_vae=None,
+def txt2img(in_sd_model=None, in_sd_vae=None, in_flux_model=None,
             in_flux_vae=None, in_clip_l=None, in_t5xxl=None,
             in_model_type="Default", in_taesd=None, in_upscl=None,
             in_upscl_rep=1, in_cnnet=None, in_control_img=None,
@@ -27,8 +27,8 @@ def txt2img(in_sd_model=None, in_flux_model=None, in_sd_vae=None,
 
     """Text to image command creator"""
     fsd_model = get_path(sd_dir, in_sd_model)
-    fflux_model = get_path(flux_dir, in_flux_model)
     fsd_vae = get_path(vae_dir, in_sd_vae)
+    fflux_model = get_path(flux_dir, in_flux_model)
     fflux_vae = get_path(vae_dir, in_flux_vae)
     fclip_l = get_path(clip_l_dir, in_clip_l)
     ft5xxl = get_path(t5xxl_dir, in_t5xxl)
