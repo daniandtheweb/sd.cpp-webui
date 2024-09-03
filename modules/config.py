@@ -10,9 +10,9 @@ CONFIG_PATH = 'config.json'
 PROMPTS_PATH = 'prompts.json'
 
 
-def set_defaults(in_sd, in_sd_vae, in_flux, in_flux_vae, in_clip_l, in_t5xxl, in_sampling,
-                 in_steps, in_schedule, in_width, in_height, in_predict,
-                 in_sd_dir_txt, in_flux_dir_txt, in_vae_dir_txt,
+def set_defaults(in_sd, in_sd_vae, in_flux, in_flux_vae, in_clip_l, in_t5xxl,
+                 in_sampling, in_steps, in_schedule, in_width, in_height,
+                 in_predict, in_sd_dir_txt, in_flux_dir_txt, in_vae_dir_txt,
                  in_clip_l_dir_txt, in_t5xxl_dir_txt, in_emb_dir_txt,
                  in_lora_dir_txt, in_taesd_dir_txt, in_upscl_dir_txt,
                  in_cnnet_dir_txt, in_txt2img_dir_txt, in_img2img_dir_txt):
