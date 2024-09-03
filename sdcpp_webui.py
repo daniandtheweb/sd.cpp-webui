@@ -282,10 +282,10 @@ with gr.Blocks() as txt2img_block:
     # Interactive Bindings
     sd_tab.select(sd_tab_switch, inputs=[flux_model, flux_vae, clip_l, t5xxl],
                   outputs=[sd_model, flux_model, sd_vae, flux_vae, clip_l,
-                           t5xxl])
-    flux_tab.select(flux_tab_switch, inputs=[sd_model, sd_vae],
+                           t5xxl, pprompt, nprompt])
+    flux_tab.select(flux_tab_switch, inputs=[sd_model, sd_vae, nprompt],
                     outputs=[sd_model, flux_model, sd_vae, flux_vae, clip_l,
-                             t5xxl])
+                             t5xxl, pprompt, nprompt])
     reload_sd_btn.click(reload_models, inputs=[sd_dir_txt],
                         outputs=[sd_model])
     reload_flux_btn.click(reload_models, inputs=[flux_dir_txt],
