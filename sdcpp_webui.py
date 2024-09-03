@@ -15,10 +15,10 @@ from modules.gallery import GalleryManager
 from modules.config import (
     set_defaults, rst_def, get_prompts, reload_prompts, save_prompts,
     delete_prompts, load_prompts, sd_dir, vae_dir, flux_dir, clip_l_dir,
-    t5xxl_dir, emb_dir, lora_dir, taesd_dir, upscl_dir, cnnet_dir, txt2img_dir,
-    img2img_dir, def_sd, def_sd_vae, def_flux, def_flux_vae, def_clip_l,
-    def_t5xxl, def_sampling, def_steps, def_scheduler, def_width, def_height,
-    def_predict, safety
+    t5xxl_dir, emb_dir, lora_dir, taesd_dir, phtmkr_dir, upscl_dir, cnnet_dir,
+    txt2img_dir, img2img_dir, def_sd, def_sd_vae, def_flux, def_flux_vae,
+    def_clip_l, def_t5xxl, def_sampling, def_steps, def_scheduler, def_width,
+    def_height, def_predict, safety
 )
 from modules.loader import (
     get_models, reload_models, model_choice, model_dir
@@ -77,6 +77,7 @@ with gr.Blocks() as txt2img_block:
     emb_dir_txt = gr.Textbox(value=emb_dir, visible=False)
     lora_dir_txt = gr.Textbox(value=lora_dir, visible=False)
     taesd_dir_txt = gr.Textbox(value=taesd_dir, visible=False)
+    phtmkr_dir_txt = gr.Textbox(value=phtmkr_dir, visible=False)
     upscl_dir_txt = gr.Textbox(value=upscl_dir, visible=False)
     cnnet_dir_txt = gr.Textbox(value=cnnet_dir, visible=False)
     safety_txt = gr.Textbox(value=safety, visible=False)
@@ -166,13 +167,33 @@ with gr.Blocks() as txt2img_block:
     with gr.Row():
         with gr.Accordion(label="Extra Networks", open=False):
             with gr.Row():
-                with gr.Column():
-                    taesd = gr.Dropdown(label="TAESD",
-                                        choices=get_models(taesd_dir, safety),
-                                        scale=7)
-                with gr.Column():
-                    reload_taesd_btn = gr.Button(value=RELOAD_SYMBOL, scale=1)
-                    clear_taesd = gr.ClearButton(taesd, scale=1)
+                taesd_title = gr.Markdown("## TAESD")
+            with gr.Row():
+                taesd_model = gr.Dropdown(label="TAESD",
+                                          choices=get_models(taesd_dir,
+                                                             safety),
+                                          interactive=True)
+            with gr.Row():
+                reload_taesd_btn = gr.Button(value=RELOAD_SYMBOL)
+                clear_taesd = gr.ClearButton(taesd_model)
+            with gr.Row():
+                phtmkr_title = gr.Markdown("## PhotoMaker")
+            with gr.Row():
+                phtmkr_model = gr.Dropdown(label="PhotoMaker",
+                                           choices=get_models(phtmkr_dir,
+                                                              safety),
+                                           interactive=True)
+            with gr.Row():
+                reload_phtmkr_btn = gr.Button(value=RELOAD_SYMBOL)
+                clear_phtmkr = gr.ClearButton(phtmkr_model)
+            with gr.Row():
+                phtmkr_in = gr.Textbox(label="PhotoMaker images directory",
+                                       value="", interactive=True)
+            with gr.Row():
+                clear_phtmkr_in = gr.ClearButton(phtmkr_in)
+            with gr.Row():
+                phtmkr_nrml = gr.Checkbox(label="Normalize PhotoMaker input",
+                                          value=False)
 
     # Prompts
     with gr.Row():
@@ -279,8 +300,9 @@ with gr.Blocks() as txt2img_block:
 
     # Generate
     gen_btn.click(txt2img, inputs=[sd_model, sd_vae, flux_model, flux_vae,
-                                   clip_l, t5xxl, model_type, taesd, upscl,
-                                   upscl_rep, cnnet, control_img,
+                                   clip_l, t5xxl, model_type, taesd_model,
+                                   phtmkr_model, phtmkr_in, phtmkr_nrml,
+                                   upscl, upscl_rep, cnnet, control_img,
                                    control_strength, pprompt, nprompt,
                                    sampling, steps, schedule, width, height,
                                    batch_count, cfg, seed, clip_skip, threads,
@@ -307,7 +329,9 @@ with gr.Blocks() as txt2img_block:
     reload_t5xxl_btn.click(reload_models, inputs=[t5xxl_dir_txt, safety_txt],
                            outputs=[t5xxl])
     reload_taesd_btn.click(reload_models, inputs=[taesd_dir_txt, safety_txt],
-                           outputs=[taesd])
+                           outputs=[taesd_model])
+    reload_phtmkr_btn.click(reload_models, inputs=[phtmkr_dir_txt, safety_txt],
+                            outputs=[phtmkr_model])
     reload_upscl_btn.click(reload_models, inputs=[upscl_dir_txt, safety_txt],
                            outputs=[upscl])
     reload_cnnet_btn.click(reload_models, inputs=[cnnet_dir_txt, safety_txt],
@@ -333,6 +357,7 @@ with gr.Blocks()as img2img_block:
     emb_dir_txt = gr.Textbox(value=emb_dir, visible=False)
     lora_dir_txt = gr.Textbox(value=lora_dir, visible=False)
     taesd_dir_txt = gr.Textbox(value=taesd_dir, visible=False)
+    phtmkr_dir_txt = gr.Textbox(value=phtmkr_dir, visible=False)
     upscl_dir_txt = gr.Textbox(value=upscl_dir, visible=False)
     cnnet_dir_txt = gr.Textbox(value=cnnet_dir, visible=False)
     safety_txt = gr.Textbox(value=safety, visible=False)
@@ -422,13 +447,33 @@ with gr.Blocks()as img2img_block:
     with gr.Row():
         with gr.Accordion(label="Extra Networks", open=False):
             with gr.Row():
-                with gr.Column():
-                    taesd = gr.Dropdown(label="TAESD",
-                                        choices=get_models(taesd_dir, safety),
-                                        scale=7)
-                with gr.Column():
-                    reload_taesd_btn = gr.Button(value=RELOAD_SYMBOL, scale=1)
-                    clear_taesd = gr.ClearButton(taesd, scale=1)
+                taesd_title = gr.Markdown("## TAESD")
+            with gr.Row():
+                taesd_model = gr.Dropdown(label="TAESD",
+                                          choices=get_models(taesd_dir,
+                                                             safety),
+                                          interactive=True)
+            with gr.Row():
+                reload_taesd_btn = gr.Button(value=RELOAD_SYMBOL)
+                clear_taesd = gr.ClearButton(taesd_model)
+            with gr.Row():
+                phtmkr_title = gr.Markdown("## PhotoMaker")
+            with gr.Row():
+                phtmkr_model = gr.Dropdown(label="PhotoMaker",
+                                           choices=get_models(phtmkr_dir,
+                                                              safety),
+                                           interactive=True)
+            with gr.Row():
+                reload_phtmkr_btn = gr.Button(value=RELOAD_SYMBOL)
+                clear_phtmkr = gr.ClearButton(phtmkr_model)
+            with gr.Row():
+                phtmkr_in = gr.Textbox(label="PhotoMaker images directory",
+                                       value="", interactive=True)
+            with gr.Row():
+                clear_phtmkr_in = gr.ClearButton(phtmkr_in)
+            with gr.Row():
+                phtmkr_nrml = gr.Checkbox(label="Normalize PhotoMaker input",
+                                          value=False)
 
     # Prompts
     with gr.Row():
@@ -542,9 +587,10 @@ with gr.Blocks()as img2img_block:
 
     # Generate
     gen_btn.click(img2img, inputs=[sd_model, sd_vae, flux_model, flux_vae,
-                                   clip_l, t5xxl, model_type, taesd, img_inp,
-                                   upscl, upscl_rep, cnnet, control_img,
-                                   control_strength, pprompt,
+                                   clip_l, t5xxl, model_type, taesd_model,
+                                   phtmkr_model, phtmkr_in, phtmkr_nrml,
+                                   img_inp, upscl, upscl_rep, cnnet,
+                                   control_img, control_strength, pprompt,
                                    nprompt, sampling, steps, schedule,
                                    width, height, batch_count,
                                    strenght, style_ratio, style_ratio_btn,
@@ -572,7 +618,9 @@ with gr.Blocks()as img2img_block:
     reload_t5xxl_btn.click(reload_models, inputs=[t5xxl_dir_txt, safety_txt],
                            outputs=[t5xxl])
     reload_taesd_btn.click(reload_models, inputs=[taesd_dir_txt, safety_txt],
-                           outputs=[taesd])
+                           outputs=[taesd_model])
+    reload_phtmkr_btn.click(reload_models, inputs=[phtmkr_dir_txt, safety_txt],
+                            outputs=[phtmkr_model])
     reload_upscl_btn.click(reload_models, inputs=[upscl_dir_txt, safety_txt],
                            outputs=[upscl])
     reload_cnnet_btn.click(reload_models, inputs=[cnnet_dir_txt, safety_txt],
@@ -844,6 +892,8 @@ with gr.Blocks() as options_block:
                                       interactive=True)
             taesd_dir_txt = gr.Textbox(label="TAESD folder", value=taesd_dir,
                                        interactive=True)
+            phtmkr_dir_txt = gr.Textbox(label="PhotoMaker folder",
+                                        value=phtmkr_dir, interactive=True)
             upscl_dir_txt = gr.Textbox(label="Upscaler folder",
                                        value=upscl_dir, interactive=True)
             cnnet_dir_txt = gr.Textbox(label="ControlNet folder",
@@ -862,9 +912,10 @@ with gr.Blocks() as options_block:
                                      sd_dir_txt, flux_dir_txt, vae_dir_txt,
                                      clip_l_dir_txt, t5xxl_dir_txt,
                                      emb_dir_txt, lora_dir_txt,
-                                     taesd_dir_txt, upscl_dir_txt,
-                                     cnnet_dir_txt, txt2img_dir_txt,
-                                     img2img_dir_txt, safety_box], [])
+                                     taesd_dir_txt, phtmkr_dir_txt,
+                                     upscl_dir_txt, cnnet_dir_txt,
+                                     txt2img_dir_txt, img2img_dir_txt,
+                                     safety_box], [])
         restore_btn = gr.Button(value="Restore Defaults")
         restore_btn.click(rst_def, [], [])
 

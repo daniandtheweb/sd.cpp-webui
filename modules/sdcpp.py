@@ -6,7 +6,7 @@ from modules.utility import run_subprocess, exe_name, get_path
 from modules.gallery import get_next_img
 from modules.config import (
     sd_dir, flux_dir, vae_dir, clip_l_dir, t5xxl_dir, emb_dir, lora_dir,
-    taesd_dir, upscl_dir, cnnet_dir, txt2img_dir, img2img_dir
+    taesd_dir, phtmkr_dir, upscl_dir, cnnet_dir, txt2img_dir, img2img_dir
     )
 
 
@@ -15,7 +15,8 @@ SD = exe_name()
 
 def txt2img(in_sd_model=None, in_sd_vae=None, in_flux_model=None,
             in_flux_vae=None, in_clip_l=None, in_t5xxl=None,
-            in_model_type="Default", in_taesd=None, in_upscl=None,
+            in_model_type="Default", in_taesd=None, in_phtmkr=None,
+            in_phtmkr_in=None, in_phtmkr_nrml=False, in_upscl=None,
             in_upscl_rep=1, in_cnnet=None, in_control_img=None,
             in_control_strength=1.0, in_ppromt="", in_nprompt="",
             in_sampling="default", in_steps=50, in_schedule="default",
@@ -33,6 +34,7 @@ def txt2img(in_sd_model=None, in_sd_vae=None, in_flux_model=None,
     fclip_l = get_path(clip_l_dir, in_clip_l)
     ft5xxl = get_path(t5xxl_dir, in_t5xxl)
     ftaesd = get_path(taesd_dir, in_taesd)
+    fphtmkr = get_path(phtmkr_dir, in_phtmkr)
     fupscl = get_path(upscl_dir, in_upscl)
     fcnnet = get_path(cnnet_dir, in_cnnet)
     foutput = (os.path.join(txt2img_dir, f"{in_output}.png")
@@ -76,6 +78,8 @@ def txt2img(in_sd_model=None, in_sd_vae=None, in_flux_model=None,
         '--clip_l': fclip_l,
         '--t5xxl': ft5xxl,
         '--taesd': ftaesd,
+        '--stacked-id-embd-dir': fphtmkr,
+        '--input-id-images-dir': str(in_phtmkr_in),
         '--upscale-model': fupscl,
         '--upscale-repeats': str(in_upscl_rep) if fupscl else None,
         '--type': in_model_type if in_model_type != "Default" else None,
@@ -92,6 +96,7 @@ def txt2img(in_sd_model=None, in_sd_vae=None, in_flux_model=None,
         '--vae-tiling': in_vae_tiling,
         '--vae-on-cpu': in_vae_cpu,
         '--control-net-cpu': in_cnnet_cpu,
+        '--normalize-input': in_phtmkr_nrml,
         '--color': in_color,
         '-v': in_verbose
     }
@@ -116,7 +121,8 @@ def txt2img(in_sd_model=None, in_sd_vae=None, in_flux_model=None,
 
 def img2img(in_sd_model=None, in_sd_vae=None, in_flux_model=None,
             in_flux_vae=None, in_clip_l=None, in_t5xxl=None,
-            in_model_type="Default", in_taesd=None, in_img_inp=None,
+            in_model_type="Default", in_taesd=None, in_phtmkr=None,
+            in_phtmkr_in=None, in_phtmkr_nrml=False, in_img_inp=None,
             in_upscl=None, in_upscl_rep=1, in_cnnet=None,
             in_control_img=None, in_control_strength=1.0, in_ppromt="",
             in_nprompt="", in_sampling="default", in_steps=50,
@@ -137,6 +143,7 @@ def img2img(in_sd_model=None, in_sd_vae=None, in_flux_model=None,
     fclip_l = get_path(clip_l_dir, in_clip_l)
     ft5xxl = get_path(t5xxl_dir, in_t5xxl)
     ftaesd = get_path(taesd_dir, in_taesd)
+    fphtmkr = get_path(phtmkr_dir, in_phtmkr)
     fupscl = get_path(upscl_dir, in_upscl)
     fcnnet = get_path(cnnet_dir, in_cnnet)
     foutput = (os.path.join(img2img_dir, f"{in_output}.png")
@@ -182,6 +189,8 @@ def img2img(in_sd_model=None, in_sd_vae=None, in_flux_model=None,
         '--t5xxl': ft5xxl,
         '--type': in_model_type if in_model_type != "Default" else None,
         '--taesd': ftaesd,
+        '--stacked-id-embd-dir': fphtmkr,
+        '--input-id-images-dir': str(in_phtmkr_in),
         '--style-ratio': str(in_style_ratio) if in_style_ratio_btn else None,
         '--prediction': in_predict if in_predict != "Default" else None,
         '--upscale-model': fupscl,
@@ -196,6 +205,7 @@ def img2img(in_sd_model=None, in_sd_vae=None, in_flux_model=None,
         '--vae-tiling': in_vae_tiling,
         '--vae-on-cpu': in_vae_cpu,
         '--control-net-cpu': in_cnnet_cpu,
+        '--normalize-input': in_phtmkr_nrml,
         '--canny': in_canny,
         '--color': in_color,
         '-v': in_verbose

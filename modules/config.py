@@ -14,9 +14,9 @@ def set_defaults(in_sd, in_sd_vae, in_flux, in_flux_vae, in_clip_l, in_t5xxl,
                  in_sampling, in_steps, in_schedule, in_width, in_height,
                  in_predict, in_sd_dir_txt, in_flux_dir_txt, in_vae_dir_txt,
                  in_clip_l_dir_txt, in_t5xxl_dir_txt, in_emb_dir_txt,
-                 in_lora_dir_txt, in_taesd_dir_txt, in_upscl_dir_txt,
-                 in_cnnet_dir_txt, in_txt2img_dir_txt, in_img2img_dir_txt,
-                 in_safety):
+                 in_lora_dir_txt, in_taesd_dir_txt, in_phtmkr_dir_txt,
+                 in_upscl_dir_txt, in_cnnet_dir_txt, in_txt2img_dir_txt,
+                 in_img2img_dir_txt, in_safety):
     """Sets new defaults"""
     data.update({
         'sd_dir': in_sd_dir_txt,
@@ -27,6 +27,7 @@ def set_defaults(in_sd, in_sd_vae, in_flux, in_flux_vae, in_clip_l, in_t5xxl,
         'emb_dir': in_emb_dir_txt,
         'lora_dir': in_lora_dir_txt,
         'taesd_dir': in_taesd_dir_txt,
+        'phtmkr_dir': in_phtmkr_dir_txt,
         'upscl_dir': in_upscl_dir_txt,
         'cnnet_dir': in_cnnet_dir_txt,
         'txt2img_dir': in_txt2img_dir_txt,
@@ -71,6 +72,7 @@ def rst_def():
         'emb_dir': os.path.join(CURRENT_DIR, "models/Embeddings/"),
         'lora_dir': os.path.join(CURRENT_DIR, "models/Lora/"),
         'taesd_dir': os.path.join(CURRENT_DIR, "models/TAESD/"),
+        'phtmkr_dir': os.path.join(CURRENT_DIR, "models/PhotoMaker/"),
         'upscl_dir': os.path.join(CURRENT_DIR, "models/Upscalers/"),
         'cnnet_dir': os.path.join(CURRENT_DIR, "models/ControlNet/"),
         'txt2img_dir': os.path.join(CURRENT_DIR, "outputs/txt2img/"),
@@ -180,6 +182,7 @@ t5xxl_dir = data['t5xxl_dir']
 emb_dir = data['emb_dir']
 lora_dir = data['lora_dir']
 taesd_dir = data['taesd_dir']
+phtmkr_dir = data['phtmkr_dir']
 upscl_dir = data['upscl_dir']
 cnnet_dir = data['cnnet_dir']
 txt2img_dir = data['txt2img_dir']
