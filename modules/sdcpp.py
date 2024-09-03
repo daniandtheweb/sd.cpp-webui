@@ -20,10 +20,10 @@ def txt2img(in_sd_model=None, in_sd_vae=None, in_flux_model=None,
             in_control_strength=1.0, in_ppromt="", in_nprompt="",
             in_sampling="default", in_steps=50, in_schedule="default",
             in_width=512, in_height=512, in_batch_count=1,
-            in_cfg=7.5, in_seed=42, in_clip_skip=0, in_threads=1,
-            in_vae_tiling=None, in_vae_cpu=None, in_cnnet_cpu=None,
+            in_cfg=7.0, in_seed=42, in_clip_skip=0, in_threads=1,
+            in_vae_tiling=False, in_vae_cpu=False, in_cnnet_cpu=False,
             in_rng="default", in_predict="Default", in_output=None,
-            in_color=None, in_verbose=None):
+            in_color=False, in_verbose=False):
 
     """Text to image command creator"""
     fsd_model = get_path(sd_dir, in_sd_model)
@@ -39,34 +39,52 @@ def txt2img(in_sd_model=None, in_sd_vae=None, in_flux_model=None,
                if in_output
                else os.path.join(txt2img_dir, get_next_img(subctrl=0)))
 
-    command = [SD, '-M', 'txt2img', '-p', f'"{in_ppromt}"',
-               '--sampling-method', str(in_sampling), '--steps', str(in_steps),
-               '--schedule', f'{in_schedule}', '-W', str(in_width), '-H',
-               str(in_height), '-b', str(in_batch_count), '--cfg-scale',
-               str(in_cfg), '-s', str(in_seed), '--clip-skip',
-               str(in_clip_skip + 1), '--embd-dir', emb_dir,
-               '--lora-model-dir', lora_dir, '-t', str(in_threads), '--rng',
-               str(in_rng), '-o', foutput]
+    # Initialize the command with prompts and critical options
+    command = [SD, '-M', 'txt2img', '-p', f'"{in_ppromt}"']
+
+    # Add prompts at the start
+    if in_nprompt:
+        command.extend(['-n', f'"{in_nprompt}"'])
+
+    # Add image generation options
+    command.extend([
+        '--sampling-method', str(in_sampling),
+        '--steps', str(in_steps),
+        '--schedule', str(in_schedule),
+        '-W', str(in_width),
+        '-H', str(in_height),
+        '-b', str(in_batch_count),
+        '--cfg-scale', str(in_cfg),
+        '-s', str(in_seed),
+        '--clip-skip', str(in_clip_skip + 1),
+        '--embd-dir', emb_dir,
+        '--lora-model-dir', lora_dir,
+        '-t', str(in_threads),
+        '--rng', str(in_rng),
+        '-o', foutput
+    ])
 
     # Handle VAE options
     vae_option = fsd_vae if fsd_vae else fflux_vae
 
     # Optional parameters in dictionaries
     options = {
+        # Model-related options
         '-m': fsd_model,
         '--diffusion-model': fflux_model,
         '--vae': vae_option,
         '--clip_l': fclip_l,
         '--t5xxl': ft5xxl,
-        '--type': in_model_type if in_model_type != "Default" else None,
         '--taesd': ftaesd,
-        '--prediction': in_predict if in_predict != "Default" else None,
         '--upscale-model': fupscl,
         '--upscale-repeats': str(in_upscl_rep) if fupscl else None,
+        '--type': in_model_type if in_model_type != "Default" else None,
+        # Control options
         '--control-net': fcnnet,
         '--control-image': in_control_img if fcnnet else None,
         '--control-strength': str(in_control_strength) if fcnnet else None,
-        '-n': f'"{in_nprompt}"' if in_nprompt else None
+        # Prediction mode
+        '--prediction': in_predict if in_predict != "Default" else None
     }
 
     # Boolean flags
