@@ -111,7 +111,25 @@ def txt2img(in_sd_model=None, in_sd_vae=None, in_flux_model=None,
         if condition:
             command.append(flag)
 
-    fcommand = ' '.join(map(str, command))
+    # Format prompts with brackets only for printing
+    fppromt = f'"{in_ppromt}"'
+    fnprompt = f'"{in_nprompt}"' if in_nprompt else ""
+
+    # Replace prompts in the command for printing
+    command_for_print = command.copy()
+
+    # Find and replace the positive prompt in the command
+    if '-p' in command_for_print:
+        p_index = command_for_print.index('-p') + 1
+        command_for_print[p_index] = fppromt
+
+    # Find and replace the negative prompt in the command, if it exists
+    if '-n' in command_for_print:
+        n_index = command_for_print.index('-n') + 1
+        command_for_print[n_index] = fnprompt
+
+    # Construct the final command for printing
+    fcommand = ' '.join(map(str, command_for_print))
 
     print(fcommand)
     run_subprocess(command)
@@ -221,8 +239,25 @@ def img2img(in_sd_model=None, in_sd_vae=None, in_flux_model=None,
         if condition:
             command.append(flag)
 
-    # Join command for debugging or logging
-    fcommand = ' '.join(map(str, command))
+    # Format prompts with brackets only for printing
+    fppromt = f'"{in_ppromt}"'
+    fnprompt = f'"{in_nprompt}"' if in_nprompt else ""
+
+    # Replace prompts in the command for printing
+    command_for_print = command.copy()
+
+    # Find and replace the positive prompt in the command
+    if '-p' in command_for_print:
+        p_index = command_for_print.index('-p') + 1
+        command_for_print[p_index] = fppromt
+
+    # Find and replace the negative prompt in the command, if it exists
+    if '-n' in command_for_print:
+        n_index = command_for_print.index('-n') + 1
+        command_for_print[n_index] = fnprompt
+
+    # Construct the final command for printing
+    fcommand = ' '.join(map(str, command_for_print))
 
     print(fcommand)
     run_subprocess(command)
