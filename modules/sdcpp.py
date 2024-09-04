@@ -293,7 +293,7 @@ def convert(in_orig_model, in_model_dir, in_quant_type, in_gguf_name=None,
     # Convert command list to string format for printing
     fcommand = ' '.join(command)
 
-    print(fcommand)
+    print(f"\n\n{fcommand}\n\n")
     run_subprocess(command)
 
     return "Process completed."
