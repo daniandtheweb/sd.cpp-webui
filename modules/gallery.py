@@ -166,8 +166,8 @@ class GalleryManager:
 
                         else:
                             exif = f"PNG: tEXt\nPositive prompt: {png_exif}"
-                            ppattern = r'Positive prompt:\s*"([^"]*)"'
-                            npattern = r'Negative prompt:\s*"([^"]*)"'
+                            ppattern = r'Positive prompt:\s*"?([^"]*?)"?\s*(?=\s*(Steps:|Negative prompt:))'
+                            npattern = r'Negative prompt:\s"?([^"]*?)"?\s*(?=\s*Steps:)'
 
                         pmatch = re.search(ppattern, exif)
                         nmatch = re.search(npattern, exif)

@@ -37,16 +37,16 @@ def txt2img(in_sd_model=None, in_sd_vae=None, in_flux_model=None,
     fphtmkr = get_path(phtmkr_dir, in_phtmkr)
     fupscl = get_path(upscl_dir, in_upscl)
     fcnnet = get_path(cnnet_dir, in_cnnet)
-    foutput = (os.path.join(txt2img_dir, f"{in_output}.png")
+    foutput = (os.path.join(txt2img_dir, f'{in_output}.png')
                if in_output
                else os.path.join(txt2img_dir, get_next_img(subctrl=0)))
 
     # Initialize the command with prompts and critical options
-    command = [SD, '-M', 'txt2img', '-p', f'"{in_ppromt}"']
+    command = [SD, '-M', 'txt2img', '-p', f'{in_ppromt}']
 
     # Add prompts at the start
     if in_nprompt:
-        command.extend(['-n', f'"{in_nprompt}"'])
+        command.extend(['-n', f'{in_nprompt}'])
 
     # Add image generation options
     command.extend([
@@ -146,16 +146,16 @@ def img2img(in_sd_model=None, in_sd_vae=None, in_flux_model=None,
     fphtmkr = get_path(phtmkr_dir, in_phtmkr)
     fupscl = get_path(upscl_dir, in_upscl)
     fcnnet = get_path(cnnet_dir, in_cnnet)
-    foutput = (os.path.join(img2img_dir, f"{in_output}.png")
+    foutput = (os.path.join(img2img_dir, f'{in_output}.png')
                if in_output
                else os.path.join(img2img_dir, get_next_img(subctrl=1)))
 
     # Initialize the command with prompts and critical options
-    command = [SD, '-M', 'img2img', '-p', f'"{in_ppromt}"']
+    command = [SD, '-M', 'img2img', '-p', f'{in_ppromt}']
 
     # Add negative prompt if present
     if in_nprompt:
-        command.extend(['-n', f'"{in_nprompt}"'])
+        command.extend(['-n', f'{in_nprompt}'])
 
     # Add image generation options
     command.extend([
