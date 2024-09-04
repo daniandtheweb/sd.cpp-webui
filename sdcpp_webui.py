@@ -720,7 +720,7 @@ with gr.Blocks() as convert_block:
     upscl_dir_txt = gr.Textbox(value=upscl_dir, visible=False)
     cnnet_dir_txt = gr.Textbox(value=cnnet_dir, visible=False)
     safety_false_txt = gr.Textbox(value=0, visible=False)
-    model_dir_txt = gr.Textbox(value="Stable-Diffusion", visible=False)
+    model_dir_txt = gr.Textbox(value=sd_dir, visible=False)
     # Title
     convert_title = gr.Markdown("# Convert and Quantize")
 
