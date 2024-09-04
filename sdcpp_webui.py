@@ -491,17 +491,13 @@ with gr.Blocks()as img2img_block:
                     del_prompt_btn = gr.Button(value="Delete prompt",
                                                size="lg")
     with gr.Row():
-        with gr.Column():
-            with gr.Row():
-                pprompt = gr.Textbox(placeholder="Positive prompt",
-                                     label="Positive Prompt", lines=3,
-                                     show_copy_button=True)
-            with gr.Row():
-                nprompt = gr.Textbox(placeholder="Negative prompt",
-                                     label="Negative Prompt", lines=3,
-                                     show_copy_button=True)
-        with gr.Column():
-            img_inp = gr.Image(sources="upload", type="filepath")
+        pprompt = gr.Textbox(placeholder="Positive prompt",
+                             label="Positive Prompt", lines=3,
+                             show_copy_button=True)
+    with gr.Row():
+        nprompt = gr.Textbox(placeholder="Negative prompt",
+                             label="Negative Prompt", lines=3,
+                             show_copy_button=True)
 
     # Settings
     with gr.Row():
@@ -577,6 +573,8 @@ with gr.Blocks()as img2img_block:
                 color = gr.Checkbox(label="Color", value=True)
                 verbose = gr.Checkbox(label="Verbose")
         with gr.Column(scale=1):
+            with gr.Row():
+                img_inp = gr.Image(sources="upload", type="filepath")
             with gr.Row():
                 gen_btn = gr.Button(value="Generate")
                 kill_btn = gr.Button(value="Stop")
