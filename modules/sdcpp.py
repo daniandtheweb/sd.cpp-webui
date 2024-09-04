@@ -131,7 +131,7 @@ def txt2img(in_sd_model=None, in_sd_vae=None, in_flux_model=None,
     # Construct the final command for printing
     fcommand = ' '.join(map(str, command_for_print))
 
-    print(fcommand)
+    print(f"\n\n{fcommand}\n\n")
     run_subprocess(command)
 
     return [foutput]
@@ -259,7 +259,7 @@ def img2img(in_sd_model=None, in_sd_vae=None, in_flux_model=None,
     # Construct the final command for printing
     fcommand = ' '.join(map(str, command_for_print))
 
-    print(fcommand)
+    print(f"\n\n{fcommand}\n\n")
     run_subprocess(command)
 
     return [foutput]
