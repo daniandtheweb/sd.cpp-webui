@@ -23,6 +23,7 @@ from modules.config import (
 from modules.loader import (
     get_models, reload_models, model_choice, model_dir
 )
+from modules.ui import create_model_ui
 
 CURRENT_DIR = os.getcwd()
 SAMPLERS = ["euler", "euler_a", "heun", "dpm2", "dpm++2s_a", "dpm++2m",
@@ -64,7 +65,6 @@ def sdcpp_launch(listen=False, autostart=False):
         print("Launching sdcpp without any specific options")
         sdcpp.launch()
 
-
 os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
 
 with gr.Blocks() as txt2img_block:
@@ -85,71 +85,31 @@ with gr.Blocks() as txt2img_block:
     txt2img_title = gr.Markdown("# Text to Image")
 
     # Model & VAE Selection
-    with gr.Row():
-        with gr.Tab("Stable Diffusion") as sd_tab:
-            with gr.Row():
-                with gr.Column():
-                    with gr.Row():
-                        sd_model = gr.Dropdown(label="Stable Diffusion Model",
-                                               choices=get_models(sd_dir),
-                                               scale=7, value=def_sd,
-                                               interactive=True)
-                    with gr.Row():
-                        reload_sd_btn = gr.Button(value=RELOAD_SYMBOL, scale=1)
-                        clear_sd_model = gr.ClearButton(sd_model, scale=1)
-                with gr.Column():
-                    with gr.Row():
-                        sd_vae = gr.Dropdown(label="Stable Diffusion VAE",
-                                             choices=get_models(vae_dir),
-                                             scale=7, value=def_sd_vae,
-                                             interactive=True)
-                    with gr.Row():
-                        reload_vae_btn = gr.Button(value=RELOAD_SYMBOL,
-                                                   scale=1)
-                        clear_vae = gr.ClearButton(sd_vae, scale=1)
-        with gr.Tab("Flux") as flux_tab:
-            with gr.Row():
-                with gr.Column():
-                    with gr.Row():
-                        flux_model = gr.Dropdown(label="Flux Model",
-                                                 choices=get_models(flux_dir),
-                                                 scale=7, value=def_flux,
-                                                 interactive=True)
-                    with gr.Row():
-                        reload_flux_btn = gr.Button(value=RELOAD_SYMBOL,
-                                                    scale=1)
-                        clear_flux_model = gr.ClearButton(flux_model, scale=1)
-                with gr.Column():
-                    with gr.Row():
-                        flux_vae = gr.Dropdown(label="Flux VAE",
-                                               choices=get_models(vae_dir),
-                                               scale=7, value=def_flux_vae,
-                                               interactive=True)
-                    with gr.Row():
-                        reload_vae_btn = gr.Button(value=RELOAD_SYMBOL,
-                                                   scale=1)
-                        clear_flux_vae = gr.ClearButton(flux_vae, scale=1)
-            with gr.Row():
-                with gr.Column():
-                    with gr.Row():
-                        clip_l = gr.Dropdown(label="clip_l",
-                                             choices=get_models(clip_l_dir),
-                                             scale=7, value=def_clip_l,
-                                             interactive=True)
-                    with gr.Row():
-                        reload_clip_l_btn = gr.Button(value=RELOAD_SYMBOL,
-                                                      scale=1)
-                        clear_clip_l = gr.ClearButton(clip_l, scale=1)
-                with gr.Column():
-                    with gr.Row():
-                        t5xxl = gr.Dropdown(label="t5xxl",
-                                            choices=get_models(t5xxl_dir),
-                                            scale=7, value=def_t5xxl,
-                                            interactive=True)
-                    with gr.Row():
-                        reload_t5xxl_btn = gr.Button(value=RELOAD_SYMBOL,
-                                                     scale=1)
-                        clear_t5xxl = gr.ClearButton(t5xxl, scale=1)
+    model_components = create_model_ui()
+
+    # Stable Diffusion Tab Components
+    sd_tab = model_components['sd_tab']
+    sd_model = model_components['sd_model']
+    reload_sd_btn = model_components['reload_sd_btn']
+    clear_sd_model = model_components['clear_sd_model']
+    sd_vae = model_components['sd_vae']
+    reload_vae_btn = model_components['reload_vae_btn']
+    clear_vae = model_components['clear_vae']
+
+    # Flux Tab Components
+    flux_tab = model_components['flux_tab']
+    flux_model = model_components['flux_model']
+    reload_flux_btn = model_components['reload_flux_btn']
+    clear_flux_model = model_components['clear_flux_model']
+    flux_vae = model_components['flux_vae']
+    reload_vae_btn_2 = model_components['reload_vae_btn_2']
+    clear_flux_vae = model_components['clear_flux_vae']
+    clip_l = model_components['clip_l']
+    reload_clip_l_btn = model_components['reload_clip_l_btn']
+    clear_clip_l = model_components['clear_clip_l']
+    t5xxl = model_components['t5xxl']
+    reload_t5xxl_btn = model_components['reload_t5xxl_btn']
+    clear_t5xxl = model_components['clear_t5xxl']
 
     # Model Type Selection
     with gr.Row():
@@ -356,71 +316,31 @@ with gr.Blocks()as img2img_block:
     img2img_title = gr.Markdown("# Image to Image")
 
     # Model & VAE Selection
-    with gr.Row():
-        with gr.Tab("Stable Diffusion") as sd_tab:
-            with gr.Row():
-                with gr.Column():
-                    with gr.Row():
-                        sd_model = gr.Dropdown(label="Stable Diffusion Model",
-                                               choices=get_models(sd_dir),
-                                               scale=7, value=def_sd,
-                                               interactive=True)
-                    with gr.Row():
-                        reload_sd_btn = gr.Button(value=RELOAD_SYMBOL, scale=1)
-                        clear_sd_model = gr.ClearButton(sd_model, scale=1)
-                with gr.Column():
-                    with gr.Row():
-                        sd_vae = gr.Dropdown(label="Stable Diffusion VAE",
-                                             choices=get_models(vae_dir),
-                                             scale=7, value=def_sd_vae,
-                                             interactive=True)
-                    with gr.Row():
-                        reload_vae_btn = gr.Button(value=RELOAD_SYMBOL,
-                                                   scale=1)
-                        clear_vae = gr.ClearButton(sd_vae, scale=1)
-        with gr.Tab("Flux") as flux_tab:
-            with gr.Row():
-                with gr.Column():
-                    with gr.Row():
-                        flux_model = gr.Dropdown(label="Flux Model",
-                                                 choices=get_models(flux_dir),
-                                                 scale=7, value=def_flux,
-                                                 interactive=True)
-                    with gr.Row():
-                        reload_flux_btn = gr.Button(value=RELOAD_SYMBOL,
-                                                    scale=1)
-                        clear_flux_model = gr.ClearButton(flux_model, scale=1)
-                with gr.Column():
-                    with gr.Row():
-                        flux_vae = gr.Dropdown(label="Flux VAE",
-                                               choices=get_models(vae_dir),
-                                               scale=7, value=def_flux_vae,
-                                               interactive=True)
-                    with gr.Row():
-                        reload_vae_btn = gr.Button(value=RELOAD_SYMBOL,
-                                                   scale=1)
-                        clear_flux_vae = gr.ClearButton(flux_vae, scale=1)
-            with gr.Row():
-                with gr.Column():
-                    with gr.Row():
-                        clip_l = gr.Dropdown(label="clip_l",
-                                             choices=get_models(clip_l_dir),
-                                             scale=7, value=def_clip_l,
-                                             interactive=True)
-                    with gr.Row():
-                        reload_clip_l_btn = gr.Button(value=RELOAD_SYMBOL,
-                                                      scale=1)
-                        clear_clip_l = gr.ClearButton(clip_l, scale=1)
-                with gr.Column():
-                    with gr.Row():
-                        t5xxl = gr.Dropdown(label="t5xxl",
-                                            choices=get_models(t5xxl_dir),
-                                            scale=7, value=def_t5xxl,
-                                            interactive=True)
-                    with gr.Row():
-                        reload_t5xxl_btn = gr.Button(value=RELOAD_SYMBOL,
-                                                     scale=1)
-                        clear_t5xxl = gr.ClearButton(t5xxl, scale=1)
+    model_components = create_model_ui()
+
+    # Stable Diffusion Tab Components
+    sd_tab = model_components['sd_tab']
+    sd_model = model_components['sd_model']
+    reload_sd_btn = model_components['reload_sd_btn']
+    clear_sd_model = model_components['clear_sd_model']
+    sd_vae = model_components['sd_vae']
+    reload_vae_btn = model_components['reload_vae_btn']
+    clear_vae = model_components['clear_vae']
+
+    # Flux Tab Components
+    flux_tab = model_components['flux_tab']
+    flux_model = model_components['flux_model']
+    reload_flux_btn = model_components['reload_flux_btn']
+    clear_flux_model = model_components['clear_flux_model']
+    flux_vae = model_components['flux_vae']
+    reload_vae_btn_2 = model_components['reload_vae_btn_2']
+    clear_flux_vae = model_components['clear_flux_vae']
+    clip_l = model_components['clip_l']
+    reload_clip_l_btn = model_components['reload_clip_l_btn']
+    clear_clip_l = model_components['clear_clip_l']
+    t5xxl = model_components['t5xxl']
+    reload_t5xxl_btn = model_components['reload_t5xxl_btn']
+    clear_t5xxl = model_components['clear_t5xxl']
 
     # Model Type Selection
     with gr.Row():
