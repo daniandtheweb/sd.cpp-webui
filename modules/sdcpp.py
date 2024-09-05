@@ -13,18 +13,20 @@ from modules.config import (
 SD = exe_name()
 
 
-def txt2img(in_sd_model=None, in_sd_vae=None, in_flux_model=None,
-            in_flux_vae=None, in_clip_l=None, in_t5xxl=None,
-            in_model_type="Default", in_taesd=None, in_phtmkr=None,
-            in_phtmkr_in=None, in_phtmkr_nrml=False, in_upscl=None,
-            in_upscl_rep=1, in_cnnet=None, in_control_img=None,
-            in_control_strength=1.0, in_ppromt="", in_nprompt="",
-            in_sampling="default", in_steps=50, in_schedule="default",
-            in_width=512, in_height=512, in_batch_count=1,
-            in_cfg=7.0, in_seed=42, in_clip_skip=0, in_threads=1,
-            in_vae_tiling=False, in_vae_cpu=False, in_cnnet_cpu=False,
-            in_rng="default", in_predict="Default", in_output=None,
-            in_color=False, in_verbose=False):
+def txt2img(
+    in_sd_model=None, in_sd_vae=None, in_flux_model=None,
+    in_flux_vae=None, in_clip_l=None, in_t5xxl=None,
+    in_model_type="Default", in_taesd=None, in_phtmkr=None,
+    in_phtmkr_in=None, in_phtmkr_nrml=False, in_upscl=None,
+    in_upscl_rep=1, in_cnnet=None, in_control_img=None,
+    in_control_strength=1.0, in_ppromt="", in_nprompt="",
+    in_sampling="default", in_steps=50, in_schedule="default",
+    in_width=512, in_height=512, in_batch_count=1,
+    in_cfg=7.0, in_seed=42, in_clip_skip=0, in_threads=1,
+    in_vae_tiling=False, in_vae_cpu=False, in_cnnet_cpu=False,
+    in_canny=False, in_rng="default", in_predict="Default",
+    in_output=None, in_color=False, in_verbose=False
+):
 
     """Text to image command creator"""
     fsd_model = get_path(sd_dir, in_sd_model)
@@ -96,6 +98,7 @@ def txt2img(in_sd_model=None, in_sd_vae=None, in_flux_model=None,
         '--vae-tiling': in_vae_tiling,
         '--vae-on-cpu': in_vae_cpu,
         '--control-net-cpu': in_cnnet_cpu,
+        '--canny': in_canny,
         '--normalize-input': in_phtmkr_nrml,
         '--color': in_color,
         '-v': in_verbose
@@ -137,20 +140,22 @@ def txt2img(in_sd_model=None, in_sd_vae=None, in_flux_model=None,
     return [foutput]
 
 
-def img2img(in_sd_model=None, in_sd_vae=None, in_flux_model=None,
-            in_flux_vae=None, in_clip_l=None, in_t5xxl=None,
-            in_model_type="Default", in_taesd=None, in_phtmkr=None,
-            in_phtmkr_in=None, in_phtmkr_nrml=False, in_img_inp=None,
-            in_upscl=None, in_upscl_rep=1, in_cnnet=None,
-            in_control_img=None, in_control_strength=1.0, in_ppromt="",
-            in_nprompt="", in_sampling="default", in_steps=50,
-            in_schedule="default", in_width=512, in_height=512,
-            in_batch_count=1, in_strenght=0.75, in_style_ratio=1.0,
-            in_style_ratio_btn=False, in_cfg=7.0, in_seed=42, in_clip_skip=0,
-            in_threads=1, in_vae_tiling=False, in_vae_cpu=False,
-            in_cnnet_cpu=False, in_canny=False, in_rng="default",
-            in_predict="Default", in_output=None, in_color=False,
-            in_verbose=False):
+def img2img(
+    in_sd_model=None, in_sd_vae=None, in_flux_model=None,
+    in_flux_vae=None, in_clip_l=None, in_t5xxl=None,
+    in_model_type="Default", in_taesd=None, in_phtmkr=None,
+    in_phtmkr_in=None, in_phtmkr_nrml=False, in_img_inp=None,
+    in_upscl=None, in_upscl_rep=1, in_cnnet=None,
+    in_control_img=None, in_control_strength=1.0, in_ppromt="",
+    in_nprompt="", in_sampling="default", in_steps=50,
+    in_schedule="default", in_width=512, in_height=512,
+    in_batch_count=1, in_strenght=0.75, in_style_ratio=1.0,
+    in_style_ratio_btn=False, in_cfg=7.0, in_seed=42, in_clip_skip=0,
+    in_threads=1, in_vae_tiling=False, in_vae_cpu=False,
+    in_cnnet_cpu=False, in_canny=False, in_rng="default",
+    in_predict="Default", in_output=None, in_color=False,
+    in_verbose=False
+):
 
     """Image to image command creator"""
     # Construct file paths
@@ -265,8 +270,10 @@ def img2img(in_sd_model=None, in_sd_vae=None, in_flux_model=None,
     return [foutput]
 
 
-def convert(in_orig_model, in_model_dir, in_quant_type, in_gguf_name=None,
-            in_verbose=False):
+def convert(
+    in_orig_model, in_model_dir, in_quant_type, in_gguf_name=None,
+    in_verbose=False
+):
     """Convert model command creator"""
     forig_model = os.path.join(in_model_dir, in_orig_model)
     if not in_gguf_name:
