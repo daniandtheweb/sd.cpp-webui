@@ -13,14 +13,10 @@ from modules.config import (
 model_dir = sd_dir
 
 
-def get_models(models_folder, safety):
+def get_models(models_folder):
     """Lists models in a folder"""
     if os.path.isdir(models_folder):
-        if safety == 1:
-            extensions = (".gguf", ".safetensors", ".pth")
-        else:
-            extensions = (".gguf", ".safetensors", ".pth", ".ckpt")
-
+        extensions = (".gguf", ".safetensors", ".sft", ".pth", ".ckpt")
         models = [model for model in os.listdir(models_folder)
                   if os.path.isfile(os.path.join(models_folder, model)) and
                   model.endswith(extensions)]
@@ -30,9 +26,9 @@ def get_models(models_folder, safety):
     return []
 
 
-def reload_models(models_folder, safety):
+def reload_models(models_folder):
     """Reloads models list"""
-    refreshed_models = gr.update(choices=get_models(models_folder, safety))
+    refreshed_models = gr.update(choices=get_models(models_folder))
     return refreshed_models
 
 
