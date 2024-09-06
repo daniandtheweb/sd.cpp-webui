@@ -22,7 +22,7 @@ This program is essentially a command generator for **stable-diffusion.cpp** wit
    - python
 2. Clone the repository:
 ```bash
-git clone https://github.com/DaniAndTheWeb/sd.cpp-webui.git
+git clone https://github.com/daniandtheweb/sd.cpp-webui.git
 ```
 3. Clone `stable-diffusion.cpp`:
 ```bash
