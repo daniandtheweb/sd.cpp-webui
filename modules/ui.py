@@ -237,6 +237,8 @@ def create_prompts_ui():
             lines=3,
             show_copy_button=True
         )
+
+    # Return the dictionary with all UI components
     return prompts_components
 
 
@@ -300,6 +302,7 @@ def create_settings_ui():
         interactive=True
     )
 
+    # Return the dictionary with all UI components
     return settings_components
 
 
@@ -332,6 +335,8 @@ def create_cnnet_ui():
             value=0.9)
         cnnet_components['cnnet_cpu'] = gr.Checkbox(label="ControlNet on CPU")
         cnnet_components['canny'] = gr.Checkbox(label="Canny (edge detection)")
+
+    # Return the dictionary with all UI components
     return cnnet_components
 
 
@@ -369,6 +374,8 @@ def create_extras_ui():
             label="Color", value=True
         )
         extras_components['verbose'] = gr.Checkbox(label="Verbose")
+
+    # Return the dictionary with all UI components
     return extras_components
 
 
@@ -448,4 +455,5 @@ def create_folders_opt_ui():
                 interactive=True
             )
 
+    # Return the dictionary with all UI components
     return folders_opt_components
