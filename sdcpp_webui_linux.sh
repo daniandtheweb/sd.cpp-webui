@@ -2,6 +2,25 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 cd "$SCRIPT_DIR"
 
+help_print() {
+    echo "sdcpp_webui_linux"
+    echo "usage:"
+    echo "-h or --help:            Show this help"
+    echo "--listen:                Share sd.cpp-webui on your local network"
+    echo "--autostart:             Open the UI automatically"
+    exit 0
+}
+
+for arg in "$@"; do
+  case $arg in
+    --*'='*) shift; set -- "${arg%%=*}" "${arg#*=}" "$@"; continue;;
+    -h|--help) help_print;;
+    --listen);;
+    --autostart);;
+    *) echo "Unknown command parameter: $arg"; exit 1;;
+  esac
+done
+
 if [ -d "venv" ]; then
     echo "Virtual environment already exists."
 else
