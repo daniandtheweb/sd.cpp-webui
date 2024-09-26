@@ -9,7 +9,7 @@ This program is essentially a command generator for **stable-diffusion.cpp** wit
 
 ## Features
 
-- Minimal python dependencies (gradio is the main one, no pytorch required, only raw CUDA/ROCm is required for GPU inference)
+- Minimal python dependencies (gradio is the main one, no pytorch required)
 - Any **stable-diffusion.cpp** feature
 - Gallery
 - Metadata reader
