@@ -21,6 +21,16 @@ for arg in "$@"; do
   esac
 done
 
+if [ ! -f "sd" ]; then
+  echo ""
+  echo ""
+  echo "Warning: stable-diffusion.cpp executable not found."
+  echo "For the command to work place the stable-diffusion.cpp executable in the main sd.cpp-webui folder."
+  echo "The executable must be called 'sd'."
+  echo ""
+  echo ""
+fi
+
 if [ -d "venv" ]; then
     echo "Virtual environment already exists."
 else
