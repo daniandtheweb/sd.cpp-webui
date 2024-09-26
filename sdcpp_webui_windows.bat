@@ -18,7 +18,7 @@ for %%A in (%*) do (
     ) else if "%%A"=="--listen" (
         set valid=true
     ) else if "%%A"=="--autostart" (
-        set valied=true
+        set valid=true
     )
 )
 
