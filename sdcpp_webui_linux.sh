@@ -3,11 +3,16 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 cd "$SCRIPT_DIR"
 
 help_print() {
-    echo "sdcpp_webui_linux"
-    echo "usage:"
-    echo "-h or --help:            Show this help"
-    echo "--listen:                Share sd.cpp-webui on your local network"
-    echo "--autostart:             Open the UI automatically"
+    echo ""
+    echo ""
+    echo "Usage: ./sdcpp_webui_linux [options]"
+    echo ""
+    echo "Options:"
+    echo "    -h or --help:            Show this help"
+    echo "    --listen:                Share sd.cpp-webui on your local network"
+    echo "    --autostart:             Open the UI automatically"
+    echo ""
+    echo ""
     exit 0
 }
 
