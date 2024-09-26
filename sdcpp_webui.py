@@ -38,16 +38,11 @@ def main():
         action='store_true',
         help='Automatically launch in a new browser tab'
     )
-    parser.add_argument(
-        '--darkmode',
-        action='store_true',
-        help='Enable dark mode'
-    )
     args = parser.parse_args()
-    sdcpp_launch(args.listen, args.autostart, args.darkmode)
+    sdcpp_launch(args.listen, args.autostart)
 
 
-def sdcpp_launch(listen=False, autostart=False, darkmode=False):
+def sdcpp_launch(listen=False, autostart=False):
     """Logic for launching sdcpp based on arguments"""
     launch_args = {}
 
@@ -66,6 +61,7 @@ sdcpp = gr.TabbedInterface(
      options_block],
     ["txt2img", "img2img", "Gallery", "Checkpoint Converter", "Options"],
     title="sd.cpp-webui",
+    theme="soft"
 )
 
 if __name__ == "__main__":
