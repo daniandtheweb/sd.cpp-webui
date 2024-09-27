@@ -18,7 +18,8 @@ def set_defaults(in_sd, in_sd_vae, in_flux, in_flux_vae, in_clip_l, in_t5xxl,
                  in_upscl_dir_txt, in_cnnet_dir_txt, in_txt2img_dir_txt,
                  in_img2img_dir_txt):
     """Sets new defaults"""
-    data.update({
+    # Directory defaults
+    dir_defaults = {
         'sd_dir': in_sd_dir_txt,
         'vae_dir': in_vae_dir_txt,
         'flux_dir': in_flux_dir_txt,
@@ -32,6 +33,11 @@ def set_defaults(in_sd, in_sd_vae, in_flux, in_flux_vae, in_clip_l, in_t5xxl,
         'cnnet_dir': in_cnnet_dir_txt,
         'txt2img_dir': in_txt2img_dir_txt,
         'img2img_dir': in_img2img_dir_txt,
+    }
+    data.update(dir_defaults)
+
+    # Other defaults
+    data.update({
         'def_sampling': in_sampling,
         'def_steps': in_steps,
         'def_scheduler': in_schedule,
@@ -146,14 +152,9 @@ def load_prompts(prompt):
     """Loads a saved prompt"""
     with open(PROMPTS_PATH, 'r', encoding="utf-8") as prompts_file:
         prompts_data = json.load(prompts_file)
-    positive_prompts = []
-    negative_prompts = []
     key_data = prompts_data.get(prompt, {})
-    positive_prompts = key_data.get('positive', '')
-    negative_prompts = key_data.get('negative', '')
-
-    pprompt_load = gr.update(value=positive_prompts)
-    nprompt_load = gr.update(value=negative_prompts)
+    pprompt_load = gr.update(value=key_data.get('positive', ''))
+    nprompt_load = gr.update(value=key_data.get('negative', ''))
     return pprompt_load, nprompt_load
 
 
