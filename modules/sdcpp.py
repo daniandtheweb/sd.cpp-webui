@@ -7,7 +7,7 @@ from modules.gallery import get_next_img
 from modules.config import (
     sd_dir, flux_dir, vae_dir, clip_l_dir, t5xxl_dir, emb_dir, lora_dir,
     taesd_dir, phtmkr_dir, upscl_dir, cnnet_dir, txt2img_dir, img2img_dir
-    )
+)
 
 
 SD = exe_name()

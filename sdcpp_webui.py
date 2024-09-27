@@ -36,7 +36,9 @@ def main():
     sdcpp_launch(args.listen, args.autostart, args.darkmode)
 
 
-def sdcpp_launch(listen=False, autostart=False, darkmode=False):
+def sdcpp_launch(
+        listen=False, autostart=False, darkmode=False
+):
     """Logic for launching sdcpp based on arguments"""
     launch_args = {}
 
@@ -45,6 +47,7 @@ def sdcpp_launch(listen=False, autostart=False, darkmode=False):
     if autostart:
         launch_args["inbrowser"] = True
 
+    # this js forces the url to redirect to the darkmode link
     dark_js = """
     function refresh() {
         const url = new URL(window.location);
