@@ -11,6 +11,7 @@ help_print() {
     echo "    -h or --help:            Show this help"
     echo "    --listen:                Share sd.cpp-webui on your local network"
     echo "    --autostart:             Open the UI automatically"
+    echo "    --darkmode:              Forces the UI to launch in dark mode"
     echo ""
     echo ""
     exit 0
@@ -22,6 +23,7 @@ for arg in "$@"; do
     -h|--help) help_print;;
     --listen);;
     --autostart);;
+    --darkmode);;
     *) echo "Unknown command parameter: $arg"; exit 1;;
   esac
 done

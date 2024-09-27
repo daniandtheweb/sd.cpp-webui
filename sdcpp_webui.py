@@ -13,17 +13,6 @@ from modules.ui_gallery import gallery_block
 from modules.ui_convert import convert_block
 from modules.ui_options import options_block
 
-dark_js = """
-function refresh() {
-    const url = new URL(window.location);
-
-    if (url.searchParams.get('__theme') !== 'dark') {
-        url.searchParams.set('__theme', 'dark');
-        window.location.href = url.href;
-    }
-}
-"""
-
 
 def main():
     """Main"""
@@ -38,11 +27,16 @@ def main():
         action='store_true',
         help='Automatically launch in a new browser tab'
     )
+    parser.add_argument(
+        '--darkmode',
+        action='store_true',
+        help='Enable dark mode for the web interface'
+    )
     args = parser.parse_args()
-    sdcpp_launch(args.listen, args.autostart)
+    sdcpp_launch(args.listen, args.autostart, args.darkmode)
 
 
-def sdcpp_launch(listen=False, autostart=False):
+def sdcpp_launch(listen=False, autostart=False, darkmode=False):
     """Logic for launching sdcpp based on arguments"""
     launch_args = {}
 
@@ -50,19 +44,32 @@ def sdcpp_launch(listen=False, autostart=False):
         launch_args["server_name"] = "0.0.0.0"
     if autostart:
         launch_args["inbrowser"] = True
+
+    dark_js = """
+    function refresh() {
+        const url = new URL(window.location);
+
+        if (url.searchParams.get('__theme') !== 'dark') {
+            url.searchParams.set('__theme', 'dark');
+            window.location.href = url.href;
+        }
+    }
+    """ if darkmode else None
+
+    sdcpp = gr.TabbedInterface(
+        [txt2img_block, img2img_block, gallery_block, convert_block,
+         options_block],
+        ["txt2img", "img2img", "Gallery", "Checkpoint Converter", "Options"],
+        title="sd.cpp-webui",
+        theme="soft",
+        js=dark_js
+    )
+
     # Pass the arguments to sdcpp.launch with argument unpacking
     sdcpp.launch(**launch_args)
 
 
 os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
-
-sdcpp = gr.TabbedInterface(
-    [txt2img_block, img2img_block, gallery_block, convert_block,
-     options_block],
-    ["txt2img", "img2img", "Gallery", "Checkpoint Converter", "Options"],
-    title="sd.cpp-webui",
-    theme="soft"
-)
 
 if __name__ == "__main__":
     main()

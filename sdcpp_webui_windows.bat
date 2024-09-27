@@ -19,6 +19,8 @@ for %%A in (%*) do (
         set valid=true
     ) else if "%%A"=="--autostart" (
         set valid=true
+    ) else if "%%A"=="--darkmode" (
+        set valid=true
     )
 )
 
@@ -36,6 +38,7 @@ if "%help%"=="true" (
     echo     -h or --help:            Show this help
     echo     --listen:                Share sd.cpp-webui on your local network
     echo     --autostart:             Open the UI automatically
+    echo     --darkmode:              Forces the UI to launch in dark mode
     echo.
     echo.
     exit /b
