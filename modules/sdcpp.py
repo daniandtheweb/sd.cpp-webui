@@ -2,7 +2,7 @@
 
 import os
 
-from modules.utility import run_subprocess, exe_name, get_path
+from modules.utility import subprocess_manager, exe_name, get_path
 from modules.gallery import get_next_img
 from modules.config import (
     sd_dir, flux_dir, vae_dir, clip_l_dir, t5xxl_dir, emb_dir, lora_dir,
@@ -135,7 +135,7 @@ def txt2img(
     fcommand = ' '.join(map(str, command_for_print))
 
     print(f"\n\n{fcommand}\n\n")
-    run_subprocess(command)
+    subprocess_manager.run_subprocess(command)
 
     return [foutput]
 
@@ -265,7 +265,7 @@ def img2img(
     fcommand = ' '.join(map(str, command_for_print))
 
     print(f"\n\n{fcommand}\n\n")
-    run_subprocess(command)
+    subprocess_manager.run_subprocess(command)
 
     return [foutput]
 
@@ -301,6 +301,6 @@ def convert(
     fcommand = ' '.join(command)
 
     print(f"\n\n{fcommand}\n\n")
-    run_subprocess(command)
+    subprocess_manager.run_subprocess(command)
 
     return "Process completed."

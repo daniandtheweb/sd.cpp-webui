@@ -5,8 +5,7 @@ import os
 import gradio as gr
 
 from modules.config import (
-    set_defaults, rst_def, get_prompts, reload_prompts, save_prompts,
-    delete_prompts, load_prompts, sd_dir, vae_dir, flux_dir, clip_l_dir,
+    get_prompts, sd_dir, vae_dir, flux_dir, clip_l_dir,
     t5xxl_dir, emb_dir, lora_dir, taesd_dir, phtmkr_dir, upscl_dir, cnnet_dir,
     txt2img_dir, img2img_dir, def_sd, def_sd_vae, def_flux, def_flux_vae,
     def_clip_l, def_t5xxl, def_sampling, def_steps, def_scheduler, def_width,

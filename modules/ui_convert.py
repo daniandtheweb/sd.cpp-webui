@@ -3,13 +3,13 @@
 import gradio as gr
 
 from modules.sdcpp import convert
-from modules.utility import kill_subprocess
+from modules.utility import subprocess_manager
 from modules.config import (
     sd_dir, vae_dir, flux_dir, clip_l_dir, t5xxl_dir, emb_dir,
     lora_dir, taesd_dir, upscl_dir, cnnet_dir
 )
 from modules.loader import (
-    get_models, reload_models, model_choice, model_dir
+    get_models, reload_models, model_choice
 )
 
 QUANTS = ["Default", "f32", "f16", "q8_0", "q4_k", "q3_k", "q2_k", "q5_1",
@@ -53,7 +53,7 @@ with gr.Blocks() as convert_block:
             with gr.Row():
                 model = gr.Dropdown(
                     label="Model",
-                    choices=get_models(model_dir),
+                    choices=get_models(sd_dir),
                     scale=5,
                     interactive=True
                 )
@@ -102,7 +102,7 @@ with gr.Blocks() as convert_block:
         outputs=[result]
     )
     kill_btn.click(
-        kill_subprocess,
+        subprocess_manager.kill_subprocess,
         inputs=[],
         outputs=[]
     )

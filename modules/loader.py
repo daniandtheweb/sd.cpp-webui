@@ -10,7 +10,19 @@ from modules.config import (
 )
 
 
-model_dir = sd_dir
+# Dictionary to map model types to their corresponding directories
+model_map = {
+    "Stable-Diffusion": sd_dir,
+    "FLUX": flux_dir,
+    "VAE": vae_dir,
+    "clip_l": clip_l_dir,
+    "t5xxl": t5xxl_dir,
+    "taesd": taesd_dir,
+    "Lora": lora_dir,
+    "Embeddings": emb_dir,
+    "Upscalers": upscl_dir,
+    "ControlNet": cnnet_dir
+}
 
 
 def get_models(models_folder):
@@ -34,27 +46,12 @@ def reload_models(models_folder):
 
 def model_choice(model_type):
     """Outputs the folder of the selected model type"""
-    global model_dir
-    match model_type:
-        case "Stable-Diffusion":
-            model_dir = sd_dir
-        case "FLUX":
-            model_dir = flux_dir
-        case "VAE":
-            model_dir = vae_dir
-        case "clip_l":
-            model_dir = clip_l_dir
-        case "t5xxl":
-            model_dir = t5xxl_dir
-        case "taesd":
-            model_dir = taesd_dir
-        case "Lora":
-            model_dir = lora_dir
-        case "Embeddings":
-            model_dir = emb_dir
-        case "Upscalers":
-            model_dir = upscl_dir
-        case "ControlNet":
-            model_dir = cnnet_dir
+    # Get the directory from the model_map based on the model_type
+    model_dir = model_map.get(model_type)
+
+    if model_dir is None:
+        print(f"Model type '{model_type}' not recognized.")
+        return gr.update(value="")
+
     model_dir_txt = gr.update(value=model_dir)
     return model_dir_txt

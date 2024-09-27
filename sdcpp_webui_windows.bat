@@ -47,7 +47,7 @@ if "%help%"=="true" (
 if not exist "sd.exe" (
     echo.
     echo.
-    echo Warning: stable-diffusion.cpp executable not found.
+    echo Warning: 'sd' executable not found or doesn't have execute permissions.
     echo For the command to work place the stable-diffusion.cpp executable in the main sd.cpp-webui folder.
     echo The executable must be called 'sd.exe'.
     echo.
@@ -81,7 +81,6 @@ if %errorlevel% equ 0 (
 )
 
 echo Starting the WebUI...
-
 python sdcpp_webui.py %*
 
 endlocal

@@ -9,6 +9,9 @@ from modules.config import (
 )
 
 
+gallery_manager = GalleryManager(txt2img_dir, img2img_dir)
+
+
 with gr.Blocks() as gallery_block:
     # Controls
     txt2img_ctrl = gr.Textbox(
@@ -93,9 +96,6 @@ with gr.Blocks() as gallery_block:
             del_img = gr.Button(value="Delete")
 
     # Interactive bindings
-    gallery_manager = GalleryManager(
-        txt2img_dir, img2img_dir
-    )
     gallery.select(
         gallery_manager.img_info,
         inputs=[],

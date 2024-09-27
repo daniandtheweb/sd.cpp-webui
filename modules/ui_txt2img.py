@@ -6,7 +6,7 @@ import gradio as gr
 
 from modules.sdcpp import txt2img
 from modules.utility import (
-    kill_subprocess, random_seed, sd_tab_switch, flux_tab_switch
+    subprocess_manager, random_seed, sd_tab_switch, flux_tab_switch
 )
 from modules.config import (
     reload_prompts, save_prompts, delete_prompts, load_prompts,
@@ -239,7 +239,7 @@ with gr.Blocks() as txt2img_block:
         outputs=[img_final]
     )
     kill_btn.click(
-        kill_subprocess,
+        subprocess_manager.kill_subprocess,
         inputs=[],
         outputs=[]
     )

@@ -14,6 +14,9 @@ from modules.ui_convert import convert_block
 from modules.ui_options import options_block
 
 
+os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
+
+
 def main():
     """Main"""
     parser = argparse.ArgumentParser(description='Process optional arguments')
@@ -71,8 +74,6 @@ def sdcpp_launch(
     # Pass the arguments to sdcpp.launch with argument unpacking
     sdcpp.launch(**launch_args)
 
-
-os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
 
 if __name__ == "__main__":
     main()

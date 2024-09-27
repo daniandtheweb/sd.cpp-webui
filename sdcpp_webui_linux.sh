@@ -1,4 +1,6 @@
 #!/usr/bin/bash
+set -e
+
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 cd "$SCRIPT_DIR"
 
@@ -21,17 +23,17 @@ for arg in "$@"; do
   case $arg in
     --*'='*) shift; set -- "${arg%%=*}" "${arg#*=}" "$@"; continue;;
     -h|--help) help_print;;
-    --listen);;
-    --autostart);;
-    --darkmode);;
+    --listen) ;;       # Passed to python
+    --autostart) ;;    # Passed to python
+    --darkmode) ;;     # Passed to python
     *) echo "Unknown command parameter: $arg"; exit 1;;
   esac
 done
 
-if [ ! -f "sd" ]; then
+if [ ! -x "sd" ]; then
   echo ""
   echo ""
-  echo "Warning: stable-diffusion.cpp executable not found."
+  echo "Warning: 'sd' executable not found or doesn't have execute permissions."
   echo "For the command to work place the stable-diffusion.cpp executable in the main sd.cpp-webui folder."
   echo "The executable must be called 'sd'."
   echo ""
@@ -64,5 +66,4 @@ else
 fi
 
 echo "Starting the WebUI..."
-
 python3 sdcpp_webui.py $@
