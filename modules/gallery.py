@@ -36,16 +36,25 @@ class GalleryManager:
         if ctrl_inp is not None:
             self.ctrl = int(ctrl_inp)
         img_dir = self._get_img_dir()
-        imgs = []
-        files = os.listdir(img_dir)
-        image_files = [file for file in files
-                       if file.endswith(('.jpg', '.png'))]
+        # Use a generator to find image files, avoiding the creation of a full list
+        def image_files_gen(directory):
+            for file in os.listdir(directory):
+                if file.endswith(('.jpg', '.png')):
+                    yield file
+
+        # Get start and end indices based on the current page
         start_index = (fpage_num * 16) - 16
-        end_index = min(start_index + 16, len(image_files))
-        for file_name in image_files[start_index:end_index]:
-            image_path = os.path.join(img_dir, file_name)
-            image = Image.open(image_path)
-            imgs.append(image)
+        end_index = start_index + 16
+
+        # Process image files lazily
+        imgs = []
+        for i, file_name in enumerate(image_files_gen(img_dir)):
+            if start_index <= i < end_index:
+                image_path = os.path.join(img_dir, file_name)
+                image = Image.open(image_path)
+                imgs.append(image)
+            elif i >= end_index:
+                break
         self.page_num = fpage_num
         if subctrl == 0:
             return imgs, self.page_num, gr.Gallery(selected_index=None)
@@ -128,11 +137,17 @@ class GalleryManager:
         else:
             self.img_index = (self.page_num * 16) - 16 + self.sel_img
         img_dir = self._get_img_dir()
-        file_paths = [os.path.join(img_dir, file)
-                      for file in os.listdir(img_dir)
-                      if os.path.isfile(os.path.join(img_dir, file)) and
-                      file.lower().endswith(('.png', '.jpg'))]
-        file_paths.sort(key=os.path.getctime)
+         # Use a generator to find and sort image files on demand
+        def image_file_gen(directory):
+            for file in os.listdir(directory):
+                file_path = os.path.join(directory, file)
+                if os.path.isfile(file_path) and file.lower().endswith(('.png', '.jpg')):
+                    yield file_path
+
+        # Sort files only when necessary and only the files we need
+        file_paths = sorted(image_file_gen(img_dir), key=os.path.getctime)
+
+        # Handle index out of range errors
         try:
             self.img_path = file_paths[self.img_index]
         except IndexError:
