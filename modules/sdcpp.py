@@ -279,7 +279,7 @@ def convert(
     if not in_gguf_name:
         model_name, _ = os.path.splitext(in_orig_model)
         model_path = os.path.join(in_model_dir, model_name)
-        fgguf_name = f"{model_path}.{in_quant_type}.gguf"
+        fgguf_name = f"{model_path}-{in_quant_type}.gguf"
     else:
         fgguf_name = os.path.join(in_model_dir, in_gguf_name)
 
