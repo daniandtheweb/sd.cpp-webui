@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/usr/bin/env bash
 set -e
 
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
@@ -7,7 +7,7 @@ cd "$SCRIPT_DIR"
 help_print() {
     echo ""
     echo ""
-    echo "Usage: ./sdcpp_webui_linux [options]"
+    echo "Usage: ./sdcpp_webui.sh [options]"
     echo ""
     echo "Options:"
     echo "    -h or --help:            Show this help"
