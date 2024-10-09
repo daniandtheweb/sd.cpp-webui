@@ -362,7 +362,7 @@ def create_extras_ui():
             value="cuda"
         )
         extras_components['predict'] = gr.Dropdown(
-            label="Prediction",
+            label="Prediction (WIP: currently not working)",
             choices=PREDICTION,
             value=def_predict
         )
