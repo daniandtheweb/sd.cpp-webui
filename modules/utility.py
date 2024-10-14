@@ -127,7 +127,11 @@ def exe_name():
         if os.name == "nt":
             return "sd.exe"
         return "./sd"
-    return "./sd"
+    else:
+        if (shutil.which("sd")):
+            return "sd"
+        else:
+            return "./sd"
 
 
 def random_seed():

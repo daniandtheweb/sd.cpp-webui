@@ -30,7 +30,7 @@ for arg in "$@"; do
   esac
 done
 
-if [ ! -x "sd" ]; then
+if [ ! -x "sd" ] && ! command -v "sd"; then
   echo ""
   echo ""
   echo "Warning: 'sd' executable not found or doesn't have execute permissions."
