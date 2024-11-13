@@ -317,6 +317,7 @@ def create_cnnet_ui():
         cnnet_components['cnnet'] = gr.Dropdown(
             label="ControlNet",
             choices=get_models(cnnet_dir),
+            value=None,
             interactive=True
         )
         cnnet_components['reload_cnnet_btn'] = gr.Button(value=RELOAD_SYMBOL)
