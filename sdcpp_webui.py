@@ -67,7 +67,7 @@ def sdcpp_launch(
          options_block],
         ["txt2img", "img2img", "Gallery", "Checkpoint Converter", "Options"],
         title="sd.cpp-webui",
-        theme="soft",
+        theme="default",
         js=dark_js
     )
 

@@ -373,6 +373,9 @@ def create_extras_ui():
         extras_components['color'] = gr.Checkbox(
             label="Color", value=True
         )
+        extras_components['flash_attn'] = gr.Checkbox(
+            label="Flash Attention", value=False
+        )
         extras_components['verbose'] = gr.Checkbox(label="Verbose")
 
     # Return the dictionary with all UI components

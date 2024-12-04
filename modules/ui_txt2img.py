@@ -204,6 +204,7 @@ with gr.Blocks() as txt2img_block:
             predict = extras_components['predict']
             output = extras_components['output']
             color = extras_components['color']
+            flash_attn = extras_components['flash_attn']
             verbose = extras_components['verbose']
 
         # Output
@@ -235,7 +236,7 @@ with gr.Blocks() as txt2img_block:
                 sampling, steps, schedule, width, height,
                 batch_count, cfg, seed, clip_skip, threads,
                 vae_tiling, vae_cpu, cnnet_cpu, canny, rng,
-                predict, output, color, verbose],
+                predict, output, color, flash_attn, verbose],
         outputs=[img_final]
     )
     kill_btn.click(

@@ -221,6 +221,7 @@ with gr.Blocks()as img2img_block:
             predict = extras_components['predict']
             output = extras_components['output']
             color = extras_components['color']
+            flash_attn = extras_components['flash_attn']
             verbose = extras_components['verbose']
 
         with gr.Column(scale=1):
@@ -254,7 +255,7 @@ with gr.Blocks()as img2img_block:
                 strenght, style_ratio, style_ratio_btn,
                 cfg, seed, clip_skip, threads, vae_tiling,
                 vae_cpu, cnnet_cpu, canny, rng, predict,
-                output, color, verbose],
+                output, color, flash_attn, verbose],
         outputs=[img_final]
     )
     kill_btn.click(

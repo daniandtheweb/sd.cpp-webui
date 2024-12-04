@@ -25,7 +25,8 @@ def txt2img(
     in_cfg=7.0, in_seed=42, in_clip_skip=0, in_threads=1,
     in_vae_tiling=False, in_vae_cpu=False, in_cnnet_cpu=False,
     in_canny=False, in_rng="default", in_predict="Default",
-    in_output=None, in_color=False, in_verbose=False
+    in_output=None, in_color=False, in_flash_attn=False,
+    in_verbose=False
 ):
 
     """Text to image command creator"""
@@ -101,6 +102,7 @@ def txt2img(
         '--canny': in_canny,
         '--normalize-input': in_phtmkr_nrml,
         '--color': in_color,
+        '--diffusion-fa': in_flash_attn,
         '-v': in_verbose
     }
 
@@ -154,7 +156,7 @@ def img2img(
     in_threads=1, in_vae_tiling=False, in_vae_cpu=False,
     in_cnnet_cpu=False, in_canny=False, in_rng="default",
     in_predict="Default", in_output=None, in_color=False,
-    in_verbose=False
+    in_flash_attn=False, in_verbose=False
 ):
 
     """Image to image command creator"""
@@ -231,6 +233,7 @@ def img2img(
         '--normalize-input': in_phtmkr_nrml,
         '--canny': in_canny,
         '--color': in_color,
+        '--diffusion-fa': in_flash_attn,
         '-v': in_verbose
     }
 
