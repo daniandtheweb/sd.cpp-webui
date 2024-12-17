@@ -1,6 +1,8 @@
 """sd.cpp-webui - Utility module"""
 
 import os
+import re
+import sys
 import shutil
 import subprocess
 
@@ -85,22 +87,37 @@ class SubprocessManager:
         If any errors occur during execution, they are also printed after the
         process finishes.
         """
+        progress_pattern = re.compile(r"^\|[=]*>? *\| \d+/\d+ - \d+\.\d+it/s$")
+        last_matched = False
+
         with subprocess.Popen(
             command,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            universal_newlines=True
+            stderr=subprocess.STDOUT,
+            universal_newlines=True,
         ) as self.process:
 
             # Read the output line by line in real-time
             for output_line in self.process.stdout:
-                print(output_line.strip())
+                output_line = output_line.strip()
+                if progress_pattern and progress_pattern.search(output_line):
+                    # Overwrite the current line if it matches the pattern
+                    sys.stdout.write(f"\r{output_line}")
+                    sys.stdout.flush()
+                    last_matched = True
+                else:
+                    # If the last line matched, print a newline first
+                    if last_matched:
+                        sys.stdout.write("\n\n")
+                        sys.stdout.flush()
+                        last_matched = False
+                    # Print normally for lines not matching the regex
+                    print(output_line)
 
-            # Wait for the process to finish and capture its errors
-            if self.process:
-                _, errors = self.process.communicate()
-                if errors:
-                    print("Errors:", errors)
+            # After the loop, if the last line matched, print a newline
+            if last_matched:
+                sys.stdout.write("\n")
+                sys.stdout.flush()
 
     def kill_subprocess(self):
         """Terminates the currently running subprocess, if any.
