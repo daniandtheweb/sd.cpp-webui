@@ -68,7 +68,8 @@ def sdcpp_launch(
         ["txt2img", "img2img", "Gallery", "Checkpoint Converter", "Options"],
         title="sd.cpp-webui",
         theme="default",
-        js=dark_js
+        js=dark_js,
+        css="footer {visibility: hidden}",
     )
 
     # Pass the arguments to sdcpp.launch with argument unpacking
