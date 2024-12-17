@@ -37,32 +37,34 @@ class ModelState:
         self.bak_t5xxl = def_t5xxl
         self.bak_nprompt = None
 
-    def update_sd_tab(self, sd_model, sd_vae, nprompt):
-        """Updates the state with values from the Stable-Diffusion tab.
+    def update(self, **kwargs):
+        """Generic method to update state variables.
 
         Args:
-            sd_model: The selected stable diffusion model.
-            sd_vae: The selected stable diffusion VAE model.
-            nprompt: The negative prompt for the Flux tab.
+            kwargs: Key-value pairs of attributes to update.
         """
-        self.bak_sd_model = sd_model
-        self.bak_sd_vae = sd_vae
-        self.bak_nprompt = nprompt
+        for key, value in kwargs.items():
+            if hasattr(self, key):
+                setattr(self, key, value)
+            else:
+                raise AttributeError(f"{key} is not a valid attribute of ModelState.")
 
-    def update_flux_tab(self, flux_model, flux_vae, clip_l, t5xxl):
-        """Updates the state with values from the Stable-Diffusion tab.
+    def bak_sd_tab(self, sd_model, sd_vae, nprompt):
+        """Updates the state with values from the Stable-Diffusion tab."""
+        self.update(
+            bak_sd_model = sd_model,
+            bak_sd_vae = sd_vae,
+            bak_nprompt = nprompt
+        )
 
-        Args:
-            flux_model: The selected flux model.
-            flux_vae: The selected flux VAE model.
-            clip_l: The selected CLIP model.
-            t5xxl: The selected T5-XXL model.
-        """
-        self.bak_flux_model = flux_model
-        self.bak_flux_vae = flux_vae
-        self.bak_clip_l = clip_l
-        self.bak_t5xxl = t5xxl
-
+    def bak_flux_tab(self, flux_model, flux_vae, clip_l, t5xxl):
+        """Updates the state with values from the Stable-Diffusion tab."""
+        self.update(
+            bak_flux_model = flux_model,
+            bak_flux_vae = flux_vae,
+            bak_clip_l = clip_l,
+            bak_t5xxl = t5xxl
+        )
 
 class SubprocessManager:
     """Class to manage subprocess execution and control.
@@ -187,7 +189,7 @@ def switch_tab_components(
 
 def flux_tab_switch(sd_model, sd_vae, nprompt):
     """Switches to the Flux tab"""
-    model_state.update_sd_tab(sd_model, sd_vae, nprompt)
+    model_state.bak_sd_tab(sd_model, sd_vae, nprompt)
 
     return switch_tab_components(
         sd_model=None,
@@ -203,7 +205,7 @@ def flux_tab_switch(sd_model, sd_vae, nprompt):
 
 def sd_tab_switch(flux_model, flux_vae, clip_l, t5xxl):
     """Switches to the Stable-Diffusion tab"""
-    model_state.update_flux_tab(flux_model, flux_vae, clip_l, t5xxl)
+    model_state.bak_flux_tab(flux_model, flux_vae, clip_l, t5xxl)
 
     return switch_tab_components(
         sd_model=model_state.bak_sd_model,
