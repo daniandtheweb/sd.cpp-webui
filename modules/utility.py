@@ -106,7 +106,7 @@ class SubprocessManager:
             # Read the output line by line in real-time
             for output_line in self.process.stdout:
                 output_line = output_line.strip()
-                if progress_pattern and progress_pattern.search(output_line):
+                if progress_pattern.search(output_line):
                     # Overwrite the current line if it matches the pattern
                     sys.stdout.write(f"\r{output_line}")
                     sys.stdout.flush()
