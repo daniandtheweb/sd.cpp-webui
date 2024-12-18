@@ -6,7 +6,7 @@ import gradio as gr
 
 from modules.sdcpp import txt2img
 from modules.utility import (
-    subprocess_manager, random_seed, sd_tab_switch, flux_tab_switch
+    subprocess_manager, random_seed, sd_tab_switch, ckpt_tab_switch
 )
 from modules.config import (
     reload_prompts, save_prompts, delete_prompts, load_prompts,
@@ -58,14 +58,14 @@ with gr.Blocks() as txt2img_block:
     reload_vae_btn = model_components['reload_vae_btn']
     clear_vae = model_components['clear_vae']
 
-    # Flux Tab Components
-    flux_tab = model_components['flux_tab']
-    flux_model = model_components['flux_model']
-    reload_flux_btn = model_components['reload_flux_btn']
-    clear_flux_model = model_components['clear_flux_model']
-    flux_vae = model_components['flux_vae']
-    reload_flux_vae_btn = model_components['reload_flux_vae_btn']
-    clear_flux_vae = model_components['clear_flux_vae']
+    # Checkpoint Tab Components (FLUX, Stable Diffusion 3/3.5)
+    ckpt_tab = model_components['ckpt_tab']
+    ckpt_model = model_components['ckpt_model']
+    reload_ckpt_btn = model_components['reload_ckpt_btn']
+    clear_ckpt_model = model_components['clear_ckpt_model']
+    ckpt_vae = model_components['ckpt_vae']
+    reload_ckpt_vae_btn = model_components['reload_ckpt_vae_btn']
+    clear_ckpt_vae = model_components['clear_ckpt_vae']
     clip_l = model_components['clip_l']
     reload_clip_l_btn = model_components['reload_clip_l_btn']
     clear_clip_l = model_components['clear_clip_l']
@@ -228,7 +228,7 @@ with gr.Blocks() as txt2img_block:
     # Generate
     gen_btn.click(
         txt2img,
-        inputs=[sd_model, sd_vae, flux_model, flux_vae,
+        inputs=[sd_model, sd_vae, ckpt_model, ckpt_vae,
                 clip_l, t5xxl, model_type, taesd_model,
                 phtmkr_model, phtmkr_in, phtmkr_nrml,
                 upscl, upscl_rep, cnnet, control_img,
@@ -248,14 +248,14 @@ with gr.Blocks() as txt2img_block:
     # Interactive Bindings
     sd_tab.select(
         sd_tab_switch,
-        inputs=[flux_model, flux_vae, clip_l, t5xxl],
-        outputs=[sd_model, flux_model, sd_vae, flux_vae, clip_l,
+        inputs=[ckpt_model, ckpt_vae, clip_l, t5xxl],
+        outputs=[sd_model, ckpt_model, sd_vae, ckpt_vae, clip_l,
                  t5xxl, pprompt, nprompt]
     )
-    flux_tab.select(
-        flux_tab_switch,
+    ckpt_tab.select(
+        ckpt_tab_switch,
         inputs=[sd_model, sd_vae, nprompt],
-        outputs=[sd_model, flux_model, sd_vae, flux_vae, clip_l,
+        outputs=[sd_model, ckpt_model, sd_vae, ckpt_vae, clip_l,
                  t5xxl, pprompt, nprompt]
     )
     reload_taesd_btn.click(

@@ -3,8 +3,8 @@
 import gradio as gr
 
 from modules.config import (
-    set_defaults, rst_def, sd_dir, vae_dir, flux_dir, clip_l_dir,
-    t5xxl_dir, def_sd, def_sd_vae, def_flux, def_flux_vae,
+    set_defaults, rst_def, sd_dir, vae_dir, ckpt_dir, clip_dir,
+    def_sd, def_sd_vae, def_ckpt, def_ckpt_vae,
     def_clip_l, def_t5xxl, def_sampling, def_steps, def_scheduler,
     def_width, def_height, def_predict
 )
@@ -61,41 +61,41 @@ with gr.Blocks() as options_block:
     with gr.Row():
         with gr.Column():
             with gr.Row():
-                flux_model = gr.Dropdown(
-                    label="Flux Model",
-                    choices=get_models(flux_dir),
+                ckpt_model = gr.Dropdown(
+                    label="Checkpoint Model",
+                    choices=get_models(ckpt_dir),
                     scale=7,
-                    value=def_flux,
+                    value=def_ckpt,
                     interactive=True
                 )
             with gr.Row():
-                reload_flux_btn = gr.Button(
+                reload_ckpt_btn = gr.Button(
                     value=RELOAD_SYMBOL, scale=1
                 )
-                clear_flux_model = gr.ClearButton(
-                    flux_model, scale=1
+                clear_ckpt_model = gr.ClearButton(
+                    ckpt_model, scale=1
                 )
         with gr.Column():
             with gr.Row():
-                flux_vae = gr.Dropdown(
-                    label="Flux VAE",
+                ckpt_vae = gr.Dropdown(
+                    label="Checkpoint VAE",
                     choices=get_models(vae_dir),
-                    scale=7, value=def_flux_vae,
+                    scale=7, value=def_ckpt_vae,
                     interactive=True
                 )
             with gr.Row():
                 reload_vae_btn = gr.Button(
                     value=RELOAD_SYMBOL, scale=1
                 )
-                clear_flux_vae = gr.ClearButton(
-                    flux_vae, scale=1
+                clear_ckpt_vae = gr.ClearButton(
+                    ckpt_vae, scale=1
                 )
     with gr.Row():
         with gr.Column():
             with gr.Row():
                 clip_l = gr.Dropdown(
                     label="clip_l",
-                    choices=get_models(clip_l_dir),
+                    choices=get_models(clip_dir),
                     scale=7,
                     value=def_clip_l,
                     interactive=True
@@ -111,7 +111,7 @@ with gr.Blocks() as options_block:
             with gr.Row():
                 t5xxl = gr.Dropdown(
                     label="t5xxl",
-                    choices=get_models(t5xxl_dir),
+                    choices=get_models(clip_dir),
                     scale=7,
                     value=def_t5xxl,
                     interactive=True
@@ -182,10 +182,9 @@ with gr.Blocks() as options_block:
     folders_opt_components = create_folders_opt_ui()
 
     sd_dir_txt = folders_opt_components['sd_dir_txt']
-    flux_dir_txt = folders_opt_components['flux_dir_txt']
+    ckpt_dir_txt = folders_opt_components['ckpt_dir_txt']
     vae_dir_txt = folders_opt_components['vae_dir_txt']
-    clip_l_dir_txt = folders_opt_components['clip_l_dir_txt']
-    t5xxl_dir_txt = folders_opt_components['t5xxl_dir_txt']
+    clip_dir_txt = folders_opt_components['clip_dir_txt']
     emb_dir_txt = folders_opt_components['emb_dir_txt']
     lora_dir_txt = folders_opt_components['lora_dir_txt']
     taesd_dir_txt = folders_opt_components['taesd_dir_txt']
@@ -200,11 +199,11 @@ with gr.Blocks() as options_block:
         set_btn = gr.Button(value="Set Defaults")
         set_btn.click(
             set_defaults,
-            inputs=[sd_model, sd_vae, flux_model, flux_vae,
+            inputs=[sd_model, sd_vae, ckpt_model, ckpt_vae,
                     clip_l, t5xxl, sampling, steps, schedule,
                     width, height, predict,
-                    sd_dir_txt, flux_dir_txt, vae_dir_txt,
-                    clip_l_dir_txt, t5xxl_dir_txt,
+                    sd_dir_txt, ckpt_dir_txt, vae_dir_txt,
+                    clip_dir_txt,
                     emb_dir_txt, lora_dir_txt,
                     taesd_dir_txt, phtmkr_dir_txt,
                     upscl_dir_txt, cnnet_dir_txt,

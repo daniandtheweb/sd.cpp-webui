@@ -5,7 +5,7 @@ import os
 from modules.utility import subprocess_manager, exe_name, get_path
 from modules.gallery import get_next_img
 from modules.config import (
-    sd_dir, flux_dir, vae_dir, clip_l_dir, t5xxl_dir, emb_dir, lora_dir,
+    sd_dir, ckpt_dir, vae_dir, clip_dir, emb_dir, lora_dir,
     taesd_dir, phtmkr_dir, upscl_dir, cnnet_dir, txt2img_dir, img2img_dir
 )
 
@@ -14,8 +14,8 @@ SD = exe_name()
 
 
 def txt2img(
-    in_sd_model=None, in_sd_vae=None, in_flux_model=None,
-    in_flux_vae=None, in_clip_l=None, in_t5xxl=None,
+    in_sd_model=None, in_sd_vae=None, in_ckpt_model=None,
+    in_ckpt_vae=None, in_clip_l=None, in_t5xxl=None,
     in_model_type="Default", in_taesd=None, in_phtmkr=None,
     in_phtmkr_in=None, in_phtmkr_nrml=False, in_upscl=None,
     in_upscl_rep=1, in_cnnet=None, in_control_img=None,
@@ -32,10 +32,10 @@ def txt2img(
     """Text to image command creator"""
     fsd_model = get_path(sd_dir, in_sd_model)
     fsd_vae = get_path(vae_dir, in_sd_vae)
-    fflux_model = get_path(flux_dir, in_flux_model)
-    fflux_vae = get_path(vae_dir, in_flux_vae)
-    fclip_l = get_path(clip_l_dir, in_clip_l)
-    ft5xxl = get_path(t5xxl_dir, in_t5xxl)
+    fckpt_model = get_path(ckpt_dir, in_ckpt_model)
+    fckpt_vae = get_path(vae_dir, in_ckpt_vae)
+    fclip_l = get_path(clip_dir, in_clip_l)
+    ft5xxl = get_path(clip_dir, in_t5xxl)
     ftaesd = get_path(taesd_dir, in_taesd)
     fphtmkr = get_path(phtmkr_dir, in_phtmkr)
     fupscl = get_path(upscl_dir, in_upscl)
@@ -70,13 +70,13 @@ def txt2img(
     ])
 
     # Handle VAE options
-    vae_option = fsd_vae if fsd_vae else fflux_vae
+    vae_option = fsd_vae if fsd_vae else fckpt_vae
 
     # Optional parameters in dictionaries
     options = {
         # Model-related options
         '-m': fsd_model,
-        '--diffusion-model': fflux_model,
+        '--diffusion-model': fckpt_model,
         '--vae': vae_option,
         '--clip_l': fclip_l,
         '--t5xxl': ft5xxl,
@@ -143,8 +143,8 @@ def txt2img(
 
 
 def img2img(
-    in_sd_model=None, in_sd_vae=None, in_flux_model=None,
-    in_flux_vae=None, in_clip_l=None, in_t5xxl=None,
+    in_sd_model=None, in_sd_vae=None, in_ckpt_model=None,
+    in_ckpt_vae=None, in_clip_l=None, in_t5xxl=None,
     in_model_type="Default", in_taesd=None, in_phtmkr=None,
     in_phtmkr_in=None, in_phtmkr_nrml=False, in_img_inp=None,
     in_upscl=None, in_upscl_rep=1, in_cnnet=None,
@@ -163,10 +163,10 @@ def img2img(
     # Construct file paths
     fsd_model = get_path(sd_dir, in_sd_model)
     fsd_vae = get_path(vae_dir, in_sd_vae)
-    fflux_model = get_path(flux_dir, in_flux_model)
-    fflux_vae = get_path(vae_dir, in_flux_vae)
-    fclip_l = get_path(clip_l_dir, in_clip_l)
-    ft5xxl = get_path(t5xxl_dir, in_t5xxl)
+    fckpt_model = get_path(ckpt_dir, in_ckpt_model)
+    fckpt_vae = get_path(vae_dir, in_ckpt_vae)
+    fclip_l = get_path(clip_dir, in_clip_l)
+    ft5xxl = get_path(clip_dir, in_t5xxl)
     ftaesd = get_path(taesd_dir, in_taesd)
     fphtmkr = get_path(phtmkr_dir, in_phtmkr)
     fupscl = get_path(upscl_dir, in_upscl)
@@ -203,12 +203,12 @@ def img2img(
     ])
 
     # Handle VAE options
-    vae_option = fsd_vae if fsd_vae else fflux_vae
+    vae_option = fsd_vae if fsd_vae else fckpt_vae
 
     # Optional parameters in dictionaries
     options = {
         '-m': fsd_model,
-        '--diffusion-model': fflux_model,
+        '--diffusion-model': fckpt_model,
         '--vae': vae_option,
         '--clip_l': fclip_l,
         '--t5xxl': ft5xxl,

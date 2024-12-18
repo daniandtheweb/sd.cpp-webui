@@ -9,7 +9,7 @@ import subprocess
 import gradio as gr
 
 from modules.config import (
-    def_sd, def_flux, def_sd_vae, def_flux_vae, def_clip_l, def_t5xxl
+    def_sd, def_ckpt, def_sd_vae, def_ckpt_vae, def_clip_l, def_t5xxl
 )
 
 
@@ -18,9 +18,9 @@ class ModelState:
 
     Attributes:
         bak_sd_model: The backup stable diffusion model.
-        bak_flux_model: The backup flux model.
+        bak_ckpt_model: The backup checkpoint model.
         bak_sd_vae: The backup stable diffusion VAE model.
-        bak_flux_vae: The backup flux VAE model.
+        bak_ckpt_vae: The backup checkpoint VAE model.
         bak_clip_l: The backup CLIP model.
         bak_t5xxl: The backup T5-XXL model.
         bak_nprompt: The backup negative prompt.
@@ -30,9 +30,9 @@ class ModelState:
         """Initializes the ModelState with default values from the
         configuration."""
         self.bak_sd_model = def_sd
-        self.bak_flux_model = def_flux
+        self.bak_ckpt_model = def_ckpt
         self.bak_sd_vae = def_sd_vae
-        self.bak_flux_vae = def_flux_vae
+        self.bak_ckpt_vae = def_ckpt_vae
         self.bak_clip_l = def_clip_l
         self.bak_t5xxl = def_t5xxl
         self.bak_nprompt = None
@@ -57,11 +57,11 @@ class ModelState:
             bak_nprompt = nprompt
         )
 
-    def bak_flux_tab(self, flux_model, flux_vae, clip_l, t5xxl):
+    def bak_ckpt_tab(self, ckpt_model, ckpt_vae, clip_l, t5xxl):
         """Updates the state with values from the Stable-Diffusion tab."""
         self.update(
-            bak_flux_model = flux_model,
-            bak_flux_vae = flux_vae,
+            bak_ckpt_model = ckpt_model,
+            bak_ckpt_vae = ckpt_vae,
             bak_clip_l = clip_l,
             bak_t5xxl = t5xxl
         )
@@ -164,16 +164,16 @@ def get_path(directory, filename):
 
 
 def switch_tab_components(
-    sd_model=None, flux_model=None, sd_vae=None, flux_vae=None,
+    sd_model=None, ckpt_model=None, sd_vae=None, ckpt_vae=None,
     clip_l=None, t5xxl=None, pprompt=None, nprompt=None
 ):
 
     """Helper function to switch the tab components"""
     return (
         gr.update(value=sd_model),
-        gr.update(value=flux_model),
+        gr.update(value=ckpt_model),
         gr.update(value=sd_vae),
-        gr.update(value=flux_vae),
+        gr.update(value=ckpt_vae),
         gr.update(value=clip_l),
         gr.update(value=t5xxl),
         gr.update(
@@ -187,15 +187,15 @@ def switch_tab_components(
     )
 
 
-def flux_tab_switch(sd_model, sd_vae, nprompt):
-    """Switches to the Flux tab"""
+def ckpt_tab_switch(sd_model, sd_vae, nprompt):
+    """Switches to the Checkpoint tab"""
     model_state.bak_sd_tab(sd_model, sd_vae, nprompt)
 
     return switch_tab_components(
         sd_model=None,
-        flux_model=model_state.bak_flux_model,
+        ckpt_model=model_state.bak_ckpt_model,
         sd_vae=None,
-        flux_vae=model_state.bak_flux_vae,
+        ckpt_vae=model_state.bak_ckpt_vae,
         clip_l=model_state.bak_clip_l,
         t5xxl=model_state.bak_t5xxl,
         pprompt=("Prompt", "Prompt"),
@@ -203,15 +203,15 @@ def flux_tab_switch(sd_model, sd_vae, nprompt):
     )
 
 
-def sd_tab_switch(flux_model, flux_vae, clip_l, t5xxl):
+def sd_tab_switch(ckpt_model, ckpt_vae, clip_l, t5xxl):
     """Switches to the Stable-Diffusion tab"""
-    model_state.bak_flux_tab(flux_model, flux_vae, clip_l, t5xxl)
+    model_state.bak_ckpt_tab(ckpt_model, ckpt_vae, clip_l, t5xxl)
 
     return switch_tab_components(
         sd_model=model_state.bak_sd_model,
-        flux_model=None,
+        ckpt_model=None,
         sd_vae=model_state.bak_sd_vae,
-        flux_vae=None,
+        ckpt_vae=None,
         clip_l=None,
         t5xxl=None,
         pprompt=("Positive Prompt", "Positive Prompt"),
