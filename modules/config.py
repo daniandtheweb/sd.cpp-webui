@@ -10,13 +10,13 @@ CONFIG_PATH = 'config.json'
 PROMPTS_PATH = 'prompts.json'
 
 
-def set_defaults(in_ckpt, in_ckpt_vae, in_unet, in_unet_vae, in_clip_l, in_t5xxl,
-                 in_sampling, in_steps, in_schedule, in_width, in_height,
-                 in_predict, in_ckpt_dir_txt, in_unet_dir_txt, in_vae_dir_txt,
-                 in_clip_dir_txt, in_emb_dir_txt,
-                 in_lora_dir_txt, in_taesd_dir_txt, in_phtmkr_dir_txt,
-                 in_upscl_dir_txt, in_cnnet_dir_txt, in_txt2img_dir_txt,
-                 in_img2img_dir_txt):
+def set_defaults(in_ckpt, in_ckpt_vae, in_unet, in_unet_vae, in_clip_g,
+                 in_clip_l, in_t5xxl, in_sampling, in_steps, in_schedule,
+                 in_width, in_height, in_predict, in_ckpt_dir_txt,
+                 in_unet_dir_txt, in_vae_dir_txt, in_clip_dir_txt,
+                 in_emb_dir_txt, in_lora_dir_txt, in_taesd_dir_txt,
+                 in_phtmkr_dir_txt, in_upscl_dir_txt, in_cnnet_dir_txt,
+                 in_txt2img_dir_txt, in_img2img_dir_txt):
     """Sets new defaults"""
     # Directory defaults
     dir_defaults = {
@@ -53,6 +53,8 @@ def set_defaults(in_ckpt, in_ckpt_vae, in_unet, in_unet_vae, in_clip_l, in_t5xxl
         data['def_unet'] = in_unet
     if in_unet_vae:
         data['def_unet_vae'] = in_unet_vae
+    if in_clip_g:
+        data['def_clip_g'] = in_clip_g
     if in_clip_l:
         data['def_clip_l'] = in_clip_l
     if in_t5xxl:
@@ -200,6 +202,10 @@ if 'def_unet_vae' in data:
     def_unet_vae = data['def_unet_vae']
 else:
     def_unet_vae = None
+if 'def_clip_g' in data:
+    def_clip_g = data['def_clip_g']
+else:
+    def_clip_g = None
 if 'def_clip_l' in data:
     def_clip_l = data['def_clip_l']
 else:

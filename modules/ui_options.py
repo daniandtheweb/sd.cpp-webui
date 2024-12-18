@@ -4,7 +4,7 @@ import gradio as gr
 
 from modules.config import (
     set_defaults, rst_def, ckpt_dir, vae_dir, unet_dir, clip_dir,
-    def_ckpt, def_ckpt_vae, def_unet, def_unet_vae,
+    def_ckpt, def_ckpt_vae, def_unet, def_unet_vae, def_clip_g,
     def_clip_l, def_t5xxl, def_sampling, def_steps, def_scheduler,
     def_width, def_height, def_predict
 )
@@ -91,6 +91,22 @@ with gr.Blocks() as options_block:
                     unet_vae, scale=1
                 )
     with gr.Row():
+        with gr.Column():
+            with gr.Row():
+                clip_g = gr.Dropdown(
+                    label="clip_g",
+                    choices=get_models(clip_dir),
+                    scale=7,
+                    value=def_clip_g,
+                    interactive=True
+                )
+            with gr.Row():
+                reload_clip_g_btn = gr.Button(
+                    value=RELOAD_SYMBOL, scale=1
+                )
+                clear_clip_g = gr.ClearButton(
+                    clip_g, scale=1    
+                )
         with gr.Column():
             with gr.Row():
                 clip_l = gr.Dropdown(
@@ -200,8 +216,8 @@ with gr.Blocks() as options_block:
         set_btn.click(
             set_defaults,
             inputs=[ckpt_model, ckpt_vae, unet_model, unet_vae,
-                    clip_l, t5xxl, sampling, steps, schedule,
-                    width, height, predict,
+                    clip_g, clip_l, t5xxl, sampling, steps,
+                    schedule, width, height, predict,
                     ckpt_dir_txt, unet_dir_txt, vae_dir_txt,
                     clip_dir_txt,
                     emb_dir_txt, lora_dir_txt,

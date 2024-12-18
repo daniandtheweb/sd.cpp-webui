@@ -9,7 +9,8 @@ import subprocess
 import gradio as gr
 
 from modules.config import (
-    def_ckpt, def_unet, def_ckpt_vae, def_unet_vae, def_clip_l, def_t5xxl
+    def_ckpt, def_unet, def_ckpt_vae, def_unet_vae, def_clip_g, def_clip_l,
+    def_t5xxl
 )
 
 
@@ -21,7 +22,8 @@ class ModelState:
         bak_unet_model: The backup UNET model.
         bak_ckpt_vae: The backup checkpoint VAE model.
         bak_unet_vae: The backup UNET VAE model.
-        bak_clip_l: The backup CLIP model.
+        bak_clip_g: The backup CLIP_G model.
+        bak_clip_l: The backup CLIP_L model.
         bak_t5xxl: The backup T5-XXL model.
         bak_nprompt: The backup negative prompt.
     """
@@ -33,6 +35,7 @@ class ModelState:
         self.bak_unet_model = def_unet
         self.bak_ckpt_vae = def_ckpt_vae
         self.bak_unet_vae = def_unet_vae
+        self.bak_clip_g = def_clip_g
         self.bak_clip_l = def_clip_l
         self.bak_t5xxl = def_t5xxl
         self.bak_nprompt = None
@@ -57,11 +60,12 @@ class ModelState:
             bak_nprompt = nprompt
         )
 
-    def bak_unet_tab(self, unet_model, unet_vae, clip_l, t5xxl):
+    def bak_unet_tab(self, unet_model, unet_vae, clip_g, clip_l, t5xxl):
         """Updates the state with values from the UNET tab."""
         self.update(
             bak_unet_model = unet_model,
             bak_unet_vae = unet_vae,
+            bak_clip_g = clip_g,
             bak_clip_l = clip_l,
             bak_t5xxl = t5xxl
         )
@@ -165,7 +169,7 @@ def get_path(directory, filename):
 
 def switch_tab_components(
     ckpt_model=None, unet_model=None, ckpt_vae=None, unet_vae=None,
-    clip_l=None, t5xxl=None, pprompt=None, nprompt=None
+    clip_g=None, clip_l=None, t5xxl=None, pprompt=None, nprompt=None
 ):
 
     """Helper function to switch the tab components"""
@@ -174,6 +178,7 @@ def switch_tab_components(
         gr.update(value=unet_model),
         gr.update(value=ckpt_vae),
         gr.update(value=unet_vae),
+        gr.update(value=clip_g),
         gr.update(value=clip_l),
         gr.update(value=t5xxl),
         gr.update(
@@ -196,6 +201,7 @@ def unet_tab_switch(ckpt_model, ckpt_vae, nprompt):
         unet_model=model_state.bak_unet_model,
         ckpt_vae=None,
         unet_vae=model_state.bak_unet_vae,
+        clip_g=model_state.bak_clip_g,
         clip_l=model_state.bak_clip_l,
         t5xxl=model_state.bak_t5xxl,
         pprompt=("Prompt", "Prompt"),
@@ -203,15 +209,16 @@ def unet_tab_switch(ckpt_model, ckpt_vae, nprompt):
     )
 
 
-def ckpt_tab_switch(unet_model, unet_vae, clip_l, t5xxl):
+def ckpt_tab_switch(unet_model, unet_vae, clip_g, clip_l, t5xxl):
     """Switches to the checkpoint tab"""
-    model_state.bak_unet_tab(unet_model, unet_vae, clip_l, t5xxl)
+    model_state.bak_unet_tab(unet_model, unet_vae, clip_g, clip_l, t5xxl)
 
     return switch_tab_components(
         ckpt_model=model_state.bak_ckpt_model,
         unet_model=None,
         ckpt_vae=model_state.bak_ckpt_vae,
         unet_vae=None,
+        clip_g=None,
         clip_l=None,
         t5xxl=None,
         pprompt=("Positive Prompt", "Positive Prompt"),

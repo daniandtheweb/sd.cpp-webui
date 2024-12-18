@@ -27,7 +27,7 @@ SCHEDULERS = ["discrete", "karras", "exponential", "ays", "gits"]
 PREDICTION = ["Default", "eps", "v", "flow"]
 QUANTS = ["Default", "f32", "f16", "q8_0", "q4_k", "q3_k", "q2_k", "q5_1",
           "q5_0", "q4_1", "q4_0"]
-MODELS = ["Stable-Diffusion", "FLUX", "VAE", "clip_l", "t5xxl", "TAESD",
+MODELS = ["Checkpoint", "UNET", "VAE", "clip_g", "clip_l", "t5xxl", "TAESD",
           "Lora", "Embeddings", "Upscaler", "ControlNet"]
 RELOAD_SYMBOL = '\U0001f504'
 RANDOM_SYMBOL = '\U0001F3B2'
@@ -66,6 +66,9 @@ with gr.Blocks()as img2img_block:
     unet_vae = model_components['unet_vae']
     reload_unet_vae_btn = model_components['reload_unet_vae_btn']
     clear_unet_vae = model_components['clear_unet_vae']
+    clip_g = model_components['clip_g']
+    reload_clip_g_btn = model_components['reload_clip_g_btn']
+    clear_clip_g = model_components['clear_clip_g']
     clip_l = model_components['clip_l']
     reload_clip_l_btn = model_components['reload_clip_l_btn']
     clear_clip_l = model_components['clear_clip_l']
@@ -246,7 +249,7 @@ with gr.Blocks()as img2img_block:
     gen_btn.click(
         img2img,
         inputs=[ckpt_model, ckpt_vae, unet_model, unet_vae,
-                clip_l, t5xxl, model_type, taesd_model,
+                clip_g, clip_l, t5xxl, model_type, taesd_model,
                 phtmkr_model, phtmkr_in, phtmkr_nrml,
                 img_inp, upscl, upscl_rep, cnnet,
                 control_img, control_strength, pprompt,
@@ -267,14 +270,14 @@ with gr.Blocks()as img2img_block:
     # Interactive Bindings
     ckpt_tab.select(
         ckpt_tab_switch,
-        inputs=[unet_model, unet_vae, clip_l, t5xxl],
-        outputs=[ckpt_model, unet_model, ckpt_vae, unet_vae, clip_l,
+        inputs=[unet_model, unet_vae, clip_g, clip_l, t5xxl],
+        outputs=[ckpt_model, unet_model, ckpt_vae, unet_vae, clip_g, clip_l,
                  t5xxl, pprompt, nprompt]
     )
     unet_tab.select(
         unet_tab_switch,
         inputs=[ckpt_model, ckpt_vae, nprompt],
-        outputs=[ckpt_model, unet_model, ckpt_vae, unet_vae, clip_l,
+        outputs=[ckpt_model, unet_model, ckpt_vae, unet_vae, clip_g, clip_l,
                  t5xxl, pprompt, nprompt]
     )
     reload_taesd_btn.click(

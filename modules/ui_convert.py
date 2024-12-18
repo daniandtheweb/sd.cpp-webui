@@ -14,7 +14,7 @@ from modules.loader import (
 
 QUANTS = ["Default", "f32", "f16", "q8_0", "q4_k", "q3_k", "q2_k", "q5_1",
           "q5_0", "q4_1", "q4_0"]
-MODELS = ["Checkpoint", "UNET", "VAE", "clip_l", "t5xxl", "TAESD",
+MODELS = ["Checkpoint", "UNET", "VAE", "clip_g", "clip_l", "t5xxl", "TAESD",
           "Lora", "Embeddings", "Upscaler", "ControlNet"]
 RELOAD_SYMBOL = '\U0001f504'
 

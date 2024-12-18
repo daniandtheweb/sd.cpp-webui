@@ -15,7 +15,7 @@ SD = exe_name()
 
 def txt2img(
     in_ckpt_model=None, in_ckpt_vae=None, in_unet_model=None,
-    in_unet_vae=None, in_clip_l=None, in_t5xxl=None,
+    in_unet_vae=None, in_clip_g=None, in_clip_l=None, in_t5xxl=None,
     in_model_type="Default", in_taesd=None, in_phtmkr=None,
     in_phtmkr_in=None, in_phtmkr_nrml=False, in_upscl=None,
     in_upscl_rep=1, in_cnnet=None, in_control_img=None,
@@ -34,6 +34,7 @@ def txt2img(
     fckpt_vae = get_path(vae_dir, in_ckpt_vae)
     funet_model = get_path(unet_dir, in_unet_model)
     funet_vae = get_path(vae_dir, in_unet_vae)
+    fclip_g = get_path(clip_dir, in_clip_g)
     fclip_l = get_path(clip_dir, in_clip_l)
     ft5xxl = get_path(clip_dir, in_t5xxl)
     ftaesd = get_path(taesd_dir, in_taesd)
@@ -78,6 +79,7 @@ def txt2img(
         '-m': fckpt_model,
         '--diffusion-model': funet_model,
         '--vae': vae_option,
+        '--clip_g': fclip_g,
         '--clip_l': fclip_l,
         '--t5xxl': ft5xxl,
         '--taesd': ftaesd,
@@ -144,7 +146,7 @@ def txt2img(
 
 def img2img(
     in_ckpt_model=None, in_ckpt_vae=None, in_unet_model=None,
-    in_unet_vae=None, in_clip_l=None, in_t5xxl=None,
+    in_unet_vae=None, in_clip_g=None, in_clip_l=None, in_t5xxl=None,
     in_model_type="Default", in_taesd=None, in_phtmkr=None,
     in_phtmkr_in=None, in_phtmkr_nrml=False, in_img_inp=None,
     in_upscl=None, in_upscl_rep=1, in_cnnet=None,
@@ -165,6 +167,7 @@ def img2img(
     fckpt_vae = get_path(vae_dir, in_ckpt_vae)
     funet_model = get_path(unet_dir, in_unet_model)
     funet_vae = get_path(vae_dir, in_unet_vae)
+    fclip_g = get_path(clip_dir, in_clip_g)
     fclip_l = get_path(clip_dir, in_clip_l)
     ft5xxl = get_path(clip_dir, in_t5xxl)
     ftaesd = get_path(taesd_dir, in_taesd)
@@ -210,6 +213,7 @@ def img2img(
         '-m': fckpt_model,
         '--diffusion-model': funet_model,
         '--vae': vae_option,
+        '--clip_g': fclip_g,
         '--clip_l': fclip_l,
         '--t5xxl': ft5xxl,
         '--type': in_model_type if in_model_type != "Default" else None,

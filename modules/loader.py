@@ -12,9 +12,10 @@ from modules.config import (
 
 # Dictionary to map model types to their corresponding directories
 model_map = {
-    "Stable-Diffusion": ckpt_dir,
-    "Checkpoint": unet_dir,
+    "Checkpoint": ckpt_dir,
+    "UNET": unet_dir,
     "VAE": vae_dir,
+    "clip_g": clip_dir,
     "clip_l": clip_dir,
     "t5xxl": clip_dir,
     "taesd": taesd_dir,

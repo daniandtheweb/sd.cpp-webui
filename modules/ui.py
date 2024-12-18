@@ -8,8 +8,8 @@ from modules.config import (
     get_prompts, ckpt_dir, vae_dir, unet_dir, clip_dir,
     emb_dir, lora_dir, taesd_dir, phtmkr_dir, upscl_dir, cnnet_dir,
     txt2img_dir, img2img_dir, def_ckpt, def_ckpt_vae, def_unet, def_unet_vae,
-    def_clip_l, def_t5xxl, def_sampling, def_steps, def_scheduler, def_width,
-    def_height, def_predict
+    def_clip_g, def_clip_l, def_t5xxl, def_sampling, def_steps,
+    def_scheduler, def_width, def_height, def_predict
 )
 from modules.loader import (
     get_models, reload_models
@@ -137,6 +137,30 @@ def create_model_sel_ui():
                         )
 
             with gr.Row():
+                with gr.Column():
+                    with gr.Row():
+                        model_components['clip_g'] = gr.Dropdown(
+                            label="clip_g",
+                            choices=get_models(clip_dir),
+                            scale=7,
+                            value=def_clip_g,
+                            interactive=True
+                        )
+                    with gr.Row():
+                        model_components['reload_clip_g_btn'] = gr.Button(
+                            value=RELOAD_SYMBOL,
+                            scale=1
+                        )
+                        model_components['reload_clip_g_btn'].click(
+                            reload_models,
+                            inputs=[clip_dir_txt],
+                            outputs=[model_components['clip_g']]
+                        )
+
+                        model_components['clear_clip_g'] = gr.ClearButton(
+                            model_components['clip_g'],
+                            scale=1
+                        )
                 with gr.Column():
                     with gr.Row():
                         model_components['clip_l'] = gr.Dropdown(
