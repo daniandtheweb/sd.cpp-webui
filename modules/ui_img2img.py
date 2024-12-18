@@ -6,7 +6,7 @@ import gradio as gr
 
 from modules.sdcpp import img2img
 from modules.utility import (
-    subprocess_manager, random_seed, sd_tab_switch, ckpt_tab_switch
+    subprocess_manager, random_seed, ckpt_tab_switch, unet_tab_switch
 )
 from modules.config import (
     reload_prompts, save_prompts, delete_prompts, load_prompts,
@@ -49,23 +49,23 @@ with gr.Blocks()as img2img_block:
     # Model & VAE Selection
     model_components = create_model_sel_ui()
 
-    # Stable Diffusion Tab Components
-    sd_tab = model_components['sd_tab']
-    sd_model = model_components['sd_model']
-    reload_sd_btn = model_components['reload_sd_btn']
-    clear_sd_model = model_components['clear_sd_model']
-    sd_vae = model_components['sd_vae']
-    reload_vae_btn = model_components['reload_vae_btn']
-    clear_vae = model_components['clear_vae']
-
     # Checkpoint Tab Components
     ckpt_tab = model_components['ckpt_tab']
     ckpt_model = model_components['ckpt_model']
     reload_ckpt_btn = model_components['reload_ckpt_btn']
     clear_ckpt_model = model_components['clear_ckpt_model']
     ckpt_vae = model_components['ckpt_vae']
-    reload_ckpt_vae_btn = model_components['reload_ckpt_vae_btn']
-    clear_ckpt_vae = model_components['clear_ckpt_vae']
+    reload_vae_btn = model_components['reload_vae_btn']
+    clear_vae = model_components['clear_vae']
+
+    # UNET Tab Components
+    unet_tab = model_components['unet_tab']
+    unet_model = model_components['unet_model']
+    reload_unet_btn = model_components['reload_unet_btn']
+    clear_unet_model = model_components['clear_unet_model']
+    unet_vae = model_components['unet_vae']
+    reload_unet_vae_btn = model_components['reload_unet_vae_btn']
+    clear_unet_vae = model_components['clear_unet_vae']
     clip_l = model_components['clip_l']
     reload_clip_l_btn = model_components['reload_clip_l_btn']
     clear_clip_l = model_components['clear_clip_l']
@@ -245,7 +245,7 @@ with gr.Blocks()as img2img_block:
     # Generate
     gen_btn.click(
         img2img,
-        inputs=[sd_model, sd_vae, ckpt_model, ckpt_vae,
+        inputs=[ckpt_model, ckpt_vae, unet_model, unet_vae,
                 clip_l, t5xxl, model_type, taesd_model,
                 phtmkr_model, phtmkr_in, phtmkr_nrml,
                 img_inp, upscl, upscl_rep, cnnet,
@@ -265,16 +265,16 @@ with gr.Blocks()as img2img_block:
     )
 
     # Interactive Bindings
-    sd_tab.select(
-        sd_tab_switch,
-        inputs=[ckpt_model, ckpt_vae, clip_l, t5xxl],
-        outputs=[sd_model, ckpt_model, sd_vae, ckpt_vae, clip_l,
-                 t5xxl, pprompt, nprompt]
-    )
     ckpt_tab.select(
         ckpt_tab_switch,
-        inputs=[sd_model, sd_vae, nprompt],
-        outputs=[sd_model, ckpt_model, sd_vae, ckpt_vae, clip_l,
+        inputs=[unet_model, unet_vae, clip_l, t5xxl],
+        outputs=[ckpt_model, unet_model, ckpt_vae, unet_vae, clip_l,
+                 t5xxl, pprompt, nprompt]
+    )
+    unet_tab.select(
+        unet_tab_switch,
+        inputs=[ckpt_model, ckpt_vae, nprompt],
+        outputs=[ckpt_model, unet_model, ckpt_vae, unet_vae, clip_l,
                  t5xxl, pprompt, nprompt]
     )
     reload_taesd_btn.click(

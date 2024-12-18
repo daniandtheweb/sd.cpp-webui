@@ -5,7 +5,7 @@ import gradio as gr
 from modules.sdcpp import convert
 from modules.utility import subprocess_manager
 from modules.config import (
-    sd_dir, vae_dir, ckpt_dir, clip_dir, emb_dir,
+    ckpt_dir, vae_dir, unet_dir, clip_dir, emb_dir,
     lora_dir, taesd_dir, upscl_dir, cnnet_dir
 )
 from modules.loader import (
@@ -14,22 +14,22 @@ from modules.loader import (
 
 QUANTS = ["Default", "f32", "f16", "q8_0", "q4_k", "q3_k", "q2_k", "q5_1",
           "q5_0", "q4_1", "q4_0"]
-MODELS = ["Stable-Diffusion", "Checkpoint", "VAE", "clip_l", "t5xxl", "TAESD",
+MODELS = ["Checkpoint", "UNET", "VAE", "clip_l", "t5xxl", "TAESD",
           "Lora", "Embeddings", "Upscaler", "ControlNet"]
 RELOAD_SYMBOL = '\U0001f504'
 
 
 with gr.Blocks() as convert_block:
-    sd_dir_txt = gr.Textbox(value=sd_dir, visible=False)
-    vae_dir_txt = gr.Textbox(value=vae_dir, visible=False)
     ckpt_dir_txt = gr.Textbox(value=ckpt_dir, visible=False)
+    vae_dir_txt = gr.Textbox(value=vae_dir, visible=False)
+    unet_dir_txt = gr.Textbox(value=unet_dir, visible=False)
     clip_dir_txt = gr.Textbox(value=clip_dir, visible=False)
     emb_dir_txt = gr.Textbox(value=emb_dir, visible=False)
     lora_dir_txt = gr.Textbox(value=lora_dir, visible=False)
     taesd_dir_txt = gr.Textbox(value=taesd_dir, visible=False)
     upscl_dir_txt = gr.Textbox(value=upscl_dir, visible=False)
     cnnet_dir_txt = gr.Textbox(value=cnnet_dir, visible=False)
-    model_dir_txt = gr.Textbox(value=sd_dir, visible=False)
+    model_dir_txt = gr.Textbox(value=ckpt_dir, visible=False)
     # Title
     convert_title = gr.Markdown("# Convert and Quantize")
 
@@ -39,7 +39,7 @@ with gr.Blocks() as convert_block:
                 label="Model Type",
                 choices=MODELS,
                 interactive=True,
-                value="Stable-Diffusion"
+                value="Checkpoint"
             )
             model_type.input(
                 model_choice,
@@ -52,7 +52,7 @@ with gr.Blocks() as convert_block:
             with gr.Row():
                 model = gr.Dropdown(
                     label="Model",
-                    choices=get_models(sd_dir),
+                    choices=get_models(ckpt_dir),
                     scale=5,
                     interactive=True
                 )

@@ -5,9 +5,9 @@ import os
 import gradio as gr
 
 from modules.config import (
-    get_prompts, sd_dir, vae_dir, ckpt_dir, clip_dir,
+    get_prompts, ckpt_dir, vae_dir, unet_dir, clip_dir,
     emb_dir, lora_dir, taesd_dir, phtmkr_dir, upscl_dir, cnnet_dir,
-    txt2img_dir, img2img_dir, def_sd, def_sd_vae, def_ckpt, def_ckpt_vae,
+    txt2img_dir, img2img_dir, def_ckpt, def_ckpt_vae, def_unet, def_unet_vae,
     def_clip_l, def_t5xxl, def_sampling, def_steps, def_scheduler, def_width,
     def_height, def_predict
 )
@@ -27,64 +27,13 @@ def create_model_sel_ui():
     # Dictionary to hold UI components
     model_components = {}
 
-    sd_dir_txt = gr.Textbox(value=sd_dir, visible=False)
-    vae_dir_txt = gr.Textbox(value=vae_dir, visible=False)
     ckpt_dir_txt = gr.Textbox(value=ckpt_dir, visible=False)
+    vae_dir_txt = gr.Textbox(value=vae_dir, visible=False)
+    unet_dir_txt = gr.Textbox(value=unet_dir, visible=False)
     clip_dir_txt = gr.Textbox(value=clip_dir, visible=False)
 
     # Model & VAE Selection
     with gr.Row():
-        with gr.Tab("Stable Diffusion") as model_components['sd_tab']:
-            with gr.Row():
-                with gr.Column():
-                    with gr.Row():
-                        model_components['sd_model'] = gr.Dropdown(
-                            label="Stable Diffusion Model",
-                            choices=get_models(sd_dir),
-                            scale=7,
-                            value=def_sd,
-                            interactive=True
-                        )
-                    with gr.Row():
-                        model_components['reload_sd_btn'] = gr.Button(
-                            value=RELOAD_SYMBOL,
-                            scale=1
-                        )
-                        model_components['reload_sd_btn'].click(
-                            reload_models,
-                            inputs=[sd_dir_txt],
-                            outputs=[model_components['sd_model']]
-                        )
-
-                        model_components['clear_sd_model'] = gr.ClearButton(
-                            model_components['sd_model'],
-                            scale=1
-                        )
-                with gr.Column():
-                    with gr.Row():
-                        model_components['sd_vae'] = gr.Dropdown(
-                            label="Stable Diffusion VAE",
-                            choices=get_models(vae_dir),
-                            scale=7,
-                            value=def_sd_vae,
-                            interactive=True
-                        )
-                    with gr.Row():
-                        model_components['reload_vae_btn'] = gr.Button(
-                            value=RELOAD_SYMBOL,
-                            scale=1
-                        )
-                        model_components['reload_vae_btn'].click(
-                            reload_models,
-                            inputs=[vae_dir_txt],
-                            outputs=[model_components['sd_vae']]
-                        )
-
-                        model_components['clear_vae'] = gr.ClearButton(
-                            model_components['sd_vae'],
-                            scale=1
-                        )
-
         with gr.Tab("Checkpoint") as model_components['ckpt_tab']:
             with gr.Row():
                 with gr.Column():
@@ -121,18 +70,69 @@ def create_model_sel_ui():
                             interactive=True
                         )
                     with gr.Row():
-                        model_components['reload_ckpt_vae_btn'] = gr.Button(
+                        model_components['reload_vae_btn'] = gr.Button(
                             value=RELOAD_SYMBOL,
                             scale=1
                         )
-                        model_components['reload_ckpt_vae_btn'].click(
+                        model_components['reload_vae_btn'].click(
                             reload_models,
                             inputs=[vae_dir_txt],
-                            outputs=[model_components['sd_vae']]
+                            outputs=[model_components['ckpt_vae']]
                         )
 
-                        model_components['clear_ckpt_vae'] = gr.ClearButton(
+                        model_components['clear_vae'] = gr.ClearButton(
                             model_components['ckpt_vae'],
+                            scale=1
+                        )
+
+        with gr.Tab("UNET") as model_components['unet_tab']:
+            with gr.Row():
+                with gr.Column():
+                    with gr.Row():
+                        model_components['unet_model'] = gr.Dropdown(
+                            label="UNET Model",
+                            choices=get_models(unet_dir),
+                            scale=7,
+                            value=def_unet,
+                            interactive=True
+                        )
+                    with gr.Row():
+                        model_components['reload_unet_btn'] = gr.Button(
+                            value=RELOAD_SYMBOL,
+                            scale=1
+                        )
+                        model_components['reload_unet_btn'].click(
+                            reload_models,
+                            inputs=[unet_dir_txt],
+                            outputs=[model_components['unet_model']]
+                        )
+
+                        model_components['clear_unet_model'] = gr.ClearButton(
+                            model_components['unet_model'],
+                            scale=1
+                        )
+                with gr.Column():
+                    with gr.Row():
+                        model_components['unet_vae'] = gr.Dropdown(
+                            label="UNET VAE",
+                            choices=get_models(vae_dir),
+                            scale=7,
+                            value=def_unet_vae,
+                            interactive=True
+                        )
+                    with gr.Row():
+                        model_components['reload_unet_vae_btn'] = gr.Button(
+                            value=RELOAD_SYMBOL,
+                            scale=1
+                        )
+                        model_components['reload_unet_vae_btn'].click(
+                            reload_models,
+                            inputs=[vae_dir_txt],
+                            outputs=[model_components['unet_vae']]
+                        )
+
+                        model_components['clear_unet_vae'] = gr.ClearButton(
+                            model_components['unet_vae'],
                             scale=1
                         )
 
@@ -391,14 +391,14 @@ def create_folders_opt_ui():
         with gr.Accordion(
             label="Folders", open=False
         ):
-            folders_opt_components['sd_dir_txt'] = gr.Textbox(
-                label="Stable Diffusion folder",
-                value=sd_dir,
-                interactive=True
-            )
             folders_opt_components['ckpt_dir_txt'] = gr.Textbox(
                 label="Checkpoint folder",
                 value=ckpt_dir,
+                interactive=True
+            )
+            folders_opt_components['unet_dir_txt'] = gr.Textbox(
+                label="UNET folder",
+                value=unet_dir,
                 interactive=True
             )
             folders_opt_components['vae_dir_txt'] = gr.Textbox(

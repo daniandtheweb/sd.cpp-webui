@@ -3,8 +3,8 @@
 import gradio as gr
 
 from modules.config import (
-    set_defaults, rst_def, sd_dir, vae_dir, ckpt_dir, clip_dir,
-    def_sd, def_sd_vae, def_ckpt, def_ckpt_vae,
+    set_defaults, rst_def, ckpt_dir, vae_dir, unet_dir, clip_dir,
+    def_ckpt, def_ckpt_vae, def_unet, def_unet_vae,
     def_clip_l, def_t5xxl, def_sampling, def_steps, def_scheduler,
     def_width, def_height, def_predict
 )
@@ -26,38 +26,6 @@ with gr.Blocks() as options_block:
     # Title
     options_title = gr.Markdown("# Options")
 
-    with gr.Row():
-        with gr.Column():
-            with gr.Row():
-                sd_model = gr.Dropdown(
-                    label="Stable Diffusion Model",
-                    choices=get_models(sd_dir),
-                    scale=7,
-                    value=def_sd,
-                    interactive=True
-                )
-            with gr.Row():
-                reload_sd_btn = gr.Button(
-                    value=RELOAD_SYMBOL, scale=1
-                )
-                clear_sd_model = gr.ClearButton(
-                    sd_model, scale=1
-                )
-        with gr.Column():
-            with gr.Row():
-                sd_vae = gr.Dropdown(
-                    label="Stable Diffusion VAE",
-                    choices=get_models(vae_dir),
-                    scale=7, value=def_sd_vae,
-                    interactive=True
-                )
-            with gr.Row():
-                reload_vae_btn = gr.Button(
-                    value=RELOAD_SYMBOL, scale=1
-                )
-                clear_vae = gr.ClearButton(
-                    sd_vae, scale=1
-                )
     with gr.Row():
         with gr.Column():
             with gr.Row():
@@ -87,8 +55,40 @@ with gr.Blocks() as options_block:
                 reload_vae_btn = gr.Button(
                     value=RELOAD_SYMBOL, scale=1
                 )
-                clear_ckpt_vae = gr.ClearButton(
+                clear_vae = gr.ClearButton(
                     ckpt_vae, scale=1
+                )
+    with gr.Row():
+        with gr.Column():
+            with gr.Row():
+                unet_model = gr.Dropdown(
+                    label="UNET Model",
+                    choices=get_models(unet_dir),
+                    scale=7,
+                    value=def_unet,
+                    interactive=True
+                )
+            with gr.Row():
+                reload_unet_btn = gr.Button(
+                    value=RELOAD_SYMBOL, scale=1
+                )
+                clear_unet_model = gr.ClearButton(
+                    unet_model, scale=1
+                )
+        with gr.Column():
+            with gr.Row():
+                unet_vae = gr.Dropdown(
+                    label="UNET VAE",
+                    choices=get_models(vae_dir),
+                    scale=7, value=def_unet_vae,
+                    interactive=True
+                )
+            with gr.Row():
+                reload_vae_btn = gr.Button(
+                    value=RELOAD_SYMBOL, scale=1
+                )
+                clear_unet_vae = gr.ClearButton(
+                    unet_vae, scale=1
                 )
     with gr.Row():
         with gr.Column():
@@ -181,8 +181,8 @@ with gr.Blocks() as options_block:
     # Folders options
     folders_opt_components = create_folders_opt_ui()
 
-    sd_dir_txt = folders_opt_components['sd_dir_txt']
     ckpt_dir_txt = folders_opt_components['ckpt_dir_txt']
+    unet_dir_txt = folders_opt_components['unet_dir_txt']
     vae_dir_txt = folders_opt_components['vae_dir_txt']
     clip_dir_txt = folders_opt_components['clip_dir_txt']
     emb_dir_txt = folders_opt_components['emb_dir_txt']
@@ -199,10 +199,10 @@ with gr.Blocks() as options_block:
         set_btn = gr.Button(value="Set Defaults")
         set_btn.click(
             set_defaults,
-            inputs=[sd_model, sd_vae, ckpt_model, ckpt_vae,
+            inputs=[ckpt_model, ckpt_vae, unet_model, unet_vae,
                     clip_l, t5xxl, sampling, steps, schedule,
                     width, height, predict,
-                    sd_dir_txt, ckpt_dir_txt, vae_dir_txt,
+                    ckpt_dir_txt, unet_dir_txt, vae_dir_txt,
                     clip_dir_txt,
                     emb_dir_txt, lora_dir_txt,
                     taesd_dir_txt, phtmkr_dir_txt,

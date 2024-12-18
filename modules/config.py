@@ -10,9 +10,9 @@ CONFIG_PATH = 'config.json'
 PROMPTS_PATH = 'prompts.json'
 
 
-def set_defaults(in_sd, in_sd_vae, in_ckpt, in_ckpt_vae, in_clip_l, in_t5xxl,
+def set_defaults(in_ckpt, in_ckpt_vae, in_unet, in_unet_vae, in_clip_l, in_t5xxl,
                  in_sampling, in_steps, in_schedule, in_width, in_height,
-                 in_predict, in_sd_dir_txt, in_ckpt_dir_txt, in_vae_dir_txt,
+                 in_predict, in_ckpt_dir_txt, in_unet_dir_txt, in_vae_dir_txt,
                  in_clip_dir_txt, in_emb_dir_txt,
                  in_lora_dir_txt, in_taesd_dir_txt, in_phtmkr_dir_txt,
                  in_upscl_dir_txt, in_cnnet_dir_txt, in_txt2img_dir_txt,
@@ -20,9 +20,9 @@ def set_defaults(in_sd, in_sd_vae, in_ckpt, in_ckpt_vae, in_clip_l, in_t5xxl,
     """Sets new defaults"""
     # Directory defaults
     dir_defaults = {
-        'sd_dir': in_sd_dir_txt,
-        'vae_dir': in_vae_dir_txt,
         'ckpt_dir': in_ckpt_dir_txt,
+        'vae_dir': in_vae_dir_txt,
+        'unet_dir': in_unet_dir_txt,
         'clip_dir': in_clip_dir_txt,
         'emb_dir': in_emb_dir_txt,
         'lora_dir': in_lora_dir_txt,
@@ -45,14 +45,14 @@ def set_defaults(in_sd, in_sd_vae, in_ckpt, in_ckpt_vae, in_clip_l, in_t5xxl,
         'def_predict': in_predict
     })
 
-    if in_sd:
-        data['def_sd'] = in_sd
-    if in_sd_vae:
-        data['def_sd_vae'] = in_sd_vae
     if in_ckpt:
         data['def_ckpt'] = in_ckpt
     if in_ckpt_vae:
         data['def_ckpt_vae'] = in_ckpt_vae
+    if in_unet:
+        data['def_unet'] = in_unet
+    if in_unet_vae:
+        data['def_unet_vae'] = in_unet_vae
     if in_clip_l:
         data['def_clip_l'] = in_clip_l
     if in_t5xxl:
@@ -67,16 +67,16 @@ def set_defaults(in_sd, in_sd_vae, in_ckpt, in_ckpt_vae, in_clip_l, in_t5xxl,
 def rst_def():
     """Restores factory defaults"""
     data.update({
-        'sd_dir': os.path.join(CURRENT_DIR, "models/Stable-Diffusion/"),
         'ckpt_dir': os.path.join(CURRENT_DIR, "models/checkpoints/"),
-        'vae_dir': os.path.join(CURRENT_DIR, "models/VAE/"),
+        'unet_dir': os.path.join(CURRENT_DIR, "models/unet/"),
+        'vae_dir': os.path.join(CURRENT_DIR, "models/vae/"),
         'clip_dir': os.path.join(CURRENT_DIR, "models/clip/"),
-        'emb_dir': os.path.join(CURRENT_DIR, "models/Embeddings/"),
-        'lora_dir': os.path.join(CURRENT_DIR, "models/Lora/"),
-        'taesd_dir': os.path.join(CURRENT_DIR, "models/TAESD/"),
-        'phtmkr_dir': os.path.join(CURRENT_DIR, "models/PhotoMaker/"),
-        'upscl_dir': os.path.join(CURRENT_DIR, "models/Upscalers/"),
-        'cnnet_dir': os.path.join(CURRENT_DIR, "models/ControlNet/"),
+        'emb_dir': os.path.join(CURRENT_DIR, "models/embeddings/"),
+        'lora_dir': os.path.join(CURRENT_DIR, "models/lora/"),
+        'taesd_dir': os.path.join(CURRENT_DIR, "models/taesd/"),
+        'phtmkr_dir': os.path.join(CURRENT_DIR, "models/photomaker/"),
+        'upscl_dir': os.path.join(CURRENT_DIR, "models/upscale_models/"),
+        'cnnet_dir': os.path.join(CURRENT_DIR, "models/controlnet/"),
         'txt2img_dir': os.path.join(CURRENT_DIR, "outputs/txt2img/"),
         'img2img_dir': os.path.join(CURRENT_DIR, "outputs/img2img/"),
         'def_sampling': "euler_a",
@@ -87,10 +87,10 @@ def rst_def():
         'def_predict': "Default"
     })
 
-    data.pop('def_sd', None)
     data.pop('def_ckpt', None)
-    data.pop('def_sd_vae', None)
+    data.pop('def_unet', None)
     data.pop('def_ckpt_vae', None)
+    data.pop('def_unet_vae', None)
     data.pop('def_clip_l', None)
     data.pop('def_t5xxl', None)
 
@@ -170,8 +170,8 @@ with open(CONFIG_PATH, 'r', encoding='utf-8') as config_file:
     data = json.load(config_file)
 
 
-sd_dir = data['sd_dir']
 ckpt_dir = data['ckpt_dir']
+unet_dir = data['unet_dir']
 vae_dir = data['vae_dir']
 clip_dir = data['clip_dir']
 emb_dir = data['emb_dir']
@@ -184,14 +184,6 @@ txt2img_dir = data['txt2img_dir']
 img2img_dir = data['img2img_dir']
 
 
-if 'def_sd' in data:
-    def_sd = data['def_sd']
-else:
-    def_sd = None
-if 'def_sd_vae' in data:
-    def_vae = data['def_sd_vae']
-else:
-    def_sd_vae = None
 if 'def_ckpt' in data:
     def_ckpt = data['def_ckpt']
 else:
@@ -200,6 +192,14 @@ if 'def_ckpt_vae' in data:
     def_ckpt_vae = data['def_ckpt_vae']
 else:
     def_ckpt_vae = None
+if 'def_unet' in data:
+    def_unet = data['def_unet']
+else:
+    def_unet = None
+if 'def_unet_vae' in data:
+    def_unet_vae = data['def_unet_vae']
+else:
+    def_unet_vae = None
 if 'def_clip_l' in data:
     def_clip_l = data['def_clip_l']
 else:

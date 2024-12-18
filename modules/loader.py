@@ -5,15 +5,15 @@ import os
 import gradio as gr
 
 from modules.config import (
-    sd_dir, ckpt_dir, vae_dir, clip_dir, taesd_dir,
+    ckpt_dir, unet_dir, vae_dir, clip_dir, taesd_dir,
     lora_dir, emb_dir, upscl_dir, cnnet_dir
 )
 
 
 # Dictionary to map model types to their corresponding directories
 model_map = {
-    "Stable-Diffusion": sd_dir,
-    "Checkpoint": ckpt_dir,
+    "Stable-Diffusion": ckpt_dir,
+    "Checkpoint": unet_dir,
     "VAE": vae_dir,
     "clip_l": clip_dir,
     "t5xxl": clip_dir,
