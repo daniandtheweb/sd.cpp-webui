@@ -1,7 +1,5 @@
 """sd.cpp-webui - Image to image UI"""
 
-import os
-
 import gradio as gr
 
 from modules.sdcpp import img2img
@@ -20,18 +18,10 @@ from modules.ui import (
     create_cnnet_ui, create_extras_ui, create_settings_ui
 )
 
-CURRENT_DIR = os.getcwd()
-SAMPLERS = ["euler", "euler_a", "heun", "dpm2", "dpm++2s_a", "dpm++2m",
-            "dpm++2mv2", "ipndm", "ipndm_v", "lcm"]
-SCHEDULERS = ["discrete", "karras", "exponential", "ays", "gits"]
-PREDICTION = ["Default", "eps", "v", "flow"]
 QUANTS = ["Default", "f32", "f16", "q8_0", "q4_k", "q3_k", "q2_k", "q5_1",
           "q5_0", "q4_1", "q4_0"]
-MODELS = ["Checkpoint", "UNET", "VAE", "clip_g", "clip_l", "t5xxl", "TAESD",
-          "Lora", "Embeddings", "Upscaler", "ControlNet"]
 RELOAD_SYMBOL = '\U0001f504'
 RANDOM_SYMBOL = '\U0001F3B2'
-RECYCLE_SYMBOL = '\U0000267C'
 
 
 with gr.Blocks()as img2img_block:
