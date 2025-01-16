@@ -187,7 +187,7 @@ def img2img(
 
     # Add image generation options
     command.extend([
-        '-i', in_img_inp,
+        '-i', str(in_img_inp),
         '--sampling-method', str(in_sampling),
         '--steps', str(in_steps),
         '--schedule', str(in_schedule),

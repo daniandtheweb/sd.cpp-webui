@@ -93,37 +93,41 @@ class SubprocessManager:
         If any errors occur during execution, they are also printed after the
         process finishes.
         """
-        progress_pattern = re.compile(r"^\|[=]*>? *\| \d+/\d+ - \d+\.\d+it/s$")
-        last_matched = False
+
+        # Regex to detect ANSI escape sequences (used for cursor movement)
+        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+
+        last_was_progress = False  # Track if the last printed line was a progress bar
 
         with subprocess.Popen(
             command,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             universal_newlines=True,
+            bufsize=1
         ) as self.process:
-
-            # Read the output line by line in real-time
+            
             for output_line in self.process.stdout:
-                output_line = output_line.strip()
-                if progress_pattern.search(output_line):
-                    # Overwrite the current line if it matches the pattern
-                    sys.stdout.write(f"\r{output_line}")
-                    sys.stdout.flush()
-                    last_matched = True
-                else:
-                    # If the last line matched, print a newline first
-                    if last_matched:
-                        sys.stdout.write("\n\n")
-                        sys.stdout.flush()
-                        last_matched = False
-                    # Print normally for lines not matching the regex
-                    print(output_line)
+                output_line = output_line.rstrip()  # Remove trailing newlines
 
-            # After the loop, if the last line matched, print a newline
-            if last_matched:
-                sys.stdout.write("\n")
-                sys.stdout.flush()
+                # Strip ANSI escape sequences to correctly overwrite progress bars
+                clean_output = ansi_escape.sub('', output_line)
+
+                if "|" in clean_output and "/" in clean_output:  # Heuristic for progress bars
+                    sys.stdout.write(f"\r{clean_output}")  # Overwrite previous line
+                    sys.stdout.flush()
+                    last_was_progress = True
+                else:
+                    if last_was_progress:
+                        print()  # Print a newline after progress bar finishes
+                        last_was_progress = False
+
+                    print(clean_output)  # Print normal output
+
+            # Ensure a final newline if progress bar was the last thing printed
+            if last_was_progress:
+                print()
+
 
     def kill_subprocess(self):
         """Terminates the currently running subprocess, if any.
