@@ -86,6 +86,8 @@ with gr.Blocks()as img2img_block:
                 taesd_model = gr.Dropdown(
                     label="TAESD",
                     choices=get_models(taesd_dir),
+                    value="",
+                    allow_custom_value=True,
                     interactive=True
                 )
             with gr.Row():
@@ -97,6 +99,8 @@ with gr.Blocks()as img2img_block:
                 phtmkr_model = gr.Dropdown(
                     label="PhotoMaker",
                     choices=get_models(phtmkr_dir),
+                    value="",
+                    allow_custom_value=True,
                     interactive=True
                 )
             with gr.Row():
