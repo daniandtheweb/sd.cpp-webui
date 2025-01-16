@@ -168,6 +168,8 @@ with gr.Blocks() as txt2img_block:
                 upscl = gr.Dropdown(
                     label="Upscaler",
                     choices=get_models(upscl_dir),
+                    value="",
+                    allow_custom_value=True,
                     interactive=True
                 )
                 reload_upscl_btn = gr.Button(value=RELOAD_SYMBOL)
