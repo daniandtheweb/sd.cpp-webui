@@ -61,7 +61,7 @@ if pip freeze | grep -q -F -f requirements.txt; then
     echo "Requirements are satisfied."
 else
     echo "Installing requirements..."
-    pip install -r requirements.txt
+    pip install -r requirements.txt --upgrade pip
     echo "Requirements installed."
 fi
 

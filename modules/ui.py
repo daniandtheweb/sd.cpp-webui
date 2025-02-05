@@ -33,181 +33,180 @@ def create_model_sel_ui():
     clip_dir_txt = gr.Textbox(value=clip_dir, visible=False)
 
     # Model & VAE Selection
-    with gr.Row():
-        with gr.Tab("Checkpoint") as model_components['ckpt_tab']:
-            with gr.Row():
-                with gr.Column():
-                    with gr.Row():
-                        model_components['ckpt_model'] = gr.Dropdown(
-                            label="Checkpoint Model",
-                            choices=get_models(ckpt_dir),
-                            scale=7,
-                            value=def_ckpt,
-                            interactive=True
-                        )
-                    with gr.Row():
-                        model_components['reload_ckpt_btn'] = gr.Button(
-                            value=RELOAD_SYMBOL,
-                            scale=1
-                        )
-                        model_components['reload_ckpt_btn'].click(
-                            reload_models,
-                            inputs=[ckpt_dir_txt],
-                            outputs=[model_components['ckpt_model']]
-                        )
+    with gr.Tab("Checkpoint") as model_components['ckpt_tab']:
+        with gr.Row():
+            with gr.Column():
+                with gr.Row():
+                    model_components['ckpt_model'] = gr.Dropdown(
+                        label="Checkpoint Model",
+                        choices=get_models(ckpt_dir),
+                        scale=7,
+                        value=def_ckpt,
+                        interactive=True
+                    )
+                with gr.Row():
+                    model_components['reload_ckpt_btn'] = gr.Button(
+                        value=RELOAD_SYMBOL,
+                        scale=1
+                    )
+                    model_components['reload_ckpt_btn'].click(
+                        reload_models,
+                        inputs=[ckpt_dir_txt],
+                        outputs=[model_components['ckpt_model']]
+                    )
 
-                        model_components['clear_ckpt_model'] = gr.ClearButton(
-                            model_components['ckpt_model'],
-                            scale=1
-                        )
-                with gr.Column():
-                    with gr.Row():
-                        model_components['ckpt_vae'] = gr.Dropdown(
-                            label="Checkpoint VAE",
-                            choices=get_models(vae_dir),
-                            scale=7,
-                            value=def_ckpt_vae,
-                            interactive=True
-                        )
-                    with gr.Row():
-                        model_components['reload_vae_btn'] = gr.Button(
-                            value=RELOAD_SYMBOL,
-                            scale=1
-                        )
-                        model_components['reload_vae_btn'].click(
-                            reload_models,
-                            inputs=[vae_dir_txt],
-                            outputs=[model_components['ckpt_vae']]
-                        )
+                    model_components['clear_ckpt_model'] = gr.ClearButton(
+                        model_components['ckpt_model'],
+                        scale=1
+                    )
+            with gr.Column():
+                with gr.Row():
+                    model_components['ckpt_vae'] = gr.Dropdown(
+                        label="Checkpoint VAE",
+                        choices=get_models(vae_dir),
+                        scale=7,
+                        value=def_ckpt_vae,
+                        interactive=True
+                    )
+                with gr.Row():
+                    model_components['reload_vae_btn'] = gr.Button(
+                        value=RELOAD_SYMBOL,
+                        scale=1
+                    )
+                    model_components['reload_vae_btn'].click(
+                        reload_models,
+                        inputs=[vae_dir_txt],
+                        outputs=[model_components['ckpt_vae']]
+                    )
 
-                        model_components['clear_vae'] = gr.ClearButton(
-                            model_components['ckpt_vae'],
-                            scale=1
-                        )
+                    model_components['clear_vae'] = gr.ClearButton(
+                        model_components['ckpt_vae'],
+                        scale=1
+                    )
 
-        with gr.Tab("UNET") as model_components['unet_tab']:
-            with gr.Row():
-                with gr.Column():
-                    with gr.Row():
-                        model_components['unet_model'] = gr.Dropdown(
-                            label="UNET Model",
-                            choices=get_models(unet_dir),
-                            scale=7,
-                            value=def_unet,
-                            interactive=True
-                        )
-                    with gr.Row():
-                        model_components['reload_unet_btn'] = gr.Button(
-                            value=RELOAD_SYMBOL,
-                            scale=1
-                        )
-                        model_components['reload_unet_btn'].click(
-                            reload_models,
-                            inputs=[unet_dir_txt],
-                            outputs=[model_components['unet_model']]
-                        )
+    with gr.Tab("UNET") as model_components['unet_tab']:
+        with gr.Row():
+            with gr.Column():
+                with gr.Row():
+                    model_components['unet_model'] = gr.Dropdown(
+                        label="UNET Model",
+                        choices=get_models(unet_dir),
+                        scale=7,
+                        value=def_unet,
+                        interactive=True
+                    )
+                with gr.Row():
+                    model_components['reload_unet_btn'] = gr.Button(
+                        value=RELOAD_SYMBOL,
+                        scale=1
+                    )
+                    model_components['reload_unet_btn'].click(
+                        reload_models,
+                        inputs=[unet_dir_txt],
+                        outputs=[model_components['unet_model']]
+                    )
 
-                        model_components['clear_unet_model'] = gr.ClearButton(
-                            model_components['unet_model'],
-                            scale=1
-                        )
-                with gr.Column():
-                    with gr.Row():
-                        model_components['unet_vae'] = gr.Dropdown(
-                            label="UNET VAE",
-                            choices=get_models(vae_dir),
-                            scale=7,
-                            value=def_unet_vae,
-                            interactive=True
-                        )
-                    with gr.Row():
-                        model_components['reload_unet_vae_btn'] = gr.Button(
-                            value=RELOAD_SYMBOL,
-                            scale=1
-                        )
-                        model_components['reload_unet_vae_btn'].click(
-                            reload_models,
-                            inputs=[vae_dir_txt],
-                            outputs=[model_components['unet_vae']]
-                        )
+                    model_components['clear_unet_model'] = gr.ClearButton(
+                        model_components['unet_model'],
+                        scale=1
+                    )
+            with gr.Column():
+                with gr.Row():
+                    model_components['unet_vae'] = gr.Dropdown(
+                        label="UNET VAE",
+                        choices=get_models(vae_dir),
+                        scale=7,
+                        value=def_unet_vae,
+                        interactive=True
+                    )
+                with gr.Row():
+                    model_components['reload_unet_vae_btn'] = gr.Button(
+                        value=RELOAD_SYMBOL,
+                        scale=1
+                    )
+                    model_components['reload_unet_vae_btn'].click(
+                        reload_models,
+                        inputs=[vae_dir_txt],
+                        outputs=[model_components['unet_vae']]
+                    )
 
-                        model_components['clear_unet_vae'] = gr.ClearButton(
-                            model_components['unet_vae'],
-                            scale=1
-                        )
+                    model_components['clear_unet_vae'] = gr.ClearButton(
+                        model_components['unet_vae'],
+                        scale=1
+                    )
 
-            with gr.Row():
-                with gr.Column():
-                    with gr.Row():
-                        model_components['clip_g'] = gr.Dropdown(
-                            label="clip_g",
-                            choices=get_models(clip_dir),
-                            scale=7,
-                            value=def_clip_g,
-                            interactive=True
-                        )
-                    with gr.Row():
-                        model_components['reload_clip_g_btn'] = gr.Button(
-                            value=RELOAD_SYMBOL,
-                            scale=1
-                        )
-                        model_components['reload_clip_g_btn'].click(
-                            reload_models,
-                            inputs=[clip_dir_txt],
-                            outputs=[model_components['clip_g']]
-                        )
+        with gr.Row():
+            with gr.Column():
+                with gr.Row():
+                    model_components['clip_g'] = gr.Dropdown(
+                        label="clip_g",
+                        choices=get_models(clip_dir),
+                        scale=7,
+                        value=def_clip_g,
+                        interactive=True
+                    )
+                with gr.Row():
+                    model_components['reload_clip_g_btn'] = gr.Button(
+                        value=RELOAD_SYMBOL,
+                        scale=1
+                    )
+                    model_components['reload_clip_g_btn'].click(
+                        reload_models,
+                        inputs=[clip_dir_txt],
+                        outputs=[model_components['clip_g']]
+                    )
 
-                        model_components['clear_clip_g'] = gr.ClearButton(
-                            model_components['clip_g'],
-                            scale=1
-                        )
-                with gr.Column():
-                    with gr.Row():
-                        model_components['clip_l'] = gr.Dropdown(
-                            label="clip_l",
-                            choices=get_models(clip_dir),
-                            scale=7,
-                            value=def_clip_l,
-                            interactive=True
-                        )
-                    with gr.Row():
-                        model_components['reload_clip_l_btn'] = gr.Button(
-                            value=RELOAD_SYMBOL,
-                            scale=1
-                        )
-                        model_components['reload_clip_l_btn'].click(
-                            reload_models,
-                            inputs=[clip_dir_txt],
-                            outputs=[model_components['clip_l']]
-                        )
+                    model_components['clear_clip_g'] = gr.ClearButton(
+                        model_components['clip_g'],
+                        scale=1
+                    )
+            with gr.Column():
+                with gr.Row():
+                    model_components['clip_l'] = gr.Dropdown(
+                        label="clip_l",
+                        choices=get_models(clip_dir),
+                        scale=7,
+                        value=def_clip_l,
+                        interactive=True
+                    )
+                with gr.Row():
+                    model_components['reload_clip_l_btn'] = gr.Button(
+                        value=RELOAD_SYMBOL,
+                        scale=1
+                    )
+                    model_components['reload_clip_l_btn'].click(
+                        reload_models,
+                        inputs=[clip_dir_txt],
+                        outputs=[model_components['clip_l']]
+                    )
 
-                        model_components['clear_clip_l'] = gr.ClearButton(
-                            model_components['clip_l'],
-                            scale=1
-                        )
-                with gr.Column():
-                    with gr.Row():
-                        model_components['t5xxl'] = gr.Dropdown(
-                            label="t5xxl",
-                            choices=get_models(clip_dir),
-                            scale=7, value=def_t5xxl,
-                            interactive=True
-                        )
-                    with gr.Row():
-                        model_components['reload_t5xxl_btn'] = gr.Button(
-                            value=RELOAD_SYMBOL,
-                            scale=1
-                        )
-                        model_components['reload_t5xxl_btn'].click(
-                            reload_models,
-                            inputs=[clip_dir_txt],
-                            outputs=[model_components['t5xxl']]
-                        )
+                    model_components['clear_clip_l'] = gr.ClearButton(
+                        model_components['clip_l'],
+                        scale=1
+                    )
+            with gr.Column():
+                with gr.Row():
+                    model_components['t5xxl'] = gr.Dropdown(
+                        label="t5xxl",
+                        choices=get_models(clip_dir),
+                        scale=7, value=def_t5xxl,
+                        interactive=True
+                    )
+                with gr.Row():
+                    model_components['reload_t5xxl_btn'] = gr.Button(
+                        value=RELOAD_SYMBOL,
+                        scale=1
+                    )
+                    model_components['reload_t5xxl_btn'].click(
+                        reload_models,
+                        inputs=[clip_dir_txt],
+                        outputs=[model_components['t5xxl']]
+                    )
 
-                        model_components['clear_t5xxl'] = gr.ClearButton(
-                            model_components['t5xxl'],
-                            scale=1
-                        )
+                    model_components['clear_t5xxl'] = gr.ClearButton(
+                        model_components['t5xxl'],
+                        scale=1
+                    )
 
     # Return the dictionary with all UI components
     return model_components

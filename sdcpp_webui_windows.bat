@@ -76,7 +76,7 @@ if %errorlevel% equ 0 (
     echo Requirements are satisfied.
 ) else (
     echo Installing requirements...
-    pip install -r requirements.txt
+    pip install -r requirements.txt --upgrade pip
     echo Requirements installed.
 )
 
