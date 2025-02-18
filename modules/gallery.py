@@ -153,18 +153,36 @@ class GalleryManager:
         except IndexError:
             return "Image index is out of range."
         if self.img_path.endswith(('.jpg', '.jpeg')):
-            pprompt_out = ""
-            nprompt_out = ""
+            pprompt = ""
+            nprompt = ""
+            im = Image.open(self.img_path)
+            w, h = im.size
+            width = w
+            height = h
             exif = self.extract_exif_from_jpg(self.img_path)
-            return pprompt_out, nprompt_out, exif
+            return pprompt, nprompt, width, height, exif
         if self.img_path.endswith('.png'):
             with open(self.img_path, 'rb') as file:
                 if file.read(8) != b'\x89PNG\r\n\x1a\n':
-                    return None
+                    pprompt = ""
+                    nprompt = ""
+                    im = Image.open(self.img_path)
+                    w, h = im.size
+                    width = w
+                    height = h
+                    exif = ""
+                    return pprompt, nprompt, width, height, exif
                 while True:
                     length_chunk = file.read(4)
                     if not length_chunk:
-                        return None
+                        pprompt = ""
+                        nprompt = ""
+                        im = Image.open(self.img_path)
+                        w, h = im.size
+                        width = w
+                        height = h
+                        exif = ""
+                        return pprompt, nprompt, width, height, exif
                     length = int.from_bytes(length_chunk, byteorder='big')
                     chunk_type = file.read(4).decode('utf-8')
                     png_block = file.read(length)
@@ -172,33 +190,45 @@ class GalleryManager:
                     if chunk_type == 'tEXt':
                         _, value = png_block.split(b'\x00', 1)
                         png_exif = f"{value.decode('utf-8')}"
-                        sdcpppattern = r'(?s).*Version: stable-diffusion.cpp'
-                        sdcppmatch = re.match(sdcpppattern, png_exif)
-                        if sdcppmatch is None:
-                            exif = png_exif
-                            ppattern = r'.*?{"text":\s*"([^"]*)",\s"clip".*'
-                            npattern = r'(?=.*{"text":\s*"([^"]*)",\s"clip".*)(.*{"text":\s*"([^"]*)",\s*"clip".*)'
 
+                        if '{"text":' in png_exif:
+                            # JSON-like metadata branch.
+                            exif = png_exif
+                            ppattern = r'.*?{"text":\s*"([^"]*)",\s*"clip".*'
+                            npattern = r'(?=.*{"text":\s*"([^"]*)",\s*"clip".*)(.*{"text":\s*"([^"]*)",\s*"clip".*)'
                         else:
+                            # Already formatted metadata branch. Since "Positive prompt:" is added later,
+                            # we prepend it here.
                             exif = f"PNG: tEXt\nPositive prompt: {png_exif}"
-                            ppattern = r'Positive prompt:\s*"?([^"]*?)"?\s*(?=\s*(Steps:|Negative prompt:))'
-                            npattern = r'Negative prompt:\s"?([^"]*?)"?\s*(?=\s*Steps:)'
+                            # This regex captures the positive prompt whether or not it is enclosed in quotes.
+                            ppattern = r'Positive prompt:\s*(?:"(?P<quoted_pprompt>(?:\\.|[^"\\])*)"|(?P<unquoted_pprompt>.*?))\s*(?=\s*(?:Steps:|Negative prompt:))'
+                            npattern = r'Negative prompt:\s*(?:"(?P<quoted_nprompt>(?:\\.|[^"\\])*)"|(?P<unquoted_nprompt>.*?))\s*(?=\s*Steps:)'
+
 
                         pmatch = re.search(ppattern, exif)
                         nmatch = re.search(npattern, exif)
 
                         if pmatch and pmatch.lastindex is not None:
-                            pprompt = pmatch.group(1)
+                            pprompt = pmatch.group("quoted_pprompt") if pmatch.group("quoted_pprompt") is not None else pmatch.group("unquoted_pprompt")
                         else:
-                            pprompt = "Not found"
+                            pprompt = ""
                         if nmatch and nmatch.lastindex is not None:
-                            nprompt = nmatch.group(1)
+                            nprompt = nmatch.group("quoted_nprompt") if nmatch.group("quoted_nprompt") is not None else nmatch.group("unquoted_nprompt")
                         else:
-                            nprompt = "Not found"
+                            nprompt = ""
 
-                        pprompt_out = gr.update(value=pprompt)
-                        nprompt_out = gr.update(value=nprompt)
-                        return pprompt_out, nprompt_out, exif
+                        size_pattern = r'Size:\s*(\d+)\s*[xX]\s*(\d+)'
+                        size_match = re.search(size_pattern, exif)
+                        if size_match and size_match.lastindex is not None:
+                            width = size_match.group(2)
+                            height = size_match.group(1)
+                        else:
+                            im = Image.open(self.img_path)
+                            w, h = im.size
+                            width = w
+                            height = h
+
+                        return pprompt, nprompt, width, height, exif
         return None
 
     def delete_img(self):

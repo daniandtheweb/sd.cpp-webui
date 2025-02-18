@@ -39,6 +39,14 @@ def main():
     sdcpp_launch(args.listen, args.autostart, args.darkmode)
 
 
+def cpy_2_txt2img(pprompt_info, nprompt_info):
+    return gr.Tabs(selected="txt2img"), pprompt_info, nprompt_info
+
+
+def cpy_2_img2img(pprompt_info, nprompt_info):
+    return gr.Tabs(selected="img2img"), pprompt_info, nprompt_info
+
+
 def sdcpp_launch(
         listen=False, autostart=False, darkmode=False
 ):
@@ -62,10 +70,6 @@ def sdcpp_launch(
     }
     """ if darkmode else None
 
-    def cpy_2_txt2img(pprompt_info, nprompt_info):
-        return gr.Tabs(selected="txt2img"), pprompt_info, nprompt_info
-    def cpy_2_img2img(pprompt_info, nprompt_info):
-        return gr.Tabs(selected="img2img"), pprompt_info, nprompt_info
 
     with gr.Blocks(css="footer {visibility: hidden}", title="sd.cpp-webui", theme="default", js=dark_js) as sdcpp:
         with gr.Tabs() as tabs:
