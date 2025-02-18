@@ -64,7 +64,7 @@ with gr.Blocks() as gallery_block:
 
         with gr.Column():
             # Positive prompts
-            pprompt = gr.Textbox(
+            pprompt_info = gr.Textbox(
                 label="Positive prompt:",
                 value="",
                 interactive=False,
@@ -74,7 +74,7 @@ with gr.Blocks() as gallery_block:
                 max_lines=4
             )
             # Negative prompts
-            nprompt = gr.Textbox(
+            nprompt_info = gr.Textbox(
                 label="Negative prompt:",
                 value="",
                 interactive=False,
@@ -92,6 +92,11 @@ with gr.Blocks() as gallery_block:
                 min_width=300,
                 max_lines=4
             )
+            with gr.Row():
+                # Copy to txt2img
+                cpy_2_txt2img_btn = gr.Button(value="Copy to txt2img")
+                # Copy to img2img
+                cpy_2_img2img_btn = gr.Button(value="Copy to img2img")
             # Delete image Button
             del_img = gr.Button(value="Delete")
 
@@ -99,7 +104,7 @@ with gr.Blocks() as gallery_block:
     gallery.select(
         gallery_manager.img_info,
         inputs=[],
-        outputs=[pprompt, nprompt, img_info_txt]
+        outputs=[pprompt_info, nprompt_info, img_info_txt]
     )
     txt2img_btn.click(
         gallery_manager.reload_gallery,
@@ -140,5 +145,5 @@ with gr.Blocks() as gallery_block:
         gallery_manager.delete_img,
         inputs=[],
         outputs=[gallery, page_num_select, gallery,
-                 pprompt, nprompt, img_info_txt]
+                 pprompt_info, nprompt_info, img_info_txt]
     )

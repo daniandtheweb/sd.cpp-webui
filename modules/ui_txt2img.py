@@ -125,8 +125,8 @@ with gr.Blocks() as txt2img_block:
     reload_prompts_btn = prompts_components['reload_prompts_btn']
     save_prompt_btn = prompts_components['save_prompt_btn']
     del_prompt_btn = prompts_components['del_prompt_btn']
-    pprompt = prompts_components['pprompt']
-    nprompt = prompts_components['nprompt']
+    pprompt_txt2img = prompts_components['pprompt']
+    nprompt_txt2img = prompts_components['nprompt']
 
     # Settings
     with gr.Row():
@@ -231,7 +231,7 @@ with gr.Blocks() as txt2img_block:
                 clip_g, clip_l, t5xxl, model_type, taesd_model,
                 phtmkr_model, phtmkr_in, phtmkr_nrml,
                 upscl, upscl_rep, cnnet, control_img,
-                control_strength, pprompt, nprompt,
+                control_strength, pprompt_txt2img, nprompt_txt2img,
                 sampling, steps, schedule, width, height,
                 batch_count, cfg, seed, clip_skip, threads,
                 vae_tiling, vae_cpu, cnnet_cpu, canny, rng,
@@ -249,13 +249,13 @@ with gr.Blocks() as txt2img_block:
         ckpt_tab_switch,
         inputs=[unet_model, unet_vae, clip_g, clip_l, t5xxl],
         outputs=[ckpt_model, unet_model, ckpt_vae, unet_vae, clip_g, clip_l,
-                 t5xxl, pprompt, nprompt]
+                 t5xxl, pprompt_txt2img, nprompt_txt2img]
     )
     unet_tab.select(
         unet_tab_switch,
-        inputs=[ckpt_model, ckpt_vae, nprompt],
+        inputs=[ckpt_model, ckpt_vae, nprompt_txt2img],
         outputs=[ckpt_model, unet_model, ckpt_vae, unet_vae, clip_g, clip_l,
-                 t5xxl, pprompt, nprompt]
+                 t5xxl, pprompt_txt2img, nprompt_txt2img]
     )
     reload_taesd_btn.click(
         reload_models,
@@ -279,8 +279,8 @@ with gr.Blocks() as txt2img_block:
     )
     save_prompt_btn.click(
         save_prompts,
-        inputs=[saved_prompts, pprompt,
-                nprompt],
+        inputs=[saved_prompts, pprompt_txt2img,
+                nprompt_txt2img],
         outputs=[]
     )
     del_prompt_btn.click(
@@ -296,7 +296,7 @@ with gr.Blocks() as txt2img_block:
     load_prompt_btn.click(
         load_prompts,
         inputs=[saved_prompts],
-        outputs=[pprompt, nprompt]
+        outputs=[pprompt_txt2img, nprompt_txt2img]
     )
     random_seed_btn.click(
         random_seed,

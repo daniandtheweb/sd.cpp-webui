@@ -7,9 +7,9 @@ import argparse
 
 import gradio as gr
 
-from modules.ui_txt2img import txt2img_block
-from modules.ui_img2img import img2img_block
-from modules.ui_gallery import gallery_block
+from modules.ui_txt2img import txt2img_block, pprompt_txt2img, nprompt_txt2img
+from modules.ui_img2img import img2img_block, pprompt_img2img, nprompt_img2img
+from modules.ui_gallery import gallery_block, cpy_2_txt2img_btn, cpy_2_img2img_btn, pprompt_info, nprompt_info
 from modules.ui_convert import convert_block
 from modules.ui_options import options_block
 
@@ -62,15 +62,35 @@ def sdcpp_launch(
     }
     """ if darkmode else None
 
-    sdcpp = gr.TabbedInterface(
-        [txt2img_block, img2img_block, gallery_block, convert_block,
-         options_block],
-        ["txt2img", "img2img", "Gallery", "Checkpoint Converter", "Options"],
-        title="sd.cpp-webui",
-        theme="default",
-        js=dark_js,
-        css="footer {visibility: hidden}",
-    )
+    def cpy_2_txt2img(pprompt_info, nprompt_info):
+        return gr.Tabs(selected="txt2img"), pprompt_info, nprompt_info
+    def cpy_2_img2img(pprompt_info, nprompt_info):
+        return gr.Tabs(selected="img2img"), pprompt_info, nprompt_info
+
+    with gr.Blocks(css="footer {visibility: hidden}", title="sd.cpp-webui", theme="default", js=dark_js) as sdcpp:
+        with gr.Tabs() as tabs:
+            with gr.TabItem("txt2img", id="txt2img"):
+                txt2img_block.render()
+            with gr.TabItem("img2img", id="img2img"):
+                img2img_block.render()
+            with gr.TabItem("Gallery", id="gallery"):
+                gallery_block.render()
+            with gr.TabItem("Checkpoint Converter", id="convert"):
+                convert_block.render()
+            with gr.TabItem("Options", id="options"):
+                options_block.render()
+
+        # Set up the button click event
+        cpy_2_txt2img_btn.click(
+            cpy_2_txt2img,
+            inputs=[pprompt_info, nprompt_info],
+            outputs=[tabs, pprompt_txt2img, nprompt_txt2img]
+        )
+        cpy_2_img2img_btn.click(
+            cpy_2_img2img,
+            inputs=[pprompt_info, nprompt_info],
+            outputs=[tabs, pprompt_img2img, nprompt_img2img]
+        )
 
     # Pass the arguments to sdcpp.launch with argument unpacking
     sdcpp.launch(**launch_args)
