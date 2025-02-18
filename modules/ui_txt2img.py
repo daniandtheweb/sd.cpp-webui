@@ -137,8 +137,8 @@ with gr.Blocks() as txt2img_block:
             sampling = settings_components['sampling']
             steps = settings_components['steps']
             schedule = settings_components['schedule']
-            width = settings_components['width']
-            height = settings_components['height']
+            width_txt2img = settings_components['width']
+            height_txt2img = settings_components['height']
             batch_count = settings_components['batch_count']
             cfg = settings_components['cfg']
 
@@ -232,7 +232,7 @@ with gr.Blocks() as txt2img_block:
                 phtmkr_model, phtmkr_in, phtmkr_nrml,
                 upscl, upscl_rep, cnnet, control_img,
                 control_strength, pprompt_txt2img, nprompt_txt2img,
-                sampling, steps, schedule, width, height,
+                sampling, steps, schedule, width_txt2img, height_txt2img,
                 batch_count, cfg, seed, clip_skip, threads,
                 vae_tiling, vae_cpu, cnnet_cpu, canny, rng,
                 predict, output, color, flash_attn, verbose],

@@ -139,8 +139,8 @@ with gr.Blocks()as img2img_block:
             sampling = settings_components['sampling']
             steps = settings_components['steps']
             schedule = settings_components['schedule']
-            width = settings_components['width']
-            height = settings_components['height']
+            width_img2img = settings_components['width']
+            height_img2img = settings_components['height']
             batch_count = settings_components['batch_count']
             cfg = settings_components['cfg']
 
@@ -250,7 +250,7 @@ with gr.Blocks()as img2img_block:
                 img_inp, upscl, upscl_rep, cnnet,
                 control_img, control_strength, pprompt_img2img,
                 nprompt_img2img, sampling, steps, schedule,
-                width, height, batch_count,
+                width_img2img, height_img2img, batch_count,
                 strenght, style_ratio, style_ratio_btn,
                 cfg, seed, clip_skip, threads, vae_tiling,
                 vae_cpu, cnnet_cpu, canny, rng, predict,
