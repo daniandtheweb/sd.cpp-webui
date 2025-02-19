@@ -160,7 +160,7 @@ with gr.Blocks()as img2img_block:
                 value=20
             )
             with gr.Row():
-                seed = gr.Number(
+                seed_img2img = gr.Number(
                     label="Seed",
                     minimum=-1,
                     maximum=10**16,
@@ -252,7 +252,7 @@ with gr.Blocks()as img2img_block:
                 nprompt_img2img, sampling_img2img, steps_img2img, schedule,
                 width_img2img, height_img2img, batch_count,
                 strenght, style_ratio, style_ratio_btn,
-                cfg, seed, clip_skip, threads, vae_tiling,
+                cfg, seed_img2img, clip_skip, threads, vae_tiling,
                 vae_cpu, cnnet_cpu, canny, rng, predict,
                 output, color, flash_attn, verbose],
         outputs=[img_final]
@@ -319,5 +319,5 @@ with gr.Blocks()as img2img_block:
     random_seed_btn.click(
         random_seed,
         inputs=[],
-        outputs=[seed]
+        outputs=[seed_img2img]
     )

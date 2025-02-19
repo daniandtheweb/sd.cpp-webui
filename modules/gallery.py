@@ -172,8 +172,9 @@ class GalleryManager:
                     height = h
                     steps = ""
                     sampler = ""
+                    seed = ""
                     exif = ""
-                    return pprompt, nprompt, width, height, steps, sampler, exif
+                    return pprompt, nprompt, width, height, steps, sampler, seed, exif
                 while True:
                     length_chunk = file.read(4)
                     if not length_chunk:
@@ -185,8 +186,9 @@ class GalleryManager:
                         height = h
                         steps = ""
                         sampler = ""
+                        seed = ""
                         exif = ""
-                        return pprompt, nprompt, width, height, steps, sampler, exif
+                        return pprompt, nprompt, width, height, steps, sampler, seed, exif
                     length = int.from_bytes(length_chunk, byteorder='big')
                     chunk_type = file.read(4).decode('utf-8')
                     png_block = file.read(length)
@@ -236,6 +238,8 @@ class GalleryManager:
                         steps_match = re.search(steps_pattern, exif, re.DOTALL)
                         if steps_match:
                             steps = steps_match.group(1)
+                        else:
+                            steps = ""
 
                         sampler_pattern = r'Sampler:\s*([^\s,]+)(?!.*Sampler:)'
                         sampler_match = re.search(sampler_pattern, exif, re.DOTALL)
@@ -244,7 +248,14 @@ class GalleryManager:
                         else:
                             sampler = ""
 
-                        return pprompt, nprompt, width, height, steps, sampler, exif
+                        seed_pattern = r'Seed:\s*(\d+)(?!.*Seed:)'
+                        seed_match = re.search(seed_pattern, exif, re.DOTALL)
+                        if seed_match:
+                            seed = seed_match.group(1)
+                        else:
+                            seed = ""
+
+                        return pprompt, nprompt, width, height, steps, sampler, seed, exif
         return None
 
     def delete_img(self):
