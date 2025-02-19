@@ -4,9 +4,6 @@ A simple Gradio-based interface for [stable-diffusion.cpp](https://github.com/le
 
 This program acts primarily as a command generator for **stable-diffusion.cpp**, with some extra features.
 
-> [!IMPORTANT]
-[2024 Sep 3] A significant refactoring has recently taken place. If you encounter issues, try deleting the old `config.json` file. A new one will be generated on the next launch.
-
 ## Features
 
 - Minimal python dependencies (Gradio is the main one, no PyTorch required)
