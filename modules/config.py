@@ -10,6 +10,29 @@ CONFIG_PATH = 'config.json'
 PROMPTS_PATH = 'prompts.json'
 
 
+default_settings = {
+    'ckpt_dir': os.path.join(CURRENT_DIR, "models/checkpoints/"),
+    'unet_dir': os.path.join(CURRENT_DIR, "models/unet/"),
+    'vae_dir': os.path.join(CURRENT_DIR, "models/vae/"),
+    'clip_dir': os.path.join(CURRENT_DIR, "models/clip/"),
+    'emb_dir': os.path.join(CURRENT_DIR, "models/embeddings/"),
+    'lora_dir': os.path.join(CURRENT_DIR, "models/lora/"),
+    'taesd_dir': os.path.join(CURRENT_DIR, "models/taesd/"),
+    'phtmkr_dir': os.path.join(CURRENT_DIR, "models/photomaker/"),
+    'upscl_dir': os.path.join(CURRENT_DIR, "models/upscale_models/"),
+    'cnnet_dir': os.path.join(CURRENT_DIR, "models/controlnet/"),
+    'txt2img_dir': os.path.join(CURRENT_DIR, "outputs/txt2img/"),
+    'img2img_dir': os.path.join(CURRENT_DIR, "outputs/img2img/"),
+    'def_type': "f16",
+    'def_sampling': "euler_a",
+    'def_steps': 20,
+    'def_scheduler': "discrete",
+    'def_width': 512,
+    'def_height': 512,
+    'def_predict': "Default"
+}
+
+
 def set_defaults(in_ckpt, in_ckpt_vae, in_unet, in_unet_vae, in_clip_g,
                  in_clip_l, in_t5xxl, in_type, in_sampling, in_steps, in_schedule,
                  in_width, in_height, in_predict, in_ckpt_dir_txt,
@@ -33,10 +56,10 @@ def set_defaults(in_ckpt, in_ckpt_vae, in_unet, in_unet_vae, in_clip_g,
         'txt2img_dir': in_txt2img_dir_txt,
         'img2img_dir': in_img2img_dir_txt,
     }
-    data.update(dir_defaults)
+    config_data.update(dir_defaults)
 
     # Other defaults
-    data.update({
+    config_data.update({
         'def_type': in_type,
         'def_sampling': in_sampling,
         'def_steps': in_steps,
@@ -47,59 +70,39 @@ def set_defaults(in_ckpt, in_ckpt_vae, in_unet, in_unet_vae, in_clip_g,
     })
 
     if in_ckpt:
-        data['def_ckpt'] = in_ckpt
+        config_data['def_ckpt'] = in_ckpt
     if in_ckpt_vae:
-        data['def_ckpt_vae'] = in_ckpt_vae
+        config_data['def_ckpt_vae'] = in_ckpt_vae
     if in_unet:
-        data['def_unet'] = in_unet
+        config_data['def_unet'] = in_unet
     if in_unet_vae:
-        data['def_unet_vae'] = in_unet_vae
+        config_data['def_unet_vae'] = in_unet_vae
     if in_clip_g:
-        data['def_clip_g'] = in_clip_g
+        config_data['def_clip_g'] = in_clip_g
     if in_clip_l:
-        data['def_clip_l'] = in_clip_l
+        config_data['def_clip_l'] = in_clip_l
     if in_t5xxl:
-        data['def_t5xxl'] = in_t5xxl
+        config_data['def_t5xxl'] = in_t5xxl
 
     with open(CONFIG_PATH, 'w', encoding='utf-8') as json_file_w:
-        json.dump(data, json_file_w, indent=4)
+        json.dump(config_data, json_file_w, indent=4)
 
     print("Set new defaults completed.")
 
 
 def rst_def():
     """Restores factory defaults"""
-    data.update({
-        'ckpt_dir': os.path.join(CURRENT_DIR, "models/checkpoints/"),
-        'unet_dir': os.path.join(CURRENT_DIR, "models/unet/"),
-        'vae_dir': os.path.join(CURRENT_DIR, "models/vae/"),
-        'clip_dir': os.path.join(CURRENT_DIR, "models/clip/"),
-        'emb_dir': os.path.join(CURRENT_DIR, "models/embeddings/"),
-        'lora_dir': os.path.join(CURRENT_DIR, "models/lora/"),
-        'taesd_dir': os.path.join(CURRENT_DIR, "models/taesd/"),
-        'phtmkr_dir': os.path.join(CURRENT_DIR, "models/photomaker/"),
-        'upscl_dir': os.path.join(CURRENT_DIR, "models/upscale_models/"),
-        'cnnet_dir': os.path.join(CURRENT_DIR, "models/controlnet/"),
-        'txt2img_dir': os.path.join(CURRENT_DIR, "outputs/txt2img/"),
-        'img2img_dir': os.path.join(CURRENT_DIR, "outputs/img2img/"),
-        'def_type': "f16",
-        'def_sampling': "euler_a",
-        'def_steps': 20,
-        'def_scheduler': "discrete",
-        'def_width': 512,
-        'def_height': 512,
-        'def_predict': "Default"
-    })
+    config_data.update(default_settings)
 
-    data.pop('def_ckpt', None)
-    data.pop('def_unet', None)
-    data.pop('def_ckpt_vae', None)
-    data.pop('def_unet_vae', None)
-    data.pop('def_clip_l', None)
-    data.pop('def_t5xxl', None)
+    config_data.pop('def_ckpt', None)
+    config_data.pop('def_unet', None)
+    config_data.pop('def_ckpt_vae', None)
+    config_data.pop('def_unet_vae', None)
+    config_data.pop('def_clip_l', None)
+    config_data.pop('def_t5xxl', None)
 
     with open(CONFIG_PATH, 'w', encoding='utf-8') as json_file_w:
-        json.dump(data, json_file_w, indent=4)
+        json.dump(config_data, json_file_w, indent=4)
 
     print("Reset defaults completed.")
 
@@ -160,74 +163,81 @@ def load_prompts(prompt):
     return pprompt_load, nprompt_load
 
 
-if not os.path.isfile(CONFIG_PATH):
-    # Create an empty JSON file
-    with open(CONFIG_PATH, 'w', encoding="utf-8") as config_file:
-        # Write an empty JSON object
-        json.dump({}, config_file, indent=4)
+# Load existing configuration or create an empty one
+if os.path.isfile(CONFIG_PATH):
     with open(CONFIG_PATH, 'r', encoding='utf-8') as config_file:
-        data = json.load(config_file)
-    rst_def()
-    print("File 'config.json' created.")
+        config_data = json.load(config_file)
+else:
+    config_data = {}
 
-with open(CONFIG_PATH, 'r', encoding='utf-8') as config_file:
-    data = json.load(config_file)
+# Update missing settings with defaults
+updated = False
+for key, value in default_settings.items():
+    if key not in config_data:
+        config_data[key] = value
+        updated = True
 
-
-ckpt_dir = data['ckpt_dir']
-unet_dir = data['unet_dir']
-vae_dir = data['vae_dir']
-clip_dir = data['clip_dir']
-emb_dir = data['emb_dir']
-lora_dir = data['lora_dir']
-taesd_dir = data['taesd_dir']
-phtmkr_dir = data['phtmkr_dir']
-upscl_dir = data['upscl_dir']
-cnnet_dir = data['cnnet_dir']
-txt2img_dir = data['txt2img_dir']
-img2img_dir = data['img2img_dir']
+# Save the updated configuration if changes were made
+if updated:
+    with open(CONFIG_PATH, 'w', encoding='utf-8') as config_file:
+        json.dump(config_data, config_file, indent=4)
+    print("Missing settings added to 'config.json'.")
 
 
-if 'def_ckpt' in data:
-    def_ckpt = data['def_ckpt']
+ckpt_dir = config_data['ckpt_dir']
+unet_dir = config_data['unet_dir']
+vae_dir = config_data['vae_dir']
+clip_dir = config_data['clip_dir']
+emb_dir = config_data['emb_dir']
+lora_dir = config_data['lora_dir']
+taesd_dir = config_data['taesd_dir']
+phtmkr_dir = config_data['phtmkr_dir']
+upscl_dir = config_data['upscl_dir']
+cnnet_dir = config_data['cnnet_dir']
+txt2img_dir = config_data['txt2img_dir']
+img2img_dir = config_data['img2img_dir']
+
+
+if 'def_ckpt' in config_data:
+    def_ckpt = config_data['def_ckpt']
 else:
     def_ckpt = None
-if 'def_ckpt_vae' in data:
-    def_ckpt_vae = data['def_ckpt_vae']
+if 'def_ckpt_vae' in config_data:
+    def_ckpt_vae = config_data['def_ckpt_vae']
 else:
     def_ckpt_vae = None
-if 'def_unet' in data:
-    def_unet = data['def_unet']
+if 'def_unet' in config_data:
+    def_unet = config_data['def_unet']
 else:
     def_unet = None
-if 'def_unet_vae' in data:
-    def_unet_vae = data['def_unet_vae']
+if 'def_unet_vae' in config_data:
+    def_unet_vae = config_data['def_unet_vae']
 else:
     def_unet_vae = None
-if 'def_clip_g' in data:
-    def_clip_g = data['def_clip_g']
+if 'def_clip_g' in config_data:
+    def_clip_g = config_data['def_clip_g']
 else:
     def_clip_g = None
-if 'def_clip_l' in data:
-    def_clip_l = data['def_clip_l']
+if 'def_clip_l' in config_data:
+    def_clip_l = config_data['def_clip_l']
 else:
     def_clip_l = None
-if 'def_t5xxl' in data:
-    def_t5xxl = data['def_t5xxl']
+if 'def_t5xxl' in config_data:
+    def_t5xxl = config_data['def_t5xxl']
 else:
     def_t5xxl = None
-def_type = data['def_type']
-def_sampling = data['def_sampling']
-def_steps = data['def_steps']
-def_scheduler = data['def_scheduler']
-def_width = data['def_width']
-def_height = data['def_height']
-def_predict = data['def_predict']
+def_type = config_data['def_type']
+def_sampling = config_data['def_sampling']
+def_steps = config_data['def_steps']
+def_scheduler = config_data['def_scheduler']
+def_width = config_data['def_width']
+def_height = config_data['def_height']
+def_predict = config_data['def_predict']
 
 
 if not os.path.isfile(PROMPTS_PATH):
     # Create an empty JSON file
-    with open('prompts.json', 'w', encoding="utf-8") as prompts:
+    with open('prompts.json', 'w', encoding="utf-8") as prompts_file:
         # Write an empty JSON object
-        json.dump({}, prompts, indent=4)
+        json.dump({}, prompts_file, indent=4)
     print("File 'prompts.json' created.")
