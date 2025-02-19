@@ -251,7 +251,7 @@ class GalleryManager:
                         seed_pattern = r'Seed:\s*(\d+)(?!.*Seed:)'
                         seed_match = re.search(seed_pattern, exif, re.DOTALL)
                         if seed_match:
-                            seed = seed_match.group(1)
+                            seed = int(seed_match.group(1))
                         else:
                             seed = ""
 

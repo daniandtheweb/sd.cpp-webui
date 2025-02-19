@@ -125,14 +125,12 @@ with gr.Blocks() as gallery_block:
                 max_lines=1
             )
             # Seed
-            seed_info = gr.Textbox(
+            seed_info = gr.Number(
                 label="Seed",
                 value="",
                 interactive=False,
                 scale=1,
-                min_width=150,
-                show_copy_button=True,
-                max_lines=1
+                min_width=150
             )
             # Image Information Display
             img_info_txt = gr.Textbox(
