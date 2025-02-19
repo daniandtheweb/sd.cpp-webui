@@ -170,8 +170,10 @@ class GalleryManager:
                     w, h = im.size
                     width = w
                     height = h
+                    steps = ""
+                    sampler = ""
                     exif = ""
-                    return pprompt, nprompt, width, height, exif
+                    return pprompt, nprompt, width, height, steps, sampler, exif
                 while True:
                     length_chunk = file.read(4)
                     if not length_chunk:
@@ -181,8 +183,10 @@ class GalleryManager:
                         w, h = im.size
                         width = w
                         height = h
+                        steps = ""
+                        sampler = ""
                         exif = ""
-                        return pprompt, nprompt, width, height, exif
+                        return pprompt, nprompt, width, height, steps, sampler, exif
                     length = int.from_bytes(length_chunk, byteorder='big')
                     chunk_type = file.read(4).decode('utf-8')
                     png_block = file.read(length)
@@ -217,9 +221,9 @@ class GalleryManager:
                         else:
                             nprompt = ""
 
-                        size_pattern = r'Size:\s*(\d+)\s*[xX]\s*(\d+)'
+                        size_pattern = r'Size:\s*(\d+)\s*[xX]\s*(\d+)(?!.*Size:)'
                         size_match = re.search(size_pattern, exif)
-                        if size_match and size_match.lastindex is not None:
+                        if size_match:
                             width = size_match.group(2)
                             height = size_match.group(1)
                         else:
@@ -228,7 +232,19 @@ class GalleryManager:
                             width = w
                             height = h
 
-                        return pprompt, nprompt, width, height, exif
+                        steps_pattern = r'Steps:\s*(\d+)(?!.*Steps:)'
+                        steps_match = re.search(steps_pattern, exif, re.DOTALL)
+                        if steps_match:
+                            steps = steps_match.group(1)
+
+                        sampler_pattern = r'Sampler:\s*([^\s,]+)(?!.*Sampler:)'
+                        sampler_match = re.search(sampler_pattern, exif, re.DOTALL)
+                        if sampler_match:
+                            sampler = sampler_match.group(1)
+                        else:
+                            sampler = ""
+
+                        return pprompt, nprompt, width, height, steps, sampler, exif
         return None
 
     def delete_img(self):
