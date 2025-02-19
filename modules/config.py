@@ -11,7 +11,7 @@ PROMPTS_PATH = 'prompts.json'
 
 
 def set_defaults(in_ckpt, in_ckpt_vae, in_unet, in_unet_vae, in_clip_g,
-                 in_clip_l, in_t5xxl, in_sampling, in_steps, in_schedule,
+                 in_clip_l, in_t5xxl, in_type, in_sampling, in_steps, in_schedule,
                  in_width, in_height, in_predict, in_ckpt_dir_txt,
                  in_unet_dir_txt, in_vae_dir_txt, in_clip_dir_txt,
                  in_emb_dir_txt, in_lora_dir_txt, in_taesd_dir_txt,
@@ -37,6 +37,7 @@ def set_defaults(in_ckpt, in_ckpt_vae, in_unet, in_unet_vae, in_clip_g,
 
     # Other defaults
     data.update({
+        'def_type': in_type,
         'def_sampling': in_sampling,
         'def_steps': in_steps,
         'def_scheduler': in_schedule,
@@ -81,6 +82,7 @@ def rst_def():
         'cnnet_dir': os.path.join(CURRENT_DIR, "models/controlnet/"),
         'txt2img_dir': os.path.join(CURRENT_DIR, "outputs/txt2img/"),
         'img2img_dir': os.path.join(CURRENT_DIR, "outputs/img2img/"),
+        'def_type': "f16",
         'def_sampling': "euler_a",
         'def_steps': 20,
         'def_scheduler': "discrete",
@@ -214,6 +216,7 @@ if 'def_t5xxl' in data:
     def_t5xxl = data['def_t5xxl']
 else:
     def_t5xxl = None
+def_type = data['def_type']
 def_sampling = data['def_sampling']
 def_steps = data['def_steps']
 def_scheduler = data['def_scheduler']

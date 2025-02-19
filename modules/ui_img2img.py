@@ -8,7 +8,8 @@ from modules.utility import (
 )
 from modules.config import (
     reload_prompts, save_prompts, delete_prompts, load_prompts,
-    emb_dir, lora_dir, taesd_dir, phtmkr_dir, upscl_dir, cnnet_dir
+    emb_dir, lora_dir, taesd_dir, phtmkr_dir, upscl_dir, cnnet_dir,
+    def_type
 )
 from modules.loader import (
     get_models, reload_models
@@ -18,7 +19,7 @@ from modules.ui import (
     create_cnnet_ui, create_extras_ui, create_settings_ui
 )
 
-QUANTS = ["Default", "f32", "f16", "q8_0", "q4_K", "q3_K", "q2_K", "q5_1",
+QUANTS = ["f32", "f16", "q8_0", "q4_K", "q3_K", "q2_K", "q5_1",
           "q5_0", "q4_1", "q4_0"]
 RELOAD_SYMBOL = '\U0001f504'
 RANDOM_SYMBOL = '\U0001F3B2'
@@ -71,7 +72,7 @@ with gr.Blocks()as img2img_block:
         model_type = gr.Dropdown(
             label="Quantization",
             choices=QUANTS,
-            value="Default",
+            value=def_type,
             interactive=True
         )
 
