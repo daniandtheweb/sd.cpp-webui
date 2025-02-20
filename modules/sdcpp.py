@@ -141,7 +141,12 @@ def txt2img(
     print(f"\n\n{fcommand}\n\n")
     subprocess_manager.run_subprocess(command)
 
-    return [foutput]
+    if in_batch_count == 1:
+        return foutput
+    else:
+        base = foutput[:-4]
+        outputs = [foutput] + [f"{base}_{i}.png" for i in range(2, in_batch_count + 1)]
+        return outputs
 
 
 def img2img(
@@ -274,7 +279,12 @@ def img2img(
     print(f"\n\n{fcommand}\n\n")
     subprocess_manager.run_subprocess(command)
 
-    return [foutput]
+    if in_batch_count == 1:
+        return foutput
+    else:
+        base = foutput[:-4]
+        outputs = [foutput] + [f"{base}_{i}.png" for i in range(2, in_batch_count + 1)]
+        return outputs
 
 
 def convert(
