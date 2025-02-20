@@ -13,6 +13,62 @@ from modules.config import (
 SD = exe_name()
 
 
+def command_generator(
+    mode: str,
+    prompt: str,
+    nprompt: str,
+    additional_args: list,
+    options: dict,
+    flags: dict,
+    output_path: str,
+    batch_count: int
+) -> tuple:
+    """
+    Args:
+        mode: e.g. 'txt2img' or 'img2img'
+        prompt: positive prompt
+        nprompt: negative prompt
+        additional_args: list of fixed arguments (e.g. sampling method, steps, width/height, etc.)
+        options: dict of key-value pairs (only added if value is not None)
+        flags: dict of boolean flags (only added if True)
+        output_path: primary output file (including .png)
+        batch_count: number of images
+        
+    Returns:
+        (command_list, formatted_command_str, outputs_list)
+    """
+    # Start building the command list
+    command = [SD, '-M', mode, '-p', prompt] + additional_args
+
+    # Add options with associated values
+    for opt, val in options.items():
+        if val is not None:
+            command.extend([opt, val])
+    # Add boolean flags
+    for flag, condition in flags.items():
+        if condition:
+            command.append(flag)
+    
+    # Prepare a copy for printing: replace prompts with quoted versions
+    command_for_print = command.copy()
+    if '-p' in command_for_print:
+        p_index = command_for_print.index('-p') + 1
+        command_for_print[p_index] = f'"{prompt}"'
+    if '-n' in command_for_print:
+        n_index = command_for_print.index('-n') + 1
+        command_for_print[n_index] = f'"{nprompt}"' if nprompt else ""
+    fcommand = ' '.join(map(str, command_for_print))
+    
+    # Compute output filenames
+    if batch_count == 1:
+        outputs = [output_path]
+    else:
+        base = output_path[:-4]  # remove the ".png"
+        outputs = [output_path] + [f"{base}_{i}.png" for i in range(2, batch_count + 1)]
+        
+    return command, fcommand, outputs
+
+
 def txt2img(
     in_ckpt_model=None, in_ckpt_vae=None, in_unet_model=None,
     in_unet_vae=None, in_clip_g=None, in_clip_l=None, in_t5xxl=None,
@@ -53,7 +109,7 @@ def txt2img(
         command.extend(['-n', f'{in_nprompt}'])
 
     # Add image generation options
-    command.extend([
+    additional_args = [
         '--sampling-method', str(in_sampling),
         '--steps', str(in_steps),
         '--schedule', str(in_schedule),
@@ -68,17 +124,14 @@ def txt2img(
         '-t', str(in_threads),
         '--rng', str(in_rng),
         '-o', foutput
-    ])
-
-    # Handle VAE options
-    vae_option = fckpt_vae if fckpt_vae else funet_vae
+    ]
 
     # Optional parameters in dictionaries
     options = {
         # Model-related options
         '-m': fckpt_model,
         '--diffusion-model': funet_model,
-        '--vae': vae_option,
+        '--vae': fckpt_vae if fckpt_vae else funet_vae,
         '--clip_g': fclip_g,
         '--clip_l': fclip_l,
         '--t5xxl': ft5xxl,
@@ -108,46 +161,23 @@ def txt2img(
         '-v': in_verbose
     }
 
-    # Extend the command with options and their values
-    for opt, value in options.items():
-        if value is not None:
-            command.extend([opt, value])
-
-    # Add boolean flags
-    for flag, condition in flags.items():
-        if condition:
-            command.append(flag)
-
-    # Format prompts with brackets only for printing
-    fppromt = f'"{in_ppromt}"'
-    fnprompt = f'"{in_nprompt}"' if in_nprompt else ""
-
-    # Replace prompts in the command for printing
-    command_for_print = command.copy()
-
-    # Find and replace the positive prompt in the command
-    if '-p' in command_for_print:
-        p_index = command_for_print.index('-p') + 1
-        command_for_print[p_index] = fppromt
-
-    # Find and replace the negative prompt in the command, if it exists
-    if '-n' in command_for_print:
-        n_index = command_for_print.index('-n') + 1
-        command_for_print[n_index] = fnprompt
-
-    # Construct the final command for printing
-    fcommand = ' '.join(map(str, command_for_print))
+    command, fcommand, outputs = command_generator(
+        mode="txt2img",
+        prompt=in_ppromt,
+        nprompt=in_nprompt,
+        additional_args=additional_args,
+        options=options,
+        flags=flags,
+        output_path=foutput,
+        batch_count=in_batch_count
+    )
 
     print(f"\n\n{fcommand}\n\n")
     yield fcommand, None
+
     subprocess_manager.run_subprocess(command)
 
-    if in_batch_count == 1:
-        yield fcommand, [foutput]
-    else:
-        base = foutput[:-4]
-        outputs = [foutput] + [f"{base}_{i}.png" for i in range(2, in_batch_count + 1)]
-        yield fcommand, outputs
+    yield fcommand, outputs
 
 
 def img2img(
@@ -192,7 +222,7 @@ def img2img(
         command.extend(['-n', f'{in_nprompt}'])
 
     # Add image generation options
-    command.extend([
+    additional_args = [
         '-i', str(in_img_inp),
         '--sampling-method', str(in_sampling),
         '--steps', str(in_steps),
@@ -209,16 +239,13 @@ def img2img(
         '-t', str(in_threads),
         '--rng', str(in_rng),
         '-o', foutput
-    ])
-
-    # Handle VAE options
-    vae_option = fckpt_vae if fckpt_vae else funet_vae
+    ]
 
     # Optional parameters in dictionaries
     options = {
         '-m': fckpt_model,
         '--diffusion-model': funet_model,
-        '--vae': vae_option,
+        '--vae': fckpt_vae if fckpt_vae else funet_vae,
         '--clip_g': fclip_g,
         '--clip_l': fclip_l,
         '--t5xxl': ft5xxl,
@@ -247,46 +274,23 @@ def img2img(
         '-v': in_verbose
     }
 
-    # Extend the command with options and their values
-    for opt, value in options.items():
-        if value is not None:
-            command.extend([opt, value])
-
-    # Add boolean flags
-    for flag, condition in flags.items():
-        if condition:
-            command.append(flag)
-
-    # Format prompts with brackets only for printing
-    fppromt = f'"{in_ppromt}"'
-    fnprompt = f'"{in_nprompt}"' if in_nprompt else ""
-
-    # Replace prompts in the command for printing
-    command_for_print = command.copy()
-
-    # Find and replace the positive prompt in the command
-    if '-p' in command_for_print:
-        p_index = command_for_print.index('-p') + 1
-        command_for_print[p_index] = fppromt
-
-    # Find and replace the negative prompt in the command, if it exists
-    if '-n' in command_for_print:
-        n_index = command_for_print.index('-n') + 1
-        command_for_print[n_index] = fnprompt
-
-    # Construct the final command for printing
-    fcommand = ' '.join(map(str, command_for_print))
+    command, fcommand, outputs = command_generator(
+        mode="img2img",
+        prompt=in_ppromt,
+        nprompt=in_nprompt,
+        additional_args=additional_args,
+        options=options,
+        flags=flags,
+        output_path=foutput,
+        batch_count=in_batch_count
+    )
 
     print(f"\n\n{fcommand}\n\n")
     yield fcommand, None
+    
     subprocess_manager.run_subprocess(command)
 
-    if in_batch_count == 1:
-        yield fcommand, [foutput]
-    else:
-        base = foutput[:-4]
-        outputs = [foutput] + [f"{base}_{i}.png" for i in range(2, in_batch_count + 1)]
-        yield fcommand, outputs
+    yield fcommand, outputs
 
 
 def convert(
