@@ -147,50 +147,41 @@ class GalleryManager:
         # Sort files only when necessary and only the files we need
         file_paths = sorted(image_file_gen(img_dir), key=os.path.getctime)
 
+        # Initialize parameters
+        pprompt = ""
+        nprompt = ""
+        steps = ""
+        sampler = ""
+        seed = ""
+        exif = ""
+
         # Handle index out of range errors
         try:
             self.img_path = file_paths[self.img_index]
         except IndexError:
             return "Image index is out of range."
         if self.img_path.endswith(('.jpg', '.jpeg')):
-            pprompt = ""
-            nprompt = ""
             im = Image.open(self.img_path)
             w, h = im.size
             width = w
             height = h
-            steps = ""
-            sampler = ""
-            seed = ""
             exif = self.extract_exif_from_jpg(self.img_path)
             return pprompt, nprompt, width, height, steps, sampler, seed, exif, self.img_path
         if self.img_path.endswith('.png'):
             with open(self.img_path, 'rb') as file:
                 if file.read(8) != b'\x89PNG\r\n\x1a\n':
-                    pprompt = ""
-                    nprompt = ""
                     im = Image.open(self.img_path)
                     w, h = im.size
                     width = w
                     height = h
-                    steps = ""
-                    sampler = ""
-                    seed = ""
-                    exif = ""
                     return pprompt, nprompt, width, height, steps, sampler, seed, self.img_path, exif
                 while True:
                     length_chunk = file.read(4)
                     if not length_chunk:
-                        pprompt = ""
-                        nprompt = ""
                         im = Image.open(self.img_path)
                         w, h = im.size
                         width = w
                         height = h
-                        steps = ""
-                        sampler = ""
-                        seed = ""
-                        exif = ""
                         return pprompt, nprompt, width, height, steps, sampler, seed, self.img_path, exif
                     length = int.from_bytes(length_chunk, byteorder='big')
                     chunk_type = file.read(4).decode('utf-8')
@@ -219,12 +210,9 @@ class GalleryManager:
 
                         if pmatch and pmatch.lastindex is not None:
                             pprompt = pmatch.group("quoted_pprompt") if pmatch.group("quoted_pprompt") is not None else pmatch.group("unquoted_pprompt")
-                        else:
-                            pprompt = ""
+
                         if nmatch and nmatch.lastindex is not None:
                             nprompt = nmatch.group("quoted_nprompt") if nmatch.group("quoted_nprompt") is not None else nmatch.group("unquoted_nprompt")
-                        else:
-                            nprompt = ""
 
                         size_pattern = r'Size:\s*(\d+)\s*[xX]\s*(\d+)(?!.*Size:)'
                         size_match = re.search(size_pattern, exif)
@@ -241,22 +229,16 @@ class GalleryManager:
                         steps_match = re.search(steps_pattern, exif, re.DOTALL)
                         if steps_match:
                             steps = steps_match.group(1)
-                        else:
-                            steps = ""
 
                         sampler_pattern = r'Sampler:\s*([^\s,]+)(?!.*Sampler:)'
                         sampler_match = re.search(sampler_pattern, exif, re.DOTALL)
                         if sampler_match:
                             sampler = sampler_match.group(1)
-                        else:
-                            sampler = ""
 
                         seed_pattern = r'Seed:\s*(\d+)(?!.*Seed:)'
                         seed_match = re.search(seed_pattern, exif, re.DOTALL)
                         if seed_match:
                             seed = int(seed_match.group(1))
-                        else:
-                            seed = ""
 
                         return pprompt, nprompt, width, height, steps, sampler, seed, self.img_path, exif
         return None
