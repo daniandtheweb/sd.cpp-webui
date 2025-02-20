@@ -139,14 +139,15 @@ def txt2img(
     fcommand = ' '.join(map(str, command_for_print))
 
     print(f"\n\n{fcommand}\n\n")
+    yield fcommand, None
     subprocess_manager.run_subprocess(command)
 
     if in_batch_count == 1:
-        return foutput
+        yield fcommand, [foutput]
     else:
         base = foutput[:-4]
         outputs = [foutput] + [f"{base}_{i}.png" for i in range(2, in_batch_count + 1)]
-        return outputs
+        yield fcommand, outputs
 
 
 def img2img(
@@ -277,14 +278,15 @@ def img2img(
     fcommand = ' '.join(map(str, command_for_print))
 
     print(f"\n\n{fcommand}\n\n")
+    yield fcommand, None
     subprocess_manager.run_subprocess(command)
 
     if in_batch_count == 1:
-        return foutput
+        yield fcommand, [foutput]
     else:
         base = foutput[:-4]
         outputs = [foutput] + [f"{base}_{i}.png" for i in range(2, in_batch_count + 1)]
-        return outputs
+        yield fcommand, outputs
 
 
 def convert(

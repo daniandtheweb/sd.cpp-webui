@@ -223,7 +223,15 @@ with gr.Blocks() as txt2img_block:
                     columns=[3],
                     rows=[1],
                     object_fit="contain",
-                    height="auto")
+                    height="auto"
+                )
+            with gr.Row():
+                command = gr.Textbox(
+                    label="stable-diffusion.cpp command:",
+                    show_label=True,
+                    value="",
+                    interactive=False,
+                )
 
     # Generate
     gen_btn.click(
@@ -237,7 +245,7 @@ with gr.Blocks() as txt2img_block:
                 batch_count, cfg, seed_txt2img, clip_skip, threads,
                 vae_tiling, vae_cpu, cnnet_cpu, canny, rng,
                 predict, output, color, flash_attn, verbose],
-        outputs=[img_final]
+        outputs=[command, img_final]
     )
     kill_btn.click(
         subprocess_manager.kill_subprocess,
