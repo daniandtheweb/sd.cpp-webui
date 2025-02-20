@@ -38,7 +38,7 @@ def command_generator(
         (command_list, formatted_command_str, outputs_list)
     """
     # Start building the command list
-    command = [SD, '-M', mode, '-p', prompt] + additional_args
+    command = [SD, '-M', mode, '-p', prompt, '-n', nprompt] + additional_args
 
     # Add options with associated values
     for opt, val in options.items():
@@ -103,10 +103,6 @@ def txt2img(
 
     # Initialize the command with prompts and critical options
     command = [SD, '-M', 'txt2img', '-p', f'{in_ppromt}']
-
-    # Add prompts at the start
-    if in_nprompt:
-        command.extend(['-n', f'{in_nprompt}'])
 
     # Add image generation options
     additional_args = [
@@ -216,10 +212,6 @@ def img2img(
 
     # Initialize the command with prompts and critical options
     command = [SD, '-M', 'img2img', '-p', f'{in_ppromt}']
-
-    # Add negative prompt if present
-    if in_nprompt:
-        command.extend(['-n', f'{in_nprompt}'])
 
     # Add image generation options
     additional_args = [
