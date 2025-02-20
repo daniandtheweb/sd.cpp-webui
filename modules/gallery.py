@@ -159,8 +159,11 @@ class GalleryManager:
             w, h = im.size
             width = w
             height = h
+            steps = ""
+            sampler = ""
+            seed = ""
             exif = self.extract_exif_from_jpg(self.img_path)
-            return pprompt, nprompt, width, height, exif
+            return pprompt, nprompt, width, height, steps, sampler, seed, exif, self.img_path
         if self.img_path.endswith('.png'):
             with open(self.img_path, 'rb') as file:
                 if file.read(8) != b'\x89PNG\r\n\x1a\n':
@@ -174,7 +177,7 @@ class GalleryManager:
                     sampler = ""
                     seed = ""
                     exif = ""
-                    return pprompt, nprompt, width, height, steps, sampler, seed, exif
+                    return pprompt, nprompt, width, height, steps, sampler, seed, self.img_path, exif
                 while True:
                     length_chunk = file.read(4)
                     if not length_chunk:
@@ -188,7 +191,7 @@ class GalleryManager:
                         sampler = ""
                         seed = ""
                         exif = ""
-                        return pprompt, nprompt, width, height, steps, sampler, seed, exif
+                        return pprompt, nprompt, width, height, steps, sampler, seed, self.img_path, exif
                     length = int.from_bytes(length_chunk, byteorder='big')
                     chunk_type = file.read(4).decode('utf-8')
                     png_block = file.read(length)
@@ -255,7 +258,7 @@ class GalleryManager:
                         else:
                             seed = ""
 
-                        return pprompt, nprompt, width, height, steps, sampler, seed, exif
+                        return pprompt, nprompt, width, height, steps, sampler, seed, self.img_path, exif
         return None
 
     def delete_img(self):

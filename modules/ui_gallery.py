@@ -132,6 +132,14 @@ with gr.Blocks() as gallery_block:
                 scale=1,
                 min_width=150
             )
+            # Path
+            path_info = gr.Textbox(
+                label="Path",
+                value="",
+                interactive=False,
+                scale=1,
+                min_width=150
+            )
             # Image Information Display
             img_info_txt = gr.Textbox(
                 label="Metadata",
@@ -153,7 +161,7 @@ with gr.Blocks() as gallery_block:
     gallery.select(
         gallery_manager.img_info,
         inputs=[],
-        outputs=[pprompt_info, nprompt_info, height_info, width_info, steps_info, sampler_info, seed_info, img_info_txt]
+        outputs=[pprompt_info, nprompt_info, height_info, width_info, steps_info, sampler_info, seed_info, path_info, img_info_txt]
     )
     txt2img_btn.click(
         gallery_manager.reload_gallery,
@@ -194,5 +202,5 @@ with gr.Blocks() as gallery_block:
         gallery_manager.delete_img,
         inputs=[],
         outputs=[gallery, page_num_select, gallery,
-                 pprompt_info, nprompt_info, height_info, width_info, steps_info, sampler_info, seed_info, img_info_txt]
+                 pprompt_info, nprompt_info, height_info, width_info, steps_info, sampler_info, seed_info, path_info, img_info_txt]
     )
