@@ -12,16 +12,9 @@ from modules.loader import (
     get_models
 )
 from modules.ui import (
-    create_folders_opt_ui,
+    create_folders_opt_ui, RELOAD_SYMBOL, QUANTS, SAMPLERS,
+    SCHEDULERS, PREDICTION
 )
-
-QUANTS = ["Default", "f32", "f16", "q8_0", "q4_K", "q3_K", "q2_K", "q5_1",
-          "q5_0", "q4_1", "q4_0"]
-SAMPLERS = ["euler", "euler_a", "heun", "dpm2", "dpm++2s_a", "dpm++2m",
-            "dpm++2mv2", "ipndm", "ipndm_v", "lcm"]
-SCHEDULERS = ["discrete", "karras", "exponential", "ays", "gits"]
-PREDICTION = ["Default", "eps", "v", "flow"]
-RELOAD_SYMBOL = '\U0001f504'
 
 
 with gr.Blocks() as options_block:

@@ -16,13 +16,9 @@ from modules.loader import (
 )
 from modules.ui import (
     create_model_sel_ui, create_prompts_ui,
-    create_cnnet_ui, create_extras_ui, create_settings_ui
+    create_cnnet_ui, create_extras_ui, create_settings_ui,
+    QUANTS, RELOAD_SYMBOL, RANDOM_SYMBOL
 )
-
-QUANTS = ["Default", "f32", "f16", "q8_0", "q4_K", "q3_K", "q2_K", "q5_1",
-          "q5_0", "q4_1", "q4_0"]
-RELOAD_SYMBOL = '\U0001f504'
-RANDOM_SYMBOL = '\U0001F3B2'
 
 
 with gr.Blocks() as txt2img_block:

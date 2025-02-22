@@ -15,11 +15,16 @@ from modules.loader import (
     get_models, reload_models
 )
 
+QUANTS = ["Default", "f32", "f16", "q8_0", "q4_K", "q3_K", "q2_K", "q5_1",
+          "q5_0", "q4_1", "q4_0"]
 SAMPLERS = ["euler", "euler_a", "heun", "dpm2", "dpm++2s_a", "dpm++2m",
             "dpm++2mv2", "ipndm", "ipndm_v", "lcm"]
 SCHEDULERS = ["discrete", "karras", "exponential", "ays", "gits"]
+MODELS = ["Checkpoint", "UNET", "VAE", "clip_g", "clip_l", "t5xxl", "TAESD",
+          "Lora", "Embeddings", "Upscaler", "ControlNet"]
 PREDICTION = ["Default", "eps", "v", "flow"]
 RELOAD_SYMBOL = '\U0001f504'
+RANDOM_SYMBOL = '\U0001F3B2'
 
 
 def create_model_sel_ui():

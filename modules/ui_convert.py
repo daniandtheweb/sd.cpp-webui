@@ -6,17 +6,14 @@ from modules.sdcpp import convert
 from modules.utility import subprocess_manager
 from modules.config import (
     ckpt_dir, vae_dir, unet_dir, clip_dir, emb_dir,
-    lora_dir, taesd_dir, upscl_dir, cnnet_dir
+    lora_dir, taesd_dir, upscl_dir, cnnet_dir 
 )
 from modules.loader import (
     get_models, reload_models, model_choice
 )
-
-QUANTS = ["Default", "f32", "f16", "q8_0", "q4_k", "q3_k", "q2_k", "q5_1",
-          "q5_0", "q4_1", "q4_0"]
-MODELS = ["Checkpoint", "UNET", "VAE", "clip_g", "clip_l", "t5xxl", "TAESD",
-          "Lora", "Embeddings", "Upscaler", "ControlNet"]
-RELOAD_SYMBOL = '\U0001f504'
+from modules.ui import (
+    QUANTS, MODELS, RELOAD_SYMBOL
+)
 
 
 with gr.Blocks() as convert_block:
