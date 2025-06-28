@@ -127,7 +127,7 @@ with gr.Blocks() as gallery_block:
             # Seed
             seed_info = gr.Number(
                 label="Seed",
-                value="",
+                value=0,
                 interactive=False,
                 scale=1,
                 min_width=150
