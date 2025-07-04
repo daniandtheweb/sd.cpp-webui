@@ -152,9 +152,9 @@ with gr.Blocks() as txt2img_block:
                 )
             clip_skip = gr.Slider(
                 label="CLIP skip",
-                minimum=0,
+                minimum=-1,
                 maximum=12,
-                value=0,
+                value=-1,
                 step=1
             )
 

@@ -33,7 +33,7 @@ def command_generator(
         flags: dict of boolean flags (only added if True)
         output_path: primary output file (including .png)
         batch_count: number of images
-        
+
     Returns:
         (command_list, formatted_command_str, outputs_list)
     """
@@ -48,7 +48,7 @@ def command_generator(
     for flag, condition in flags.items():
         if condition:
             command.append(flag)
-    
+
     # Prepare a copy for printing: replace prompts with quoted versions
     command_for_print = command.copy()
     if '-p' in command_for_print:
@@ -58,14 +58,14 @@ def command_generator(
         n_index = command_for_print.index('-n') + 1
         command_for_print[n_index] = f'"{nprompt}"' if nprompt else ""
     fcommand = ' '.join(map(str, command_for_print))
-    
+
     # Compute output filenames
     if batch_count == 1:
         outputs = [output_path]
     else:
         base = output_path[:-4]  # remove the ".png"
         outputs = [output_path] + [f"{base}_{i}.png" for i in range(2, batch_count + 1)]
-        
+
     return command, fcommand, outputs
 
 
@@ -78,7 +78,7 @@ def txt2img(
     in_control_strength=1.0, in_ppromt="", in_nprompt="",
     in_sampling="default", in_steps=50, in_schedule="default",
     in_width=512, in_height=512, in_batch_count=1,
-    in_cfg=7.0, in_seed=42, in_clip_skip=0, in_threads=1,
+    in_cfg=7.0, in_seed=42, in_clip_skip=-1, in_threads=1,
     in_vae_tiling=False, in_vae_cpu=False, in_cnnet_cpu=False,
     in_canny=False, in_rng="default", in_predict="Default",
     in_output=None, in_color=False, in_flash_attn=False,
@@ -114,7 +114,7 @@ def txt2img(
         '-b', str(in_batch_count),
         '--cfg-scale', str(in_cfg),
         '-s', str(in_seed),
-        '--clip-skip', str(in_clip_skip + 1),
+        '--clip-skip', str(in_clip_skip),
         '--embd-dir', emb_dir,
         '--lora-model-dir', lora_dir,
         '-t', str(in_threads),
@@ -186,7 +186,7 @@ def img2img(
     in_nprompt="", in_sampling="default", in_steps=50,
     in_schedule="default", in_width=512, in_height=512,
     in_batch_count=1, in_strenght=0.75, in_style_ratio=1.0,
-    in_style_ratio_btn=False, in_cfg=7.0, in_seed=42, in_clip_skip=0,
+    in_style_ratio_btn=False, in_cfg=7.0, in_seed=42, in_clip_skip=-1,
     in_threads=1, in_vae_tiling=False, in_vae_cpu=False,
     in_cnnet_cpu=False, in_canny=False, in_rng="default",
     in_predict="Default", in_output=None, in_color=False,
@@ -225,7 +225,7 @@ def img2img(
         '--strength', str(in_strenght),
         '--cfg-scale', str(in_cfg),
         '-s', str(in_seed),
-        '--clip-skip', str(in_clip_skip + 1),
+        '--clip-skip', str(in_clip_skip),
         '--embd-dir', emb_dir,
         '--lora-model-dir', lora_dir,
         '-t', str(in_threads),
@@ -279,7 +279,7 @@ def img2img(
 
     print(f"\n\n{fcommand}\n\n")
     yield fcommand, None
-    
+
     subprocess_manager.run_subprocess(command)
 
     yield fcommand, outputs

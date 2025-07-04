@@ -169,10 +169,10 @@ with gr.Blocks()as img2img_block:
                 )
             clip_skip = gr.Slider(
                 label="CLIP skip",
-                minimum=0,
+                minimum=-1,
                 maximum=12,
-                value=0,
-                step=0.1
+                value=-1,
+                step=1
             )
 
             # Upscale
