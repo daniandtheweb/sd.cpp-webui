@@ -125,7 +125,7 @@ def txt2img(
     # Optional parameters in dictionaries
     options = {
         # Model-related options
-        '-m': fckpt_model,
+        '--model': fckpt_model,
         '--diffusion-model': funet_model,
         '--vae': fckpt_vae if fckpt_vae else funet_vae,
         '--clip_g': fclip_g,
@@ -158,7 +158,7 @@ def txt2img(
     }
 
     command, fcommand, outputs = command_generator(
-        mode="txt2img",
+        mode="img_gen",
         prompt=in_ppromt,
         nprompt=in_nprompt,
         additional_args=additional_args,
@@ -215,7 +215,7 @@ def img2img(
 
     # Add image generation options
     additional_args = [
-        '-i', str(in_img_inp),
+        '--init-img', str(in_img_inp),
         '--sampling-method', str(in_sampling),
         '--steps', str(in_steps),
         '--schedule', str(in_schedule),
@@ -235,7 +235,7 @@ def img2img(
 
     # Optional parameters in dictionaries
     options = {
-        '-m': fckpt_model,
+        '--model': fckpt_model,
         '--diffusion-model': funet_model,
         '--vae': fckpt_vae if fckpt_vae else funet_vae,
         '--clip_g': fclip_g,
@@ -267,7 +267,7 @@ def img2img(
     }
 
     command, fcommand, outputs = command_generator(
-        mode="img2img",
+        mode="img_gen",
         prompt=in_ppromt,
         nprompt=in_nprompt,
         additional_args=additional_args,
@@ -303,7 +303,7 @@ def convert(
 
     # Add essential command options
     command.extend([
-        '-m', forig_model,        # Original model path
+        '--model', forig_model,   # Original model path
         '-o', fgguf_name,         # Output name
         '--type', in_quant_type   # Quantization type
     ])
