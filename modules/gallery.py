@@ -246,41 +246,53 @@ class GalleryManager:
     def delete_img(self):
         """Deletes a selected image"""
         try:
+            if not hasattr(self, 'img_path') or not os.path.exists(self.img_path):
+                print("Deletion failed: No valid image selected or file does not exist.")
+                imgs, page_num, gallery_update = self.reload_gallery(self.ctrl, self.page_num, subctrl=0)
+                (pprompt, nprompt, width, height, steps, sampler, seed, img_path, exif) = ("", "", None, None, "", "", "", "", "")
+                return (imgs, page_num, gallery_update, pprompt, nprompt, width, height, steps, sampler, seed, img_path, exif)
+
+            index_of_deleted_img = self.img_index
+
             os.remove(self.img_path)
             print(f"Deleted {self.img_path}")
-            self.img_index -= 1
             img_dir = self._get_img_dir()
-            files = os.listdir(img_dir)
-            total_imgs = len([file for file in files
-                             if file.endswith(('.png', '.jpg'))])
-            file_paths = [os.path.join(img_dir, file)
-                          for file in files
-                          if os.path.isfile(os.path.join(img_dir, file)) and
-                          file.lower().endswith(('.png', '.jpg'))]
-            file_paths.sort(key=os.path.getctime)
+            file_paths = sorted(
+                [os.path.join(img_dir, f) for f in os.listdir(img_dir) if f.lower().endswith(('.png', '.jpg'))],
+                key=os.path.getctime
+            )
+            total_imgs = len(file_paths)
+
             if total_imgs == 0:
-                self.sel_img = None
-            if self.img_index == total_imgs:
-                if self.sel_img == 0 or self.sel_img % 16 == 0:
-                    self.sel_img = 16
-                    self.page_num -= 1
+                self.page_num, self.sel_img, self.img_index, self.img_path = 1, None, 0, ""
+                return ([], 1, gr.Gallery(value=None, selected_index=None),
+                        "", "", None, None, "", "", "", "", "")
 
-                else:
-                    self.sel_img -= 1
+            new_selected_index = index_of_deleted_img
+            if new_selected_index >= total_imgs:
+                new_selected_index = total_imgs - 1
+            new_selected_index = max(0, new_selected_index)
 
-            try:
-                self.img_path = file_paths[self.img_index]
-            except IndexError:
-                return "Image index is out of range."
+            self.page_num = (new_selected_index // 16) + 1
+            self.sel_img = new_selected_index % 16
 
-            imgs, _, _ = self.reload_gallery(None, self.page_num)
-            img_info = self.img_info(self.sel_img)
-            pprompt_out, nprompt_out, exif = img_info[:3]
-            return [imgs, self.page_num, gr.update(self.sel_img),
-                    pprompt_out, nprompt_out, exif]
-        except FileNotFoundError as e:
-            print(f"Error deleting image: {e}")
-            return "An error occurred while deleting."
+            imgs, _, _ = self.reload_gallery(self.ctrl, self.page_num, subctrl=0)
+
+            img_info_tuple = self.img_info(self.sel_img)
+            if img_info_tuple is None:
+                raise ValueError("Failed to retrieve information for the new image.")
+            
+            pprompt, nprompt, width, height, steps, sampler, seed, img_path, exif = img_info_tuple
+            gallery_update = gr.Gallery(selected_index=self.sel_img)
+            
+            return (
+                imgs, self.page_num, gallery_update,
+                pprompt, nprompt, width, height, steps, sampler, seed, img_path, exif
+            )
+
+        except Exception as e:
+            print(f"An error occurred in delete_img: {e}")
+            return ([], 1, gr.Gallery(value=None), "", "", None, None, "", "", "", "", "")
 
 
 def get_next_img(subctrl):
