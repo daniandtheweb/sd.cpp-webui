@@ -154,6 +154,8 @@ class GalleryManager:
         sampler = ""
         seed = ""
         exif = ""
+        width = None
+        height = None
 
         # Handle index out of range errors
         try:
@@ -191,28 +193,41 @@ class GalleryManager:
                         _, value = png_block.split(b'\x00', 1)
                         png_exif = f"{value.decode('utf-8')}"
 
-                        if '{"text":' in png_exif:
-                            # JSON-like metadata branch.
-                            exif = png_exif
-                            ppattern = r'.*?{"text":\s*"([^"]*)",\s*"clip".*'
-                            npattern = r'(?=.*{"text":\s*"([^"]*)",\s*"clip".*)(.*{"text":\s*"([^"]*)",\s*"clip".*)'
-                        else:
-                            # Already formatted metadata branch. Since "Positive prompt:" is added later,
-                            # we prepend it here.
-                            exif = f"PNG: tEXt\nPositive prompt: {png_exif}"
-                            # This regex captures the positive prompt whether or not it is enclosed in quotes.
-                            ppattern = r'Positive prompt:\s*(?:"(?P<quoted_pprompt>(?:\\.|[^"\\])*)"|(?P<unquoted_pprompt>.*?))\s*(?=\s*(?:Steps:|Negative prompt:))'
-                            npattern = r'Negative prompt:\s*(?:"(?P<quoted_nprompt>(?:\\.|[^"\\])*)"|(?P<unquoted_nprompt>.*?))\s*(?=\s*Steps:)'
-
-
+                        # Main parsing method
+                        exif = f"PNG: tEXt\nPositive prompt: {png_exif}"
+                        ppattern = r'Positive prompt:\s*(?:"(?P<quoted_pprompt>(?:\\.|[^"\\])*)"|(?P<unquoted_pprompt>.*?))\s*(?=\s*(?:Steps:|Negative prompt:))'
+                        npattern = r'Negative prompt:\s*(?:"(?P<quoted_nprompt>(?:\\.|[^"\\])*)"|(?P<unquoted_nprompt>.*?))\s*(?=\s*Steps:)'
+                        
                         pmatch = re.search(ppattern, exif)
                         nmatch = re.search(npattern, exif)
 
-                        if pmatch and pmatch.lastindex is not None:
-                            pprompt = pmatch.group("quoted_pprompt") if pmatch.group("quoted_pprompt") is not None else pmatch.group("unquoted_pprompt")
+                        if pmatch:
+                            pprompt = pmatch.group("quoted_pprompt") or pmatch.group("unquoted_pprompt") or ""
+                        if nmatch:
+                            nprompt = nmatch.group("quoted_nprompt") or nmatch.group("unquoted_nprompt") or ""
 
-                        if nmatch and nmatch.lastindex is not None:
-                            nprompt = nmatch.group("quoted_nprompt") if nmatch.group("quoted_nprompt") is not None else nmatch.group("unquoted_nprompt")
+                        # Fallback parsing method (ComfyUI format)
+                        if not pprompt and '{"text":' in png_exif:
+                            exif = png_exif
+                            pattern = r'"text":\s*"((?:[^"\\]|\\.)*)"'
+                            matches = re.findall(pattern, exif)
+                            
+                            if len(matches) > 0:
+                                pprompt = matches[0]
+                            if len(matches) > 1:
+                                nprompt = matches[1]
+                            
+                            steps_match_json = re.search(r'"steps":\s*(\d+)', exif)
+                            if steps_match_json:
+                                steps = steps_match_json.group(1)
+
+                            sampler_match_json = re.search(r'"sampler_name":\s*"([^"]+)"', exif)
+                            if sampler_match_json:
+                                sampler = sampler_match_json.group(1)
+
+                            seed_match_json = re.search(r'"seed":\s*(\d+)', exif)
+                            if seed_match_json:
+                                seed = int(seed_match_json.group(1))
 
                         size_pattern = r'Size:\s*(\d+)\s*[xX]\s*(\d+)(?!.*Size:)'
                         size_match = re.search(size_pattern, exif)
@@ -225,20 +240,28 @@ class GalleryManager:
                             width = w
                             height = h
 
-                        steps_pattern = r'Steps:\s*(\d+)(?!.*Steps:)'
-                        steps_match = re.search(steps_pattern, exif, re.DOTALL)
-                        if steps_match:
-                            steps = steps_match.group(1)
+                        if not steps:
+                            steps_pattern = r'Steps:\s*(\d+)(?!.*Steps:)'
+                            steps_match = re.search(steps_pattern, exif, re.DOTALL)
+                            if steps_match:
+                                steps = steps_match.group(1)
+                            else:
+                                steps = ""
 
-                        sampler_pattern = r'Sampler:\s*([^\s,]+)(?!.*Sampler:)'
-                        sampler_match = re.search(sampler_pattern, exif, re.DOTALL)
-                        if sampler_match:
-                            sampler = sampler_match.group(1)
+                        if not sampler:
+                            sampler_pattern = r'Sampler:\s*([^\s,]+)(?!.*Sampler:)'
+                            sampler_match = re.search(sampler_pattern, exif, re.DOTALL)
+                            if sampler_match:
+                                sampler = sampler_match.group(1)
+                            else: sampler = ""
 
-                        seed_pattern = r'Seed:\s*(\d+)(?!.*Seed:)'
-                        seed_match = re.search(seed_pattern, exif, re.DOTALL)
-                        if seed_match:
-                            seed = int(seed_match.group(1))
+                        if not seed:
+                            seed_pattern = r'Seed:\s*(\d+)(?!.*Seed:)'
+                            seed_match = re.search(seed_pattern, exif, re.DOTALL)
+                            if seed_match:
+                                seed = int(seed_match.group(1))
+                            else:
+                                seed = None
 
                         return pprompt, nprompt, width, height, steps, sampler, seed, self.img_path, exif
         return None
