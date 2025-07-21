@@ -234,9 +234,6 @@ class GalleryManager:
                             if seed_match_json:
                                 seed = int(seed_match_json.group(1))
 
-                        size_pattern = r'Size:\s*(\d+)\s*[xX]\s*(\d+)(?!.*Size:)'
-                        size_match = re.search(size_pattern, exif)
-
                         im = Image.open(self.img_path)
                         w, h = im.size
                         width = w
