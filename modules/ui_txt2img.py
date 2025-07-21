@@ -137,7 +137,7 @@ with gr.Blocks() as txt2img_block:
             width_txt2img = settings_components['width']
             height_txt2img = settings_components['height']
             batch_count = settings_components['batch_count']
-            cfg = settings_components['cfg']
+            cfg_txt2img = settings_components['cfg']
 
             with gr.Row():
                 seed_txt2img = gr.Number(
@@ -238,7 +238,7 @@ with gr.Blocks() as txt2img_block:
                 upscl, upscl_rep, cnnet, control_img,
                 control_strength, pprompt_txt2img, nprompt_txt2img,
                 sampling_txt2img, steps_txt2img, schedule, width_txt2img, height_txt2img,
-                batch_count, cfg, seed_txt2img, clip_skip, threads,
+                batch_count, cfg_txt2img, seed_txt2img, clip_skip, threads,
                 vae_tiling, vae_cpu, cnnet_cpu, canny, rng,
                 predict, output, color, flash_attn, verbose],
         outputs=[command, img_final]

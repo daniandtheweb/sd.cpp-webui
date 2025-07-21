@@ -152,6 +152,7 @@ class GalleryManager:
         nprompt = ""
         steps = ""
         sampler = ""
+        cfg= ""
         seed = ""
         exif = ""
         width = None
@@ -168,7 +169,7 @@ class GalleryManager:
             width = w
             height = h
             exif = self.extract_exif_from_jpg(self.img_path)
-            return pprompt, nprompt, width, height, steps, sampler, seed, exif, self.img_path
+            return pprompt, nprompt, width, height, steps, sampler, cfg, seed, exif, self.img_path
         if self.img_path.endswith('.png'):
             with open(self.img_path, 'rb') as file:
                 if file.read(8) != b'\x89PNG\r\n\x1a\n':
@@ -176,7 +177,7 @@ class GalleryManager:
                     w, h = im.size
                     width = w
                     height = h
-                    return pprompt, nprompt, width, height, steps, sampler, seed, self.img_path, exif
+                    return pprompt, nprompt, width, height, steps, sampler, cfg, seed, self.img_path, exif
                 while True:
                     length_chunk = file.read(4)
                     if not length_chunk:
@@ -184,7 +185,7 @@ class GalleryManager:
                         w, h = im.size
                         width = w
                         height = h
-                        return pprompt, nprompt, width, height, steps, sampler, seed, self.img_path, exif
+                        return pprompt, nprompt, width, height, steps, sampler, cfg, seed, self.img_path, exif
                     length = int.from_bytes(length_chunk, byteorder='big')
                     chunk_type = file.read(4).decode('utf-8')
                     png_block = file.read(length)
@@ -225,20 +226,21 @@ class GalleryManager:
                             if sampler_match_json:
                                 sampler = sampler_match_json.group(1)
 
+                            cfg_match_json = re.search(r'"cfg":\s*(\d+)', exif)
+                            if cfg_match_json:
+                                cfg = int(cfg_match_json.group(1))
+
                             seed_match_json = re.search(r'"seed":\s*(\d+)', exif)
                             if seed_match_json:
                                 seed = int(seed_match_json.group(1))
 
                         size_pattern = r'Size:\s*(\d+)\s*[xX]\s*(\d+)(?!.*Size:)'
                         size_match = re.search(size_pattern, exif)
-                        if size_match:
-                            width = size_match.group(2)
-                            height = size_match.group(1)
-                        else:
-                            im = Image.open(self.img_path)
-                            w, h = im.size
-                            width = w
-                            height = h
+
+                        im = Image.open(self.img_path)
+                        w, h = im.size
+                        width = w
+                        height = h
 
                         if not steps:
                             steps_pattern = r'Steps:\s*(\d+)(?!.*Steps:)'
@@ -255,6 +257,14 @@ class GalleryManager:
                                 sampler = sampler_match.group(1)
                             else: sampler = ""
 
+                        if not cfg:
+                            cfg_pattern = r'CFG scale:\s*(\d+)(?!.*CFG scale:)'
+                            cfg_match = re.search(cfg_pattern, exif, re.DOTALL)
+                            if cfg_match:
+                                cfg = cfg_match.group(1)
+                            else:
+                                cfg = ""
+
                         if not seed:
                             seed_pattern = r'Seed:\s*(\d+)(?!.*Seed:)'
                             seed_match = re.search(seed_pattern, exif, re.DOTALL)
@@ -263,7 +273,7 @@ class GalleryManager:
                             else:
                                 seed = None
 
-                        return pprompt, nprompt, width, height, steps, sampler, seed, self.img_path, exif
+                        return pprompt, nprompt, width, height, steps, sampler, cfg, seed, self.img_path, exif
         return None
 
     def delete_img(self):
@@ -272,8 +282,8 @@ class GalleryManager:
             if not hasattr(self, 'img_path') or not os.path.exists(self.img_path):
                 print("Deletion failed: No valid image selected or file does not exist.")
                 imgs, page_num, gallery_update = self.reload_gallery(self.ctrl, self.page_num, subctrl=0)
-                (pprompt, nprompt, width, height, steps, sampler, seed, img_path, exif) = ("", "", None, None, "", "", "", "", "")
-                return (imgs, page_num, gallery_update, pprompt, nprompt, width, height, steps, sampler, seed, img_path, exif)
+                (pprompt, nprompt, width, height, steps, sampler, cfg, seed, img_path, exif) = ("", "", None, None, "", "", "", "", "", "")
+                return (imgs, page_num, gallery_update, pprompt, nprompt, width, height, steps, sampler, cfg, seed, img_path, exif)
 
             index_of_deleted_img = self.img_index
 
@@ -289,7 +299,7 @@ class GalleryManager:
             if total_imgs == 0:
                 self.page_num, self.sel_img, self.img_index, self.img_path = 1, None, 0, ""
                 return ([], 1, gr.Gallery(value=None, selected_index=None),
-                        "", "", None, None, "", "", "", "", "")
+                        "", "", None, None, "", "", "", "", "", "")
 
             new_selected_index = index_of_deleted_img
             if new_selected_index >= total_imgs:
@@ -305,17 +315,17 @@ class GalleryManager:
             if img_info_tuple is None:
                 raise ValueError("Failed to retrieve information for the new image.")
             
-            pprompt, nprompt, width, height, steps, sampler, seed, img_path, exif = img_info_tuple
+            pprompt, nprompt, width, height, steps, sampler, cfg, seed, img_path, exif = img_info_tuple
             gallery_update = gr.Gallery(selected_index=self.sel_img)
             
             return (
                 imgs, self.page_num, gallery_update,
-                pprompt, nprompt, width, height, steps, sampler, seed, img_path, exif
+                pprompt, nprompt, width, height, steps, sampler, cfg, seed, img_path, exif
             )
 
         except Exception as e:
             print(f"An error occurred in delete_img: {e}")
-            return ([], 1, gr.Gallery(value=None), "", "", None, None, "", "", "", "", "")
+            return ([], 1, gr.Gallery(value=None), "", "", None, None, "", "", "", "", "", "")
 
 
 def get_next_img(subctrl):

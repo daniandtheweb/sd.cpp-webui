@@ -7,9 +7,9 @@ import argparse
 
 import gradio as gr
 
-from modules.ui_txt2img import txt2img_block, pprompt_txt2img, nprompt_txt2img, width_txt2img, height_txt2img, steps_txt2img, sampling_txt2img, seed_txt2img
-from modules.ui_img2img import img2img_block, pprompt_img2img, nprompt_img2img, width_img2img, height_img2img, steps_img2img, sampling_img2img, seed_img2img, img_inp
-from modules.ui_gallery import gallery_block, cpy_2_txt2img_btn, cpy_2_img2img_btn, pprompt_info, nprompt_info, width_info, height_info, steps_info, sampler_info, seed_info, path_info
+from modules.ui_txt2img import txt2img_block, pprompt_txt2img, nprompt_txt2img, width_txt2img, height_txt2img, steps_txt2img, sampling_txt2img, cfg_txt2img, seed_txt2img
+from modules.ui_img2img import img2img_block, pprompt_img2img, nprompt_img2img, width_img2img, height_img2img, steps_img2img, sampling_img2img, cfg_img2img, seed_img2img, img_inp
+from modules.ui_gallery import gallery_block, cpy_2_txt2img_btn, cpy_2_img2img_btn, pprompt_info, nprompt_info, width_info, height_info, steps_info, sampler_info, cfg_info, seed_info, path_info
 from modules.ui_convert import convert_block
 from modules.ui_options import options_block
 
@@ -39,12 +39,12 @@ def main():
     sdcpp_launch(args.listen, args.autostart, args.darkmode)
 
 
-def cpy_2_txt2img(pprompt_info, nprompt_info, width_info, height_info, steps_info, sampler_info, seed_info):
-    return gr.Tabs(selected="txt2img"), pprompt_info, nprompt_info, width_info, height_info, steps_info, sampler_info, seed_info
+def cpy_2_txt2img(pprompt_info, nprompt_info, width_info, height_info, steps_info, sampler_info, cfg_info, seed_info):
+    return gr.Tabs(selected="txt2img"), pprompt_info, nprompt_info, width_info, height_info, steps_info, sampler_info, cfg_info, seed_info
 
 
-def cpy_2_img2img(pprompt_info, nprompt_info, width_info, height_info, steps_info, sampler_info, seed_info, path_info):
-    return gr.Tabs(selected="img2img"), pprompt_info, nprompt_info, width_info, height_info, steps_info, sampler_info, seed_info, path_info
+def cpy_2_img2img(pprompt_info, nprompt_info, width_info, height_info, steps_info, sampler_info, cfg_info, seed_info, path_info):
+    return gr.Tabs(selected="img2img"), pprompt_info, nprompt_info, width_info, height_info, steps_info, sampler_info, cfg_info, seed_info, path_info
 
 
 def sdcpp_launch(
@@ -87,13 +87,13 @@ def sdcpp_launch(
         # Set up the button click event
         cpy_2_txt2img_btn.click(
             cpy_2_txt2img,
-            inputs=[pprompt_info, nprompt_info, width_info, height_info, steps_info, sampler_info, seed_info],
-            outputs=[tabs, pprompt_txt2img, nprompt_txt2img, width_txt2img, height_txt2img, steps_txt2img, sampling_txt2img, seed_txt2img]
+            inputs=[pprompt_info, nprompt_info, width_info, height_info, steps_info, sampler_info, cfg_info, seed_info],
+            outputs=[tabs, pprompt_txt2img, nprompt_txt2img, width_txt2img, height_txt2img, steps_txt2img, sampling_txt2img, cfg_txt2img, seed_txt2img]
         )
         cpy_2_img2img_btn.click(
             cpy_2_img2img,
-            inputs=[pprompt_info, nprompt_info, width_info, height_info, steps_info, sampler_info, seed_info, path_info],
-            outputs=[tabs, pprompt_img2img, nprompt_img2img, width_img2img, height_img2img, steps_img2img, sampling_img2img, seed_img2img, img_inp]
+            inputs=[pprompt_info, nprompt_info, width_info, height_info, steps_info, sampler_info, cfg_info, seed_info, path_info],
+            outputs=[tabs, pprompt_img2img, nprompt_img2img, width_img2img, height_img2img, steps_img2img, sampling_img2img, cfg_img2img, seed_img2img, img_inp]
         )
 
     # Pass the arguments to sdcpp.launch with argument unpacking

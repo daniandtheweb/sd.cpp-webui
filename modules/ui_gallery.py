@@ -124,14 +124,23 @@ with gr.Blocks() as gallery_block:
                 show_copy_button=True,
                 max_lines=1
             )
-            # Seed
-            seed_info = gr.Number(
-                label="Seed",
-                value=0,
-                interactive=False,
-                scale=1,
-                min_width=150
-            )
+            with gr.Row():
+                # CFG
+                cfg_info = gr.Number(
+                    label="CFG",
+                    value=None,
+                    interactive=False,
+                    scale=1,
+                    min_width=150
+                )
+                # Seed
+                seed_info = gr.Number(
+                    label="Seed",
+                    value=0,
+                    interactive=False,
+                    scale=1,
+                    min_width=150
+                )
             # Path
             path_info = gr.Textbox(
                 label="Path",
@@ -161,7 +170,7 @@ with gr.Blocks() as gallery_block:
     gallery.select(
         gallery_manager.img_info,
         inputs=[],
-        outputs=[pprompt_info, nprompt_info, height_info, width_info, steps_info, sampler_info, seed_info, path_info, img_info_txt]
+        outputs=[pprompt_info, nprompt_info, height_info, width_info, steps_info, sampler_info, cfg_info, seed_info, path_info, img_info_txt]
     )
     txt2img_btn.click(
         gallery_manager.reload_gallery,
@@ -202,5 +211,5 @@ with gr.Blocks() as gallery_block:
         gallery_manager.delete_img,
         inputs=[],
         outputs=[gallery, page_num_select, gallery,
-                 pprompt_info, nprompt_info, height_info, width_info, steps_info, sampler_info, seed_info, path_info, img_info_txt]
+                 pprompt_info, nprompt_info, height_info, width_info, steps_info, sampler_info, cfg_info, seed_info, path_info, img_info_txt]
     )

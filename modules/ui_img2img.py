@@ -139,7 +139,7 @@ with gr.Blocks()as img2img_block:
             width_img2img = settings_components['width']
             height_img2img = settings_components['height']
             batch_count = settings_components['batch_count']
-            cfg = settings_components['cfg']
+            cfg_img2img = settings_components['cfg']
 
             strenght = gr.Slider(
                 label="Noise strenght",
@@ -256,7 +256,7 @@ with gr.Blocks()as img2img_block:
                 nprompt_img2img, sampling_img2img, steps_img2img, schedule,
                 width_img2img, height_img2img, batch_count,
                 strenght, style_ratio, style_ratio_btn,
-                cfg, seed_img2img, clip_skip, threads, vae_tiling,
+                cfg_img2img, seed_img2img, clip_skip, threads, vae_tiling,
                 vae_cpu, cnnet_cpu, canny, rng, predict,
                 output, color, flash_attn, verbose],
         outputs=[command, img_final]
