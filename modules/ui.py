@@ -22,7 +22,7 @@ SAMPLERS = ["euler", "euler_a", "heun", "dpm2", "dpm++2s_a", "dpm++2m",
 SCHEDULERS = ["discrete", "karras", "exponential", "ays", "gits"]
 MODELS = ["Checkpoint", "UNET", "VAE", "clip_g", "clip_l", "t5xxl", "TAESD",
           "Lora", "Embeddings", "Upscaler", "ControlNet"]
-PREDICTION = ["Default", "eps", "v", "flow"]
+PREDICTION = ["Default", "eps", "v", "edm_v", "sd3_flow", "flux_flow"]
 RELOAD_SYMBOL = '\U0001f504'
 RANDOM_SYMBOL = '\U0001F3B2'
 
@@ -390,7 +390,7 @@ def create_extras_ui():
             value="cuda"
         )
         extras_components['predict'] = gr.Dropdown(
-            label="Prediction (WIP: currently not working)",
+            label="Prediction (WIP: currently only works with PR #334)",
             choices=PREDICTION,
             value=def_predict
         )
