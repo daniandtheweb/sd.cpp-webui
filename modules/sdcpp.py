@@ -25,7 +25,7 @@ def command_generator(
 ) -> tuple:
     """
     Args:
-        mode: e.g. 'txt2img' or 'img2img'
+        mode: e.g. 'img_gen'
         prompt: positive prompt
         nprompt: negative prompt
         additional_args: list of fixed arguments (e.g. sampling method, steps, width/height, etc.)
@@ -100,9 +100,6 @@ def txt2img(
     foutput = (os.path.join(txt2img_dir, f'{in_output}.png')
                if in_output
                else os.path.join(txt2img_dir, get_next_img(subctrl=0)))
-
-    # Initialize the command with prompts and critical options
-    command = [SD, '-M', 'txt2img', '-p', f'{in_ppromt}']
 
     # Add image generation options
     additional_args = [
@@ -209,9 +206,6 @@ def img2img(
     foutput = (os.path.join(img2img_dir, f'{in_output}.png')
                if in_output
                else os.path.join(img2img_dir, get_next_img(subctrl=1)))
-
-    # Initialize the command with prompts and critical options
-    command = [SD, '-M', 'img2img', '-p', f'{in_ppromt}']
 
     # Add image generation options
     additional_args = [
