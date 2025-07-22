@@ -17,7 +17,7 @@ from modules.loader import (
 from modules.ui import (
     create_model_sel_ui, create_prompts_ui,
     create_cnnet_ui, create_extras_ui, create_settings_ui,
-    QUANTS, RELOAD_SYMBOL, RANDOM_SYMBOL
+    QUANTS, RELOAD_SYMBOL, RANDOM_SYMBOL, SWITCH_V_SYMBOL,
 )
 
 
@@ -136,6 +136,7 @@ with gr.Blocks() as txt2img_block:
             schedule = settings_components['schedule']
             width_txt2img = settings_components['width']
             height_txt2img = settings_components['height']
+            switch_size = settings_components['switch_size']
             batch_count = settings_components['batch_count']
             cfg_txt2img = settings_components['cfg']
 

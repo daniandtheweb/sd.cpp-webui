@@ -14,6 +14,9 @@ from modules.config import (
 from modules.loader import (
     get_models, reload_models
 )
+from modules.utility import (
+    switch_sizes
+)
 
 QUANTS = ["Default", "f32", "f16", "q8_0", "q4_K", "q3_K", "q2_K", "q5_1",
           "q5_0", "q4_1", "q4_0"]
@@ -23,8 +26,9 @@ SCHEDULERS = ["discrete", "karras", "exponential", "ays", "gits"]
 MODELS = ["Checkpoint", "UNET", "VAE", "clip_g", "clip_l", "t5xxl", "TAESD",
           "Lora", "Embeddings", "Upscaler", "ControlNet"]
 PREDICTION = ["Default", "eps", "v", "edm_v", "sd3_flow", "flux_flow"]
-RELOAD_SYMBOL = '\U0001f504'
+RELOAD_SYMBOL = '\U0001F504'
 RANDOM_SYMBOL = '\U0001F3B2'
+SWITCH_V_SYMBOL = '\u2195'
 
 
 def create_model_sel_ui():
@@ -297,20 +301,29 @@ def create_settings_ui():
             interactive=True
         )
     with gr.Row():
-        with gr.Column():
-            settings_components['width'] = gr.Slider(
-                label="Width",
-                minimum=64,
-                maximum=2048,
-                value=def_width,
-                step=64
+        with gr.Row():
+            with gr.Column():
+                settings_components['width'] = gr.Slider(
+                    label="Width",
+                    minimum=64,
+                    maximum=2048,
+                    value=def_width,
+                    step=64
+                )
+                settings_components['height'] = gr.Slider(
+                    label="Height",
+                    minimum=64,
+                    maximum=2048,
+                    value=def_height,
+                    step=64
+                )
+            settings_components['switch_size'] = gr.Button(
+                value=SWITCH_V_SYMBOL, scale=1
             )
-            settings_components['height'] = gr.Slider(
-                label="Height",
-                minimum=64,
-                maximum=2048,
-                value=def_height,
-                step=64
+            settings_components['switch_size'].click(
+                switch_sizes,
+                inputs=[settings_components['height'], settings_components['width']],
+                outputs=[settings_components['height'], settings_components['width']]
             )
         settings_components['batch_count'] = gr.Slider(
             label="Batch count",

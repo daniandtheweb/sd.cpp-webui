@@ -67,7 +67,7 @@ class GalleryManager:
         total_imgs = len([file for file in files
                          if file.endswith(('.png', '.jpg'))])
         total_pages = (total_imgs + 15) // 16
-        if fpage_num is None:
+        if fpage_num == None or fpage_num<1:
             fpage_num = 1
         self.page_num = min(fpage_num, total_pages)
         return self.reload_gallery(self.ctrl, self.page_num, subctrl=0)

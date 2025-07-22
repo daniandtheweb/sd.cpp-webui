@@ -228,3 +228,6 @@ def ckpt_tab_switch(unet_model, unet_vae, clip_g, clip_l, t5xxl):
         pprompt=("Positive Prompt", "Positive Prompt"),
         nprompt=(model_state.bak_nprompt, True)
     )
+
+def switch_sizes(height, width):
+    return(width, height)

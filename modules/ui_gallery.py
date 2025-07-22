@@ -40,7 +40,6 @@ with gr.Blocks() as gallery_block:
     with gr.Row():
         page_num_select = gr.Number(
             label="Page:",
-            minimum=1,
             value=1,
             interactive=True,
             scale=7
@@ -203,6 +202,11 @@ with gr.Blocks() as gallery_block:
         outputs=[gallery, page_num_select, gallery]
     )
     go_btn.click(
+        gallery_manager.goto_gallery,
+        inputs=[page_num_select],
+        outputs=[gallery, page_num_select, gallery]
+    )
+    page_num_select.submit(
         gallery_manager.goto_gallery,
         inputs=[page_num_select],
         outputs=[gallery, page_num_select, gallery]
