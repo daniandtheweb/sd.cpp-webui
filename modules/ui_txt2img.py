@@ -228,6 +228,7 @@ with gr.Blocks() as txt2img_block:
                     show_label=True,
                     value="",
                     interactive=False,
+                    show_copy_button=True,
                 )
 
     # Generate

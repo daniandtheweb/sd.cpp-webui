@@ -244,6 +244,7 @@ with gr.Blocks()as img2img_block:
                     show_label=True,
                     value="",
                     interactive=False,
+                    show_copy_button=True,
                 )
 
     # Generate
