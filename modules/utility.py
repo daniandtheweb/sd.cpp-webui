@@ -110,11 +110,8 @@ class SubprocessManager:
             for output_line in self.process.stdout:
                 output_line = output_line.rstrip()  # Remove trailing newlines
 
-                # Strip ANSI escape sequences to correctly overwrite progress bars
-                clean_output = ansi_escape.sub('', output_line)
-
-                if "|" in clean_output and "/" in clean_output:  # Heuristic for progress bars
-                    sys.stdout.write(f"\r{clean_output}")  # Overwrite previous line
+                if "|" in output_line and "/" in output_line:  # Heuristic for progress bars
+                    sys.stdout.write(f"\r{output_line}")  # Overwrite previous line
                     sys.stdout.flush()
                     last_was_progress = True
                 else:
@@ -122,7 +119,7 @@ class SubprocessManager:
                         print()  # Print a newline after progress bar finishes
                         last_was_progress = False
 
-                    print(clean_output)  # Print normal output
+                    print(output_line)  # Print normal output
 
             # Ensure a final newline if progress bar was the last thing printed
             if last_was_progress:
