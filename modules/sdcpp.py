@@ -82,6 +82,7 @@ def txt2img(
     in_vae_tiling=False, in_vae_cpu=False, in_cnnet_cpu=False,
     in_canny=False, in_rng="default", in_predict="Default",
     in_output=None, in_color=False, in_flash_attn=False,
+    in_diffusion_conv_direct=False, in_vae_conv_direct=False,
     in_verbose=False
 ):
 
@@ -151,6 +152,8 @@ def txt2img(
         '--normalize-input': in_phtmkr_nrml,
         '--color': in_color,
         '--diffusion-fa': in_flash_attn,
+        '--diffusion-conv-direct': in_diffusion_conv_direct,
+        '--vae-conv-direct': in_vae_conv_direct,
         '-v': in_verbose
     }
 
@@ -187,7 +190,8 @@ def img2img(
     in_threads=1, in_vae_tiling=False, in_vae_cpu=False,
     in_cnnet_cpu=False, in_canny=False, in_rng="default",
     in_predict="Default", in_output=None, in_color=False,
-    in_flash_attn=False, in_verbose=False
+    in_flash_attn=False, in_diffusion_conv_direct=False,
+    in_vae_conv_direct=False, in_verbose=False
 ):
 
     """Image to image command creator"""
@@ -257,6 +261,8 @@ def img2img(
         '--canny': in_canny,
         '--color': in_color,
         '--diffusion-fa': in_flash_attn,
+        '--diffusion-conv-direct': in_diffusion_conv_direct,
+        '--vae-conv-direct': in_vae_conv_direct,
         '-v': in_verbose
     }
 

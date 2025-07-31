@@ -219,6 +219,8 @@ with gr.Blocks()as img2img_block:
             output = extras_components['output']
             color = extras_components['color']
             flash_attn = extras_components['flash_attn']
+            diffusion_conv_direct = extras_components['diffusion_conv_direct']
+            vae_conv_direct = extras_components['vae_conv_direct']
             verbose = extras_components['verbose']
 
         with gr.Column(scale=1):
@@ -260,7 +262,8 @@ with gr.Blocks()as img2img_block:
                 strenght, style_ratio, style_ratio_btn,
                 cfg_img2img, seed_img2img, clip_skip, threads, vae_tiling,
                 vae_cpu, cnnet_cpu, canny, rng, predict,
-                output, color, flash_attn, verbose],
+                output, color, flash_attn, diffusion_conv_direct,
+                vae_conv_direct, verbose],
         outputs=[command, img_final]
     )
     kill_btn.click(

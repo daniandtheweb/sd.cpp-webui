@@ -416,6 +416,12 @@ def create_extras_ui():
         extras_components['flash_attn'] = gr.Checkbox(
             label="Flash Attention", value=False
         )
+        extras_components['diffusion_conv_direct'] = gr.Checkbox(
+            label="Conv2D Direct for diffusion", value=False
+        )
+        extras_components['vae_conv_direct'] = gr.Checkbox(
+            label="Conv2D Direct for vae", value=False
+        )
         extras_components['verbose'] = gr.Checkbox(label="Verbose")
 
     # Return the dictionary with all UI components
