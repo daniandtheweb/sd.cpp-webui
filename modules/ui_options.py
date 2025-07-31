@@ -6,7 +6,8 @@ from modules.config import (
     set_defaults, rst_def, ckpt_dir, vae_dir, unet_dir, clip_dir,
     def_ckpt, def_ckpt_vae, def_unet, def_unet_vae, def_clip_g,
     def_clip_l, def_t5xxl, def_type, def_sampling, def_steps,
-    def_scheduler, def_width, def_height, def_predict
+    def_scheduler, def_width, def_height, def_predict,
+    def_flash_attn, def_diffusion_conv_direct, def_vae_conv_direct
 )
 from modules.loader import (
     get_models
@@ -193,6 +194,20 @@ with gr.Blocks() as options_block:
             value=def_predict,
             interactive=True
         )
+    with gr.Row():
+        # Boolean options
+        flash_attn = gr.Checkbox(
+            label="Flash Attention",
+            value=def_flash_attn
+        )
+        diffusion_conv_direct = gr.Checkbox(
+            label="Conv2D Direct for diffusion",
+            value=def_diffusion_conv_direct
+        )
+        vae_conv_direct = gr.Checkbox(
+            label="Conv2D Direct for VAE",
+            value=def_vae_conv_direct
+        )
 
     # Folders options
     folders_opt_components = create_folders_opt_ui()
@@ -218,6 +233,7 @@ with gr.Blocks() as options_block:
             inputs=[ckpt_model, ckpt_vae, unet_model, unet_vae,
                     clip_g, clip_l, t5xxl, model_type, sampling,
                     steps, schedule, width, height, predict,
+                    flash_attn, diffusion_conv_direct, vae_conv_direct,
                     ckpt_dir_txt, unet_dir_txt, vae_dir_txt,
                     clip_dir_txt,
                     emb_dir_txt, lora_dir_txt,

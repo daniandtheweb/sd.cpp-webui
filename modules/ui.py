@@ -9,7 +9,8 @@ from modules.config import (
     emb_dir, lora_dir, taesd_dir, phtmkr_dir, upscl_dir, cnnet_dir,
     txt2img_dir, img2img_dir, def_ckpt, def_ckpt_vae, def_unet, def_unet_vae,
     def_clip_g, def_clip_l, def_t5xxl, def_sampling, def_steps,
-    def_scheduler, def_width, def_height, def_predict
+    def_scheduler, def_width, def_height, def_predict, def_flash_attn,
+    def_diffusion_conv_direct, def_vae_conv_direct
 )
 from modules.loader import (
     get_models, reload_models
@@ -414,13 +415,13 @@ def create_extras_ui():
             label="Color", value=True
         )
         extras_components['flash_attn'] = gr.Checkbox(
-            label="Flash Attention", value=False
+            label="Flash Attention", value=def_flash_attn
         )
         extras_components['diffusion_conv_direct'] = gr.Checkbox(
-            label="Conv2D Direct for diffusion", value=False
+            label="Conv2D Direct for diffusion", value=def_diffusion_conv_direct
         )
         extras_components['vae_conv_direct'] = gr.Checkbox(
-            label="Conv2D Direct for vae", value=False
+            label="Conv2D Direct for VAE", value=def_vae_conv_direct
         )
         extras_components['verbose'] = gr.Checkbox(label="Verbose")
 

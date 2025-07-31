@@ -29,13 +29,17 @@ default_settings = {
     'def_scheduler': "discrete",
     'def_width': 512,
     'def_height': 512,
-    'def_predict': "Default"
+    'def_predict': "Default",
+    'def_flash_attn': False,
+    'def_diffusion_conv_direct': False,
+    'def_vae_conv_direct': False
 }
 
 
 def set_defaults(in_ckpt, in_ckpt_vae, in_unet, in_unet_vae, in_clip_g,
                  in_clip_l, in_t5xxl, in_type, in_sampling, in_steps, in_schedule,
-                 in_width, in_height, in_predict, in_ckpt_dir_txt,
+                 in_width, in_height, in_predict, in_flash_attn,
+                 in_diffusion_conv_direct, in_vae_conv_direct, in_ckpt_dir_txt,
                  in_unet_dir_txt, in_vae_dir_txt, in_clip_dir_txt,
                  in_emb_dir_txt, in_lora_dir_txt, in_taesd_dir_txt,
                  in_phtmkr_dir_txt, in_upscl_dir_txt, in_cnnet_dir_txt,
@@ -66,7 +70,10 @@ def set_defaults(in_ckpt, in_ckpt_vae, in_unet, in_unet_vae, in_clip_g,
         'def_scheduler': in_schedule,
         'def_width': in_width,
         'def_height': in_height,
-        'def_predict': in_predict
+        'def_predict': in_predict,
+        'def_flash_attn': in_flash_attn,
+        'def_diffusion_conv_direct': in_diffusion_conv_direct,
+        'def_vae_conv_direct': in_vae_conv_direct
     })
 
     if in_ckpt:
@@ -233,6 +240,9 @@ def_scheduler = config_data['def_scheduler']
 def_width = config_data['def_width']
 def_height = config_data['def_height']
 def_predict = config_data['def_predict']
+def_flash_attn = config_data['def_flash_attn']
+def_diffusion_conv_direct = config_data['def_diffusion_conv_direct']
+def_vae_conv_direct = config_data['def_vae_conv_direct']
 
 
 if not os.path.isfile(PROMPTS_PATH):
