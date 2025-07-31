@@ -31,7 +31,7 @@ git clone https://github.com/leejet/stable-diffusion.cpp.git
 4. Copy the built file (`sd` or `sd.exe`) from the `build/bin` directory to the `sd.cpp-webui` folder.
 5. On Linux/macOS, ensure the copied file is executable.
 6. Run the launch script: 
-   - `sdpp_webui.sh` for Linux/macOS
+   - `sdcpp_webui.sh` for Linux/macOS
    - `sdcpp_webui_windows.bat` for Windows
 
 
