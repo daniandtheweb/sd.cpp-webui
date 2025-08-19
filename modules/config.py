@@ -6,8 +6,8 @@ import json
 import gradio as gr
 
 CURRENT_DIR = os.getcwd()
-CONFIG_PATH = 'config.json'
-PROMPTS_PATH = 'prompts.json'
+CONFIG_PATH = os.getenv('SD_WEBUI_CONFIG_PATH' ,'config.json')
+PROMPTS_PATH = os.getenv('SD_WEBUI_PROMPTS_PATH', 'prompts.json')
 
 
 default_settings = {
@@ -247,7 +247,7 @@ def_vae_conv_direct = config_data['def_vae_conv_direct']
 
 if not os.path.isfile(PROMPTS_PATH):
     # Create an empty JSON file
-    with open('prompts.json', 'w', encoding="utf-8") as prompts_file:
+    with open(PROMPTS_PATH, 'w', encoding="utf-8") as prompts_file:
         # Write an empty JSON object
         json.dump({}, prompts_file, indent=4)
     print("File 'prompts.json' created.")
