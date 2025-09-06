@@ -396,8 +396,10 @@ def create_extras_ui():
             maximum=os.cpu_count(),
             value=0
         )
+        extras_components['offload_to_cpu'] = gr.Checkbox(label="Offload to CPU")
         extras_components['vae_tiling'] = gr.Checkbox(label="VAE Tiling")
         extras_components['vae_cpu'] = gr.Checkbox(label="VAE on CPU")
+        extras_components['clip_cpu'] = gr.Checkbox(label="CLIP on CPU")
         extras_components['rng'] = gr.Dropdown(
             label="RNG",
             choices=["std_default", "cuda"],

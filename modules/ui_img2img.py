@@ -212,8 +212,10 @@ with gr.Blocks()as img2img_block:
             extras_components = create_extras_ui()
 
             threads = extras_components['threads']
+            offload_to_cpu = extras_components['offload_to_cpu']
             vae_tiling = extras_components['vae_tiling']
             vae_cpu = extras_components['vae_cpu']
+            clip_cpu = extras_components['clip_cpu']
             rng = extras_components['rng']
             predict = extras_components['predict']
             output = extras_components['output']
@@ -260,8 +262,8 @@ with gr.Blocks()as img2img_block:
                 nprompt_img2img, sampling_img2img, steps_img2img, scheduler,
                 width_img2img, height_img2img, batch_count,
                 strenght, style_ratio, style_ratio_btn,
-                cfg_img2img, seed_img2img, clip_skip, threads, vae_tiling,
-                vae_cpu, cnnet_cpu, canny, rng, predict,
+                cfg_img2img, seed_img2img, clip_skip, threads, offload_to_cpu,
+                vae_tiling, vae_cpu, clip_cpu, cnnet_cpu, canny, rng, predict,
                 output, color, flash_attn, diffusion_conv_direct,
                 vae_conv_direct, verbose],
         outputs=[command, img_final]

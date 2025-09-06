@@ -79,10 +79,11 @@ def txt2img(
     in_sampling="default", in_steps=50, in_scheduler="default",
     in_width=512, in_height=512, in_batch_count=1,
     in_cfg=7.0, in_seed=42, in_clip_skip=-1, in_threads=1,
-    in_vae_tiling=False, in_vae_cpu=False, in_cnnet_cpu=False,
-    in_canny=False, in_rng="default", in_predict="Default",
-    in_output=None, in_color=False, in_flash_attn=False,
-    in_diffusion_conv_direct=False, in_vae_conv_direct=False,
+    in_offload_to_cpu=False, in_vae_tiling=False, in_vae_cpu=False,
+    in_clip_cpu=False, in_cnnet_cpu=False, in_canny=False,
+    in_rng="default", in_predict="Default", in_output=None,
+    in_color=False, in_flash_attn=False, in_diffusion_conv_direct=False,
+    in_vae_conv_direct=False,
     in_verbose=False
 ):
 
@@ -145,8 +146,10 @@ def txt2img(
 
     # Boolean flags
     flags = {
+        '--offload-to-cpu': in_offload_to_cpu,
         '--vae-tiling': in_vae_tiling,
         '--vae-on-cpu': in_vae_cpu,
+        '--clip-on-cpu': in_clip_cpu,
         '--control-net-cpu': in_cnnet_cpu,
         '--canny': in_canny,
         '--normalize-input': in_phtmkr_nrml,
@@ -187,11 +190,12 @@ def img2img(
     in_scheduler="default", in_width=512, in_height=512,
     in_batch_count=1, in_strenght=0.75, in_style_ratio=1.0,
     in_style_ratio_btn=False, in_cfg=7.0, in_seed=42, in_clip_skip=-1,
-    in_threads=1, in_vae_tiling=False, in_vae_cpu=False,
-    in_cnnet_cpu=False, in_canny=False, in_rng="default",
-    in_predict="Default", in_output=None, in_color=False,
-    in_flash_attn=False, in_diffusion_conv_direct=False,
-    in_vae_conv_direct=False, in_verbose=False
+    in_threads=1, in_offload_to_cpu=False, in_vae_tiling=False,
+    in_vae_cpu=False, in_clip_cpu=False, in_cnnet_cpu=False,
+    in_canny=False, in_rng="default", in_predict="Default",
+    in_output=None, in_color=False, in_flash_attn=False,
+    in_diffusion_conv_direct=False, in_vae_conv_direct=False,
+    in_verbose=False
 ):
 
     """Image to image command creator"""
@@ -254,8 +258,10 @@ def img2img(
 
     # Boolean flags
     flags = {
+        '--offload-to-cpu': in_offload_to_cpu,
         '--vae-tiling': in_vae_tiling,
         '--vae-on-cpu': in_vae_cpu,
+        '--clip-on-cpu': in_clip_cpu,
         '--control-net-cpu': in_cnnet_cpu,
         '--normalize-input': in_phtmkr_nrml,
         '--canny': in_canny,
