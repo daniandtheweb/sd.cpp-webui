@@ -37,7 +37,7 @@ default_settings = {
 
 
 def set_defaults(in_ckpt, in_ckpt_vae, in_unet, in_unet_vae, in_clip_g,
-                 in_clip_l, in_t5xxl, in_type, in_sampling, in_steps, in_schedule,
+                 in_clip_l, in_t5xxl, in_type, in_sampling, in_steps, in_scheduler,
                  in_width, in_height, in_predict, in_flash_attn,
                  in_diffusion_conv_direct, in_vae_conv_direct, in_ckpt_dir_txt,
                  in_unet_dir_txt, in_vae_dir_txt, in_clip_dir_txt,
@@ -67,7 +67,7 @@ def set_defaults(in_ckpt, in_ckpt_vae, in_unet, in_unet_vae, in_clip_g,
         'def_type': in_type,
         'def_sampling': in_sampling,
         'def_steps': in_steps,
-        'def_scheduler': in_schedule,
+        'def_scheduler': in_scheduler,
         'def_width': in_width,
         'def_height': in_height,
         'def_predict': in_predict,

@@ -135,7 +135,7 @@ with gr.Blocks()as img2img_block:
 
             sampling_img2img = settings_components['sampling']
             steps_img2img = settings_components['steps']
-            schedule = settings_components['schedule']
+            scheduler = settings_components['scheduler']
             width_img2img = settings_components['width']
             height_img2img = settings_components['height']
             switch_size = settings_components['switch_size']
@@ -257,7 +257,7 @@ with gr.Blocks()as img2img_block:
                 phtmkr_model, phtmkr_in, phtmkr_nrml,
                 img_inp, upscl, upscl_rep, cnnet,
                 control_img, control_strength, pprompt_img2img,
-                nprompt_img2img, sampling_img2img, steps_img2img, schedule,
+                nprompt_img2img, sampling_img2img, steps_img2img, scheduler,
                 width_img2img, height_img2img, batch_count,
                 strenght, style_ratio, style_ratio_btn,
                 cfg_img2img, seed_img2img, clip_skip, threads, vae_tiling,

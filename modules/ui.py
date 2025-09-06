@@ -295,8 +295,8 @@ def create_settings_ui():
                 step=1
             )
     with gr.Row():
-        settings_components['schedule'] = gr.Dropdown(
-            label="Schedule",
+        settings_components['scheduler'] = gr.Dropdown(
+            label="Scheduler",
             choices=SCHEDULERS,
             value=def_scheduler,
             interactive=True

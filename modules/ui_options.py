@@ -161,9 +161,9 @@ with gr.Blocks() as options_block:
             )
 
     with gr.Row():
-        # Schedule Dropdown
-        schedule = gr.Dropdown(
-            label="Schedule",
+        # Scheduler Dropdown
+        scheduler = gr.Dropdown(
+            label="Scheduler",
             choices=SCHEDULERS,
             value=def_scheduler,
             interactive=True
@@ -232,7 +232,7 @@ with gr.Blocks() as options_block:
             set_defaults,
             inputs=[ckpt_model, ckpt_vae, unet_model, unet_vae,
                     clip_g, clip_l, t5xxl, model_type, sampling,
-                    steps, schedule, width, height, predict,
+                    steps, scheduler, width, height, predict,
                     flash_attn, diffusion_conv_direct, vae_conv_direct,
                     ckpt_dir_txt, unet_dir_txt, vae_dir_txt,
                     clip_dir_txt,
