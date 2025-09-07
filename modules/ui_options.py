@@ -227,7 +227,9 @@ with gr.Blocks() as options_block:
 
     # Set Defaults and Restore Defaults Buttons
     with gr.Row():
-        set_btn = gr.Button(value="Set Defaults")
+        set_btn = gr.Button(
+            value="Set Defaults", variant="primary"
+        )
         set_btn.click(
             set_defaults,
             inputs=[ckpt_model, ckpt_vae, unet_model, unet_vae,
@@ -242,7 +244,9 @@ with gr.Blocks() as options_block:
                     txt2img_dir_txt, img2img_dir_txt],
             outputs=[]
         )
-        restore_btn = gr.Button(value="Restore Defaults")
+        restore_btn = gr.Button(
+            value="Restore Defaults", variant="stop"
+        )
         restore_btn.click(
             rst_def,
             inputs=[],

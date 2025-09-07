@@ -79,8 +79,12 @@ with gr.Blocks() as convert_block:
             verbose = gr.Checkbox(label="Verbose")
 
             with gr.Row():
-                convert_btn = gr.Button(value="Convert")
-                kill_btn = gr.Button(value="Stop")
+                convert_btn = gr.Button(
+                    value="Convert", variant="primary"
+                )
+                kill_btn = gr.Button(
+                    value="Stop", variant="stop"
+                )
 
         # Output
         with gr.Column(scale=1):

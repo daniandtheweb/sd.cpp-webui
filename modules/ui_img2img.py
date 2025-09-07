@@ -225,14 +225,21 @@ with gr.Blocks()as img2img_block:
             vae_conv_direct = extras_components['vae_conv_direct']
             verbose = extras_components['verbose']
 
+        # Output
         with gr.Column(scale=1):
             with gr.Row():
                 img_inp = gr.Image(
                     sources="upload", type="filepath"
                 )
             with gr.Row():
-                gen_btn = gr.Button(value="Generate")
-                kill_btn = gr.Button(value="Stop")
+                gen_btn = gr.Button(
+                    value="Generate", size="lg",
+                    variant="primary"
+                )
+                kill_btn = gr.Button(
+                    value="Stop", size="lg",
+                    variant="stop"
+                )
             with gr.Row():
                 img_final = gr.Gallery(
                     label="Generated images",

@@ -212,10 +212,12 @@ with gr.Blocks() as txt2img_block:
         with gr.Column(scale=1):
             with gr.Row():
                 gen_btn = gr.Button(
-                    value="Generate", size="lg"
+                    value="Generate", size="lg",
+                    variant="primary"
                 )
                 kill_btn = gr.Button(
-                    value="Stop", size="lg"
+                    value="Stop", size="lg",
+                    variant="stop"
                 )
             with gr.Row():
                 img_final = gr.Gallery(

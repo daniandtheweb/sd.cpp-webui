@@ -26,8 +26,12 @@ with gr.Blocks() as gallery_block:
 
     # Gallery Navigation Buttons
     with gr.Row():
-        txt2img_btn = gr.Button(value="txt2img")
-        img2img_btn = gr.Button(value="img2img")
+        txt2img_btn = gr.Button(
+            value="txt2img", variant="primary"
+        )
+        img2img_btn = gr.Button(
+            value="img2img", variant="primary"
+        )
 
     with gr.Row():
         pvw_btn = gr.Button(value="Previous")
@@ -157,7 +161,8 @@ with gr.Blocks() as gallery_block:
                 # Copy to img2img
                 cpy_2_img2img_btn = gr.Button(value="Copy to img2img")
             # Delete image Button
-            del_img = gr.Button(value="Delete")
+            del_img = gr.Button(
+                value="Delete", variant="stop")
 
     # Interactive bindings
     gallery.select(
