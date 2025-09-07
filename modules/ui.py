@@ -307,14 +307,14 @@ def create_settings_ui():
                 settings_components['width'] = gr.Slider(
                     label="Width",
                     minimum=64,
-                    maximum=2048,
+                    maximum=4096,
                     value=def_width,
                     step=64
                 )
                 settings_components['height'] = gr.Slider(
                     label="Height",
                     minimum=64,
-                    maximum=2048,
+                    maximum=4096,
                     value=def_height,
                     step=64
                 )

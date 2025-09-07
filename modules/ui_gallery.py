@@ -84,34 +84,28 @@ with gr.Blocks() as gallery_block:
             )
             with gr.Row():
                 # Width
-                width_info = gr.Textbox(
+                width_info = gr.Number(
                     label="Width",
-                    value="",
+                    value=None,
                     interactive=False,
                     scale=1,
-                    min_width=150,
-                    show_copy_button=True,
-                    max_lines=1
+                    min_width=150
                 )
                 # Height
-                height_info = gr.Textbox(
+                height_info = gr.Number(
                     label="Height",
-                    value="",
+                    value=None,
                     interactive=False,
                     scale=1,
-                    min_width=150,
-                    show_copy_button=True,
-                    max_lines=1
+                    min_width=150
                 )
             # Steps
-            steps_info = gr.Textbox(
+            steps_info = gr.Number(
                 label="Steps",
-                value="",
+                value=None,
                 interactive=False,
                 scale=1,
-                min_width=150,
-                show_copy_button=True,
-                max_lines=1
+                min_width=150
             )
             # Sampler
             sampler_info = gr.Textbox(
@@ -135,7 +129,7 @@ with gr.Blocks() as gallery_block:
                 # Seed
                 seed_info = gr.Number(
                     label="Seed",
-                    value=0,
+                    value=None,
                     interactive=False,
                     scale=1,
                     min_width=150

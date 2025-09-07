@@ -150,10 +150,10 @@ class GalleryManager:
         # Initialize parameters
         pprompt = ""
         nprompt = ""
-        steps = ""
+        steps = None
         sampler = ""
-        cfg= ""
-        seed = ""
+        cfg = None
+        seed = None
         exif = ""
         width = None
         height = None
@@ -198,7 +198,7 @@ class GalleryManager:
                         exif = f"PNG: tEXt\nPositive prompt: {png_exif}"
                         ppattern = r'Positive prompt:\s*(?:"(?P<quoted_pprompt>(?:\\.|[^"\\])*)"|(?P<unquoted_pprompt>.*?))\s*(?=\s*(?:Steps:|Negative prompt:))'
                         npattern = r'Negative prompt:\s*(?:"(?P<quoted_nprompt>(?:\\.|[^"\\])*)"|(?P<unquoted_nprompt>.*?))\s*(?=\s*Steps:)'
-                        
+
                         pmatch = re.search(ppattern, exif)
                         nmatch = re.search(npattern, exif)
 
@@ -212,15 +212,15 @@ class GalleryManager:
                             exif = png_exif
                             pattern = r'"text":\s*"((?:[^"\\]|\\.)*)"'
                             matches = re.findall(pattern, exif)
-                            
+
                             if len(matches) > 0:
                                 pprompt = matches[0]
                             if len(matches) > 1:
                                 nprompt = matches[1]
-                            
+
                             steps_match_json = re.search(r'"steps":\s*(\d+)', exif)
                             if steps_match_json:
-                                steps = steps_match_json.group(1)
+                                steps = int(steps_match_json.group(1))
 
                             sampler_match_json = re.search(r'"sampler_name":\s*"([^"]+)"', exif)
                             if sampler_match_json:
@@ -228,7 +228,7 @@ class GalleryManager:
 
                             cfg_match_json = re.search(r'"cfg":\s*(\d+)', exif)
                             if cfg_match_json:
-                                cfg = int(cfg_match_json.group(1))
+                                cfg = float(int(cfg_match_json.group(1)))
 
                             seed_match_json = re.search(r'"seed":\s*(\d+)', exif)
                             if seed_match_json:
@@ -243,24 +243,25 @@ class GalleryManager:
                             steps_pattern = r'Steps:\s*(\d+)(?!.*Steps:)'
                             steps_match = re.search(steps_pattern, exif, re.DOTALL)
                             if steps_match:
-                                steps = steps_match.group(1)
+                                steps = int(steps_match.group(1))
                             else:
-                                steps = ""
+                                steps = None
 
                         if not sampler:
                             sampler_pattern = r'Sampler:\s*([^\s,]+)(?!.*Sampler:)'
                             sampler_match = re.search(sampler_pattern, exif, re.DOTALL)
                             if sampler_match:
                                 sampler = sampler_match.group(1)
-                            else: sampler = ""
+                            else:
+                                sampler = ""
 
                         if not cfg:
                             cfg_pattern = r'CFG scale:\s*(\d+)(?!.*CFG scale:)'
                             cfg_match = re.search(cfg_pattern, exif, re.DOTALL)
                             if cfg_match:
-                                cfg = cfg_match.group(1)
+                                cfg = float(cfg_match.group(1))
                             else:
-                                cfg = ""
+                                cfg = None
 
                         if not seed:
                             seed_pattern = r'Seed:\s*(\d+)(?!.*Seed:)'
@@ -279,7 +280,7 @@ class GalleryManager:
             if not hasattr(self, 'img_path') or not os.path.exists(self.img_path):
                 print("Deletion failed: No valid image selected or file does not exist.")
                 imgs, page_num, gallery_update = self.reload_gallery(self.ctrl, self.page_num, subctrl=0)
-                (pprompt, nprompt, width, height, steps, sampler, cfg, seed, img_path, exif) = ("", "", None, None, "", "", "", "", "", "")
+                (pprompt, nprompt, width, height, steps, sampler, cfg, seed, img_path, exif) = ("", "", None, None, None, "", None, None, "", "")
                 return (imgs, page_num, gallery_update, pprompt, nprompt, width, height, steps, sampler, cfg, seed, img_path, exif)
 
             index_of_deleted_img = self.img_index
@@ -296,7 +297,7 @@ class GalleryManager:
             if total_imgs == 0:
                 self.page_num, self.sel_img, self.img_index, self.img_path = 1, None, 0, ""
                 return ([], 1, gr.Gallery(value=None, selected_index=None),
-                        "", "", None, None, "", "", "", "", "", "")
+                        "", "", None, None, None, "", None, None, "", "")
 
             new_selected_index = index_of_deleted_img
             if new_selected_index >= total_imgs:
@@ -311,10 +312,10 @@ class GalleryManager:
             img_info_tuple = self.img_info(self.sel_img)
             if img_info_tuple is None:
                 raise ValueError("Failed to retrieve information for the new image.")
-            
+
             pprompt, nprompt, width, height, steps, sampler, cfg, seed, img_path, exif = img_info_tuple
             gallery_update = gr.Gallery(selected_index=self.sel_img)
-            
+
             return (
                 imgs, self.page_num, gallery_update,
                 pprompt, nprompt, width, height, steps, sampler, cfg, seed, img_path, exif
@@ -322,7 +323,7 @@ class GalleryManager:
 
         except Exception as e:
             print(f"An error occurred in delete_img: {e}")
-            return ([], 1, gr.Gallery(value=None), "", "", None, None, "", "", "", "", "", "")
+            return ([], 1, gr.Gallery(value=None), "", "", None, None, None, "", None, None, "", "")
 
 
 def get_next_img(subctrl):
