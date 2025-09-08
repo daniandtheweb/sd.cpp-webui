@@ -290,7 +290,7 @@ def create_settings_ui():
             settings_components['steps'] = gr.Slider(
                 label="Steps",
                 minimum=1,
-                maximum=99,
+                maximum=100,
                 value=def_steps,
                 step=1
             )

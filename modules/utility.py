@@ -55,20 +55,21 @@ class ModelState:
     def bak_ckpt_tab(self, ckpt_model, ckpt_vae, nprompt):
         """Updates the state with values from the checkpoint tab."""
         self.update(
-            bak_ckpt_model = ckpt_model,
-            bak_ckpt_vae = ckpt_vae,
-            bak_nprompt = nprompt
+            bak_ckpt_model=ckpt_model,
+            bak_ckpt_vae=ckpt_vae,
+            bak_nprompt=nprompt
         )
 
     def bak_unet_tab(self, unet_model, unet_vae, clip_g, clip_l, t5xxl):
         """Updates the state with values from the UNET tab."""
         self.update(
-            bak_unet_model = unet_model,
-            bak_unet_vae = unet_vae,
-            bak_clip_g = clip_g,
-            bak_clip_l = clip_l,
-            bak_t5xxl = t5xxl
+            bak_unet_model=unet_model,
+            bak_unet_vae=unet_vae,
+            bak_clip_g=clip_g,
+            bak_clip_l=clip_l,
+            bak_t5xxl=t5xxl
         )
+
 
 class SubprocessManager:
     """Class to manage subprocess execution and control.
@@ -81,50 +82,133 @@ class SubprocessManager:
     def __init__(self):
         """Initializes the SubprocessManager with no active subprocess."""
         self.process = None
+        # --- Patterns are now defined once as class attributes ---
+        self.STATS_REGEX = re.compile(r"completed, taking ([\d.]+)s")
+        self.TOTAL_TIME_REGEX = re.compile(r"completed in ([\d.]+)s")
+        self.ETA_REGEX = re.compile(r'(\d+)/(\d+)\s*-\s*([\d.]+)(s/it|it/s)')
+        self.SIMPLE_REGEX = re.compile(r'(\d+)/(\d+)')
+
+    def _parse_final_stats(self, line, final_stats):
+        """Parses a line for final summary stats and updates the stats dictionary."""
+        if 'loading tensors completed' in line:
+            match = self.STATS_REGEX.search(line)
+            if match:
+                final_stats['tensor_load_time'] = f"{match.group(1)}s"
+        elif 'sampling completed' in line:
+            match = self.STATS_REGEX.search(line)
+            if match:
+                final_stats['sampling_time'] = f"{match.group(1)}s"
+        elif 'decode_first_stage completed' in line:
+            match = self.STATS_REGEX.search(line)
+            if match:
+                final_stats['decoding_time'] = f"{match.group(1)}s"
+        elif 'generate_image completed' in line:
+            match = self.TOTAL_TIME_REGEX.search(line)
+            if match:
+                final_stats['total_time'] = f"{match.group(1)}s"
+
+    def _parse_progress_update(self, line, final_stats):
+        """Parses a progress bar line and returns a dictionary for the UI."""
+        eta_match = self.ETA_REGEX.search(line)
+        if eta_match:
+            current_step, total_steps, speed_value, speed_unit = eta_match.groups()
+            final_stats['last_speed'] = f"{float(speed_value):.2f} {speed_unit}"
+
+            current_step, total_steps = map(int, [current_step, total_steps])
+            speed_value = float(speed_value)
+
+            phase_fraction = current_step / total_steps
+            steps_remaining = total_steps - current_step
+            eta_seconds = 0
+
+            if speed_unit == 's/it':
+                eta_seconds = int(steps_remaining * speed_value)
+            elif speed_unit == 'it/s' and speed_value > 0:
+                eta_seconds = int(steps_remaining / speed_value)
+
+            if eta_seconds < 60:
+                eta_str = f"{eta_seconds}s"
+            elif eta_seconds < 3600:  # Less than an hour
+                minutes = eta_seconds // 60
+                seconds = eta_seconds % 60
+                eta_str = f"{minutes:02}:{seconds:02}"
+            else:  # An hour or more
+                hours = eta_seconds // 3600
+                minutes = (eta_seconds % 3600) // 60
+                seconds = eta_seconds % 60
+                eta_str = f"{hours:02}:{minutes:02}:{seconds:02}"
+
+            return {
+                "percent": int(phase_fraction * 100),
+                "status": f"Speed: {final_stats['last_speed']} | ETA: {eta_str}"
+            }
+
+        # Fallback for progress lines without ETA info
+        simple_match = self.SIMPLE_REGEX.search(line)
+        if simple_match:
+            current_step, total_steps = map(int, simple_match.groups())
+            phase_fraction = current_step / total_steps
+            return {
+                "percent": int(phase_fraction * 100),
+                "status": f"Step: {current_step}/{total_steps}"
+            }
+        return {}
 
     def run_subprocess(self, command):
-        """Runs a subprocess with the specified command.
-
-        Args:
-            command: A list of command-line arguments for the subprocess.
-
-        This method captures the subprocess's output in real-time and prints
-        it.
-        If any errors occur during execution, they are also printed after the
-        process finishes.
         """
+        Runs a subprocess, captures its output, and yields UI updates.
+        This main method is now much simpler and delegates parsing to helpers.
+        """
+        phase = "Initializing"
+        last_was_progress = False
+        final_stats = {}
 
-        # Regex to detect ANSI escape sequences (used for cursor movement)
-        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+        try:
+            with subprocess.Popen(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                universal_newlines=True,
+                bufsize=1,
+                encoding='utf-8',
+                errors='replace'
+            ) as self.process:
 
-        last_was_progress = False  # Track if the last printed line was a progress bar
+                for output_line in self.process.stdout:
+                    output_line = output_line.rstrip()
 
-        with subprocess.Popen(
-            command,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            universal_newlines=True,
-            bufsize=1
-        ) as self.process:
-            
-            for output_line in self.process.stdout:
-                output_line = output_line.rstrip()  # Remove trailing newlines
+                    self._parse_final_stats(output_line, final_stats)
 
-                if "|" in output_line and "/" in output_line:  # Heuristic for progress bars
-                    sys.stdout.write(f"\r{output_line}")  # Overwrite previous line
-                    sys.stdout.flush()
-                    last_was_progress = True
-                else:
-                    if last_was_progress:
-                        print()  # Print a newline after progress bar finishes
-                        last_was_progress = False
+                    if 'loading model' in output_line:
+                        phase = "Loading Model"
+                    elif 'sampling using' in output_line:
+                        phase = "Sampling"
 
-                    print(output_line)  # Print normal output
+                    if "|" in output_line and "/" in output_line:
+                        if phase == "Sampling":
+                            update_data = self._parse_progress_update(output_line, final_stats)
+                            if update_data:
+                                yield update_data
 
-            # Ensure a final newline if progress bar was the last thing printed
+                        sys.stdout.write(f"\r{output_line}")
+                        sys.stdout.flush()
+                        last_was_progress = True
+                    else:
+                        if last_was_progress:
+                            print("\n")
+                            last_was_progress = False
+                        print(output_line)
+
+        finally:
             if last_was_progress:
-                print()
+                print("\n")
 
+            if self.process and self.process.returncode != 0:
+                print("Subprocess terminated.")
+
+            self.process = None
+
+        yield {"final_stats": final_stats}
 
     def kill_subprocess(self):
         """Terminates the currently running subprocess, if any.
@@ -134,8 +218,6 @@ class SubprocessManager:
         """
         if self.process is not None:
             self.process.terminate()
-            self.process = None
-            print("Subprocess terminated.")
         else:
             print("No subprocess running.")
 
@@ -172,7 +254,6 @@ def switch_tab_components(
     ckpt_model=None, unet_model=None, ckpt_vae=None, unet_vae=None,
     clip_g=None, clip_l=None, t5xxl=None, pprompt=None, nprompt=None
 ):
-
     """Helper function to switch the tab components"""
     return (
         gr.update(value=ckpt_model),
@@ -226,5 +307,6 @@ def ckpt_tab_switch(unet_model, unet_vae, clip_g, clip_l, t5xxl):
         nprompt=(model_state.bak_nprompt, True)
     )
 
+
 def switch_sizes(height, width):
-    return(width, height)
+    return (width, height)

@@ -2,6 +2,8 @@
 
 import os
 
+import gradio as gr
+
 from modules.utility import subprocess_manager, exe_name, get_path
 from modules.gallery import get_next_img
 from modules.config import (
@@ -86,7 +88,6 @@ def txt2img(
     in_vae_conv_direct=False,
     in_verbose=False
 ):
-
     """Text to image command creator"""
     fckpt_model = get_path(ckpt_dir, in_ckpt_model)
     fckpt_vae = get_path(vae_dir, in_ckpt_vae)
@@ -172,11 +173,23 @@ def txt2img(
     )
 
     print(f"\n\n{fcommand}\n\n")
-    yield fcommand, None
 
-    subprocess_manager.run_subprocess(command)
+    yield fcommand, gr.update(visible=True, value=0), gr.update(visible=True, value="Initializing..."), gr.update(value=""), None
 
-    yield fcommand, outputs
+    for update in subprocess_manager.run_subprocess(command):
+        if "final_stats" in update:
+            stats = update["final_stats"]
+            # Format the final string
+            l_time = stats.get('tensor_load_time', 'N/A')
+            s_time = stats.get('sampling_time', 'N/A')
+            d_time = stats.get('decoding_time', 'N/A')
+            t_time = stats.get('total_time', 'N/A')
+            speed = stats.get('last_speed', 'N/A')
+            final_stats_str = f"Tensor Load: {l_time} | Sampling: {s_time} | Decode: {d_time} | Total: {t_time} | Last Speed: {speed}"
+        else:
+            yield fcommand, gr.update(value=update["percent"]), update["status"], gr.update(value=""), None
+
+    yield fcommand, gr.update(visible=False, value=100), gr.update(visible=False, value=""), gr.update(value=final_stats_str), outputs
 
 
 def img2img(
@@ -197,7 +210,6 @@ def img2img(
     in_diffusion_conv_direct=False, in_vae_conv_direct=False,
     in_verbose=False
 ):
-
     """Image to image command creator"""
     # Construct file paths
     fckpt_model = get_path(ckpt_dir, in_ckpt_model)
@@ -284,11 +296,23 @@ def img2img(
     )
 
     print(f"\n\n{fcommand}\n\n")
-    yield fcommand, None
 
-    subprocess_manager.run_subprocess(command)
+    yield fcommand, gr.update(visible=True, value=0), gr.update(visible=True, value="Initializing..."), gr.update(value=""), None
 
-    yield fcommand, outputs
+    for update in subprocess_manager.run_subprocess(command):
+        if "final_stats" in update:
+            stats = update["final_stats"]
+            # Format the final string
+            l_time = stats.get('tensor_load_time', 'N/A')
+            s_time = stats.get('sampling_time', 'N/A')
+            d_time = stats.get('decoding_time', 'N/A')
+            t_time = stats.get('total_time', 'N/A')
+            speed = stats.get('last_speed', 'N/A')
+            final_stats_str = f"Tensor Load: {l_time} | Sampling: {s_time} | Decode: {d_time} | Total: {t_time} | Last Speed: {speed}"
+        else:
+            yield fcommand, gr.update(value=update["percent"]), update["status"], gr.update(value=""), None
+
+    yield fcommand, gr.update(visible=False, value=100), gr.update(visible=False, value=""), gr.update(value=final_stats_str), outputs
 
 
 def convert(

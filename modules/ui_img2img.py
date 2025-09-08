@@ -241,6 +241,21 @@ with gr.Blocks()as img2img_block:
                     variant="stop"
                 )
             with gr.Row():
+                progress_slider = gr.Slider(
+                    minimum=0,
+                    maximum=100,
+                    value=0,
+                    interactive=False,
+                    visible=False,
+                    label="Progress"
+                )
+            with gr.Row():
+                progress_textbox = gr.Textbox(
+                    label="Progress:",
+                    visible=False,
+                    interactive=False
+                )
+            with gr.Row():
                 img_final = gr.Gallery(
                     label="Generated images",
                     show_label=False,
@@ -248,6 +263,13 @@ with gr.Blocks()as img2img_block:
                     rows=[1],
                     object_fit="contain",
                     height="auto"
+                )
+            with gr.Row():
+                stats = gr.Textbox(
+                    label="Statistics:",
+                    show_label=True,
+                    value="",
+                    interactive=False
                 )
             with gr.Row():
                 command = gr.Textbox(
@@ -273,7 +295,7 @@ with gr.Blocks()as img2img_block:
                 vae_tiling, vae_cpu, clip_cpu, cnnet_cpu, canny, rng, predict,
                 output, color, flash_attn, diffusion_conv_direct,
                 vae_conv_direct, verbose],
-        outputs=[command, img_final]
+        outputs=[command, progress_slider, progress_textbox, stats, img_final]
     )
     kill_btn.click(
         subprocess_manager.kill_subprocess,
