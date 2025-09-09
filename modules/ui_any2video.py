@@ -17,7 +17,7 @@ from modules.loader import (
 from modules.ui import (
     create_video_model_sel_ui, create_prompts_ui,
     create_cnnet_ui, create_extras_ui, create_settings_ui,
-    QUANTS, RELOAD_SYMBOL, RANDOM_SYMBOL, SWITCH_V_SYMBOL,
+    QUANTS, RELOAD_SYMBOL, RANDOM_SYMBOL
 )
 
 
@@ -316,7 +316,8 @@ with gr.Blocks() as any2video_block:
                 clip_skip, threads, offload_to_cpu, vae_tiling, vae_cpu,
                 clip_cpu, cnnet_cpu, canny, rng, predict, output, color,
                 flash_attn, diffusion_conv_direct, vae_conv_direct, verbose],
-        outputs=[command, progress_slider, progress_textbox, stats, video_final]
+        outputs=[command, progress_slider, progress_textbox, stats,
+                 video_final]
     )
     kill_btn.click(
         subprocess_manager.kill_subprocess,

@@ -17,7 +17,7 @@ from modules.loader import (
 from modules.ui import (
     create_img_model_sel_ui, create_prompts_ui,
     create_cnnet_ui, create_extras_ui, create_settings_ui,
-    QUANTS, RELOAD_SYMBOL, RANDOM_SYMBOL, SWITCH_V_SYMBOL
+    QUANTS, RELOAD_SYMBOL, RANDOM_SYMBOL
 )
 
 

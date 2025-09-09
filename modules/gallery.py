@@ -13,6 +13,7 @@ from modules.config import (
 
 class GalleryManager:
     """Controls the gallery block"""
+
     def __init__(self, txt2img_gallery, img2img_gallery):
         self.page_num = 1
         self.ctrl = 0
@@ -36,7 +37,9 @@ class GalleryManager:
         if ctrl_inp is not None:
             self.ctrl = int(ctrl_inp)
         img_dir = self._get_img_dir()
-        # Use a generator to find image files, avoiding the creation of a full list
+        # Use a generator to find image files,
+        # avoiding the creation of a full list
+
         def image_files_gen(directory):
             for file in os.listdir(directory):
                 if file.endswith(('.jpg', '.png')):
@@ -67,7 +70,7 @@ class GalleryManager:
         total_imgs = len([file for file in files
                          if file.endswith(('.png', '.jpg'))])
         total_pages = (total_imgs + 15) // 16
-        if fpage_num == None or fpage_num<1:
+        if fpage_num is None or fpage_num < 1:
             fpage_num = 1
         self.page_num = min(fpage_num, total_pages)
         return self.reload_gallery(self.ctrl, self.page_num, subctrl=0)
@@ -137,11 +140,13 @@ class GalleryManager:
         else:
             self.img_index = (self.page_num * 16) - 16 + self.sel_img
         img_dir = self._get_img_dir()
-         # Use a generator to find and sort image files on demand
+        # Use a generator to find and sort image files on demand
+
         def image_file_gen(directory):
             for file in os.listdir(directory):
                 file_path = os.path.join(directory, file)
-                if os.path.isfile(file_path) and file.lower().endswith(('.png', '.jpg')):
+                if (os.path.isfile(file_path) and
+                        file.lower().endswith(('.png', '.jpg'))):
                     yield file_path
 
         # Sort files only when necessary and only the files we need
@@ -169,7 +174,10 @@ class GalleryManager:
             width = w
             height = h
             exif = self.extract_exif_from_jpg(self.img_path)
-            return pprompt, nprompt, width, height, steps, sampler, cfg, seed, exif, self.img_path
+            return (
+                pprompt, nprompt, width, height, steps, sampler, cfg, seed,
+                exif, self.img_path
+            )
         if self.img_path.endswith('.png'):
             with open(self.img_path, 'rb') as file:
                 if file.read(8) != b'\x89PNG\r\n\x1a\n':
@@ -177,7 +185,10 @@ class GalleryManager:
                     w, h = im.size
                     width = w
                     height = h
-                    return pprompt, nprompt, width, height, steps, sampler, cfg, seed, self.img_path, exif
+                    return (
+                        pprompt, nprompt, width, height, steps, sampler,
+                        cfg, seed, self.img_path, exif
+                    )
                 while True:
                     length_chunk = file.read(4)
                     if not length_chunk:
@@ -185,7 +196,9 @@ class GalleryManager:
                         w, h = im.size
                         width = w
                         height = h
-                        return pprompt, nprompt, width, height, steps, sampler, cfg, seed, self.img_path, exif
+                        return (
+                            pprompt, nprompt, width, height, steps, sampler,
+                            cfg, seed, self.img_path, exif)
                     length = int.from_bytes(length_chunk, byteorder='big')
                     chunk_type = file.read(4).decode('utf-8')
                     png_block = file.read(length)
@@ -196,16 +209,38 @@ class GalleryManager:
 
                         # Main parsing method
                         exif = f"PNG: tEXt\nPositive prompt: {png_exif}"
-                        ppattern = r'Positive prompt:\s*(?:"(?P<quoted_pprompt>(?:\\.|[^"\\])*)"|(?P<unquoted_pprompt>.*?))\s*(?=\s*(?:Steps:|Negative prompt:))'
-                        npattern = r'Negative prompt:\s*(?:"(?P<quoted_nprompt>(?:\\.|[^"\\])*)"|(?P<unquoted_nprompt>.*?))\s*(?=\s*Steps:)'
+                        ppattern = (
+                            r'Positive prompt:\s*'
+                            r'(?:"(?P<quoted_pprompt>'
+                            r'(?:\\.|[^"\\])*'
+                            r')"'
+                            r'|'
+                            r'(?P<unquoted_pprompt>.*?))'
+                            r'\s*'
+                            r'(?=\s*(?:Steps:|Negative prompt:))'
+                        )
+                        npattern = (
+                            r'Negative prompt:\s*'
+                            r'(?:"(?P<quoted_nprompt>'
+                            r'(?:\\.|[^"\\])*'
+                            r')"'
+                            r'|'
+                            r'(?P<unquoted_nprompt>.*?))'
+                            r'\s*'
+                            r'(?=\s*Steps:)'
+                        )
 
                         pmatch = re.search(ppattern, exif)
                         nmatch = re.search(npattern, exif)
 
                         if pmatch:
-                            pprompt = pmatch.group("quoted_pprompt") or pmatch.group("unquoted_pprompt") or ""
+                            pprompt = (pmatch.group("quoted_pprompt") or
+                                       pmatch.group("unquoted_pprompt") or
+                                       "")
                         if nmatch:
-                            nprompt = nmatch.group("quoted_nprompt") or nmatch.group("unquoted_nprompt") or ""
+                            nprompt = (nmatch.group("quoted_nprompt") or
+                                       nmatch.group("unquoted_nprompt") or
+                                       "")
 
                         # Fallback parsing method (ComfyUI format)
                         if not pprompt and '{"text":' in png_exif:
@@ -218,19 +253,27 @@ class GalleryManager:
                             if len(matches) > 1:
                                 nprompt = matches[1]
 
-                            steps_match_json = re.search(r'"steps":\s*(\d+)', exif)
+                            steps_match_json = re.search(
+                                r'"steps":\s*(\d+)', exif
+                            )
                             if steps_match_json:
                                 steps = int(steps_match_json.group(1))
 
-                            sampler_match_json = re.search(r'"sampler_name":\s*"([^"]+)"', exif)
+                            sampler_match_json = re.search(
+                                r'"sampler_name":\s*"([^"]+)"', exif
+                            )
                             if sampler_match_json:
                                 sampler = sampler_match_json.group(1)
 
-                            cfg_match_json = re.search(r'"cfg":\s*(\d+)', exif)
+                            cfg_match_json = re.search(
+                                r'"cfg":\s*(\d+)', exif
+                            )
                             if cfg_match_json:
                                 cfg = float(int(cfg_match_json.group(1)))
 
-                            seed_match_json = re.search(r'"seed":\s*(\d+)', exif)
+                            seed_match_json = re.search(
+                                r'"seed":\s*(\d+)', exif
+                            )
                             if seed_match_json:
                                 seed = int(seed_match_json.group(1))
 
@@ -241,15 +284,21 @@ class GalleryManager:
 
                         if not steps:
                             steps_pattern = r'Steps:\s*(\d+)(?!.*Steps:)'
-                            steps_match = re.search(steps_pattern, exif, re.DOTALL)
+                            steps_match = re.search(
+                                steps_pattern, exif, re.DOTALL
+                            )
                             if steps_match:
                                 steps = int(steps_match.group(1))
                             else:
                                 steps = None
 
                         if not sampler:
-                            sampler_pattern = r'Sampler:\s*([^\s,]+)(?!.*Sampler:)'
-                            sampler_match = re.search(sampler_pattern, exif, re.DOTALL)
+                            sampler_pattern = (
+                                r'Sampler:\s*([^\s,]+)(?!.*Sampler:)'
+                            )
+                            sampler_match = re.search(
+                                sampler_pattern, exif, re.DOTALL
+                            )
                             if sampler_match:
                                 sampler = sampler_match.group(1)
                             else:
@@ -257,7 +306,9 @@ class GalleryManager:
 
                         if not cfg:
                             cfg_pattern = r'CFG scale:\s*(\d+)(?!.*CFG scale:)'
-                            cfg_match = re.search(cfg_pattern, exif, re.DOTALL)
+                            cfg_match = re.search(
+                                cfg_pattern, exif, re.DOTALL
+                            )
                             if cfg_match:
                                 cfg = float(cfg_match.group(1))
                             else:
@@ -265,23 +316,38 @@ class GalleryManager:
 
                         if not seed:
                             seed_pattern = r'Seed:\s*(\d+)(?!.*Seed:)'
-                            seed_match = re.search(seed_pattern, exif, re.DOTALL)
+                            seed_match = re.search(
+                                seed_pattern, exif, re.DOTALL
+                            )
                             if seed_match:
                                 seed = int(seed_match.group(1))
                             else:
                                 seed = None
 
-                        return pprompt, nprompt, width, height, steps, sampler, cfg, seed, self.img_path, exif
+                        return (
+                            pprompt, nprompt, width, height, steps, sampler,
+                            cfg, seed, self.img_path, exif
+                        )
         return None
 
     def delete_img(self):
         """Deletes a selected image"""
         try:
-            if not hasattr(self, 'img_path') or not os.path.exists(self.img_path):
-                print("Deletion failed: No valid image selected or file does not exist.")
-                imgs, page_num, gallery_update = self.reload_gallery(self.ctrl, self.page_num, subctrl=0)
-                (pprompt, nprompt, width, height, steps, sampler, cfg, seed, img_path, exif) = ("", "", None, None, None, "", None, None, "", "")
-                return (imgs, page_num, gallery_update, pprompt, nprompt, width, height, steps, sampler, cfg, seed, img_path, exif)
+            if (not hasattr(self, 'img_path')
+                    or not os.path.exists(self.img_path)):
+                print("Deletion failed: No valid image selected "
+                      "or file does not exist.")
+                imgs, page_num, gallery_update = self.reload_gallery(
+                    self.ctrl, self.page_num, subctrl=0
+                )
+                (pprompt, nprompt, width, height, steps,
+                    sampler, cfg, seed, img_path, exif) = (
+                    "", "", None, None, None, "", None, None, "", ""
+                )
+                return (
+                    imgs, page_num, gallery_update, pprompt, nprompt, width,
+                    height, steps, sampler, cfg, seed, img_path, exif
+                )
 
             index_of_deleted_img = self.img_index
 
@@ -289,13 +355,19 @@ class GalleryManager:
             print(f"Deleted {self.img_path}")
             img_dir = self._get_img_dir()
             file_paths = sorted(
-                [os.path.join(img_dir, f) for f in os.listdir(img_dir) if f.lower().endswith(('.png', '.jpg'))],
+                [
+                    os.path.join(img_dir, f)
+                    for f in os.listdir(img_dir)
+                    if f.lower().endswith(('.png', '.jpg'))
+                ],
                 key=os.path.getctime
             )
             total_imgs = len(file_paths)
 
             if total_imgs == 0:
-                self.page_num, self.sel_img, self.img_index, self.img_path = 1, None, 0, ""
+                self.page_num, self.sel_img, self.img_index, self.img_path = (
+                    1, None, 0, ""
+                )
                 return ([], 1, gr.Gallery(value=None, selected_index=None),
                         "", "", None, None, None, "", None, None, "", "")
 
@@ -307,23 +379,34 @@ class GalleryManager:
             self.page_num = (new_selected_index // 16) + 1
             self.sel_img = new_selected_index % 16
 
-            imgs, _, _ = self.reload_gallery(self.ctrl, self.page_num, subctrl=0)
+            imgs, _, _ = self.reload_gallery(
+                self.ctrl, self.page_num, subctrl=0
+            )
 
             img_info_tuple = self.img_info(self.sel_img)
             if img_info_tuple is None:
-                raise ValueError("Failed to retrieve information for the new image.")
+                raise ValueError(
+                    "Failed to retrieve information for the new image."
+                )
 
-            pprompt, nprompt, width, height, steps, sampler, cfg, seed, img_path, exif = img_info_tuple
+            (
+                pprompt, nprompt, width, height, steps,
+                sampler, cfg, seed, img_path, exif
+            ) = img_info_tuple
             gallery_update = gr.Gallery(selected_index=self.sel_img)
 
             return (
                 imgs, self.page_num, gallery_update,
-                pprompt, nprompt, width, height, steps, sampler, cfg, seed, img_path, exif
+                pprompt, nprompt, width, height, steps,
+                sampler, cfg, seed, img_path, exif
             )
 
         except Exception as e:
             print(f"An error occurred in delete_img: {e}")
-            return ([], 1, gr.Gallery(value=None), "", "", None, None, None, "", None, None, "", "")
+            return (
+                [], 1, gr.Gallery(value=None), "", "", None,
+                None, None, "", None, None, "", ""
+            )
 
 
 def get_next_img(subctrl):

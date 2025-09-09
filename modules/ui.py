@@ -352,9 +352,11 @@ def create_video_model_sel_ui():
                     outputs=[video_model_components['high_noise_model']]
                 )
 
-                video_model_components['clear_high_noise_model'] = gr.ClearButton(
-                    video_model_components['high_noise_model'],
-                    scale=1
+                video_model_components['clear_high_noise_model'] = (
+                    gr.ClearButton(
+                        video_model_components['high_noise_model'],
+                        scale=1
+                    )
                 )
 
     # Return the dictionary with all UI components
@@ -462,8 +464,10 @@ def create_settings_ui():
             )
             settings_components['switch_size'].click(
                 switch_sizes,
-                inputs=[settings_components['height'], settings_components['width']],
-                outputs=[settings_components['height'], settings_components['width']]
+                inputs=[settings_components['height'],
+                        settings_components['width']],
+                outputs=[settings_components['height'],
+                         settings_components['width']]
             )
         settings_components['batch_count'] = gr.Slider(
             label="Batch count",
@@ -535,7 +539,8 @@ def create_extras_ui():
             maximum=os.cpu_count(),
             value=0
         )
-        extras_components['offload_to_cpu'] = gr.Checkbox(label="Offload to CPU")
+        extras_components['offload_to_cpu'] = gr.Checkbox(
+            label="Offload to CPU")
         extras_components['vae_tiling'] = gr.Checkbox(label="VAE Tiling")
         extras_components['vae_cpu'] = gr.Checkbox(label="VAE on CPU")
         extras_components['clip_cpu'] = gr.Checkbox(label="CLIP on CPU")
@@ -559,7 +564,8 @@ def create_extras_ui():
             label="Flash Attention", value=def_flash_attn
         )
         extras_components['diffusion_conv_direct'] = gr.Checkbox(
-            label="Conv2D Direct for diffusion", value=def_diffusion_conv_direct
+            label="Conv2D Direct for diffusion",
+            value=def_diffusion_conv_direct
         )
         extras_components['vae_conv_direct'] = gr.Checkbox(
             label="Conv2D Direct for VAE", value=def_vae_conv_direct
