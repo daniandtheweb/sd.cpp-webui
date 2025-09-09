@@ -49,6 +49,9 @@ with gr.Blocks() as any2video_block:
     clip_vision_h = video_model_components['clip_vision_h']
     reload_clip_vision_h_btn = video_model_components['reload_clip_vision_h_btn']
     clear_clip_vision_h = video_model_components['clear_clip_vision_h']
+    high_noise_model = video_model_components['high_noise_model']
+    reload_high_noise_model = video_model_components['reload_high_noise_model']
+    clear_high_noise_model = video_model_components['clear_high_noise_model']
 
     # Model Type Selection
     with gr.Row():
@@ -303,16 +306,16 @@ with gr.Blocks() as any2video_block:
     gen_btn.click(
         any2video,
         inputs=[unet_model, unet_vae, umt5_xxl, clip_vision_h,
-                model_type, taesd_model, phtmkr_model, phtmkr_in,
-                phtmkr_nrml, img_inp, first_frame_inp, last_frame_inp, upscl,
-                upscl_rep, cnnet, control_img, control_strength,
-                pprompt_any2video, nprompt_any2video, sampling_any2video,
-                steps_any2video, scheduler, width_any2video, height_any2video,
-                batch_count, cfg_any2video, frames, fps, flow_shift_toggle,
-                flow_shift, seed_any2video, clip_skip, threads, offload_to_cpu,
-                vae_tiling, vae_cpu, clip_cpu, cnnet_cpu, canny, rng,
-                predict, output, color, flash_attn, diffusion_conv_direct,
-                vae_conv_direct, verbose],
+                high_noise_model, model_type, taesd_model, phtmkr_model,
+                phtmkr_in, phtmkr_nrml, img_inp, first_frame_inp,
+                last_frame_inp, upscl, upscl_rep, cnnet, control_img,
+                control_strength, pprompt_any2video, nprompt_any2video,
+                sampling_any2video, steps_any2video, scheduler,
+                width_any2video, height_any2video, batch_count, cfg_any2video,
+                frames, fps, flow_shift_toggle, flow_shift, seed_any2video,
+                clip_skip, threads, offload_to_cpu, vae_tiling, vae_cpu,
+                clip_cpu, cnnet_cpu, canny, rng, predict, output, color,
+                flash_attn, diffusion_conv_direct, vae_conv_direct, verbose],
         outputs=[command, progress_slider, progress_textbox, stats, video_final]
     )
     kill_btn.click(

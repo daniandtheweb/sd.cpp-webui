@@ -322,8 +322,8 @@ def img2img(
 
 def any2video(
     in_unet_model=None, in_unet_vae=None, in_clip_vision_h=None,
-    in_umt5_xxl=None, in_model_type="Default", in_taesd=None,
-    in_phtmkr=None, in_phtmkr_in=None, in_phtmkr_nrml=False,
+    in_umt5_xxl=None, in_high_noise_model=None, in_model_type="Default",
+    in_taesd=None, in_phtmkr=None, in_phtmkr_in=None, in_phtmkr_nrml=False,
     in_img_inp=None, in_first_frame_inp=None, in_last_frame_inp=None,
     in_upscl=None, in_upscl_rep=1, in_cnnet=None, in_control_img=None,
     in_control_strength=1.0, in_ppromt="", in_nprompt="",
@@ -343,6 +343,7 @@ def any2video(
     funet_vae = get_path(vae_dir, in_unet_vae)
     fclip_vision_h = get_path(clip_dir, in_clip_vision_h)
     fumt5_xxl = get_path(clip_dir, in_umt5_xxl)
+    fhigh_noise_model = get_path(unet_dir, in_high_noise_model)
     ftaesd = get_path(taesd_dir, in_taesd)
     fphtmkr = get_path(phtmkr_dir, in_phtmkr)
     fupscl = get_path(upscl_dir, in_upscl)
@@ -378,6 +379,7 @@ def any2video(
         '--vae': funet_vae,
         '--clip_vision': fclip_vision_h,
         '--t5xxl': fumt5_xxl,
+        '--high-noise-diffusion-model': fhigh_noise_model,
         '--taesd': ftaesd,
         '--stacked-id-embd-dir': fphtmkr,
         '--input-id-images-dir': str(in_phtmkr_in) if fphtmkr else None,
