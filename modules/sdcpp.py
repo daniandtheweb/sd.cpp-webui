@@ -88,13 +88,13 @@ def txt2img(
     in_control_strength=1.0, in_ppromt="", in_nprompt="",
     in_sampling="default", in_steps=50, in_scheduler="default",
     in_width=512, in_height=512, in_batch_count=1,
-    in_cfg=7.0, in_seed=42, in_clip_skip=-1, in_threads=0,
-    in_offload_to_cpu=False, in_vae_tiling=False, in_vae_cpu=False,
-    in_clip_cpu=False, in_cnnet_cpu=False, in_canny=False,
-    in_rng="default", in_predict="Default", in_output=None,
-    in_color=False, in_flash_attn=False, in_diffusion_conv_direct=False,
-    in_vae_conv_direct=False,
-    in_verbose=False
+    in_cfg=7.0, in_guidance_btn=False, in_guidance=3.5, in_seed=42,
+    in_clip_skip=-1, in_threads=0, in_offload_to_cpu=False,
+    in_vae_tiling=False, in_vae_cpu=False, in_clip_cpu=False,
+    in_cnnet_cpu=False, in_canny=False, in_rng="default",
+    in_predict="Default", in_output=None, in_color=False,
+    in_flash_attn=False, in_diffusion_conv_direct=False,
+    in_vae_conv_direct=False, in_verbose=False
 ):
     """Text to image command creator"""
     fckpt_model = get_path(ckpt_dir, in_ckpt_model)
@@ -142,6 +142,7 @@ def txt2img(
         '--taesd': ftaesd,
         '--stacked-id-embd-dir': fphtmkr,
         '--input-id-images-dir': str(in_phtmkr_in) if fphtmkr else None,
+        '--guidance': str(in_guidance) if in_guidance_btn else None,
         '--upscale-model': fupscl,
         '--upscale-repeats': str(in_upscl_rep) if fupscl else None,
         '--type': in_model_type if in_model_type != "Default" else None,
@@ -231,10 +232,11 @@ def img2img(
     in_nprompt="", in_sampling="default", in_steps=50,
     in_scheduler="default", in_width=512, in_height=512,
     in_batch_count=1, in_strenght=0.75, in_style_ratio=1.0,
-    in_style_ratio_btn=False, in_cfg=7.0, in_img_cfg=7.0,
-    in_img_cfg_btn=False, in_seed=42, in_clip_skip=-1, in_threads=0,
-    in_offload_to_cpu=False, in_vae_tiling=False, in_vae_cpu=False,
-    in_clip_cpu=False, in_cnnet_cpu=False, in_canny=False, in_rng="default",
+    in_style_ratio_btn=False, in_cfg=7.0, in_guidance_btn=False,
+    in_guidance=3.5, in_img_cfg=7.0, in_img_cfg_btn=False, in_seed=42,
+    in_clip_skip=-1, in_threads=0, in_offload_to_cpu=False,
+    in_vae_tiling=False, in_vae_cpu=False, in_clip_cpu=False,
+    in_cnnet_cpu=False, in_canny=False, in_rng="default",
     in_predict="Default", in_output=None, in_color=False,
     in_flash_attn=False, in_diffusion_conv_direct=False,
     in_vae_conv_direct=False, in_verbose=False
@@ -291,6 +293,7 @@ def img2img(
         '--img-cfg-scale': str(in_img_cfg) if in_img_cfg_btn else None,
         '--style-ratio': str(in_style_ratio) if in_style_ratio_btn else None,
         '--prediction': in_predict if in_predict != "Default" else None,
+        '--guidance': str(in_guidance) if in_guidance_btn else None,
         '--upscale-model': fupscl,
         '--upscale-repeats': str(in_upscl_rep) if fupscl else None,
         '--control-net': fcnnet,

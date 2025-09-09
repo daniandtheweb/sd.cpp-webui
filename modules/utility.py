@@ -37,6 +37,8 @@ class ModelState:
         self.bak_clip_g = def_clip_g
         self.bak_clip_l = def_clip_l
         self.bak_t5xxl = def_t5xxl
+        self.bak_guidance_btn = False
+        self.bak_guidance = 3.5
 
     def update(self, **kwargs):
         """Generic method to update state variables.
@@ -59,14 +61,17 @@ class ModelState:
             bak_ckpt_vae=ckpt_vae,
         )
 
-    def bak_unet_tab(self, unet_model, unet_vae, clip_g, clip_l, t5xxl):
+    def bak_unet_tab(self, unet_model, unet_vae, clip_g, clip_l, t5xxl,
+                     guidance_btn, guidance):
         """Updates the state with values from the UNET tab."""
         self.update(
             bak_unet_model=unet_model,
             bak_unet_vae=unet_vae,
             bak_clip_g=clip_g,
             bak_clip_l=clip_l,
-            bak_t5xxl=t5xxl
+            bak_t5xxl=t5xxl,
+            bak_guidance_btn=guidance_btn,
+            bak_guidance=guidance
         )
 
 
@@ -259,49 +264,40 @@ def get_path(directory, filename):
     return os.path.join(directory, filename) if filename else None
 
 
-def switch_tab_components(
-    ckpt_model=None, unet_model=None, ckpt_vae=None, unet_vae=None,
-    clip_g=None, clip_l=None, t5xxl=None
-):
-    """Helper function to switch the tab components"""
-    return (
-        gr.update(value=ckpt_model),
-        gr.update(value=unet_model),
-        gr.update(value=ckpt_vae),
-        gr.update(value=unet_vae),
-        gr.update(value=clip_g),
-        gr.update(value=clip_l),
-        gr.update(value=t5xxl)
-    )
-
-
-def unet_tab_switch(ckpt_model, ckpt_vae):
+def unet_tab_switch(ckpt_model, ckpt_vae,
+                    guidance_btn, guidance):
     """Switches to the UNET tab"""
     model_state.bak_ckpt_tab(ckpt_model, ckpt_vae)
 
-    return switch_tab_components(
-        ckpt_model=None,
-        unet_model=model_state.bak_unet_model,
-        ckpt_vae=None,
-        unet_vae=model_state.bak_unet_vae,
-        clip_g=model_state.bak_clip_g,
-        clip_l=model_state.bak_clip_l,
-        t5xxl=model_state.bak_t5xxl
+    return (
+        gr.update(value=None),
+        gr.update(value=model_state.bak_unet_model),
+        gr.update(value=None),
+        gr.update(value=model_state.bak_unet_vae),
+        gr.update(value=model_state.bak_clip_g),
+        gr.update(value=model_state.bak_clip_l),
+        gr.update(value=model_state.bak_t5xxl),
+        gr.update(value=model_state.bak_guidance_btn, visible=True),
+        gr.update(value=model_state.bak_guidance, visible=True)
     )
 
 
-def ckpt_tab_switch(unet_model, unet_vae, clip_g, clip_l, t5xxl):
+def ckpt_tab_switch(unet_model, unet_vae, clip_g, clip_l, t5xxl,
+                    guidance_btn, guidance):
     """Switches to the checkpoint tab"""
-    model_state.bak_unet_tab(unet_model, unet_vae, clip_g, clip_l, t5xxl)
+    model_state.bak_unet_tab(unet_model, unet_vae, clip_g, clip_l, t5xxl,
+                             guidance_btn, guidance)
 
-    return switch_tab_components(
-        ckpt_model=model_state.bak_ckpt_model,
-        unet_model=None,
-        ckpt_vae=model_state.bak_ckpt_vae,
-        unet_vae=None,
-        clip_g=None,
-        clip_l=None,
-        t5xxl=None
+    return (
+        gr.update(value=model_state.bak_ckpt_model),
+        gr.update(value=None),
+        gr.update(value=model_state.bak_ckpt_vae),
+        gr.update(value=None),
+        gr.update(value=None),
+        gr.update(value=None),
+        gr.update(value=None),
+        gr.update(value=False, visible=False),
+        gr.update(visible=False)
     )
 
 

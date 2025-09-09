@@ -484,6 +484,20 @@ def create_settings_ui():
         step=0.1,
         interactive=True
     )
+    with gr.Row():
+        settings_components['guidance_btn'] = gr.Checkbox(
+            label="Enable distilled guidance", value=False,
+            visible=False
+        )
+        settings_components['guidance'] = gr.Slider(
+            label="Guidance",
+            minimum=0,
+            maximum=30,
+            value=3.5,
+            step=0.1,
+            interactive=True,
+            visible=False
+        )
 
     # Return the dictionary with all UI components
     return settings_components

@@ -139,6 +139,8 @@ with gr.Blocks() as txt2img_block:
             switch_size = settings_components['switch_size']
             batch_count = settings_components['batch_count']
             cfg_txt2img = settings_components['cfg']
+            guidance_btn = settings_components['guidance_btn']
+            guidance = settings_components['guidance']
 
             with gr.Row():
                 seed_txt2img = gr.Number(
@@ -268,10 +270,11 @@ with gr.Blocks() as txt2img_block:
                 upscl, upscl_rep, cnnet, control_img,
                 control_strength, pprompt_txt2img, nprompt_txt2img,
                 sampling_txt2img, steps_txt2img, scheduler, width_txt2img,
-                height_txt2img, batch_count, cfg_txt2img, seed_txt2img,
-                clip_skip, threads, offload_to_cpu, vae_tiling, vae_cpu,
-                clip_cpu, cnnet_cpu, canny, rng, predict, output, color,
-                flash_attn, diffusion_conv_direct, vae_conv_direct, verbose],
+                height_txt2img, batch_count, cfg_txt2img, guidance_btn,
+                guidance, seed_txt2img, clip_skip, threads, offload_to_cpu,
+                vae_tiling, vae_cpu, clip_cpu, cnnet_cpu, canny, rng, predict,
+                output, color, flash_attn, diffusion_conv_direct,
+                vae_conv_direct, verbose],
         outputs=[command, progress_slider, progress_textbox, stats, img_final]
     )
     kill_btn.click(
@@ -283,15 +286,16 @@ with gr.Blocks() as txt2img_block:
     # Interactive Bindings
     ckpt_tab.select(
         ckpt_tab_switch,
-        inputs=[unet_model, unet_vae, clip_g, clip_l, t5xxl],
+        inputs=[unet_model, unet_vae, clip_g, clip_l, t5xxl,
+                guidance_btn, guidance],
         outputs=[ckpt_model, unet_model, ckpt_vae, unet_vae, clip_g, clip_l,
-                 t5xxl]
+                 t5xxl, guidance_btn, guidance]
     )
     unet_tab.select(
         unet_tab_switch,
-        inputs=[ckpt_model, ckpt_vae],
+        inputs=[ckpt_model, ckpt_vae, guidance_btn, guidance],
         outputs=[ckpt_model, unet_model, ckpt_vae, unet_vae, clip_g, clip_l,
-                 t5xxl]
+                 t5xxl, guidance_btn, guidance]
     )
     reload_taesd_btn.click(
         reload_models,
