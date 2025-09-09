@@ -308,13 +308,13 @@ with gr.Blocks()as img2img_block:
         ckpt_tab_switch,
         inputs=[unet_model, unet_vae, clip_g, clip_l, t5xxl],
         outputs=[ckpt_model, unet_model, ckpt_vae, unet_vae, clip_g, clip_l,
-                 t5xxl, pprompt_img2img, nprompt_img2img]
+                 t5xxl]
     )
     unet_tab.select(
         unet_tab_switch,
-        inputs=[ckpt_model, ckpt_vae, nprompt_img2img],
+        inputs=[ckpt_model, ckpt_vae],
         outputs=[ckpt_model, unet_model, ckpt_vae, unet_vae, clip_g, clip_l,
-                 t5xxl, pprompt_img2img, nprompt_img2img]
+                 t5xxl]
     )
     reload_taesd_btn.click(
         reload_models,

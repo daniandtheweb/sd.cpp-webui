@@ -25,7 +25,6 @@ class ModelState:
         bak_clip_g: The backup CLIP_G model.
         bak_clip_l: The backup CLIP_L model.
         bak_t5xxl: The backup T5-XXL model.
-        bak_nprompt: The backup negative prompt.
     """
 
     def __init__(self):
@@ -38,7 +37,6 @@ class ModelState:
         self.bak_clip_g = def_clip_g
         self.bak_clip_l = def_clip_l
         self.bak_t5xxl = def_t5xxl
-        self.bak_nprompt = None
 
     def update(self, **kwargs):
         """Generic method to update state variables.
@@ -52,12 +50,11 @@ class ModelState:
             else:
                 raise AttributeError(f"{key} is not a valid attribute of ModelState.")
 
-    def bak_ckpt_tab(self, ckpt_model, ckpt_vae, nprompt):
+    def bak_ckpt_tab(self, ckpt_model, ckpt_vae):
         """Updates the state with values from the checkpoint tab."""
         self.update(
             bak_ckpt_model=ckpt_model,
             bak_ckpt_vae=ckpt_vae,
-            bak_nprompt=nprompt
         )
 
     def bak_unet_tab(self, unet_model, unet_vae, clip_g, clip_l, t5xxl):
@@ -252,7 +249,7 @@ def get_path(directory, filename):
 
 def switch_tab_components(
     ckpt_model=None, unet_model=None, ckpt_vae=None, unet_vae=None,
-    clip_g=None, clip_l=None, t5xxl=None, pprompt=None, nprompt=None
+    clip_g=None, clip_l=None, t5xxl=None
 ):
     """Helper function to switch the tab components"""
     return (
@@ -262,21 +259,13 @@ def switch_tab_components(
         gr.update(value=unet_vae),
         gr.update(value=clip_g),
         gr.update(value=clip_l),
-        gr.update(value=t5xxl),
-        gr.update(
-            label=pprompt[0],
-            placeholder=pprompt[1]
-        ) if pprompt else None,
-        gr.update(
-            value=nprompt[0],
-            visible=nprompt[1]
-        ) if nprompt else None
+        gr.update(value=t5xxl)
     )
 
 
-def unet_tab_switch(ckpt_model, ckpt_vae, nprompt):
+def unet_tab_switch(ckpt_model, ckpt_vae):
     """Switches to the UNET tab"""
-    model_state.bak_ckpt_tab(ckpt_model, ckpt_vae, nprompt)
+    model_state.bak_ckpt_tab(ckpt_model, ckpt_vae)
 
     return switch_tab_components(
         ckpt_model=None,
@@ -285,9 +274,7 @@ def unet_tab_switch(ckpt_model, ckpt_vae, nprompt):
         unet_vae=model_state.bak_unet_vae,
         clip_g=model_state.bak_clip_g,
         clip_l=model_state.bak_clip_l,
-        t5xxl=model_state.bak_t5xxl,
-        pprompt=("Prompt", "Prompt"),
-        nprompt=(None, False)
+        t5xxl=model_state.bak_t5xxl
     )
 
 
@@ -302,9 +289,7 @@ def ckpt_tab_switch(unet_model, unet_vae, clip_g, clip_l, t5xxl):
         unet_vae=None,
         clip_g=None,
         clip_l=None,
-        t5xxl=None,
-        pprompt=("Positive Prompt", "Positive Prompt"),
-        nprompt=(model_state.bak_nprompt, True)
+        t5xxl=None
     )
 
 
