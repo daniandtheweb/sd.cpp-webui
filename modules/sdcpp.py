@@ -30,7 +30,8 @@ def command_generator(
         mode: e.g. 'img_gen'
         prompt: positive prompt
         nprompt: negative prompt
-        additional_args: list of fixed arguments (e.g. sampling method, steps, width/height, etc.)
+        additional_args: list of fixed arguments (e.g. sampling method,
+        steps, width/height, etc.)
         options: dict of key-value pairs (only added if value is not None)
         flags: dict of boolean flags (only added if True)
         output_path: primary output file (including .png)
@@ -71,7 +72,9 @@ def command_generator(
         outputs = [output_path]
     else:
         base = output_path[:-4]  # remove the ".png"
-        outputs = [output_path] + [f"{base}_{i}.png" for i in range(2, batch_count + 1)]
+        outputs = [output_path] + [
+            f"{base}_{i}.png" for i in range(2, batch_count + 1)
+        ]
 
     return command, fcommand, outputs
 
@@ -179,7 +182,13 @@ def txt2img(
 
     print(f"\n\n{fcommand}\n\n")
 
-    yield fcommand, gr.update(visible=True, value=0), gr.update(visible=True, value="Initializing..."), gr.update(value=""), None
+    yield (
+        fcommand,
+        gr.update(visible=True, value=0),
+        gr.update(visible=True, value="Initializing..."),
+        gr.update(value=""),
+        None
+    )
 
     for update in subprocess_manager.run_subprocess(command):
         if "final_stats" in update:
@@ -190,11 +199,26 @@ def txt2img(
             d_time = stats.get('decoding_time', 'N/A')
             t_time = stats.get('total_time', 'N/A')
             speed = stats.get('last_speed', 'N/A')
-            final_stats_str = f"Tensor Load: {l_time} | Sampling: {s_time} | Decode: {d_time} | Total: {t_time} | Last Speed: {speed}"
+            final_stats_str = (
+                    f"Tensor Load: {l_time} | Sampling: {s_time} | "
+                    f"Decode: {d_time} | Total: {t_time} | Last Speed: {speed}"
+            )
         else:
-            yield fcommand, gr.update(value=update["percent"]), update["status"], gr.update(value=""), None
+            yield (
+                fcommand,
+                gr.update(value=update["percent"]),
+                update["status"],
+                gr.update(value=""),
+                None
+            )
 
-    yield fcommand, gr.update(visible=False, value=100), gr.update(visible=False, value=""), gr.update(value=final_stats_str), outputs
+    yield (
+        fcommand,
+        gr.update(visible=False, value=100),
+        gr.update(visible=False, value=""),
+        gr.update(value=final_stats_str),
+        outputs
+    )
 
 
 def img2img(
@@ -302,7 +326,13 @@ def img2img(
 
     print(f"\n\n{fcommand}\n\n")
 
-    yield fcommand, gr.update(visible=True, value=0), gr.update(visible=True, value="Initializing..."), gr.update(value=""), None
+    yield (
+        fcommand,
+        gr.update(visible=True, value=0),
+        gr.update(visible=True, value="Initializing..."),
+        gr.update(value=""),
+        None
+    )
 
     for update in subprocess_manager.run_subprocess(command):
         if "final_stats" in update:
@@ -313,11 +343,26 @@ def img2img(
             d_time = stats.get('decoding_time', 'N/A')
             t_time = stats.get('total_time', 'N/A')
             speed = stats.get('last_speed', 'N/A')
-            final_stats_str = f"Tensor Load: {l_time} | Sampling: {s_time} | Decode: {d_time} | Total: {t_time} | Last Speed: {speed}"
+            final_stats_str = (
+                f"Tensor Load: {l_time} | Sampling: {s_time} | "
+                f"Decode: {d_time} | Total: {t_time} | Last Speed: {speed}"
+            )
         else:
-            yield fcommand, gr.update(value=update["percent"]), update["status"], gr.update(value=""), None
+            yield (
+                fcommand,
+                gr.update(value=update["percent"]),
+                update["status"],
+                gr.update(value=""),
+                None
+            )
 
-    yield fcommand, gr.update(visible=False, value=100), gr.update(visible=False, value=""), gr.update(value=final_stats_str), outputs
+    yield (
+        fcommand,
+        gr.update(visible=False, value=100),
+        gr.update(visible=False, value=""),
+        gr.update(value=final_stats_str),
+        outputs
+    )
 
 
 def any2video(
@@ -383,8 +428,16 @@ def any2video(
         '--taesd': ftaesd,
         '--stacked-id-embd-dir': fphtmkr,
         '--input-id-images-dir': str(in_phtmkr_in) if fphtmkr else None,
-        '--init-img': str(in_img_inp or in_first_frame_inp) if (in_img_inp or in_first_frame_inp) else None,
-        '--end-img': str(in_last_frame_inp) if in_last_frame_inp is not None else None,
+        '--init-img': (
+            str(in_img_inp or in_first_frame_inp)
+            if (in_img_inp or in_first_frame_inp)
+            else None
+        ),
+        '--end-img': (
+            str(in_last_frame_inp)
+            if in_last_frame_inp is not None
+            else None
+        ),
         '--upscale-model': fupscl,
         '--upscale-repeats': str(in_upscl_rep) if fupscl else None,
         '--type': in_model_type if in_model_type != "Default" else None,
@@ -426,7 +479,13 @@ def any2video(
 
     print(f"\n\n{fcommand}\n\n")
 
-    yield fcommand, gr.update(visible=True, value=0), gr.update(visible=True, value="Initializing..."), gr.update(value=""), None
+    yield (
+        fcommand,
+        gr.update(visible=True, value=0),
+        gr.update(visible=True, value="Initializing..."),
+        gr.update(value=""),
+        None
+    )
 
     for update in subprocess_manager.run_subprocess(command):
         if "final_stats" in update:
@@ -437,11 +496,26 @@ def any2video(
             d_time = stats.get('decoding_time', 'N/A')
             t_time = stats.get('total_time', 'N/A')
             speed = stats.get('last_speed', 'N/A')
-            final_stats_str = f"Tensor Load: {l_time} | Sampling: {s_time} | Decode: {d_time} | Total: {t_time} | Last Speed: {speed}"
+            final_stats_str = (
+                f"Tensor Load: {l_time} | Sampling: {s_time} | "
+                f"Decode: {d_time} | Total: {t_time} | Last Speed: {speed}"
+            )
         else:
-            yield fcommand, gr.update(value=update["percent"]), update["status"], gr.update(value=""), None
+            yield (
+                fcommand,
+                gr.update(value=update["percent"]),
+                update["status"],
+                gr.update(value=""),
+                None
+            )
 
-    yield fcommand, gr.update(visible=False, value=100), gr.update(visible=False, value=""), gr.update(value=final_stats_str), outputs
+    yield (
+        fcommand,
+        gr.update(visible=False, value=100),
+        gr.update(visible=False, value=""),
+        gr.update(value=final_stats_str),
+        outputs
+    )
 
 
 def convert(
