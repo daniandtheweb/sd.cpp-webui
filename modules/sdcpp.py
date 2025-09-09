@@ -231,13 +231,13 @@ def img2img(
     in_nprompt="", in_sampling="default", in_steps=50,
     in_scheduler="default", in_width=512, in_height=512,
     in_batch_count=1, in_strenght=0.75, in_style_ratio=1.0,
-    in_style_ratio_btn=False, in_cfg=7.0, in_seed=42, in_clip_skip=-1,
-    in_threads=0, in_offload_to_cpu=False, in_vae_tiling=False,
-    in_vae_cpu=False, in_clip_cpu=False, in_cnnet_cpu=False,
-    in_canny=False, in_rng="default", in_predict="Default",
-    in_output=None, in_color=False, in_flash_attn=False,
-    in_diffusion_conv_direct=False, in_vae_conv_direct=False,
-    in_verbose=False
+    in_style_ratio_btn=False, in_cfg=7.0, in_img_cfg=7.0,
+    in_img_cfg_btn=False, in_seed=42, in_clip_skip=-1, in_threads=0,
+    in_offload_to_cpu=False, in_vae_tiling=False, in_vae_cpu=False,
+    in_clip_cpu=False, in_cnnet_cpu=False, in_canny=False, in_rng="default",
+    in_predict="Default", in_output=None, in_color=False,
+    in_flash_attn=False, in_diffusion_conv_direct=False,
+    in_vae_conv_direct=False, in_verbose=False
 ):
     """Image to image command creator"""
     # Construct file paths
@@ -288,6 +288,7 @@ def img2img(
         '--taesd': ftaesd,
         '--stacked-id-embd-dir': fphtmkr,
         '--input-id-images-dir': str(in_phtmkr_in),
+        '--img-cfg-scale': str(in_img_cfg) if in_img_cfg_btn else None,
         '--style-ratio': str(in_style_ratio) if in_style_ratio_btn else None,
         '--prediction': in_predict if in_predict != "Default" else None,
         '--upscale-model': fupscl,

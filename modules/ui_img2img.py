@@ -142,21 +142,33 @@ with gr.Blocks()as img2img_block:
             batch_count = settings_components['batch_count']
             cfg_img2img = settings_components['cfg']
 
-            strenght = gr.Slider(
-                label="Noise strenght",
-                minimum=0,
-                maximum=1,
-                step=0.01,
-                value=0.75
-            )
-            style_ratio_btn = gr.Checkbox(label="Enable style-ratio")
-            style_ratio = gr.Slider(
-                label="Style ratio",
-                minimum=0,
-                maximum=100,
-                step=1,
-                value=20
-            )
+            with gr.Row():
+                img_cfg_btn = gr.Checkbox(label="Enable Image CFG")
+                img_cfg = gr.Slider(
+                    label="Image CFG (inpaint or instruct-pix2pix models)",
+                    minimum=1,
+                    maximum=30,
+                    value=7.0,
+                    step=0.1,
+                    interactive=True
+                )
+            with gr.Row():
+                strenght = gr.Slider(
+                    label="Noise strenght",
+                    minimum=0,
+                    maximum=1,
+                    step=0.01,
+                    value=0.75
+                )
+            with gr.Row():
+                style_ratio_btn = gr.Checkbox(label="Enable style-ratio")
+                style_ratio = gr.Slider(
+                    label="Style ratio",
+                    minimum=0,
+                    maximum=100,
+                    step=1,
+                    value=20
+                )
             with gr.Row():
                 seed_img2img = gr.Number(
                     label="Seed",
@@ -290,11 +302,11 @@ with gr.Blocks()as img2img_block:
                 control_img, control_strength, pprompt_img2img,
                 nprompt_img2img, sampling_img2img, steps_img2img, scheduler,
                 width_img2img, height_img2img, batch_count,
-                strenght, style_ratio, style_ratio_btn,
-                cfg_img2img, seed_img2img, clip_skip, threads, offload_to_cpu,
-                vae_tiling, vae_cpu, clip_cpu, cnnet_cpu, canny, rng, predict,
-                output, color, flash_attn, diffusion_conv_direct,
-                vae_conv_direct, verbose],
+                strenght, style_ratio, style_ratio_btn, cfg_img2img, img_cfg,
+                img_cfg_btn, seed_img2img, clip_skip, threads,
+                offload_to_cpu, vae_tiling, vae_cpu, clip_cpu, cnnet_cpu,
+                canny, rng, predict, output, color, flash_attn,
+                diffusion_conv_direct, vae_conv_direct, verbose],
         outputs=[command, progress_slider, progress_textbox, stats, img_final]
     )
     kill_btn.click(
