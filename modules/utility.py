@@ -48,7 +48,9 @@ class ModelState:
             if hasattr(self, key):
                 setattr(self, key, value)
             else:
-                raise AttributeError(f"{key} is not a valid attribute of ModelState.")
+                raise AttributeError(
+                    f"{key} is not a valid attribute of ModelState."
+                )
 
     def bak_ckpt_tab(self, ckpt_model, ckpt_vae):
         """Updates the state with values from the checkpoint tab."""
@@ -79,14 +81,15 @@ class SubprocessManager:
     def __init__(self):
         """Initializes the SubprocessManager with no active subprocess."""
         self.process = None
-        # --- Patterns are now defined once as class attributes ---
         self.STATS_REGEX = re.compile(r"completed, taking ([\d.]+)s")
         self.TOTAL_TIME_REGEX = re.compile(r"completed in ([\d.]+)s")
         self.ETA_REGEX = re.compile(r'(\d+)/(\d+)\s*-\s*([\d.]+)(s/it|it/s)')
         self.SIMPLE_REGEX = re.compile(r'(\d+)/(\d+)')
 
     def _parse_final_stats(self, line, final_stats):
-        """Parses a line for final summary stats and updates the stats dictionary."""
+        """
+        Parses a line for final summary stats and updates the stats dictionary.
+        """
         if 'loading tensors completed' in line:
             match = self.STATS_REGEX.search(line)
             if match:
@@ -108,8 +111,11 @@ class SubprocessManager:
         """Parses a progress bar line and returns a dictionary for the UI."""
         eta_match = self.ETA_REGEX.search(line)
         if eta_match:
-            current_step, total_steps, speed_value, speed_unit = eta_match.groups()
-            final_stats['last_speed'] = f"{float(speed_value):.2f} {speed_unit}"
+            (current_step, total_steps,
+             speed_value, speed_unit) = eta_match.groups()
+            final_stats['last_speed'] = (
+                    f"{float(speed_value):.2f} {speed_unit}"
+            )
 
             current_step, total_steps = map(int, [current_step, total_steps])
             speed_value = float(speed_value)
@@ -137,7 +143,10 @@ class SubprocessManager:
 
             return {
                 "percent": int(phase_fraction * 100),
-                "status": f"Speed: {final_stats['last_speed']} | ETA: {eta_str}"
+                "status": (
+                    f"Speed: {final_stats['last_speed']} | "
+                    f"ETA: {eta_str}"
+                )
             }
 
         # Fallback for progress lines without ETA info
@@ -183,7 +192,10 @@ class SubprocessManager:
 
                     if "|" in output_line and "/" in output_line:
                         if phase == "Sampling":
-                            update_data = self._parse_progress_update(output_line, final_stats)
+                            update_data = self._parse_progress_update(
+                                output_line,
+                                final_stats
+                            )
                             if update_data:
                                 yield update_data
 

@@ -6,7 +6,7 @@ from modules.sdcpp import convert
 from modules.utility import subprocess_manager
 from modules.config import (
     ckpt_dir, vae_dir, unet_dir, clip_dir, emb_dir,
-    lora_dir, taesd_dir, upscl_dir, cnnet_dir 
+    lora_dir, taesd_dir, upscl_dir, cnnet_dir
 )
 from modules.loader import (
     get_models, reload_models, model_choice

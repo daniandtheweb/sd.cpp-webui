@@ -1,10 +1,10 @@
-"""sd.cpp-webui - Text to image UI"""
+"""sd.cpp-webui - Anything to Video UI"""
 
 import gradio as gr
 
-from modules.sdcpp import txt2img
+from modules.sdcpp import any2video
 from modules.utility import (
-    subprocess_manager, random_seed, ckpt_tab_switch, unet_tab_switch
+    subprocess_manager, random_seed
 )
 from modules.config import (
     reload_prompts, save_prompts, delete_prompts, load_prompts,
@@ -15,13 +15,13 @@ from modules.loader import (
     get_models, reload_models
 )
 from modules.ui import (
-    create_img_model_sel_ui, create_prompts_ui,
+    create_video_model_sel_ui, create_prompts_ui,
     create_cnnet_ui, create_extras_ui, create_settings_ui,
     QUANTS, RELOAD_SYMBOL, RANDOM_SYMBOL
 )
 
 
-with gr.Blocks() as txt2img_block:
+with gr.Blocks() as any2video_block:
     # Directory Textboxes
     emb_dir_txt = gr.Textbox(value=emb_dir, visible=False)
     lora_dir_txt = gr.Textbox(value=lora_dir, visible=False)
@@ -31,37 +31,27 @@ with gr.Blocks() as txt2img_block:
     cnnet_dir_txt = gr.Textbox(value=cnnet_dir, visible=False)
 
     # Title
-    txt2img_title = gr.Markdown("# Text to Image")
+    any2video_title = gr.Markdown("# Anything to Video")
 
     # Model & VAE Selection
-    img_model_components = create_img_model_sel_ui()
+    video_model_components = create_video_model_sel_ui()
 
-    # Checkpoint Tab Components
-    ckpt_tab = img_model_components['ckpt_tab']
-    ckpt_model = img_model_components['ckpt_model']
-    reload_ckpt_btn = img_model_components['reload_ckpt_btn']
-    clear_ckpt_model = img_model_components['clear_ckpt_model']
-    ckpt_vae = img_model_components['ckpt_vae']
-    reload_vae_btn = img_model_components['reload_vae_btn']
-    clear_vae = img_model_components['clear_vae']
-
-    # UNET Tab Components (FLUX, Stable Diffusion 3/3.5)
-    unet_tab = img_model_components['unet_tab']
-    unet_model = img_model_components['unet_model']
-    reload_unet_btn = img_model_components['reload_unet_btn']
-    clear_unet_model = img_model_components['clear_unet_model']
-    unet_vae = img_model_components['unet_vae']
-    reload_unet_vae_btn = img_model_components['reload_unet_vae_btn']
-    clear_unet_vae = img_model_components['clear_unet_vae']
-    clip_g = img_model_components['clip_g']
-    reload_clip_g_btn = img_model_components['reload_clip_g_btn']
-    clear_clip_g = img_model_components['clear_clip_g']
-    clip_l = img_model_components['clip_l']
-    reload_clip_l_btn = img_model_components['reload_clip_l_btn']
-    clear_clip_l = img_model_components['clear_clip_l']
-    t5xxl = img_model_components['t5xxl']
-    reload_t5xxl_btn = img_model_components['reload_t5xxl_btn']
-    clear_t5xxl = img_model_components['clear_t5xxl']
+    # UNET Components (Wan 2.1/2.2)
+    unet_model = video_model_components['unet_model']
+    reload_unet_btn = video_model_components['reload_unet_btn']
+    clear_unet_model = video_model_components['clear_unet_model']
+    unet_vae = video_model_components['unet_vae']
+    reload_unet_vae_btn = video_model_components['reload_unet_vae_btn']
+    clear_unet_vae = video_model_components['clear_unet_vae']
+    umt5_xxl = video_model_components['umt5_xxl']
+    reload_umt5_xxl_btn = video_model_components['reload_umt5_xxl_btn']
+    clear_umt5_xxl = video_model_components['clear_umt5_xxl']
+    clip_vision_h = video_model_components['clip_vision_h']
+    reload_clip_vision_h_btn = video_model_components['reload_clip_vision_h_btn']
+    clear_clip_vision_h = video_model_components['clear_clip_vision_h']
+    high_noise_model = video_model_components['high_noise_model']
+    reload_high_noise_model = video_model_components['reload_high_noise_model']
+    clear_high_noise_model = video_model_components['clear_high_noise_model']
 
     # Model Type Selection
     with gr.Row():
@@ -122,8 +112,8 @@ with gr.Blocks() as txt2img_block:
     reload_prompts_btn = prompts_components['reload_prompts_btn']
     save_prompt_btn = prompts_components['save_prompt_btn']
     del_prompt_btn = prompts_components['del_prompt_btn']
-    pprompt_txt2img = prompts_components['pprompt']
-    nprompt_txt2img = prompts_components['nprompt']
+    pprompt_any2video = prompts_components['pprompt']
+    nprompt_any2video = prompts_components['nprompt']
 
     # Settings
     with gr.Row():
@@ -131,17 +121,50 @@ with gr.Blocks() as txt2img_block:
 
             settings_components = create_settings_ui()
 
-            sampling_txt2img = settings_components['sampling']
-            steps_txt2img = settings_components['steps']
+            sampling_any2video = settings_components['sampling']
+            steps_any2video = settings_components['steps']
             scheduler = settings_components['scheduler']
-            width_txt2img = settings_components['width']
-            height_txt2img = settings_components['height']
+            width_any2video = settings_components['width']
+            height_any2video = settings_components['height']
             switch_size = settings_components['switch_size']
             batch_count = settings_components['batch_count']
-            cfg_txt2img = settings_components['cfg']
+            cfg_any2video = settings_components['cfg']
 
             with gr.Row():
-                seed_txt2img = gr.Number(
+                frames = gr.Number(
+                    label="Video Frames",
+                    minimum=1,
+                    value=24,
+                    scale=1,
+                    interactive=True,
+                    step=1
+                )
+                fps = gr.Number(
+                    label="FPS",
+                    minimum=1,
+                    value=1,
+                    scale=1,
+                    interactive=True,
+                    step=1
+                )
+
+            with gr.Accordion(
+                label="Flow Shift", open=False
+            ):
+                flow_shift_toggle = gr.Checkbox(
+                    label="Enable Flow Shift", value=False
+                )
+                flow_shift = gr.Number(
+                    label="Flow Shift",
+                    minimum=1.0,
+                    maximum=12.0,
+                    value=3.0,
+                    interactive=True,
+                    step=0.1
+                )
+
+            with gr.Row():
+                seed_any2video = gr.Number(
                     label="Seed",
                     minimum=-1,
                     maximum=10**16,
@@ -211,6 +234,26 @@ with gr.Blocks() as txt2img_block:
         # Output
         with gr.Column(scale=1):
             with gr.Row():
+                with gr.Accordion(
+                    label="Image to Video", open=False
+                ):
+                    img_inp = gr.Image(
+                        sources="upload", type="filepath"
+                    )
+            with gr.Row():
+                with gr.Accordion(
+                    label="First-Last Frame Video", open=False
+                ):
+                    with gr.Row():
+                        first_frame_inp = gr.Image(
+                            sources="upload", type="filepath"
+                        )
+                    with gr.Row():
+                        last_frame_inp = gr.Image(
+                            sources="upload", type="filepath"
+                        )
+
+            with gr.Row():
                 gen_btn = gr.Button(
                     value="Generate", size="lg",
                     variant="primary"
@@ -235,8 +278,8 @@ with gr.Blocks() as txt2img_block:
                     interactive=False
                 )
             with gr.Row():
-                img_final = gr.Gallery(
-                    label="Generated images",
+                video_final = gr.Gallery(
+                    label="Generated videos",
                     show_label=False,
                     columns=[3],
                     rows=[1],
@@ -261,18 +304,20 @@ with gr.Blocks() as txt2img_block:
 
     # Generate
     gen_btn.click(
-        txt2img,
-        inputs=[ckpt_model, ckpt_vae, unet_model, unet_vae,
-                clip_g, clip_l, t5xxl, model_type, taesd_model,
-                phtmkr_model, phtmkr_in, phtmkr_nrml,
-                upscl, upscl_rep, cnnet, control_img,
-                control_strength, pprompt_txt2img, nprompt_txt2img,
-                sampling_txt2img, steps_txt2img, scheduler, width_txt2img,
-                height_txt2img, batch_count, cfg_txt2img, seed_txt2img,
+        any2video,
+        inputs=[unet_model, unet_vae, umt5_xxl, clip_vision_h,
+                high_noise_model, model_type, taesd_model, phtmkr_model,
+                phtmkr_in, phtmkr_nrml, img_inp, first_frame_inp,
+                last_frame_inp, upscl, upscl_rep, cnnet, control_img,
+                control_strength, pprompt_any2video, nprompt_any2video,
+                sampling_any2video, steps_any2video, scheduler,
+                width_any2video, height_any2video, batch_count, cfg_any2video,
+                frames, fps, flow_shift_toggle, flow_shift, seed_any2video,
                 clip_skip, threads, offload_to_cpu, vae_tiling, vae_cpu,
                 clip_cpu, cnnet_cpu, canny, rng, predict, output, color,
                 flash_attn, diffusion_conv_direct, vae_conv_direct, verbose],
-        outputs=[command, progress_slider, progress_textbox, stats, img_final]
+        outputs=[command, progress_slider, progress_textbox, stats,
+                 video_final]
     )
     kill_btn.click(
         subprocess_manager.kill_subprocess,
@@ -281,18 +326,6 @@ with gr.Blocks() as txt2img_block:
     )
 
     # Interactive Bindings
-    ckpt_tab.select(
-        ckpt_tab_switch,
-        inputs=[unet_model, unet_vae, clip_g, clip_l, t5xxl],
-        outputs=[ckpt_model, unet_model, ckpt_vae, unet_vae, clip_g, clip_l,
-                 t5xxl]
-    )
-    unet_tab.select(
-        unet_tab_switch,
-        inputs=[ckpt_model, ckpt_vae],
-        outputs=[ckpt_model, unet_model, ckpt_vae, unet_vae, clip_g, clip_l,
-                 t5xxl]
-    )
     reload_taesd_btn.click(
         reload_models,
         inputs=[taesd_dir_txt],
@@ -315,8 +348,8 @@ with gr.Blocks() as txt2img_block:
     )
     save_prompt_btn.click(
         save_prompts,
-        inputs=[saved_prompts, pprompt_txt2img,
-                nprompt_txt2img],
+        inputs=[saved_prompts, pprompt_any2video,
+                nprompt_any2video],
         outputs=[]
     )
     del_prompt_btn.click(
@@ -332,9 +365,9 @@ with gr.Blocks() as txt2img_block:
     load_prompt_btn.click(
         load_prompts,
         inputs=[saved_prompts],
-        outputs=[pprompt_txt2img, nprompt_txt2img]
+        outputs=[pprompt_any2video, nprompt_any2video]
     )
     random_seed_btn.click(
         random_seed,
         inputs=[],
-        outputs=[seed_txt2img])
+        outputs=[seed_any2video])

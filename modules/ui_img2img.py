@@ -15,9 +15,9 @@ from modules.loader import (
     get_models, reload_models
 )
 from modules.ui import (
-    create_model_sel_ui, create_prompts_ui,
+    create_img_model_sel_ui, create_prompts_ui,
     create_cnnet_ui, create_extras_ui, create_settings_ui,
-    QUANTS, RELOAD_SYMBOL, RANDOM_SYMBOL, SWITCH_V_SYMBOL
+    QUANTS, RELOAD_SYMBOL, RANDOM_SYMBOL
 )
 
 
@@ -34,34 +34,34 @@ with gr.Blocks()as img2img_block:
     img2img_title = gr.Markdown("# Image to Image")
 
     # Model & VAE Selection
-    model_components = create_model_sel_ui()
+    img_model_components = create_img_model_sel_ui()
 
     # Checkpoint Tab Components
-    ckpt_tab = model_components['ckpt_tab']
-    ckpt_model = model_components['ckpt_model']
-    reload_ckpt_btn = model_components['reload_ckpt_btn']
-    clear_ckpt_model = model_components['clear_ckpt_model']
-    ckpt_vae = model_components['ckpt_vae']
-    reload_vae_btn = model_components['reload_vae_btn']
-    clear_vae = model_components['clear_vae']
+    ckpt_tab = img_model_components['ckpt_tab']
+    ckpt_model = img_model_components['ckpt_model']
+    reload_ckpt_btn = img_model_components['reload_ckpt_btn']
+    clear_ckpt_model = img_model_components['clear_ckpt_model']
+    ckpt_vae = img_model_components['ckpt_vae']
+    reload_vae_btn = img_model_components['reload_vae_btn']
+    clear_vae = img_model_components['clear_vae']
 
     # UNET Tab Components
-    unet_tab = model_components['unet_tab']
-    unet_model = model_components['unet_model']
-    reload_unet_btn = model_components['reload_unet_btn']
-    clear_unet_model = model_components['clear_unet_model']
-    unet_vae = model_components['unet_vae']
-    reload_unet_vae_btn = model_components['reload_unet_vae_btn']
-    clear_unet_vae = model_components['clear_unet_vae']
-    clip_g = model_components['clip_g']
-    reload_clip_g_btn = model_components['reload_clip_g_btn']
-    clear_clip_g = model_components['clear_clip_g']
-    clip_l = model_components['clip_l']
-    reload_clip_l_btn = model_components['reload_clip_l_btn']
-    clear_clip_l = model_components['clear_clip_l']
-    t5xxl = model_components['t5xxl']
-    reload_t5xxl_btn = model_components['reload_t5xxl_btn']
-    clear_t5xxl = model_components['clear_t5xxl']
+    unet_tab = img_model_components['unet_tab']
+    unet_model = img_model_components['unet_model']
+    reload_unet_btn = img_model_components['reload_unet_btn']
+    clear_unet_model = img_model_components['clear_unet_model']
+    unet_vae = img_model_components['unet_vae']
+    reload_unet_vae_btn = img_model_components['reload_unet_vae_btn']
+    clear_unet_vae = img_model_components['clear_unet_vae']
+    clip_g = img_model_components['clip_g']
+    reload_clip_g_btn = img_model_components['reload_clip_g_btn']
+    clear_clip_g = img_model_components['clear_clip_g']
+    clip_l = img_model_components['clip_l']
+    reload_clip_l_btn = img_model_components['reload_clip_l_btn']
+    clear_clip_l = img_model_components['clear_clip_l']
+    t5xxl = img_model_components['t5xxl']
+    reload_t5xxl_btn = img_model_components['reload_t5xxl_btn']
+    clear_t5xxl = img_model_components['clear_t5xxl']
 
     # Model Type Selection
     with gr.Row():
