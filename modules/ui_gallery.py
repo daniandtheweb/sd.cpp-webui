@@ -160,6 +160,8 @@ with gr.Blocks() as gallery_block:
                 cpy_2_txt2img_btn = gr.Button(value="Copy to txt2img")
                 # Copy to img2img
                 cpy_2_img2img_btn = gr.Button(value="Copy to img2img")
+                # Copy to any2video
+                cpy_2_any2video_btn = gr.Button(value="Copy to any2video")
             # Delete image Button
             del_img = gr.Button(
                 value="Delete", variant="stop")

@@ -6,7 +6,7 @@ import json
 import gradio as gr
 
 CURRENT_DIR = os.getcwd()
-CONFIG_PATH = os.getenv('SD_WEBUI_CONFIG_PATH' ,'config.json')
+CONFIG_PATH = os.getenv('SD_WEBUI_CONFIG_PATH', 'config.json')
 PROMPTS_PATH = os.getenv('SD_WEBUI_PROMPTS_PATH', 'prompts.json')
 
 
@@ -37,13 +37,14 @@ default_settings = {
 
 
 def set_defaults(in_ckpt, in_ckpt_vae, in_unet, in_unet_vae, in_clip_g,
-                 in_clip_l, in_t5xxl, in_type, in_sampling, in_steps, in_scheduler,
-                 in_width, in_height, in_predict, in_flash_attn,
-                 in_diffusion_conv_direct, in_vae_conv_direct, in_ckpt_dir_txt,
-                 in_unet_dir_txt, in_vae_dir_txt, in_clip_dir_txt,
-                 in_emb_dir_txt, in_lora_dir_txt, in_taesd_dir_txt,
-                 in_phtmkr_dir_txt, in_upscl_dir_txt, in_cnnet_dir_txt,
-                 in_txt2img_dir_txt, in_img2img_dir_txt):
+                 in_clip_l, in_clip_vision_h, in_t5xxl, in_umt5_xxl, in_type,
+                 in_sampling, in_steps, in_scheduler, in_width, in_height,
+                 in_predict, in_flash_attn, in_diffusion_conv_direct,
+                 in_vae_conv_direct, in_ckpt_dir_txt, in_unet_dir_txt,
+                 in_vae_dir_txt, in_clip_dir_txt, in_emb_dir_txt,
+                 in_lora_dir_txt, in_taesd_dir_txt, in_phtmkr_dir_txt,
+                 in_upscl_dir_txt, in_cnnet_dir_txt, in_txt2img_dir_txt,
+                 in_img2img_dir_txt):
     """Sets new defaults"""
     # Directory defaults
     dir_defaults = {
@@ -88,8 +89,12 @@ def set_defaults(in_ckpt, in_ckpt_vae, in_unet, in_unet_vae, in_clip_g,
         config_data['def_clip_g'] = in_clip_g
     if in_clip_l:
         config_data['def_clip_l'] = in_clip_l
+    if in_clip_vision_h:
+        config_data['def_clip_vision_h'] = in_clip_vision_h
     if in_t5xxl:
         config_data['def_t5xxl'] = in_t5xxl
+    if in_umt5_xxl:
+        config_data['def_umt5_xxl'] = in_umt5_xxl
 
     with open(CONFIG_PATH, 'w', encoding='utf-8') as json_file_w:
         json.dump(config_data, json_file_w, indent=4)
@@ -106,7 +111,9 @@ def rst_def():
     config_data.pop('def_ckpt_vae', None)
     config_data.pop('def_unet_vae', None)
     config_data.pop('def_clip_l', None)
+    config_data.pop('def_clip_vision_h', None)
     config_data.pop('def_t5xxl', None)
+    config_data.pop('def_umt5_xxl', None)
 
     with open(CONFIG_PATH, 'w', encoding='utf-8') as json_file_w:
         json.dump(config_data, json_file_w, indent=4)
@@ -229,10 +236,18 @@ if 'def_clip_l' in config_data:
     def_clip_l = config_data['def_clip_l']
 else:
     def_clip_l = None
+if 'def_clip_vision_h' in config_data:
+    def_clip_vision_h = config_data['def_clip_vision_h']
+else:
+    def_clip_vision_h = None
 if 'def_t5xxl' in config_data:
     def_t5xxl = config_data['def_t5xxl']
 else:
     def_t5xxl = None
+if 'def_umt5_xxl' in config_data:
+    def_umt5_xxl = config_data['def_umt5_xxl']
+else:
+    def_umt5_xxl = None
 def_type = config_data['def_type']
 def_sampling = config_data['def_sampling']
 def_steps = config_data['def_steps']

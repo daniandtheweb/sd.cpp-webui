@@ -320,6 +320,128 @@ def img2img(
     yield fcommand, gr.update(visible=False, value=100), gr.update(visible=False, value=""), gr.update(value=final_stats_str), outputs
 
 
+def any2video(
+    in_unet_model=None, in_unet_vae=None, in_clip_vision_h=None,
+    in_umt5_xxl=None, in_model_type="Default", in_taesd=None,
+    in_phtmkr=None, in_phtmkr_in=None, in_phtmkr_nrml=False,
+    in_img_inp=None, in_first_frame_inp=None, in_last_frame_inp=None,
+    in_upscl=None, in_upscl_rep=1, in_cnnet=None, in_control_img=None,
+    in_control_strength=1.0, in_ppromt="", in_nprompt="",
+    in_sampling="default", in_steps=50, in_scheduler="default",
+    in_width=512, in_height=512, in_batch_count=1,
+    in_cfg=7.0, in_frames=1, in_fps=24, in_flow_shift_toggle=False,
+    in_flow_shift=3.0, in_seed=42, in_clip_skip=-1, in_threads=0,
+    in_offload_to_cpu=False, in_vae_tiling=False, in_vae_cpu=False,
+    in_clip_cpu=False, in_cnnet_cpu=False, in_canny=False,
+    in_rng="default", in_predict="Default", in_output=None,
+    in_color=False, in_flash_attn=False, in_diffusion_conv_direct=False,
+    in_vae_conv_direct=False,
+    in_verbose=False
+):
+    """Text to image command creator"""
+    funet_model = get_path(unet_dir, in_unet_model)
+    funet_vae = get_path(vae_dir, in_unet_vae)
+    fclip_vision_h = get_path(clip_dir, in_clip_vision_h)
+    fumt5_xxl = get_path(clip_dir, in_umt5_xxl)
+    ftaesd = get_path(taesd_dir, in_taesd)
+    fphtmkr = get_path(phtmkr_dir, in_phtmkr)
+    fupscl = get_path(upscl_dir, in_upscl)
+    fcnnet = get_path(cnnet_dir, in_cnnet)
+    foutput = (os.path.join(txt2img_dir, f'{in_output}.png')
+               if in_output
+               else os.path.join(txt2img_dir, get_next_img(subctrl=0)))
+
+    # Add image generation options
+    additional_args = [
+        '--sampling-method', str(in_sampling),
+        '--steps', str(in_steps),
+        '--scheduler', str(in_scheduler),
+        '-W', str(in_width),
+        '-H', str(in_height),
+        '-b', str(in_batch_count),
+        '--cfg-scale', str(in_cfg),
+        '--video-frames', str(in_frames),
+        '--fps', str(in_fps),
+        '-s', str(in_seed),
+        '--clip-skip', str(in_clip_skip),
+        '--embd-dir', emb_dir,
+        '--lora-model-dir', lora_dir,
+        '-t', str(in_threads),
+        '--rng', str(in_rng),
+        '-o', foutput
+    ]
+
+    # Optional parameters in dictionaries
+    options = {
+        # Model-related options
+        '--diffusion-model': funet_model,
+        '--vae': funet_vae,
+        '--clip_vision': fclip_vision_h,
+        '--t5xxl': fumt5_xxl,
+        '--taesd': ftaesd,
+        '--stacked-id-embd-dir': fphtmkr,
+        '--input-id-images-dir': str(in_phtmkr_in) if fphtmkr else None,
+        '--init-img': str(in_img_inp or in_first_frame_inp) if (in_img_inp or in_first_frame_inp) else None,
+        '--end-img': str(in_last_frame_inp) if in_last_frame_inp is not None else None,
+        '--upscale-model': fupscl,
+        '--upscale-repeats': str(in_upscl_rep) if fupscl else None,
+        '--type': in_model_type if in_model_type != "Default" else None,
+        '--flow-shift': str(in_flow_shift) if in_flow_shift_toggle else None,
+        # Control options
+        '--control-net': fcnnet,
+        '--control-image': in_control_img if fcnnet else None,
+        '--control-strength': str(in_control_strength) if fcnnet else None,
+        # Prediction mode
+        '--prediction': in_predict if in_predict != "Default" else None
+    }
+
+    # Boolean flags
+    flags = {
+        '--offload-to-cpu': in_offload_to_cpu,
+        '--vae-tiling': in_vae_tiling,
+        '--vae-on-cpu': in_vae_cpu,
+        '--clip-on-cpu': in_clip_cpu,
+        '--control-net-cpu': in_cnnet_cpu,
+        '--canny': in_canny,
+        '--normalize-input': in_phtmkr_nrml,
+        '--color': in_color,
+        '--diffusion-fa': in_flash_attn,
+        '--diffusion-conv-direct': in_diffusion_conv_direct,
+        '--vae-conv-direct': in_vae_conv_direct,
+        '-v': in_verbose
+    }
+
+    command, fcommand, outputs = command_generator(
+        mode="vid_gen",
+        prompt=in_ppromt,
+        nprompt=in_nprompt,
+        additional_args=additional_args,
+        options=options,
+        flags=flags,
+        output_path=foutput,
+        batch_count=in_batch_count
+    )
+
+    print(f"\n\n{fcommand}\n\n")
+
+    yield fcommand, gr.update(visible=True, value=0), gr.update(visible=True, value="Initializing..."), gr.update(value=""), None
+
+    for update in subprocess_manager.run_subprocess(command):
+        if "final_stats" in update:
+            stats = update["final_stats"]
+            # Format the final string
+            l_time = stats.get('tensor_load_time', 'N/A')
+            s_time = stats.get('sampling_time', 'N/A')
+            d_time = stats.get('decoding_time', 'N/A')
+            t_time = stats.get('total_time', 'N/A')
+            speed = stats.get('last_speed', 'N/A')
+            final_stats_str = f"Tensor Load: {l_time} | Sampling: {s_time} | Decode: {d_time} | Total: {t_time} | Last Speed: {speed}"
+        else:
+            yield fcommand, gr.update(value=update["percent"]), update["status"], gr.update(value=""), None
+
+    yield fcommand, gr.update(visible=False, value=100), gr.update(visible=False, value=""), gr.update(value=final_stats_str), outputs
+
+
 def convert(
     in_orig_model, in_model_dir, in_quant_type, in_gguf_name=None,
     in_verbose=False

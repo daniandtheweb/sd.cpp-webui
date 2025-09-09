@@ -9,7 +9,8 @@ import gradio as gr
 
 from modules.ui_txt2img import txt2img_block, pprompt_txt2img, nprompt_txt2img, width_txt2img, height_txt2img, steps_txt2img, sampling_txt2img, cfg_txt2img, seed_txt2img
 from modules.ui_img2img import img2img_block, pprompt_img2img, nprompt_img2img, width_img2img, height_img2img, steps_img2img, sampling_img2img, cfg_img2img, seed_img2img, img_inp
-from modules.ui_gallery import gallery_block, cpy_2_txt2img_btn, cpy_2_img2img_btn, pprompt_info, nprompt_info, width_info, height_info, steps_info, sampler_info, cfg_info, seed_info, path_info
+from modules.ui_any2video import any2video_block, pprompt_any2video, nprompt_any2video, width_any2video, height_any2video, steps_any2video, sampling_any2video, cfg_any2video, seed_any2video
+from modules.ui_gallery import gallery_block, cpy_2_txt2img_btn, cpy_2_img2img_btn, cpy_2_any2video_btn, pprompt_info, nprompt_info, width_info, height_info, steps_info, sampler_info, cfg_info, seed_info, path_info
 from modules.ui_convert import convert_block
 from modules.ui_options import options_block
 
@@ -46,6 +47,9 @@ def cpy_2_txt2img(pprompt_info, nprompt_info, width_info, height_info, steps_inf
 def cpy_2_img2img(pprompt_info, nprompt_info, width_info, height_info, steps_info, sampler_info, cfg_info, seed_info, path_info):
     return gr.Tabs(selected="img2img"), pprompt_info, nprompt_info, width_info, height_info, steps_info, sampler_info, cfg_info, seed_info, path_info
 
+def cpy_2_any2video(pprompt_info, nprompt_info, width_info, height_info, steps_info, sampler_info, cfg_info, seed_info, path_info):
+    return gr.Tabs(selected="any2video"), pprompt_info, nprompt_info, width_info, height_info, steps_info, sampler_info, cfg_info, seed_info, path_info
+
 
 def sdcpp_launch(
         listen=False, autostart=False, darkmode=False
@@ -77,6 +81,8 @@ def sdcpp_launch(
                 txt2img_block.render()
             with gr.TabItem("img2img", id="img2img"):
                 img2img_block.render()
+            with gr.TabItem("any2video", id="any2video"):
+                any2video_block.render()
             with gr.TabItem("Gallery", id="gallery"):
                 gallery_block.render()
             with gr.TabItem("Checkpoint Converter", id="convert"):
@@ -94,6 +100,11 @@ def sdcpp_launch(
             cpy_2_img2img,
             inputs=[pprompt_info, nprompt_info, width_info, height_info, steps_info, sampler_info, cfg_info, seed_info, path_info],
             outputs=[tabs, pprompt_img2img, nprompt_img2img, width_img2img, height_img2img, steps_img2img, sampling_img2img, cfg_img2img, seed_img2img, img_inp]
+        )
+        cpy_2_any2video_btn.click(
+            cpy_2_any2video,
+            inputs=[pprompt_info, nprompt_info, width_info, height_info, steps_info, sampler_info, cfg_info, seed_info, path_info],
+            outputs=[tabs, pprompt_any2video, nprompt_any2video, width_any2video, height_any2video, steps_any2video, sampling_any2video, cfg_any2video, seed_any2video, img_inp]
         )
 
     # Pass the arguments to sdcpp.launch with argument unpacking

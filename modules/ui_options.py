@@ -5,9 +5,10 @@ import gradio as gr
 from modules.config import (
     set_defaults, rst_def, ckpt_dir, vae_dir, unet_dir, clip_dir,
     def_ckpt, def_ckpt_vae, def_unet, def_unet_vae, def_clip_g,
-    def_clip_l, def_t5xxl, def_type, def_sampling, def_steps,
-    def_scheduler, def_width, def_height, def_predict,
-    def_flash_attn, def_diffusion_conv_direct, def_vae_conv_direct
+    def_clip_l, def_clip_vision_h, def_t5xxl, def_umt5_xxl, def_type,
+    def_sampling, def_steps, def_scheduler, def_width, def_height,
+    def_predict, def_flash_attn, def_diffusion_conv_direct,
+    def_vae_conv_direct
 )
 from modules.loader import (
     get_models
@@ -101,7 +102,7 @@ with gr.Blocks() as options_block:
                     value=RELOAD_SYMBOL, scale=1
                 )
                 clear_clip_g = gr.ClearButton(
-                    clip_g, scale=1    
+                    clip_g, scale=1
                 )
         with gr.Column():
             with gr.Row():
@@ -121,6 +122,23 @@ with gr.Blocks() as options_block:
                 )
         with gr.Column():
             with gr.Row():
+                clip_vision_h = gr.Dropdown(
+                    label="clip_vision_h",
+                    choices=get_models(clip_dir),
+                    scale=7,
+                    value=def_clip_vision_h,
+                    interactive=True
+                )
+            with gr.Row():
+                reload_clip_vision_h_btn = gr.Button(
+                    value=RELOAD_SYMBOL, scale=1
+                )
+                clear_clip_vision_h = gr.ClearButton(
+                    clip_vision_h, scale=1
+                )
+    with gr.Row():
+        with gr.Column():
+            with gr.Row():
                 t5xxl = gr.Dropdown(
                     label="t5xxl",
                     choices=get_models(clip_dir),
@@ -134,6 +152,22 @@ with gr.Blocks() as options_block:
                 )
                 clear_t5xxl = gr.ClearButton(
                     t5xxl, scale=1
+                )
+        with gr.Column():
+            with gr.Row():
+                umt5_xxl = gr.Dropdown(
+                    label="umt5_xxl",
+                    choices=get_models(clip_dir),
+                    scale=7,
+                    value=def_umt5_xxl,
+                    interactive=True
+                )
+            with gr.Row():
+                reload_umt5_xxl_btn = gr.Button(
+                    value=RELOAD_SYMBOL, scale=1
+                )
+                clear_umt5_xxl = gr.ClearButton(
+                    umt5_xxl, scale=1
                 )
     model_type = gr.Dropdown(
             label="Quantization",
@@ -233,11 +267,11 @@ with gr.Blocks() as options_block:
         set_btn.click(
             set_defaults,
             inputs=[ckpt_model, ckpt_vae, unet_model, unet_vae,
-                    clip_g, clip_l, t5xxl, model_type, sampling,
-                    steps, scheduler, width, height, predict,
-                    flash_attn, diffusion_conv_direct, vae_conv_direct,
-                    ckpt_dir_txt, unet_dir_txt, vae_dir_txt,
-                    clip_dir_txt,
+                    clip_g, clip_l, clip_vision_h, t5xxl, umt5_xxl,
+                    model_type, sampling, steps, scheduler, width, height,
+                    predict, flash_attn, diffusion_conv_direct,
+                    vae_conv_direct, ckpt_dir_txt, unet_dir_txt,
+                    vae_dir_txt, clip_dir_txt,
                     emb_dir_txt, lora_dir_txt,
                     taesd_dir_txt, phtmkr_dir_txt,
                     upscl_dir_txt, cnnet_dir_txt,
