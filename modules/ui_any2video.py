@@ -134,7 +134,7 @@ with gr.Blocks() as any2video_block:
                 frames = gr.Number(
                     label="Video Frames",
                     minimum=1,
-                    value=24,
+                    value=1,
                     scale=1,
                     interactive=True,
                     step=1
@@ -142,7 +142,7 @@ with gr.Blocks() as any2video_block:
                 fps = gr.Number(
                     label="FPS",
                     minimum=1,
-                    value=1,
+                    value=24,
                     scale=1,
                     interactive=True,
                     step=1
