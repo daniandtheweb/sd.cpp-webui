@@ -40,7 +40,12 @@ def command_generator(
         (command_list, formatted_command_str, outputs_list)
     """
     # Start building the command list
-    command = [SD, '-M', mode, '-p', prompt, '-n', nprompt] + additional_args
+    command = [SD, '-M', mode, '-p', prompt]
+
+    if nprompt:
+        command.extend(['-n', nprompt])
+
+    command.extend(additional_args)
 
     # Add options with associated values
     for opt, val in options.items():
