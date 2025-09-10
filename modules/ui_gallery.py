@@ -176,7 +176,7 @@ with gr.Blocks() as gallery_block:
 
     # Interactive bindings
     gallery.select(
-        gallery_manager.img_info,
+        gallery_manager.get_img_info,
         inputs=[],
         outputs=[pprompt_info, nprompt_info, width_info, height_info,
                  steps_info, sampler_info, cfg_info, seed_info, path_info,
@@ -218,12 +218,12 @@ with gr.Blocks() as gallery_block:
         outputs=[gallery, page_num_select, gallery]
     )
     go_btn.click(
-        gallery_manager.goto_gallery,
+        gallery_manager.reload_gallery,
         inputs=[page_num_select],
         outputs=[gallery, page_num_select, gallery]
     )
     page_num_select.submit(
-        gallery_manager.goto_gallery,
+        gallery_manager.reload_gallery,
         inputs=[page_num_select],
         outputs=[gallery, page_num_select, gallery]
     )

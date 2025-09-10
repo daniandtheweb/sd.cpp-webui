@@ -3,6 +3,7 @@
 import os
 import re
 from PIL import Image
+from typing import List, Tuple, Dict, Any, Optional
 
 import gradio as gr
 
@@ -12,420 +13,308 @@ from modules.shared_instance import config
 class GalleryManager:
     """Controls the gallery block"""
 
-    def __init__(self, txt2img_gallery, img2img_gallery, any2video_gallery):
-        self.page_num = 1
-        self.ctrl = 0
-        self.txt2img_dir = txt2img_gallery
-        self.img2img_dir = img2img_gallery
-        self.any2video_dir = any2video_gallery
-        self.img_index = int
-        self.sel_img = int
-        self.img_path = str
-        self.exif = str
+    def __init__(
+        self, txt2img_gallery: str, img2img_gallery: str,
+        any2video_gallery: str
+    ):
+        self.dirs: List[str] = [
+            txt2img_gallery, img2img_gallery, any2video_gallery
+        ]
+        self.page_num: int = 1
+        self.ctrl: int = 0
+        self.selected_img_index_on_page: Optional[int] = None
+        self.selected_img_global_index: Optional[int] = None
+        self.current_img_path: Optional[str] = None
 
-    def _get_img_dir(self):
-        """Determines the directory based on the control value"""
-        if self.ctrl == 0:
-            return self.txt2img_dir
-        if self.ctrl == 1:
-            return self.img2img_dir
-        if self.ctrl == 2:
-            return self.any2video_dir
-        return self.txt2img_dir
+    def _get_current_dir(self) -> str:
+        """Determines the directory based on the control value."""
+        if 0 <= self.ctrl < len(self.dirs):
+            return self.dirs[self.ctrl]
+        return self.dirs[0]
 
-    def reload_gallery(self, ctrl_inp=None, fpage_num=1, subctrl=0):
-        """Reloads the gallery block"""
-        if ctrl_inp is not None:
-            self.ctrl = int(ctrl_inp)
-        img_dir = self._get_img_dir()
-        # Use a generator to find image files,
-        # avoiding the creation of a full list
-
-        def image_files_gen(directory):
-            for file in os.listdir(directory):
-                if file.endswith(('.jpg', '.png')):
-                    yield file
-
-        # Get start and end indices based on the current page
-        start_index = (fpage_num * 16) - 16
-        end_index = start_index + 16
-
-        # Process image files lazily
-        imgs = []
-        for i, file_name in enumerate(image_files_gen(img_dir)):
-            if start_index <= i < end_index:
-                image_path = os.path.join(img_dir, file_name)
-                image = Image.open(image_path)
-                imgs.append(image)
-            elif i >= end_index:
-                break
-        self.page_num = fpage_num
-        if subctrl == 0:
-            return imgs, self.page_num, gr.Gallery(selected_index=None)
-        return imgs
-
-    def goto_gallery(self, fpage_num=1):
-        """Loads a specific gallery page"""
-        img_dir = self._get_img_dir()
-        files = os.listdir(img_dir)
-        total_imgs = len([file for file in files
-                         if file.endswith(('.png', '.jpg'))])
-        total_pages = (total_imgs + 15) // 16
-        if fpage_num is None or fpage_num < 1:
-            fpage_num = 1
-        self.page_num = min(fpage_num, total_pages)
-        return self.reload_gallery(self.ctrl, self.page_num, subctrl=0)
-
-    def next_page(self):
-        """Moves to the next gallery page"""
-        next_page_num = self.page_num + 1
-        img_dir = self._get_img_dir()
-        files = os.listdir(img_dir)
-        total_imgs = len([file for file in files
-                         if file.endswith(('.png', '.jpg'))])
-        total_pages = (total_imgs + 15) // 16
-        if next_page_num > total_pages:
-            self.page_num = 1
-        else:
-            self.page_num = next_page_num
-        imgs = self.reload_gallery(self.ctrl, self.page_num, subctrl=1)
-        return imgs, self.page_num, gr.Gallery(selected_index=None)
-
-    def prev_page(self):
-        """Moves to the previous gallery page"""
-        prev_page_num = self.page_num - 1
-        img_dir = self._get_img_dir()
-        files = os.listdir(img_dir)
-        total_imgs = len([file for file in files
-                         if file.endswith(('.png', '.jpg'))])
-        total_pages = (total_imgs + 15) // 16
-        if prev_page_num < 1:
-            self.page_num = total_pages
-        else:
-            self.page_num = prev_page_num
-        imgs = self.reload_gallery(self.ctrl, self.page_num, subctrl=1)
-        return imgs, self.page_num, gr.Gallery(selected_index=None)
-
-    def extract_exif_from_jpg(self, img_path):
-        """Extracts exif data from jpg"""
-        img = Image.open(img_path)
-        exif_data = img._getexif()
-
-        if exif_data is not None:
-            user_comment = exif_data.get(37510)  # 37510 = UserComment tag
-            if user_comment:
-                self.exif = f"JPG: Exif\nPositive prompt: "\
-                            f"{user_comment.decode('utf-8')[9::2]}"
-                return self.exif
-
-            return "JPG: No User Comment found."
-
-        return "JPG: Exif\nNo EXIF data found."
-
-    def last_page(self):
-        """Moves to the last gallery page"""
-        img_dir = self._get_img_dir()
-        files = os.listdir(img_dir)
-        total_imgs = len([file for file in files
-                         if file.endswith(('.png', '.jpg'))])
-        total_pages = (total_imgs + 15) // 16
-        self.page_num = total_pages
-        imgs = self.reload_gallery(self.ctrl, self.page_num, subctrl=1)
-        return imgs, self.page_num, gr.Gallery(selected_index=None)
-
-    def img_info(self, sel_img: gr.SelectData):
-        """Reads generation data from an image"""
-        if hasattr(sel_img, 'index'):
-            self.img_index = (self.page_num * 16) - 16 + sel_img.index
-            self.sel_img = sel_img.index
-        else:
-            self.img_index = (self.page_num * 16) - 16 + self.sel_img
-        img_dir = self._get_img_dir()
-        # Use a generator to find and sort image files on demand
-
-        def image_file_gen(directory):
-            for file in os.listdir(directory):
-                file_path = os.path.join(directory, file)
-                if (os.path.isfile(file_path) and
-                        file.lower().endswith(('.png', '.jpg'))):
-                    yield file_path
-
-        # Sort files only when necessary and only the files we need
-        file_paths = sorted(image_file_gen(img_dir), key=os.path.getctime)
-
-        # Initialize parameters
-        pprompt = ""
-        nprompt = ""
-        steps = None
-        sampler = ""
-        cfg = None
-        seed = None
-        exif = ""
-        width = None
-        height = None
-
-        # Handle index out of range errors
+    def _get_sorted_files(self) -> List[str]:
+        """
+        Gets all image files from the current directory,
+        sorted by creation time.
+        """
+        img_dir = self._get_current_dir()
         try:
-            self.img_path = file_paths[self.img_index]
-        except IndexError:
-            return "Image index is out of range."
-        if self.img_path.endswith(('.jpg', '.jpeg')):
-            im = Image.open(self.img_path)
-            w, h = im.size
-            width = w
-            height = h
-            exif = self.extract_exif_from_jpg(self.img_path)
-            return (
-                pprompt, nprompt, width, height, steps, sampler, cfg, seed,
-                exif, self.img_path
+            files = (
+                os.path.join(img_dir, f)
+                for f in os.listdir(img_dir)
+                if f.lower().endswith(('.png', '.jpg', '.jpeg'))
             )
-        if self.img_path.endswith('.png'):
-            with open(self.img_path, 'rb') as file:
+            return sorted(files, key=os.path.getctime)
+        except (FileNotFoundError, OSError):
+            return []
+
+    def _parse_png_metadata(self, img_path: str) -> Optional[str]:
+        """Reads the tEXt chunk from a PNG file to get metadata."""
+        try:
+            with open(img_path, 'rb') as file:
                 if file.read(8) != b'\x89PNG\r\n\x1a\n':
-                    im = Image.open(self.img_path)
-                    w, h = im.size
-                    width = w
-                    height = h
-                    return (
-                        pprompt, nprompt, width, height, steps, sampler,
-                        cfg, seed, self.img_path, exif
-                    )
+                    return None  # Not a valid PNG
+
                 while True:
                     length_chunk = file.read(4)
                     if not length_chunk:
-                        im = Image.open(self.img_path)
-                        w, h = im.size
-                        width = w
-                        height = h
-                        return (
-                            pprompt, nprompt, width, height, steps, sampler,
-                            cfg, seed, self.img_path, exif)
+                        break
                     length = int.from_bytes(length_chunk, byteorder='big')
-                    chunk_type = file.read(4).decode('utf-8')
-                    png_block = file.read(length)
-                    _ = file.read(4)
+                    chunk_type = file.read(4).decode('utf-8', errors='ignore')
+
                     if chunk_type == 'tEXt':
-                        _, value = png_block.split(b'\x00', 1)
-                        png_exif = f"{value.decode('utf-8')}"
-
-                        # Main parsing method
-                        exif = f"PNG: tEXt\nPositive prompt: {png_exif}"
-                        ppattern = (
-                            r'Positive prompt:\s*'
-                            r'(?:"(?P<quoted_pprompt>'
-                            r'(?:\\.|[^"\\])*'
-                            r')"'
-                            r'|'
-                            r'(?P<unquoted_pprompt>.*?))'
-                            r'\s*'
-                            r'(?=\s*(?:Steps:|Negative prompt:))'
-                        )
-                        npattern = (
-                            r'Negative prompt:\s*'
-                            r'(?:"(?P<quoted_nprompt>'
-                            r'(?:\\.|[^"\\])*'
-                            r')"'
-                            r'|'
-                            r'(?P<unquoted_nprompt>.*?))'
-                            r'\s*'
-                            r'(?=\s*Steps:)'
-                        )
-
-                        pmatch = re.search(ppattern, exif)
-                        nmatch = re.search(npattern, exif)
-
-                        if pmatch:
-                            pprompt = (pmatch.group("quoted_pprompt") or
-                                       pmatch.group("unquoted_pprompt") or
-                                       "")
-                        if nmatch:
-                            nprompt = (nmatch.group("quoted_nprompt") or
-                                       nmatch.group("unquoted_nprompt") or
-                                       "")
-
-                        # Fallback parsing method (ComfyUI format)
-                        if not pprompt and '{"text":' in png_exif:
-                            exif = png_exif
-                            pattern = r'"text":\s*"((?:[^"\\]|\\.)*)"'
-                            matches = re.findall(pattern, exif)
-
-                            if len(matches) > 0:
-                                pprompt = matches[0]
-                            if len(matches) > 1:
-                                nprompt = matches[1]
-
-                            steps_match_json = re.search(
-                                r'"steps":\s*(\d+)', exif
-                            )
-                            if steps_match_json:
-                                steps = int(steps_match_json.group(1))
-
-                            sampler_match_json = re.search(
-                                r'"sampler_name":\s*"([^"]+)"', exif
-                            )
-                            if sampler_match_json:
-                                sampler = sampler_match_json.group(1)
-
-                            cfg_match_json = re.search(
-                                r'"cfg":\s*(\d+)', exif
-                            )
-                            if cfg_match_json:
-                                cfg = float(int(cfg_match_json.group(1)))
-
-                            seed_match_json = re.search(
-                                r'"seed":\s*(\d+)', exif
-                            )
-                            if seed_match_json:
-                                seed = int(seed_match_json.group(1))
-
-                        im = Image.open(self.img_path)
-                        w, h = im.size
-                        width = w
-                        height = h
-
-                        if not steps:
-                            steps_pattern = r'Steps:\s*(\d+)(?!.*Steps:)'
-                            steps_match = re.search(
-                                steps_pattern, exif, re.DOTALL
-                            )
-                            if steps_match:
-                                steps = int(steps_match.group(1))
-                            else:
-                                steps = None
-
-                        if not sampler:
-                            sampler_pattern = (
-                                r'Sampler:\s*([^\s,]+)(?!.*Sampler:)'
-                            )
-                            sampler_match = re.search(
-                                sampler_pattern, exif, re.DOTALL
-                            )
-                            if sampler_match:
-                                sampler = sampler_match.group(1)
-                            else:
-                                sampler = ""
-
-                        if not cfg:
-                            cfg_pattern = r'CFG scale:\s*(\d+)(?!.*CFG scale:)'
-                            cfg_match = re.search(
-                                cfg_pattern, exif, re.DOTALL
-                            )
-                            if cfg_match:
-                                cfg = float(cfg_match.group(1))
-                            else:
-                                cfg = None
-
-                        if not seed:
-                            seed_pattern = r'Seed:\s*(\d+)(?!.*Seed:)'
-                            seed_match = re.search(
-                                seed_pattern, exif, re.DOTALL
-                            )
-                            if seed_match:
-                                seed = int(seed_match.group(1))
-                            else:
-                                seed = None
-
+                        # Found the metadata chunk
+                        png_block = file.read(length)
+                        _ = file.read(4)  # Skip CRC
+                        keyword, value = png_block.split(b'\x00', 1)
                         return (
-                            pprompt, nprompt, width, height, steps, sampler,
-                            cfg, seed, self.img_path, exif
+                            f"PNG: tEXt\n{keyword.decode('utf-8')}: "
+                            f"{value.decode('utf-8')}"
                         )
+
+                    file.seek(length + 4, 1)  # Skip chunk data and CRC
+
+        except Exception:
+            return None
         return None
 
-    def delete_img(self):
-        """Deletes a selected image"""
+    def _parse_jpg_metadata(self, img_path: str) -> Optional[str]:
+        """Extracts UserComment EXIF data from a JPG file."""
         try:
-            if (not hasattr(self, 'img_path')
-                    or not os.path.exists(self.img_path)):
-                print("Deletion failed: No valid image selected "
-                      "or file does not exist.")
-                imgs, page_num, gallery_update = self.reload_gallery(
-                    self.ctrl, self.page_num, subctrl=0
-                )
-                (pprompt, nprompt, width, height, steps,
-                    sampler, cfg, seed, img_path, exif) = (
-                    "", "", None, None, None, "", None, None, "", ""
-                )
-                return (
-                    imgs, page_num, gallery_update, pprompt, nprompt, width,
-                    height, steps, sampler, cfg, seed, img_path, exif
-                )
+            with Image.open(img_path) as img:
+                exif_data = img._getexif()
+                if exif_data:
+                    exif = exif_data.get(37510)  # 37510 = UserComment tag
+                    if exif:
+                        # Decoding can be tricky, this is a common approach
+                        return (
+                            f"JPG: Exif\nPositive prompt: "
+                            f"{exif.decode('utf-8', errors='ignore')[8:]}"
+                        )
+                    return "JPG: No User Comment found."
+        except Exception:
+            return "JPG: No EXIF data found."
+        return "JPG: No EXIF data found."
 
-            index_of_deleted_img = self.img_index
+    def _extract_params_from_text(self, text_data: str) -> Dict[str, Any]:
+        """
+        Uses regex to extract generation parameters from a raw metadata string.
+        """
+        params = {
+            'pprompt': "", 'nprompt': "", 'steps': None, 'sampler': "",
+            'cfg': None, 'seed': None
+        }
+        if not text_data:
+            return params
 
-            os.remove(self.img_path)
-            print(f"Deleted {self.img_path}")
-            img_dir = self._get_img_dir()
-            file_paths = sorted(
-                [
-                    os.path.join(img_dir, f)
-                    for f in os.listdir(img_dir)
-                    if f.lower().endswith(('.png', '.jpg'))
-                ],
-                key=os.path.getctime
+        # A1111 / General Format
+        pprompt_match = re.search(
+            r'(?:Positive prompt|parameters):\s*(.*?)'
+            r'(?:\nNegative prompt:|\nSteps:|$)',
+            text_data, re.DOTALL
+        )
+        nprompt_match = re.search(
+            r'Negative prompt:\s*(.*?)(?:\nSteps:|$)', text_data, re.DOTALL
+        )
+
+        if pprompt_match:
+            params['pprompt'] = pprompt_match.group(1).strip()
+        if nprompt_match:
+            params['nprompt'] = nprompt_match.group(1).strip()
+
+        # Extract other key-value pairs
+        steps_match = re.search(r'Steps:\s*(\d+)', text_data)
+        sampler_match = re.search(r'Sampler:\s*([\w\s+]+)', text_data)
+        cfg_match = re.search(r'CFG scale:\s*([\d.]+)', text_data)
+        seed_match = re.search(r'Seed:\s*(\d+)', text_data)
+
+        if steps_match:
+            params['steps'] = int(steps_match.group(1))
+        if sampler_match:
+            params['sampler'] = sampler_match.group(1).strip()
+        if cfg_match:
+            params['cfg'] = float(cfg_match.group(1))
+        if seed_match:
+            params['seed'] = int(seed_match.group(1))
+
+        # Fallback for ComfyUI JSON-like format
+        if not params['pprompt'] and '"positive_prompt":' in text_data:
+            pprompt_json_match = re.search(
+                r'"positive_prompt":\s*"([^"]*)"', text_data
             )
-            total_imgs = len(file_paths)
-
-            if total_imgs == 0:
-                self.page_num, self.sel_img, self.img_index, self.img_path = (
-                    1, None, 0, ""
-                )
-                return ([], 1, gr.Gallery(value=None, selected_index=None),
-                        "", "", None, None, None, "", None, None, "", "")
-
-            new_selected_index = index_of_deleted_img
-            if new_selected_index >= total_imgs:
-                new_selected_index = total_imgs - 1
-            new_selected_index = max(0, new_selected_index)
-
-            self.page_num = (new_selected_index // 16) + 1
-            self.sel_img = new_selected_index % 16
-
-            imgs, _, _ = self.reload_gallery(
-                self.ctrl, self.page_num, subctrl=0
+            nprompt_json_match = re.search(
+                r'"negative_prompt":\s*"([^"]*)"', text_data
             )
+            if pprompt_json_match:
+                params['pprompt'] = pprompt_json_match.group(1)
+            if nprompt_json_match:
+                params['nprompt'] = nprompt_json_match.group(1)
 
-            img_info_tuple = self.img_info(self.sel_img)
-            if img_info_tuple is None:
-                raise ValueError(
-                    "Failed to retrieve information for the new image."
-                )
+        return params
 
-            (
-                pprompt, nprompt, width, height, steps,
-                sampler, cfg, seed, img_path, exif
-            ) = img_info_tuple
-            gallery_update = gr.Gallery(selected_index=self.sel_img)
+    def reload_gallery(
+        self, ctrl_inp: Optional[int] = None, page_num: int = 1
+    ) -> Tuple[List[Image.Image], int, gr.Gallery]:
+        """Reloads the gallery block to a specific page."""
+        if ctrl_inp is not None:
+            self.ctrl = int(ctrl_inp)
 
+        self.page_num = int(page_num)
+        files = self._get_sorted_files()
+
+        start_index = (self.page_num - 1) * 16
+        end_index = start_index + 16
+
+        page_files = files[start_index:end_index]
+
+        imgs = [Image.open(path) for path in page_files]
+
+        # Reset selections when reloading
+        self.selected_img_index_on_page = None
+        self.current_img_path = None
+
+        return imgs, self.page_num, gr.Gallery(selected_index=None)
+
+    def _navigate_page(
+        self, direction: int
+    ) -> Tuple[List[Image.Image], int, gr.Gallery]:
+        """Helper for next/prev/last page navigation."""
+        files = self._get_sorted_files()
+        total_imgs = len(files)
+        total_pages = (total_imgs + 15) // 16 or 1
+
+        if direction == 1:  # Next
+            self.page_num = (
+                self.page_num + 1
+                if self.page_num < total_pages
+                else 1
+            )
+        elif direction == -1:  # Previous
+            self.page_num = (
+                self.page_num - 1
+                if self.page_num > 1
+                else total_pages
+            )
+        elif direction == 0:  # Go to last page
+            self.page_num = total_pages
+
+        return self.reload_gallery(page_num=self.page_num)
+
+    def next_page(self):
+        """Moves to the next gallery page."""
+        return self._navigate_page(1)
+
+    def prev_page(self):
+        """Moves to the previous gallery page."""
+        return self._navigate_page(-1)
+
+    def last_page(self):
+        """Moves to the last gallery page."""
+        return self._navigate_page(0)
+
+    def get_img_info(self, sel_data: gr.SelectData) -> Tuple[Any, ...]:
+        """Reads and parses generation data from a selected image."""
+        if not sel_data:
+            # Return empty values if no image is selected
+            return ("", "", None, None, None, "", None, None, "", "")
+
+        self.selected_img_index_on_page = sel_data.index
+        # Calculate the global index across all pages
+        self.selected_img_global_index = (
+            ((self.page_num - 1) * 16) + sel_data.index
+        )
+
+        files = self._get_sorted_files()
+
+        if self.selected_img_global_index >= len(files):
             return (
-                imgs, self.page_num, gallery_update,
-                pprompt, nprompt, width, height, steps,
-                sampler, cfg, seed, img_path, exif
+                "", "Image index out of range.", None, None, None, "", None,
+                None, "", ""
             )
 
-        except Exception as e:
-            print(f"An error occurred in delete_img: {e}")
+        self.current_img_path = files[self.selected_img_global_index]
+
+        if self.current_img_path.lower().endswith('.png'):
+            raw_text = self._parse_png_metadata(self.current_img_path)
+        else:  # jpg/jpeg
+            raw_text = self._parse_jpg_metadata(self.current_img_path)
+
+        params = self._extract_params_from_text(raw_text)
+
+        try:
+            with Image.open(self.current_img_path) as img:
+                width, height = img.size
+        except Exception:
+            width, height = None, None
+
+        return (
+            params['pprompt'], params['nprompt'], width, height,
+            params['steps'], params['sampler'], params['cfg'], params['seed'],
+            self.current_img_path, raw_text or ""
+        )
+
+    def delete_img(self) -> Tuple[Any, ...]:
+        """Deletes the currently selected image and refreshes the gallery."""
+        if (not self.current_img_path or
+                not os.path.exists(self.current_img_path)):
+            # No image is selected or it's already gone, just refresh
+            imgs, page_num, gallery_update = (
+                self.reload_gallery(page_num=self.page_num)
+            )
             return (
-                [], 1, gr.Gallery(value=None), "", "", None,
-                None, None, "", None, None, "", ""
+                imgs, page_num, gallery_update, "", "", None, None, None, "",
+                None, None, "", ""
             )
 
+        try:
+            os.remove(self.current_img_path)
+            print(f"Deleted {self.current_img_path}")
+        except OSError as e:
+            print(f"Error deleting file: {e}")
+            # Fall through to refresh the UI anyway
 
-def get_next_img(subctrl):
-    """Creates a new image name"""
-    if subctrl == 0:
-        fimg_out = config.get('txt2img_dir')
-    elif subctrl == 1:
-        fimg_out = config.get('img2img_dir')
-    elif subctrl == 2:
-        fimg_out = config.get('any2video_dir')
-    else:
-        fimg_out = config.get('txt2img_dir')
-    files = os.listdir(fimg_out)
-    png_files = [file for file in files if file.endswith('.png') and
-                 file[:-4].isdigit()]
-    if not png_files:
-        return "1.png"
-    highest_number = max(int(file[:-4]) for file in png_files)
-    next_number = highest_number + 1
-    fnext_img = f"{next_number}.png"
-    return fnext_img
+        # The image is gone, so reload everything and reset state
+        self.current_img_path = None
+        self.selected_img_index_on_page = None
+
+        # Check if the current page is now empty and go to the previous one
+        files = self._get_sorted_files()
+        total_pages = (len(files) + 15) // 16 or 1
+        if self.page_num > total_pages:
+            self.page_num = total_pages
+
+        imgs, page_num, gallery_update = (
+            self.reload_gallery(page_num=self.page_num)
+        )
+
+        # Return a full tuple to clear all outputs
+        return (
+            imgs, page_num, gallery_update,
+            "", "", None, None, None, "", None, None, "", ""
+        )
+
+
+def get_next_img(subctrl: int) -> str:
+    """Creates a new, sequential image name (e.g., '123.png')."""
+    dir_map = {
+        0: 'txt2img_dir',
+        1: 'img2img_dir',
+        2: 'any2video_dir'
+    }
+    dir_key = dir_map.get(subctrl, 'txt2img_dir')
+    img_out_dir = config.get(dir_key)
+
+    if not os.path.isdir(img_out_dir):
+        os.makedirs(img_out_dir, exist_ok=True)
+
+    try:
+        numbers = [
+            int(f[:-4])
+            for f in os.listdir(img_out_dir)
+            if f.endswith('.png') and f[:-4].isdigit()
+        ]
+        next_number = max(numbers) + 1 if numbers else 1
+    except (ValueError, FileNotFoundError):
+        next_number = 1
+
+    return f"{next_number}.png"
