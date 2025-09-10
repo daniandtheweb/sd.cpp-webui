@@ -81,6 +81,7 @@ def sdcpp_launch(
         css="footer {visibility: hidden}", title="sd.cpp-webui",
         theme="default", js=dark_js
     ) as sdcpp:
+        gr.Markdown("# <center>sd.cpp-webui</center>")
         with gr.Tabs() as tabs:
             with gr.TabItem("txt2img", id="txt2img"):
                 txt2img_block.render()
