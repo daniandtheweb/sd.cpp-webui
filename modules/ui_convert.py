@@ -4,10 +4,7 @@ import gradio as gr
 
 from modules.sdcpp import convert
 from modules.utility import subprocess_manager
-from modules.config import (
-    ckpt_dir, vae_dir, unet_dir, clip_dir, emb_dir,
-    lora_dir, taesd_dir, upscl_dir, cnnet_dir
-)
+from modules.shared_instance import config
 from modules.loader import (
     get_models, reload_models, model_choice
 )
@@ -17,16 +14,16 @@ from modules.ui import (
 
 
 with gr.Blocks() as convert_block:
-    ckpt_dir_txt = gr.Textbox(value=ckpt_dir, visible=False)
-    vae_dir_txt = gr.Textbox(value=vae_dir, visible=False)
-    unet_dir_txt = gr.Textbox(value=unet_dir, visible=False)
-    clip_dir_txt = gr.Textbox(value=clip_dir, visible=False)
-    emb_dir_txt = gr.Textbox(value=emb_dir, visible=False)
-    lora_dir_txt = gr.Textbox(value=lora_dir, visible=False)
-    taesd_dir_txt = gr.Textbox(value=taesd_dir, visible=False)
-    upscl_dir_txt = gr.Textbox(value=upscl_dir, visible=False)
-    cnnet_dir_txt = gr.Textbox(value=cnnet_dir, visible=False)
-    model_dir_txt = gr.Textbox(value=ckpt_dir, visible=False)
+    ckpt_dir_txt = gr.Textbox(value=config.get('ckpt_dir'), visible=False)
+    vae_dir_txt = gr.Textbox(value=config.get('vae_dir'), visible=False)
+    unet_dir_txt = gr.Textbox(value=config.get('unet_dir'), visible=False)
+    clip_dir_txt = gr.Textbox(value=config.get('clip_dir'), visible=False)
+    emb_dir_txt = gr.Textbox(value=config.get('emb_dir'), visible=False)
+    lora_dir_txt = gr.Textbox(value=config.get('lora_dir'), visible=False)
+    taesd_dir_txt = gr.Textbox(value=config.get('taesd_dir'), visible=False)
+    upscl_dir_txt = gr.Textbox(value=config.get('upscl_dir'), visible=False)
+    cnnet_dir_txt = gr.Textbox(value=config.get('cnnet_dir'), visible=False)
+    model_dir_txt = gr.Textbox(value=config.get('ckpt_dir'), visible=False)
     # Title
     convert_title = gr.Markdown("# Convert and Quantize")
 
@@ -49,7 +46,7 @@ with gr.Blocks() as convert_block:
             with gr.Row():
                 model = gr.Dropdown(
                     label="Model",
-                    choices=get_models(ckpt_dir),
+                    choices=get_models(config.get('ckpt_dir')),
                     scale=5,
                     interactive=True
                 )

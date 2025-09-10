@@ -4,12 +4,14 @@ import gradio as gr
 
 from modules.gallery import GalleryManager
 
-from modules.config import (
-    txt2img_dir, img2img_dir, any2video_dir
+from modules.shared_instance import config
+
+
+gallery_manager = GalleryManager(
+    config.get('txt2img_dir'),
+    config.get('img2img_dir'),
+    config.get('any2video_dir')
 )
-
-
-gallery_manager = GalleryManager(txt2img_dir, img2img_dir, any2video_dir)
 
 
 with gr.Blocks() as gallery_block:

@@ -4,15 +4,7 @@ import os
 
 import gradio as gr
 
-from modules.config import (
-    get_prompts, ckpt_dir, vae_dir, unet_dir, clip_dir,
-    emb_dir, lora_dir, taesd_dir, phtmkr_dir, upscl_dir, cnnet_dir,
-    txt2img_dir, img2img_dir, any2video_dir, def_ckpt, def_ckpt_vae,
-    def_unet, def_unet_vae, def_clip_g, def_clip_l, def_clip_vision_h,
-    def_t5xxl, def_umt5_xxl, def_sampling, def_steps, def_scheduler,
-    def_width, def_height, def_predict, def_flash_attn,
-    def_diffusion_conv_direct, def_vae_conv_direct
-)
+from modules.shared_instance import config
 from modules.loader import (
     get_models, reload_models
 )
@@ -38,10 +30,10 @@ def create_img_model_sel_ui():
     # Dictionary to hold UI components
     img_model_components = {}
 
-    ckpt_dir_txt = gr.Textbox(value=ckpt_dir, visible=False)
-    vae_dir_txt = gr.Textbox(value=vae_dir, visible=False)
-    unet_dir_txt = gr.Textbox(value=unet_dir, visible=False)
-    clip_dir_txt = gr.Textbox(value=clip_dir, visible=False)
+    ckpt_dir_txt = gr.Textbox(value=config.get('ckpt_dir'), visible=False)
+    vae_dir_txt = gr.Textbox(value=config.get('vae_dir'), visible=False)
+    unet_dir_txt = gr.Textbox(value=config.get('unet_dir'), visible=False)
+    clip_dir_txt = gr.Textbox(value=config.get('clip_dir'), visible=False)
 
     # Model & VAE Selection
     with gr.Tab("Checkpoint") as img_model_components['ckpt_tab']:
@@ -50,9 +42,9 @@ def create_img_model_sel_ui():
                 with gr.Row():
                     img_model_components['ckpt_model'] = gr.Dropdown(
                         label="Checkpoint Model",
-                        choices=get_models(ckpt_dir),
+                        choices=get_models(config.get('ckpt_dir')),
                         scale=7,
-                        value=def_ckpt,
+                        value=config.get('def_ckpt'),
                         interactive=True
                     )
                 with gr.Row():
@@ -74,9 +66,9 @@ def create_img_model_sel_ui():
                 with gr.Row():
                     img_model_components['ckpt_vae'] = gr.Dropdown(
                         label="Checkpoint VAE",
-                        choices=get_models(vae_dir),
+                        choices=get_models(config.get('vae_dir')),
                         scale=7,
-                        value=def_ckpt_vae,
+                        value=config.get('def_ckpt_vae'),
                         interactive=True
                     )
                 with gr.Row():
@@ -101,9 +93,9 @@ def create_img_model_sel_ui():
                 with gr.Row():
                     img_model_components['unet_model'] = gr.Dropdown(
                         label="UNET Model",
-                        choices=get_models(unet_dir),
+                        choices=get_models(config.get('unet_dir')),
                         scale=7,
-                        value=def_unet,
+                        value=config.get('def_unet'),
                         interactive=True
                     )
                 with gr.Row():
@@ -125,9 +117,9 @@ def create_img_model_sel_ui():
                 with gr.Row():
                     img_model_components['unet_vae'] = gr.Dropdown(
                         label="UNET VAE",
-                        choices=get_models(vae_dir),
+                        choices=get_models(config.get('vae_dir')),
                         scale=7,
-                        value=def_unet_vae,
+                        value=config.get('def_unet_vae'),
                         interactive=True
                     )
                 with gr.Row():
@@ -151,9 +143,9 @@ def create_img_model_sel_ui():
                 with gr.Row():
                     img_model_components['clip_g'] = gr.Dropdown(
                         label="clip_g",
-                        choices=get_models(clip_dir),
+                        choices=get_models(config.get('clip_dir')),
                         scale=7,
-                        value=def_clip_g,
+                        value=config.get('def_clip_g'),
                         interactive=True
                     )
                 with gr.Row():
@@ -175,9 +167,9 @@ def create_img_model_sel_ui():
                 with gr.Row():
                     img_model_components['clip_l'] = gr.Dropdown(
                         label="clip_l",
-                        choices=get_models(clip_dir),
+                        choices=get_models(config.get('clip_dir')),
                         scale=7,
-                        value=def_clip_l,
+                        value=config.get('def_clip_l'),
                         interactive=True
                     )
                 with gr.Row():
@@ -199,8 +191,8 @@ def create_img_model_sel_ui():
                 with gr.Row():
                     img_model_components['t5xxl'] = gr.Dropdown(
                         label="t5xxl",
-                        choices=get_models(clip_dir),
-                        scale=7, value=def_t5xxl,
+                        choices=get_models(config.get('clip_dir')),
+                        scale=7, value=config.get('def_t5xxl'),
                         interactive=True
                     )
                 with gr.Row():
@@ -228,18 +220,18 @@ def create_video_model_sel_ui():
     # Dictionary to hold UI components
     video_model_components = {}
 
-    unet_dir_txt = gr.Textbox(value=unet_dir, visible=False)
-    vae_dir_txt = gr.Textbox(value=vae_dir, visible=False)
-    clip_dir_txt = gr.Textbox(value=clip_dir, visible=False)
+    unet_dir_txt = gr.Textbox(value=config.get('unet_dir'), visible=False)
+    vae_dir_txt = gr.Textbox(value=config.get('vae_dir'), visible=False)
+    clip_dir_txt = gr.Textbox(value=config.get('clip_dir'), visible=False)
 
     with gr.Row():
         with gr.Column():
             with gr.Row():
                 video_model_components['unet_model'] = gr.Dropdown(
                     label="UNET Model",
-                    choices=get_models(unet_dir),
+                    choices=get_models(config.get('unet_dir')),
                     scale=7,
-                    value=def_unet,
+                    value=config.get('def_unet'),
                     interactive=True
                 )
             with gr.Row():
@@ -261,9 +253,9 @@ def create_video_model_sel_ui():
             with gr.Row():
                 video_model_components['unet_vae'] = gr.Dropdown(
                     label="UNET VAE",
-                    choices=get_models(vae_dir),
+                    choices=get_models(config.get('vae_dir')),
                     scale=7,
-                    value=def_unet_vae,
+                    value=config.get('def_unet_vae'),
                     interactive=True
                 )
             with gr.Row():
@@ -287,9 +279,9 @@ def create_video_model_sel_ui():
             with gr.Row():
                 video_model_components['clip_vision_h'] = gr.Dropdown(
                     label="clip_vision_h",
-                    choices=get_models(clip_dir),
+                    choices=get_models(config.get('clip_dir')),
                     scale=7,
-                    value=def_clip_vision_h,
+                    value=config.get('def_clip_vision_h'),
                     interactive=True
                 )
             with gr.Row():
@@ -311,9 +303,9 @@ def create_video_model_sel_ui():
             with gr.Row():
                 video_model_components['umt5_xxl'] = gr.Dropdown(
                     label="umt5_xxl",
-                    choices=get_models(clip_dir),
+                    choices=get_models(config.get('clip_dir')),
                     scale=7,
-                    value=def_umt5_xxl,
+                    value=config.get('def_umt5_xxl'),
                     interactive=True
                 )
             with gr.Row():
@@ -338,7 +330,7 @@ def create_video_model_sel_ui():
             with gr.Row():
                 video_model_components['high_noise_model'] = gr.Dropdown(
                     label="High Noise Diffusion model",
-                    choices=get_models(unet_dir),
+                    choices=get_models(config.get('unet_dir')),
                     value=None,
                     interactive=True
                 )
@@ -377,7 +369,7 @@ def create_prompts_ui():
             with gr.Column():
                 prompts_components['saved_prompts'] = gr.Dropdown(
                     label="Prompts",
-                    choices=get_prompts(),
+                    choices=config.get_prompts(),
                     interactive=True,
                     allow_custom_value=True
                 )
@@ -425,7 +417,7 @@ def create_settings_ui():
             settings_components['sampling'] = gr.Dropdown(
                 label="Sampling method",
                 choices=SAMPLERS,
-                value=def_sampling,
+                value=config.get('def_sampling'),
                 interactive=True
             )
         with gr.Column(scale=1):
@@ -433,14 +425,14 @@ def create_settings_ui():
                 label="Steps",
                 minimum=1,
                 maximum=100,
-                value=def_steps,
+                value=config.get('def_steps'),
                 step=1
             )
     with gr.Row():
         settings_components['scheduler'] = gr.Dropdown(
             label="Scheduler",
             choices=SCHEDULERS,
-            value=def_scheduler,
+            value=config.get('def_scheduler'),
             interactive=True
         )
     with gr.Row():
@@ -450,14 +442,14 @@ def create_settings_ui():
                     label="Width",
                     minimum=64,
                     maximum=4096,
-                    value=def_width,
+                    value=config.get('def_width'),
                     step=64
                 )
                 settings_components['height'] = gr.Slider(
                     label="Height",
                     minimum=64,
                     maximum=4096,
-                    value=def_height,
+                    value=config.get('def_height'),
                     step=64
                 )
             settings_components['switch_size'] = gr.Button(
@@ -515,7 +507,7 @@ def create_cnnet_ui():
     ):
         cnnet_components['cnnet'] = gr.Dropdown(
             label="ControlNet",
-            choices=get_models(cnnet_dir),
+            choices=get_models(config.get('cnnet_dir')),
             value=None,
             interactive=True
         )
@@ -567,7 +559,7 @@ def create_extras_ui():
         extras_components['predict'] = gr.Dropdown(
             label="Prediction (WIP: currently only works with PR #334)",
             choices=PREDICTION,
-            value=def_predict
+            value=config.get('def_predict')
         )
         extras_components['output'] = gr.Textbox(
             label="Output Name (optional)", value=""
@@ -576,14 +568,15 @@ def create_extras_ui():
             label="Color", value=True
         )
         extras_components['flash_attn'] = gr.Checkbox(
-            label="Flash Attention", value=def_flash_attn
+            label="Flash Attention", value=config.get('def_flash_attn')
         )
         extras_components['diffusion_conv_direct'] = gr.Checkbox(
             label="Conv2D Direct for diffusion",
-            value=def_diffusion_conv_direct
+            value=config.get('def_diffusion_conv_direct')
         )
         extras_components['vae_conv_direct'] = gr.Checkbox(
-            label="Conv2D Direct for VAE", value=def_vae_conv_direct
+            label="Conv2D Direct for VAE",
+            value=config.get('def_vae_conv_direct')
         )
         extras_components['verbose'] = gr.Checkbox(label="Verbose")
 
@@ -603,67 +596,67 @@ def create_folders_opt_ui():
         ):
             folders_opt_components['ckpt_dir_txt'] = gr.Textbox(
                 label="Checkpoint folder",
-                value=ckpt_dir,
+                value=config.get('ckpt_dir'),
                 interactive=True
             )
             folders_opt_components['unet_dir_txt'] = gr.Textbox(
                 label="UNET folder",
-                value=unet_dir,
+                value=config.get('unet_dir'),
                 interactive=True
             )
             folders_opt_components['vae_dir_txt'] = gr.Textbox(
                 label="VAE folder",
-                value=vae_dir,
+                value=config.get('vae_dir'),
                 interactive=True
             )
             folders_opt_components['clip_dir_txt'] = gr.Textbox(
                 label="clip folder",
-                value=clip_dir,
+                value=config.get('clip_dir'),
                 interactive=True
             )
             folders_opt_components['emb_dir_txt'] = gr.Textbox(
                 label="Embeddings folder",
-                value=emb_dir,
+                value=config.get('emb_dir'),
                 interactive=True
             )
             folders_opt_components['lora_dir_txt'] = gr.Textbox(
                 label="Lora folder",
-                value=lora_dir,
+                value=config.get('lora_dir'),
                 interactive=True
             )
             folders_opt_components['taesd_dir_txt'] = gr.Textbox(
                 label="TAESD folder",
-                value=taesd_dir,
+                value=config.get('taesd_dir'),
                 interactive=True
             )
             folders_opt_components['phtmkr_dir_txt'] = gr.Textbox(
                 label="PhotoMaker folder",
-                value=phtmkr_dir,
+                value=config.get('phtmkr_dir'),
                 interactive=True
             )
             folders_opt_components['upscl_dir_txt'] = gr.Textbox(
                 label="Upscaler folder",
-                value=upscl_dir,
+                value=config.get('upscl_dir'),
                 interactive=True
             )
             folders_opt_components['cnnet_dir_txt'] = gr.Textbox(
                 label="ControlNet folder",
-                value=cnnet_dir,
+                value=config.get('cnnet_dir'),
                 interactive=True
             )
             folders_opt_components['txt2img_dir_txt'] = gr.Textbox(
                 label="txt2img outputs folder",
-                value=txt2img_dir,
+                value=config.get('txt2img_dir'),
                 interactive=True
             )
             folders_opt_components['img2img_dir_txt'] = gr.Textbox(
                 label="img2img outputs folder",
-                value=img2img_dir,
+                value=config.get('img2img_dir'),
                 interactive=True
             )
             folders_opt_components['any2video_dir_txt'] = gr.Textbox(
                 label="any2video output folder",
-                value=any2video_dir,
+                value=config.get('any2video_dir'),
                 interactive=True
             )
 

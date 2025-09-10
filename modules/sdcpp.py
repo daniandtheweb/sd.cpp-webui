@@ -1,558 +1,395 @@
 """sd.cpp-webui - stable-diffusion.cpp command module"""
 
 import os
+from typing import Dict, Any, Generator
 
 import gradio as gr
 
 from modules.utility import subprocess_manager, exe_name, get_path
 from modules.gallery import get_next_img
-from modules.config import (
-    ckpt_dir, unet_dir, vae_dir, clip_dir, emb_dir, lora_dir,
-    taesd_dir, phtmkr_dir, upscl_dir, cnnet_dir, txt2img_dir, img2img_dir
-)
+from modules.shared_instance import config
 
 
 SD = exe_name()
 
 
-def command_generator(
-    mode: str,
-    prompt: str,
-    nprompt: str,
-    additional_args: list,
-    options: dict,
-    flags: dict,
-    output_path: str,
-    batch_count: int
-) -> tuple:
-    """
-    Args:
-        mode: e.g. 'img_gen'
-        prompt: positive prompt
-        nprompt: negative prompt
-        additional_args: list of fixed arguments (e.g. sampling method,
-        steps, width/height, etc.)
-        options: dict of key-value pairs (only added if value is not None)
-        flags: dict of boolean flags (only added if True)
-        output_path: primary output file (including .png)
-        batch_count: number of images
+class CommandRunner:
+    """Builds and runs stable-diffusion.cpp commands and yelds UI updates."""
 
-    Returns:
-        (command_list, formatted_command_str, outputs_list)
-    """
-    # Start building the command list
-    command = [SD, '-M', mode, '-p', prompt]
+    def __init__(self, mode: str, params: Dict[str, Any]):
+        self.mode = mode
+        self.params = params
+        self.command = [SD, '-M', self.mode]
+        self.fcommand = ""
+        self.outputs = []
+        self.output_path = ""
 
-    if nprompt:
-        command.extend(['-n', nprompt])
+    def _resolve_paths(self):
+        """Resolves all model and directory paths from the config."""
+        path_mappings = {
+            'ckpt_dir': ['in_ckpt_model'],
+            'vae_dir': ['in_ckpt_vae', 'in_unet_vae'],
+            'unet_dir': ['in_unet_model', 'in_high_noise_model'],
+            'clip_dir': [
+                'in_clip_g', 'in_clip_l', 'in_t5xxl', 'in_umt5_xxl',
+                'in_clip_vision_h'
+            ],
+            'taesd_dir': ['in_taesd'],
+            'phtmkr_dir': ['in_phtmkr'],
+            'upscl_dir': ['in_upscl'],
+            'cnnet_dir': ['in_cnnet']
+        }
+        for dir_key, param_keys in path_mappings.items():
+            for param_key in param_keys:
+                if param_key in self.params:
+                    # Create a new key for the full path, e.g., 'f_ckpt_model'
+                    full_path_key = f"f_{param_key.replace('in_', '')}"
+                    self.params[full_path_key] = get_path(
+                        config.get(dir_key), self.params.get(param_key)
+                    )
 
-    command.extend(additional_args)
+    def _get_param(self, key: str, default: Any = None) -> Any:
+        """Helper to get a parameter from the params dictionary."""
+        return self.params.get(key, default)
 
-    # Add options with associated values
-    for opt, val in options.items():
-        if val is not None:
-            command.extend([opt, val])
-    # Add boolean flags
-    for flag, condition in flags.items():
-        if condition:
-            command.append(flag)
+    def _add_base_args(self):
+        """Adds arguments common to all modes."""
+        self.command.extend([
+            '--sampling-method', str(self._get_param('in_sampling')),
+            '--steps', str(self._get_param('in_steps')),
+            '--scheduler', str(self._get_param('in_scheduler')),
+            '-W', str(self._get_param('in_width')),
+            '-H', str(self._get_param('in_height')),
+            '-b', str(self._get_param('in_batch_count')),
+            '--cfg-scale', str(self._get_param('in_cfg')),
+            '-s', str(self._get_param('in_seed')),
+            '--clip-skip', str(self._get_param('in_clip_skip')),
+            '--embd-dir', config.get('emb_dir'),
+            '--lora-model-dir', config.get('lora_dir'),
+            '-t', str(self._get_param('in_threads')),
+            '--rng', str(self._get_param('in_rng')),
+            '-o', self.output_path
+        ])
 
-    # Prepare a copy for printing: replace prompts with quoted versions
-    command_for_print = command.copy()
-    if '-p' in command_for_print:
-        p_index = command_for_print.index('-p') + 1
-        command_for_print[p_index] = f'"{prompt}"'
-    if '-n' in command_for_print:
-        n_index = command_for_print.index('-n') + 1
-        command_for_print[n_index] = f'"{nprompt}"' if nprompt else ""
-    fcommand = ' '.join(map(str, command_for_print))
+    def _add_options(self, options: Dict[str, Any]):
+        """Adds key-value options to the command if the value is not None."""
+        for opt, val in options.items():
+            if val is not None:
+                self.command.extend([opt, str(val)])
 
-    # Compute output filenames
-    if batch_count == 1:
-        outputs = [output_path]
-    else:
-        base = output_path[:-4]  # remove the ".png"
-        outputs = [output_path] + [
-            f"{base}_{i}.png" for i in range(2, batch_count + 1)
-        ]
+    def _add_flags(self, flags: Dict[str, bool]):
+        """Adds boolean flags to the command if they are True."""
+        for flag, condition in flags.items():
+            if condition:
+                self.command.append(flag)
 
-    return command, fcommand, outputs
+    def _prepare_for_run(self):
+        """
+        Prepares the final command string for printing and computes outputs.
+        """
+        prompt = self._get_param('in_ppromt', "")
+        nprompt = self._get_param('in_nprompt', "")
 
+        # Prepare a copy for printing
+        cmd_print = self.command.copy()
+        if '-p' in cmd_print:
+            cmd_print[cmd_print.index('-p') + 1] = f'"{prompt}"'
+        if '-n' in cmd_print:
+            cmd_print[cmd_print.index('-n') + 1] = f'"{nprompt}"'
+        self.fcommand = ' '.join(map(str, cmd_print))
 
-def txt2img(
-    in_ckpt_model=None, in_ckpt_vae=None, in_unet_model=None,
-    in_unet_vae=None, in_clip_g=None, in_clip_l=None, in_t5xxl=None,
-    in_model_type="Default", in_taesd=None, in_phtmkr=None,
-    in_phtmkr_in=None, in_phtmkr_nrml=False, in_upscl=None,
-    in_upscl_rep=1, in_cnnet=None, in_control_img=None,
-    in_control_strength=1.0, in_ppromt="", in_nprompt="",
-    in_sampling="default", in_steps=50, in_scheduler="default",
-    in_width=512, in_height=512, in_batch_count=1,
-    in_cfg=7.0, in_guidance_btn=False, in_guidance=3.5, in_seed=42,
-    in_clip_skip=-1, in_threads=0, in_offload_to_cpu=False,
-    in_vae_tiling=False, in_vae_cpu=False, in_clip_cpu=False,
-    in_cnnet_cpu=False, in_canny=False, in_rng="default",
-    in_predict="Default", in_output=None, in_color=False,
-    in_flash_attn=False, in_diffusion_conv_direct=False,
-    in_vae_conv_direct=False, in_verbose=False
-):
-    """Text to image command creator"""
-    fckpt_model = get_path(ckpt_dir, in_ckpt_model)
-    fckpt_vae = get_path(vae_dir, in_ckpt_vae)
-    funet_model = get_path(unet_dir, in_unet_model)
-    funet_vae = get_path(vae_dir, in_unet_vae)
-    fclip_g = get_path(clip_dir, in_clip_g)
-    fclip_l = get_path(clip_dir, in_clip_l)
-    ft5xxl = get_path(clip_dir, in_t5xxl)
-    ftaesd = get_path(taesd_dir, in_taesd)
-    fphtmkr = get_path(phtmkr_dir, in_phtmkr)
-    fupscl = get_path(upscl_dir, in_upscl)
-    fcnnet = get_path(cnnet_dir, in_cnnet)
-    foutput = (os.path.join(txt2img_dir, f'{in_output}.png')
-               if in_output
-               else os.path.join(txt2img_dir, get_next_img(subctrl=0)))
-
-    # Add image generation options
-    additional_args = [
-        '--sampling-method', str(in_sampling),
-        '--steps', str(in_steps),
-        '--scheduler', str(in_scheduler),
-        '-W', str(in_width),
-        '-H', str(in_height),
-        '-b', str(in_batch_count),
-        '--cfg-scale', str(in_cfg),
-        '-s', str(in_seed),
-        '--clip-skip', str(in_clip_skip),
-        '--embd-dir', emb_dir,
-        '--lora-model-dir', lora_dir,
-        '-t', str(in_threads),
-        '--rng', str(in_rng),
-        '-o', foutput
-    ]
-
-    # Optional parameters in dictionaries
-    options = {
-        # Model-related options
-        '--model': fckpt_model,
-        '--diffusion-model': funet_model,
-        '--vae': fckpt_vae if fckpt_vae else funet_vae,
-        '--clip_g': fclip_g,
-        '--clip_l': fclip_l,
-        '--t5xxl': ft5xxl,
-        '--taesd': ftaesd,
-        '--stacked-id-embd-dir': fphtmkr,
-        '--input-id-images-dir': str(in_phtmkr_in) if fphtmkr else None,
-        '--guidance': str(in_guidance) if in_guidance_btn else None,
-        '--upscale-model': fupscl,
-        '--upscale-repeats': str(in_upscl_rep) if fupscl else None,
-        '--type': in_model_type if in_model_type != "Default" else None,
-        # Control options
-        '--control-net': fcnnet,
-        '--control-image': in_control_img if fcnnet else None,
-        '--control-strength': str(in_control_strength) if fcnnet else None,
-        # Prediction mode
-        '--prediction': in_predict if in_predict != "Default" else None
-    }
-
-    # Boolean flags
-    flags = {
-        '--offload-to-cpu': in_offload_to_cpu,
-        '--vae-tiling': in_vae_tiling,
-        '--vae-on-cpu': in_vae_cpu,
-        '--clip-on-cpu': in_clip_cpu,
-        '--control-net-cpu': in_cnnet_cpu,
-        '--canny': in_canny,
-        '--normalize-input': in_phtmkr_nrml,
-        '--color': in_color,
-        '--diffusion-fa': in_flash_attn,
-        '--diffusion-conv-direct': in_diffusion_conv_direct,
-        '--vae-conv-direct': in_vae_conv_direct,
-        '-v': in_verbose
-    }
-
-    command, fcommand, outputs = command_generator(
-        mode="img_gen",
-        prompt=in_ppromt,
-        nprompt=in_nprompt,
-        additional_args=additional_args,
-        options=options,
-        flags=flags,
-        output_path=foutput,
-        batch_count=in_batch_count
-    )
-
-    print(f"\n\n{fcommand}\n\n")
-
-    yield (
-        fcommand,
-        gr.update(visible=True, value=0),
-        gr.update(visible=True, value="Initializing..."),
-        gr.update(value=""),
-        None
-    )
-
-    for update in subprocess_manager.run_subprocess(command):
-        if "final_stats" in update:
-            stats = update["final_stats"]
-            # Format the final string
-            l_time = stats.get('tensor_load_time', 'N/A')
-            s_time = stats.get('sampling_time', 'N/A')
-            d_time = stats.get('decoding_time', 'N/A')
-            t_time = stats.get('total_time', 'N/A')
-            speed = stats.get('last_speed', 'N/A')
-            final_stats_str = (
-                    f"Tensor Load: {l_time} | Sampling: {s_time} | "
-                    f"Decode: {d_time} | Total: {t_time} | Last Speed: {speed}"
-            )
+        # Compute all output filenames
+        batch_count = self._get_param('in_batch_count', 1)
+        if batch_count == 1:
+            self.outputs = [self.output_path]
         else:
-            yield (
-                fcommand,
-                gr.update(value=update["percent"]),
-                update["status"],
-                gr.update(value=""),
-                None
+            base, ext = os.path.splitext(self.output_path)
+            self.outputs = [self.output_path] + [
+                f"{base}_{i}{ext}" for i in range(2, batch_count + 1)
+            ]
+
+    def build_command(self):
+        """
+        Main method to build the command.
+        To be implemented by subclasses.
+        """
+        raise NotImplementedError
+
+    def run(self) -> Generator:
+        """Runs the command and yields Gradio updates."""
+        self._prepare_for_run()
+        print(f"\n\n{self.fcommand}\n\n")
+
+        yield (self.fcommand, gr.update(visible=True, value=0),
+               gr.update(visible=True, value="Initializing..."),
+               gr.update(value=""), None)
+
+        final_stats_str = "Process completed with unknown stats."
+        for update in subprocess_manager.run_subprocess(self.command):
+            if "final_stats" in update:
+                stats = update["final_stats"]
+                final_stats_str = (
+                    f"Tensor Load: {stats.get('tensor_load_time', 'N/A')} | "
+                    f"Sampling: {stats.get('sampling_time', 'N/A')} | "
+                    f"Decode: {stats.get('decoding_time', 'N/A')} | "
+                    f"Total: {stats.get('total_time', 'N/A')} | "
+                    f"Last Speed: {stats.get('last_speed', 'N/A')}"
+                )
+            else:
+                yield (self.fcommand, gr.update(value=update["percent"]),
+                       update["status"], gr.update(value=""), None)
+
+        yield (self.fcommand, gr.update(visible=False, value=100),
+               gr.update(visible=False, value=""),
+               gr.update(value=final_stats_str), self.outputs)
+
+
+class Txt2ImgRunner(CommandRunner):
+    def build_command(self):
+        self._resolve_paths()
+        self.output_path = (
+            os.path.join(
+                config.get('txt2img_dir'),
+                f"{self._get_param('in_output')}.png"
             )
-
-    yield (
-        fcommand,
-        gr.update(visible=False, value=100),
-        gr.update(visible=False, value=""),
-        gr.update(value=final_stats_str),
-        outputs
-    )
-
-
-def img2img(
-    in_ckpt_model=None, in_ckpt_vae=None, in_unet_model=None,
-    in_unet_vae=None, in_clip_g=None, in_clip_l=None, in_t5xxl=None,
-    in_model_type="Default", in_taesd=None, in_phtmkr=None,
-    in_phtmkr_in=None, in_phtmkr_nrml=False, in_img_inp=None,
-    in_upscl=None, in_upscl_rep=1, in_cnnet=None,
-    in_control_img=None, in_control_strength=1.0, in_ppromt="",
-    in_nprompt="", in_sampling="default", in_steps=50,
-    in_scheduler="default", in_width=512, in_height=512,
-    in_batch_count=1, in_strenght=0.75, in_style_ratio=1.0,
-    in_style_ratio_btn=False, in_cfg=7.0, in_guidance_btn=False,
-    in_guidance=3.5, in_img_cfg=7.0, in_img_cfg_btn=False, in_seed=42,
-    in_clip_skip=-1, in_threads=0, in_offload_to_cpu=False,
-    in_vae_tiling=False, in_vae_cpu=False, in_clip_cpu=False,
-    in_cnnet_cpu=False, in_canny=False, in_rng="default",
-    in_predict="Default", in_output=None, in_color=False,
-    in_flash_attn=False, in_diffusion_conv_direct=False,
-    in_vae_conv_direct=False, in_verbose=False
-):
-    """Image to image command creator"""
-    # Construct file paths
-    fckpt_model = get_path(ckpt_dir, in_ckpt_model)
-    fckpt_vae = get_path(vae_dir, in_ckpt_vae)
-    funet_model = get_path(unet_dir, in_unet_model)
-    funet_vae = get_path(vae_dir, in_unet_vae)
-    fclip_g = get_path(clip_dir, in_clip_g)
-    fclip_l = get_path(clip_dir, in_clip_l)
-    ft5xxl = get_path(clip_dir, in_t5xxl)
-    ftaesd = get_path(taesd_dir, in_taesd)
-    fphtmkr = get_path(phtmkr_dir, in_phtmkr)
-    fupscl = get_path(upscl_dir, in_upscl)
-    fcnnet = get_path(cnnet_dir, in_cnnet)
-    foutput = (os.path.join(img2img_dir, f'{in_output}.png')
-               if in_output
-               else os.path.join(img2img_dir, get_next_img(subctrl=1)))
-
-    # Add image generation options
-    additional_args = [
-        '--init-img', str(in_img_inp),
-        '--sampling-method', str(in_sampling),
-        '--steps', str(in_steps),
-        '--scheduler', str(in_scheduler),
-        '-W', str(in_width),
-        '-H', str(in_height),
-        '-b', str(in_batch_count),
-        '--strength', str(in_strenght),
-        '--cfg-scale', str(in_cfg),
-        '-s', str(in_seed),
-        '--clip-skip', str(in_clip_skip),
-        '--embd-dir', emb_dir,
-        '--lora-model-dir', lora_dir,
-        '-t', str(in_threads),
-        '--rng', str(in_rng),
-        '-o', foutput
-    ]
-
-    # Optional parameters in dictionaries
-    options = {
-        '--model': fckpt_model,
-        '--diffusion-model': funet_model,
-        '--vae': fckpt_vae if fckpt_vae else funet_vae,
-        '--clip_g': fclip_g,
-        '--clip_l': fclip_l,
-        '--t5xxl': ft5xxl,
-        '--type': in_model_type if in_model_type != "Default" else None,
-        '--taesd': ftaesd,
-        '--stacked-id-embd-dir': fphtmkr,
-        '--input-id-images-dir': str(in_phtmkr_in),
-        '--img-cfg-scale': str(in_img_cfg) if in_img_cfg_btn else None,
-        '--style-ratio': str(in_style_ratio) if in_style_ratio_btn else None,
-        '--prediction': in_predict if in_predict != "Default" else None,
-        '--guidance': str(in_guidance) if in_guidance_btn else None,
-        '--upscale-model': fupscl,
-        '--upscale-repeats': str(in_upscl_rep) if fupscl else None,
-        '--control-net': fcnnet,
-        '--control-image': in_control_img if fcnnet else None,
-        '--control-strength': str(in_control_strength) if fcnnet else None
-    }
-
-    # Boolean flags
-    flags = {
-        '--offload-to-cpu': in_offload_to_cpu,
-        '--vae-tiling': in_vae_tiling,
-        '--vae-on-cpu': in_vae_cpu,
-        '--clip-on-cpu': in_clip_cpu,
-        '--control-net-cpu': in_cnnet_cpu,
-        '--normalize-input': in_phtmkr_nrml,
-        '--canny': in_canny,
-        '--color': in_color,
-        '--diffusion-fa': in_flash_attn,
-        '--diffusion-conv-direct': in_diffusion_conv_direct,
-        '--vae-conv-direct': in_vae_conv_direct,
-        '-v': in_verbose
-    }
-
-    command, fcommand, outputs = command_generator(
-        mode="img_gen",
-        prompt=in_ppromt,
-        nprompt=in_nprompt,
-        additional_args=additional_args,
-        options=options,
-        flags=flags,
-        output_path=foutput,
-        batch_count=in_batch_count
-    )
-
-    print(f"\n\n{fcommand}\n\n")
-
-    yield (
-        fcommand,
-        gr.update(visible=True, value=0),
-        gr.update(visible=True, value="Initializing..."),
-        gr.update(value=""),
-        None
-    )
-
-    for update in subprocess_manager.run_subprocess(command):
-        if "final_stats" in update:
-            stats = update["final_stats"]
-            # Format the final string
-            l_time = stats.get('tensor_load_time', 'N/A')
-            s_time = stats.get('sampling_time', 'N/A')
-            d_time = stats.get('decoding_time', 'N/A')
-            t_time = stats.get('total_time', 'N/A')
-            speed = stats.get('last_speed', 'N/A')
-            final_stats_str = (
-                f"Tensor Load: {l_time} | Sampling: {s_time} | "
-                f"Decode: {d_time} | Total: {t_time} | Last Speed: {speed}"
+            if self._get_param('in_output')
+            else os.path.join(
+                config.get('txt2img_dir'), get_next_img(subctrl=0)
             )
-        else:
-            yield (
-                fcommand,
-                gr.update(value=update["percent"]),
-                update["status"],
-                gr.update(value=""),
-                None
+        )
+
+        self.command.extend(['-p', self._get_param('in_ppromt', "")])
+        if self._get_param('in_nprompt'):
+            self.command.extend(['-n', self._get_param('in_nprompt')])
+
+        self._add_base_args()
+
+        options = {
+            '--model': self._get_param('f_ckpt_model'),
+            '--diffusion-model': self._get_param('f_unet_model'),
+            '--vae': (self._get_param('f_ckpt_vae')
+                      or self._get_param('f_unet_vae')),
+            '--clip_g': self._get_param('f_clip_g'),
+            '--clip_l': self._get_param('f_clip_l'),
+            '--t5xxl': self._get_param('f_t5xxl'),
+            '--taesd': self._get_param('f_taesd'),
+            '--stacked-id-embd-dir': self._get_param('f_phtmkr'),
+            '--input-id-images-dir': (self._get_param('in_phtmkr_in')
+                                      if self._get_param('f_phtmkr')
+                                      else None),
+            '--guidance': (self._get_param('in_guidance')
+                           if self._get_param('in_guidance_btn')
+                           else None),
+            '--upscale-model': self._get_param('f_upscl'),
+            '--upscale-repeats': (self._get_param('in_upscl_rep')
+                                  if self._get_param('f_upscl')
+                                  else None),
+            '--type': (self._get_param('in_model_type')
+                       if self._get_param('in_model_type') != "Default"
+                       else None),
+            '--control-net': self._get_param('f_cnnet'),
+            '--control-image': (self._get_param('in_control_img')
+                                if self._get_param('f_cnnet')
+                                else None),
+            '--control-strength': (self._get_param('in_control_strength')
+                                   if self._get_param('f_cnnet')
+                                   else None),
+            '--prediction': (self._get_param('in_predict')
+                             if self._get_param('in_predict') != "Default"
+                             else None)
+        }
+        self._add_options(options)
+
+        flags = {
+            '--offload-to-cpu': self._get_param('in_offload_to_cpu'),
+            '--vae-tiling': self._get_param('in_vae_tiling'),
+            '--vae-on-cpu': self._get_param('in_vae_cpu'),
+            '--clip-on-cpu': self._get_param('in_clip_cpu'),
+            '--control-net-cpu': self._get_param('in_cnnet_cpu'),
+            '--canny': self._get_param('in_canny'),
+            '--normalize-input': self._get_param('in_phtmkr_nrml'),
+            '--color': self._get_param('in_color'),
+            '--diffusion-fa': self._get_param('in_flash_attn'),
+            '--diffusion-conv-direct': (
+                self._get_param('in_diffusion_conv_direct')
+            ),
+            '--vae-conv-direct': self._get_param('in_vae_conv_direct'),
+            '-v': self._get_param('in_verbose')
+        }
+        self._add_flags(flags)
+
+
+class Img2ImgRunner(Txt2ImgRunner):
+    def build_command(self):
+        super().build_command()
+
+        self.output_path = (
+            os.path.join(
+                config.get('img2img_dir'),
+                f"{self._get_param('in_output')}.png"
             )
-
-    yield (
-        fcommand,
-        gr.update(visible=False, value=100),
-        gr.update(visible=False, value=""),
-        gr.update(value=final_stats_str),
-        outputs
-    )
-
-
-def any2video(
-    in_unet_model=None, in_unet_vae=None, in_clip_vision_h=None,
-    in_umt5_xxl=None, in_high_noise_model=None, in_model_type="Default",
-    in_taesd=None, in_phtmkr=None, in_phtmkr_in=None, in_phtmkr_nrml=False,
-    in_img_inp=None, in_first_frame_inp=None, in_last_frame_inp=None,
-    in_upscl=None, in_upscl_rep=1, in_cnnet=None, in_control_img=None,
-    in_control_strength=1.0, in_ppromt="", in_nprompt="",
-    in_sampling="default", in_steps=50, in_scheduler="default",
-    in_width=512, in_height=512, in_batch_count=1,
-    in_cfg=7.0, in_frames=1, in_fps=24, in_flow_shift_toggle=False,
-    in_flow_shift=3.0, in_seed=42, in_clip_skip=-1, in_threads=0,
-    in_offload_to_cpu=False, in_vae_tiling=False, in_vae_cpu=False,
-    in_clip_cpu=False, in_cnnet_cpu=False, in_canny=False,
-    in_rng="default", in_predict="Default", in_output=None,
-    in_color=False, in_flash_attn=False, in_diffusion_conv_direct=False,
-    in_vae_conv_direct=False,
-    in_verbose=False
-):
-    """Text to image command creator"""
-    funet_model = get_path(unet_dir, in_unet_model)
-    funet_vae = get_path(vae_dir, in_unet_vae)
-    fclip_vision_h = get_path(clip_dir, in_clip_vision_h)
-    fumt5_xxl = get_path(clip_dir, in_umt5_xxl)
-    fhigh_noise_model = get_path(unet_dir, in_high_noise_model)
-    ftaesd = get_path(taesd_dir, in_taesd)
-    fphtmkr = get_path(phtmkr_dir, in_phtmkr)
-    fupscl = get_path(upscl_dir, in_upscl)
-    fcnnet = get_path(cnnet_dir, in_cnnet)
-    foutput = (os.path.join(txt2img_dir, f'{in_output}.png')
-               if in_output
-               else os.path.join(txt2img_dir, get_next_img(subctrl=0)))
-
-    # Add image generation options
-    additional_args = [
-        '--sampling-method', str(in_sampling),
-        '--steps', str(in_steps),
-        '--scheduler', str(in_scheduler),
-        '-W', str(in_width),
-        '-H', str(in_height),
-        '-b', str(in_batch_count),
-        '--cfg-scale', str(in_cfg),
-        '--video-frames', str(in_frames),
-        '--fps', str(in_fps),
-        '-s', str(in_seed),
-        '--clip-skip', str(in_clip_skip),
-        '--embd-dir', emb_dir,
-        '--lora-model-dir', lora_dir,
-        '-t', str(in_threads),
-        '--rng', str(in_rng),
-        '-o', foutput
-    ]
-
-    # Optional parameters in dictionaries
-    options = {
-        # Model-related options
-        '--diffusion-model': funet_model,
-        '--vae': funet_vae,
-        '--clip_vision': fclip_vision_h,
-        '--t5xxl': fumt5_xxl,
-        '--high-noise-diffusion-model': fhigh_noise_model,
-        '--taesd': ftaesd,
-        '--stacked-id-embd-dir': fphtmkr,
-        '--input-id-images-dir': str(in_phtmkr_in) if fphtmkr else None,
-        '--init-img': (
-            str(in_img_inp or in_first_frame_inp)
-            if (in_img_inp or in_first_frame_inp)
-            else None
-        ),
-        '--end-img': (
-            str(in_last_frame_inp)
-            if in_last_frame_inp is not None
-            else None
-        ),
-        '--upscale-model': fupscl,
-        '--upscale-repeats': str(in_upscl_rep) if fupscl else None,
-        '--type': in_model_type if in_model_type != "Default" else None,
-        '--flow-shift': str(in_flow_shift) if in_flow_shift_toggle else None,
-        # Control options
-        '--control-net': fcnnet,
-        '--control-image': in_control_img if fcnnet else None,
-        '--control-strength': str(in_control_strength) if fcnnet else None,
-        # Prediction mode
-        '--prediction': in_predict if in_predict != "Default" else None
-    }
-
-    # Boolean flags
-    flags = {
-        '--offload-to-cpu': in_offload_to_cpu,
-        '--vae-tiling': in_vae_tiling,
-        '--vae-on-cpu': in_vae_cpu,
-        '--clip-on-cpu': in_clip_cpu,
-        '--control-net-cpu': in_cnnet_cpu,
-        '--canny': in_canny,
-        '--normalize-input': in_phtmkr_nrml,
-        '--color': in_color,
-        '--diffusion-fa': in_flash_attn,
-        '--diffusion-conv-direct': in_diffusion_conv_direct,
-        '--vae-conv-direct': in_vae_conv_direct,
-        '-v': in_verbose
-    }
-
-    command, fcommand, outputs = command_generator(
-        mode="vid_gen",
-        prompt=in_ppromt,
-        nprompt=in_nprompt,
-        additional_args=additional_args,
-        options=options,
-        flags=flags,
-        output_path=foutput,
-        batch_count=in_batch_count
-    )
-
-    print(f"\n\n{fcommand}\n\n")
-
-    yield (
-        fcommand,
-        gr.update(visible=True, value=0),
-        gr.update(visible=True, value="Initializing..."),
-        gr.update(value=""),
-        None
-    )
-
-    for update in subprocess_manager.run_subprocess(command):
-        if "final_stats" in update:
-            stats = update["final_stats"]
-            # Format the final string
-            l_time = stats.get('tensor_load_time', 'N/A')
-            s_time = stats.get('sampling_time', 'N/A')
-            d_time = stats.get('decoding_time', 'N/A')
-            t_time = stats.get('total_time', 'N/A')
-            speed = stats.get('last_speed', 'N/A')
-            final_stats_str = (
-                f"Tensor Load: {l_time} | Sampling: {s_time} | "
-                f"Decode: {d_time} | Total: {t_time} | Last Speed: {speed}"
+            if self._get_param('in_output')
+            else os.path.join(
+                config.get('img2img_dir'), get_next_img(subctrl=1)
             )
-        else:
-            yield (
-                fcommand,
-                gr.update(value=update["percent"]),
-                update["status"],
-                gr.update(value=""),
-                None
-            )
+        )
 
-    yield (
-        fcommand,
-        gr.update(visible=False, value=100),
-        gr.update(visible=False, value=""),
-        gr.update(value=final_stats_str),
-        outputs
-    )
+        # Add img2img specific arguments
+        self.command.extend(['--init-img', str(self._get_param('in_img_inp'))])
+        self.command.extend([
+            '--strength',
+            str(self._get_param('in_strenght'))
+        ])
+
+        options = {
+            '--img-cfg-scale': (self._get_param('in_img_cfg')
+                                if self._get_param('in_img_cfg_btn')
+                                else None),
+            '--style-ratio': (self._get_param('in_style_ratio')
+                              if self._get_param('in_style_ratio_btn')
+                              else None),
+        }
+        self._add_options(options)
+
+
+class Any2VideoRunner(CommandRunner):
+    def _add_base_args(self):
+        # Override to add video-specific base arguments
+        super()._add_base_args()
+        self.command.extend([
+            '--video-frames', str(self._get_param('in_frames')),
+            '--fps', str(self._get_param('in_fps')),
+        ])
+
+    def build_command(self):
+        self._resolve_paths()
+        self.output_path = (
+            os.path.join(
+                config.get('any2video_dir'),
+                f"{self._get_param('in_output')}.png"
+            )
+            if self._get_param('in_output')
+            else os.path.join(
+                config.get('any2video_dir'), get_next_img(subctrl=2)
+            )
+        )
+
+        self.command.extend(['-p', self._get_param('in_ppromt', "")])
+        if self._get_param('in_nprompt'):
+            self.command.extend(['-n', self._get_param('in_nprompt')])
+
+        self._add_base_args()
+
+        init_img = (self._get_param('in_img_inp')
+                    or self._get_param('in_first_frame_inp'))
+        options = {
+            '--diffusion-model': self._get_param('f_unet_model'),
+            '--vae': self._get_param('f_unet_vae'),
+            '--clip_vision': self._get_param('f_clip_vision_h'),
+            '--t5xxl': self._get_param('f_umt5_xxl'),
+            '--high-noise-diffusion-model': (
+                self._get_param('f_high_noise_model')
+            ),
+            '--taesd': self._get_param('f_taesd'),
+            '--stacked-id-embd-dir': self._get_param('f_phtmkr'),
+            '--input-id-images-dir': (self._get_param('in_phtmkr_in')
+                                      if self._get_param('f_phtmkr')
+                                      else None),
+            '--init-img': init_img,
+            '--end-img': self._get_param('in_last_frame_inp'),
+            '--upscale-model': self._get_param('f_upscl'),
+            '--upscale-repeats': (self._get_param('in_upscl_rep')
+                                  if self._get_param('f_upscl')
+                                  else None),
+            '--type': (self._get_param('in_model_type')
+                       if self._get_param('in_model_type') != "Default"
+                       else None),
+            '--flow-shift': (self._get_param('in_flow_shift')
+                             if self._get_param('in_flow_shift_toggle')
+                             else None),
+            '--control-net': self._get_param('f_cnnet'),
+            '--control-image': (self._get_param('in_control_img')
+                                if self._get_param('f_cnnet')
+                                else None),
+            '--control-strength': (self._get_param('in_control_strength')
+                                   if self._get_param('f_cnnet')
+                                   else None),
+            '--prediction': (self._get_param('in_predict')
+                             if self._get_param('in_predict') != "Default"
+                             else None)
+        }
+        self._add_options(options)
+
+        flags = {
+            '--offload-to-cpu': self._get_param('in_offload_to_cpu'),
+            '--vae-tiling': self._get_param('in_vae_tiling'),
+            '--vae-on-cpu': self._get_param('in_vae_cpu'),
+            '--clip-on-cpu': self._get_param('in_clip_cpu'),
+            '--control-net-cpu': self._get_param('in_cnnet_cpu'),
+            '--canny': self._get_param('in_canny'),
+            '--normalize-input': self._get_param('in_phtmkr_nrml'),
+            '--color': self._get_param('in_color'),
+            '--diffusion-fa': self._get_param('in_flash_attn'),
+            '--diffusion-conv-direct': (
+                self._get_param('in_diffusion_conv_direct')
+            ),
+            '--vae-conv-direct': self._get_param('in_vae_conv_direct'),
+            '-v': self._get_param('in_verbose')
+        }
+        self._add_flags(flags)
+
+
+def txt2img(params: dict) -> Generator:
+    """Creates and runs a Txt2ImgRunner from a params dictionary."""
+    runner = Txt2ImgRunner(mode="img_gen", params=params)
+    runner.build_command()
+    yield from runner.run()
+
+
+def img2img(params: dict) -> Generator:
+    """Creates and runs an Img2ImgRunner."""
+    runner = Img2ImgRunner(mode="img_gen", params=params)
+    runner.build_command()
+    yield from runner.run()
+
+
+def any2video(params: dict) -> Generator:
+    """Creates and runs an Any2VideoRunner."""
+    runner = Any2VideoRunner(mode="vid_gen", params=params)
+    runner.build_command()
+    yield from runner.run()
 
 
 def convert(
-    in_orig_model, in_model_dir, in_quant_type, in_gguf_name=None,
-    in_verbose=False
-):
-    """Convert model command creator"""
-    forig_model = os.path.join(in_model_dir, in_orig_model)
-    if not in_gguf_name:
-        model_name, _ = os.path.splitext(in_orig_model)
-        model_path = os.path.join(in_model_dir, model_name)
-        fgguf_name = f"{model_path}-{in_quant_type}.gguf"
+    in_orig_model: str, in_model_dir: str, in_quant_type: str,
+    in_gguf_name: str = None, in_verbose: bool = False
+) -> str:
+    """Synchronously runs the model conversion command."""
+    orig_model_path = os.path.join(in_model_dir, in_orig_model)
+
+    if in_gguf_name:
+        gguf_path = os.path.join(in_model_dir, in_gguf_name)
     else:
-        fgguf_name = os.path.join(in_model_dir, in_gguf_name)
+        model_name, _ = os.path.splitext(in_orig_model)
+        gguf_path = os.path.join(
+            in_model_dir, f"{model_name}-{in_quant_type}.gguf"
+        )
 
-    # Initialize base command
-    command = [SD, '-M', 'convert']
-
-    # Add essential command options
-    command.extend([
-        '--model', forig_model,   # Original model path
-        '-o', fgguf_name,         # Output name
-        '--type', in_quant_type   # Quantization type
-    ])
-
-    # Add verbosity flag if enabled
+    command = [
+        SD, '-M', 'convert',
+        '--model', orig_model_path,
+        '-o', gguf_path,
+        '--type', in_quant_type
+    ]
     if in_verbose:
         command.append('-v')
 
-    # Convert command list to string format for printing
     fcommand = ' '.join(command)
-
     print(f"\n\n{fcommand}\n\n")
-    subprocess_manager.run_subprocess(command)
+
+    # This assumes run_subprocess can handle synchronous execution
+    # and will block until the process is complete.
+    for _ in subprocess_manager.run_subprocess(command):
+        pass  # Consume generator if it's async
 
     return "Process completed."

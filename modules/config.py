@@ -2,15 +2,12 @@
 
 import os
 import json
-
-import gradio as gr
+from typing import Dict, Any, List
 
 CURRENT_DIR = os.getcwd()
-CONFIG_PATH = os.getenv('SD_WEBUI_CONFIG_PATH', 'config.json')
-PROMPTS_PATH = os.getenv('SD_WEBUI_PROMPTS_PATH', 'prompts.json')
-
-
-default_settings = {
+DEFAULT_CONFIG_PATH = 'config.json'
+DEFAULT_PROMPTS_PATH = 'prompts.json'
+DEFAULT_SETTINGS = {
     'ckpt_dir': os.path.join(CURRENT_DIR, "models/checkpoints/"),
     'unet_dir': os.path.join(CURRENT_DIR, "models/unet/"),
     'vae_dir': os.path.join(CURRENT_DIR, "models/vae/"),
@@ -37,235 +34,103 @@ default_settings = {
 }
 
 
-def set_defaults(in_ckpt, in_ckpt_vae, in_unet, in_unet_vae, in_clip_g,
-                 in_clip_l, in_clip_vision_h, in_t5xxl, in_umt5_xxl, in_type,
-                 in_sampling, in_steps, in_scheduler, in_width, in_height,
-                 in_predict, in_flash_attn, in_diffusion_conv_direct,
-                 in_vae_conv_direct, in_ckpt_dir_txt, in_unet_dir_txt,
-                 in_vae_dir_txt, in_clip_dir_txt, in_emb_dir_txt,
-                 in_lora_dir_txt, in_taesd_dir_txt, in_phtmkr_dir_txt,
-                 in_upscl_dir_txt, in_cnnet_dir_txt, in_txt2img_dir_txt,
-                 in_img2img_dir_txt, in_any2video_dir_txt):
-    """Sets new defaults"""
-    # Directory defaults
-    dir_defaults = {
-        'ckpt_dir': in_ckpt_dir_txt,
-        'vae_dir': in_vae_dir_txt,
-        'unet_dir': in_unet_dir_txt,
-        'clip_dir': in_clip_dir_txt,
-        'emb_dir': in_emb_dir_txt,
-        'lora_dir': in_lora_dir_txt,
-        'taesd_dir': in_taesd_dir_txt,
-        'phtmkr_dir': in_phtmkr_dir_txt,
-        'upscl_dir': in_upscl_dir_txt,
-        'cnnet_dir': in_cnnet_dir_txt,
-        'txt2img_dir': in_txt2img_dir_txt,
-        'img2img_dir': in_img2img_dir_txt,
-        'any2video_dir': in_any2video_dir_txt
-    }
-    config_data.update(dir_defaults)
+class ConfigManager:
+    """
+    Handles loading, managing and saving the application configuration.
+    """
 
-    # Other defaults
-    config_data.update({
-        'def_type': in_type,
-        'def_sampling': in_sampling,
-        'def_steps': in_steps,
-        'def_scheduler': in_scheduler,
-        'def_width': in_width,
-        'def_height': in_height,
-        'def_predict': in_predict,
-        'def_flash_attn': in_flash_attn,
-        'def_diffusion_conv_direct': in_diffusion_conv_direct,
-        'def_vae_conv_direct': in_vae_conv_direct
-    })
+    def __init__(self, config_path: str = None, prompts_path: str = None):
+        self.config_path = os.getenv(
+            'SD_WEBUI_CONFIG_PATH', config_path or DEFAULT_CONFIG_PATH
+        )
+        self.prompts_path = os.getenv(
+            'SD_WEBUI_PROMPTS_PATH', prompts_path or DEFAULT_PROMPTS_PATH
+        )
+        self.data = self._load_json(self.config_path) or {}
+        self.prompts = self._load_json(self.prompts_path) or {}
+        self._initialize_files()
 
-    if in_ckpt:
-        config_data['def_ckpt'] = in_ckpt
-    if in_ckpt_vae:
-        config_data['def_ckpt_vae'] = in_ckpt_vae
-    if in_unet:
-        config_data['def_unet'] = in_unet
-    if in_unet_vae:
-        config_data['def_unet_vae'] = in_unet_vae
-    if in_clip_g:
-        config_data['def_clip_g'] = in_clip_g
-    if in_clip_l:
-        config_data['def_clip_l'] = in_clip_l
-    if in_clip_vision_h:
-        config_data['def_clip_vision_h'] = in_clip_vision_h
-    if in_t5xxl:
-        config_data['def_t5xxl'] = in_t5xxl
-    if in_umt5_xxl:
-        config_data['def_umt5_xxl'] = in_umt5_xxl
+    def _load_json(self, file_path: str) -> Dict[str, Any]:
+        """Safely loads a JSON file."""
+        if not os.path.isfile(file_path):
+            return {}
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, OSError) as e:
+            print(
+                f"Error loading {file_path}: {e}. Using empty configuration."
+            )
+            return {}
 
-    with open(CONFIG_PATH, 'w', encoding='utf-8') as json_file_w:
-        json.dump(config_data, json_file_w, indent=4)
+    def _save_json(self, file_path: str, data: Dict[str, Any]):
+        """Saves data to a JSON file."""
+        try:
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=4)
+        except OSError as e:
+            print(f"Error saving to {file_path}: {e}")
 
-    print("Set new defaults completed.")
+    def _initialize_files(self):
+        """Ensures config and prompt files exist and have default values."""
+        # Initialize config
+        updated_config = False
+        for key, value in DEFAULT_SETTINGS.items():
+            if key not in self.data:
+                self.data[key] = value
+                updated_config = True
+        if updated_config:
+            self.save_config()
+            print("Missing settings added to config file.")
 
+        # Initialize prompts file if it doesn't exist
+        if not os.path.isfile(self.prompts_path):
+            self.save_prompts()
+            print("Created empty prompts file")
 
-def rst_def():
-    """Restores factory defaults"""
-    config_data.update(default_settings)
+    def get(self, key: str, default: Any = None) -> Any:
+        """Gets a configuration value."""
+        return self.data.get(key, default)
 
-    config_data.pop('def_ckpt', None)
-    config_data.pop('def_unet', None)
-    config_data.pop('def_ckpt_vae', None)
-    config_data.pop('def_unet_vae', None)
-    config_data.pop('def_clip_l', None)
-    config_data.pop('def_clip_vision_h', None)
-    config_data.pop('def_t5xxl', None)
-    config_data.pop('def_umt5_xxl', None)
+    def save_config(self):
+        """Saves the current configuration."""
+        self._save_json(self.config_path, self.data)
 
-    with open(CONFIG_PATH, 'w', encoding='utf-8') as json_file_w:
-        json.dump(config_data, json_file_w, indent=4)
+    def update_settings(self, new_settings: Dict[str, Any]):
+        """Updates the configuration with new settings and saves."""
+        self.data.update(new_settings)
+        self.save_config()
+        print("Set new defaults completed.")
 
-    print("Reset defaults completed.")
+    def reset_defaults(self):
+        """Resets the configuration to factory defaults."""
+        self.data = DEFAULT_SETTINGS.copy()
+        self.save_config()
+        print("Reset defaults completed.")
 
+    def get_prompts(self) -> List[str]:
+        """Returns a list of saved prompts."""
+        return sorted(list(self.prompts.keys()))
 
-def get_prompts():
-    """Lists saved prompts"""
-    with open(PROMPTS_PATH, 'r', encoding="utf-8") as prompts_file:
-        prompts_data = json.load(prompts_file)
+    def save_prompts(self):
+        """Saves the current prompts dictionary to disk."""
+        self._save_json(self.prompts_path, self.prompts)
 
-    prompts_keys = list(prompts_data.keys())
-
-    return prompts_keys
-
-
-def reload_prompts():
-    """Reloads prompts list"""
-    refreshed_prompts = gr.update(choices=get_prompts())
-    return refreshed_prompts
-
-
-def save_prompts(prompt, pos_prompt, neg_prompt):
-    """Saves a prompt"""
-    if prompt is not None:
-        with open(PROMPTS_PATH, 'r', encoding="utf-8") as prompts_file:
-            prompts_data = json.load(prompts_file)
-
-        prompts_data[prompt.strip()] = {
-            'positive': pos_prompt,
-            'negative': neg_prompt
+    def add_prompt(self, name: str, positive: str, negative: str):
+        """Adds or updates a prompt."""
+        if not name:
+            return
+        self.prompts[name.strip()] = {
+            'positive': positive, 'negative': negative
         }
+        self.save_prompts()
 
-        with open(PROMPTS_PATH, 'w', encoding="utf-8") as prompts_file:
-            json.dump(prompts_data, prompts_file, indent=4)
-        print(f"Prompt '{prompt}' saved.")
+    def delete_prompt(self, name: str):
+        """Deletes a prompt."""
+        if name in self.prompts:
+            del self.prompts[name]
+            self.save_prompts()
 
-
-def delete_prompts(prompt):
-    """Deletes a saved prompt"""
-    with open(PROMPTS_PATH, 'r', encoding="utf-8") as prompts_file:
-        prompts_data = json.load(prompts_file)
-
-    if prompt in prompts_data:
-        del prompts_data[prompt]
-        with open(PROMPTS_PATH, 'w', encoding="utf-8") as prompts_file:
-            json.dump(prompts_data, prompts_file, indent=4)
-        print(f"Prompt '{prompt}' deleted.")
-    else:
-        print(f"Prompt '{prompt}' not found.")
-
-
-def load_prompts(prompt):
-    """Loads a saved prompt"""
-    with open(PROMPTS_PATH, 'r', encoding="utf-8") as prompts_file:
-        prompts_data = json.load(prompts_file)
-    key_data = prompts_data.get(prompt, {})
-    pprompt_load = gr.update(value=key_data.get('positive', ''))
-    nprompt_load = gr.update(value=key_data.get('negative', ''))
-    return pprompt_load, nprompt_load
-
-
-# Load existing configuration or create an empty one
-if os.path.isfile(CONFIG_PATH):
-    with open(CONFIG_PATH, 'r', encoding='utf-8') as config_file:
-        config_data = json.load(config_file)
-else:
-    config_data = {}
-
-# Update missing settings with defaults
-updated = False
-for key, value in default_settings.items():
-    if key not in config_data:
-        config_data[key] = value
-        updated = True
-
-# Save the updated configuration if changes were made
-if updated:
-    with open(CONFIG_PATH, 'w', encoding='utf-8') as config_file:
-        json.dump(config_data, config_file, indent=4)
-    print("Missing settings added to 'config.json'.")
-
-
-ckpt_dir = config_data['ckpt_dir']
-unet_dir = config_data['unet_dir']
-vae_dir = config_data['vae_dir']
-clip_dir = config_data['clip_dir']
-emb_dir = config_data['emb_dir']
-lora_dir = config_data['lora_dir']
-taesd_dir = config_data['taesd_dir']
-phtmkr_dir = config_data['phtmkr_dir']
-upscl_dir = config_data['upscl_dir']
-cnnet_dir = config_data['cnnet_dir']
-txt2img_dir = config_data['txt2img_dir']
-img2img_dir = config_data['img2img_dir']
-any2video_dir = config_data['any2video_dir']
-
-
-if 'def_ckpt' in config_data:
-    def_ckpt = config_data['def_ckpt']
-else:
-    def_ckpt = None
-if 'def_ckpt_vae' in config_data:
-    def_ckpt_vae = config_data['def_ckpt_vae']
-else:
-    def_ckpt_vae = None
-if 'def_unet' in config_data:
-    def_unet = config_data['def_unet']
-else:
-    def_unet = None
-if 'def_unet_vae' in config_data:
-    def_unet_vae = config_data['def_unet_vae']
-else:
-    def_unet_vae = None
-if 'def_clip_g' in config_data:
-    def_clip_g = config_data['def_clip_g']
-else:
-    def_clip_g = None
-if 'def_clip_l' in config_data:
-    def_clip_l = config_data['def_clip_l']
-else:
-    def_clip_l = None
-if 'def_clip_vision_h' in config_data:
-    def_clip_vision_h = config_data['def_clip_vision_h']
-else:
-    def_clip_vision_h = None
-if 'def_t5xxl' in config_data:
-    def_t5xxl = config_data['def_t5xxl']
-else:
-    def_t5xxl = None
-if 'def_umt5_xxl' in config_data:
-    def_umt5_xxl = config_data['def_umt5_xxl']
-else:
-    def_umt5_xxl = None
-def_type = config_data['def_type']
-def_sampling = config_data['def_sampling']
-def_steps = config_data['def_steps']
-def_scheduler = config_data['def_scheduler']
-def_width = config_data['def_width']
-def_height = config_data['def_height']
-def_predict = config_data['def_predict']
-def_flash_attn = config_data['def_flash_attn']
-def_diffusion_conv_direct = config_data['def_diffusion_conv_direct']
-def_vae_conv_direct = config_data['def_vae_conv_direct']
-
-
-if not os.path.isfile(PROMPTS_PATH):
-    # Create an empty JSON file
-    with open(PROMPTS_PATH, 'w', encoding="utf-8") as prompts_file:
-        # Write an empty JSON object
-        json.dump({}, prompts_file, indent=4)
-    print("File 'prompts.json' created.")
+    def get_prompt(self, name: str) -> Dict[str, str]:
+        """Retrieves a specific prompt."""
+        return self.prompts.get(name, {'positive': '', 'negative': ''})

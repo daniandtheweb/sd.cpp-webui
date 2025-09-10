@@ -28,65 +28,34 @@ from modules.ui_gallery import (
 )
 from modules.ui_convert import convert_block
 from modules.ui_options import options_block
+from modules.config import ConfigManager
 
 
 os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
 
-
-def main():
-    """Main"""
-    parser = argparse.ArgumentParser(description='Process optional arguments')
-    parser.add_argument(
-        '--listen',
-        action='store_true',
-        help='Listen on 0.0.0.0'
-    )
-    parser.add_argument(
-        '--autostart',
-        action='store_true',
-        help='Automatically launch in a new browser tab'
-    )
-    parser.add_argument(
-        '--darkmode',
-        action='store_true',
-        help='Enable dark mode for the web interface'
-    )
-    args = parser.parse_args()
-    sdcpp_launch(args.listen, args.autostart, args.darkmode)
+config = ConfigManager()
 
 
-def cpy_2_txt2img(
-    pprompt_info, nprompt_info, width_info, height_info, steps_info,
-    sampler_info, cfg_info, seed_info
-):
-    return (
-        gr.Tabs(selected="txt2img"), pprompt_info, nprompt_info, width_info,
-        height_info, steps_info, sampler_info, cfg_info, seed_info
-    )
+def create_copy_fn(tab_id: str) -> callable:
+    """
+    Creates a function that that switches to a specific tab
+    and passes through its arguments.
 
+    Args:
+        tab_id (str): The ID of the selected tab.
 
-def cpy_2_img2img(
-    pprompt_info, nprompt_info, width_info, height_info, steps_info,
-    sampler_info, cfg_info, seed_info, path_info
-):
-    return (
-        gr.Tabs(selected="img2img"), pprompt_info, nprompt_info, width_info,
-        height_info, steps_info, sampler_info, cfg_info, seed_info, path_info
-    )
-
-
-def cpy_2_any2video(
-    pprompt_info, nprompt_info, width_info, height_info, steps_info,
-    sampler_info, cfg_info, seed_info, path_info
-):
-    return (
-        gr.Tabs(selected="any2video"), pprompt_info, nprompt_info, width_info,
-        height_info, steps_info, sampler_info, cfg_info, seed_info, path_info
-    )
+    Returns:
+        A function suitable for a Gradio .click() event.
+    """
+    def copy_fn(*args):
+        # The first return value switches the tab,
+        # the rest are the passed-through arguments.
+        return [gr.Tabs(selected=tab_id), *args]
+    return copy_fn
 
 
 def sdcpp_launch(
-        listen=False, autostart=False, darkmode=False
+    listen: bool = False, autostart: bool = False, darkmode: bool = False
 ):
     """Logic for launching sdcpp based on arguments"""
     launch_args = {}
@@ -126,35 +95,67 @@ def sdcpp_launch(
             with gr.TabItem("Options", id="options"):
                 options_block.render()
 
-        # Set up the button click event
+        common_inputs = [
+            pprompt_info, nprompt_info, width_info, height_info,
+            steps_info, sampler_info, cfg_info, seed_info
+        ]
+
+        # Copy data from gallery image to txt2img.
         cpy_2_txt2img_btn.click(
-            cpy_2_txt2img,
-            inputs=[pprompt_info, nprompt_info, width_info, height_info,
-                    steps_info, sampler_info, cfg_info, seed_info],
-            outputs=[tabs, pprompt_txt2img, nprompt_txt2img, width_txt2img,
-                     height_txt2img, steps_txt2img, sampling_txt2img,
-                     cfg_txt2img, seed_txt2img]
+            create_copy_fn("txt2img"),
+            inputs=common_inputs,
+            outputs=[
+                tabs, pprompt_txt2img, nprompt_txt2img, width_txt2img,
+                height_txt2img, steps_txt2img, sampling_txt2img,
+                cfg_txt2img, seed_txt2img
+            ]
         )
+        # Copy data from gallery image to img2img.
         cpy_2_img2img_btn.click(
-            cpy_2_img2img,
-            inputs=[pprompt_info, nprompt_info, width_info, height_info,
-                    steps_info, sampler_info, cfg_info, seed_info, path_info],
-            outputs=[tabs, pprompt_img2img, nprompt_img2img, width_img2img,
-                     height_img2img, steps_img2img, sampling_img2img,
-                     cfg_img2img, seed_img2img, img_inp]
+            create_copy_fn("img2img"),
+            inputs=common_inputs + [path_info],
+            outputs=[
+                tabs, pprompt_img2img, nprompt_img2img, width_img2img,
+                height_img2img, steps_img2img, sampling_img2img,
+                cfg_img2img, seed_img2img, img_inp
+            ]
         )
+        # Copy data from gallery image to any2video.
         cpy_2_any2video_btn.click(
-            cpy_2_any2video,
-            inputs=[pprompt_info, nprompt_info, width_info, height_info,
-                    steps_info, sampler_info, cfg_info, seed_info, path_info],
-            outputs=[tabs, pprompt_any2video, nprompt_any2video,
-                     width_any2video, height_any2video, steps_any2video,
-                     sampling_any2video, cfg_any2video, seed_any2video,
-                     img_inp]
+            create_copy_fn("any2video"),
+            inputs=common_inputs + [path_info],
+            outputs=[
+                tabs, pprompt_any2video, nprompt_any2video,
+                width_any2video, height_any2video, steps_any2video,
+                sampling_any2video, cfg_any2video, seed_any2video,
+                img_inp]
         )
 
     # Pass the arguments to sdcpp.launch with argument unpacking
     sdcpp.launch(**launch_args)
+
+
+def main():
+    """Main"""
+    parser = argparse.ArgumentParser(description='Process optional arguments')
+    parser.add_argument(
+        '--listen',
+        action='store_true',
+        help='Listen on 0.0.0.0'
+    )
+    parser.add_argument(
+        '--autostart',
+        action='store_true',
+        help='Automatically launch in a new browser tab'
+    )
+    parser.add_argument(
+        '--darkmode',
+        action='store_true',
+        help='Enable dark mode for the web interface'
+    )
+    args = parser.parse_args()
+
+    sdcpp_launch(args.listen, args.autostart, args.darkmode)
 
 
 if __name__ == "__main__":

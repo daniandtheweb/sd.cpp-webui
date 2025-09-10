@@ -6,11 +6,7 @@ from modules.sdcpp import img2img
 from modules.utility import (
     subprocess_manager, random_seed, ckpt_tab_switch, unet_tab_switch
 )
-from modules.config import (
-    reload_prompts, save_prompts, delete_prompts, load_prompts,
-    emb_dir, lora_dir, taesd_dir, phtmkr_dir, upscl_dir, cnnet_dir,
-    def_type
-)
+from modules.shared_instance import config
 from modules.loader import (
     get_models, reload_models
 )
@@ -21,14 +17,39 @@ from modules.ui import (
 )
 
 
+IMG2IMG_KEYS = [
+    'in_ckpt_model', 'in_ckpt_vae', 'in_unet_model', 'in_unet_vae',
+    'in_clip_g', 'in_clip_l', 'in_t5xxl', 'in_model_type', 'in_taesd',
+    'in_phtmkr', 'in_phtmkr_in', 'in_phtmkr_nrml', 'in_img_inp', 'in_upscl',
+    'in_upscl_rep', 'in_cnnet', 'in_control_img', 'in_control_strength',
+    'in_ppromt', 'in_nprompt', 'in_sampling', 'in_steps', 'in_scheduler',
+    'in_width', 'in_height', 'in_batch_count', 'in_strenght', 'in_style_ratio',
+    'in_style_ratio_btn', 'in_cfg', 'in_guidance_btn', 'in_guidance',
+    'in_img_cfg', 'in_img_cfg_btn', 'in_seed', 'in_clip_skip', 'in_threads',
+    'in_offload_to_cpu', 'in_vae_tiling', 'in_vae_cpu', 'in_clip_cpu',
+    'in_cnnet_cpu', 'in_canny', 'in_rng', 'in_predict', 'in_output',
+    'in_color', 'in_flash_attn', 'in_diffusion_conv_direct',
+    'in_vae_conv_direct', 'in_verbose'
+]
+
+
+def img2img_wrapper(*args):
+    """
+    Accepts all UI inputs, zips them with keys, and calls the
+    main img2img function.
+    """
+    params = dict(zip(IMG2IMG_KEYS, args))
+    yield from img2img(params)
+
+
 with gr.Blocks()as img2img_block:
     # Directory Textboxes
-    emb_dir_txt = gr.Textbox(value=emb_dir, visible=False)
-    lora_dir_txt = gr.Textbox(value=lora_dir, visible=False)
-    taesd_dir_txt = gr.Textbox(value=taesd_dir, visible=False)
-    phtmkr_dir_txt = gr.Textbox(value=phtmkr_dir, visible=False)
-    upscl_dir_txt = gr.Textbox(value=upscl_dir, visible=False)
-    cnnet_dir_txt = gr.Textbox(value=cnnet_dir, visible=False)
+    emb_dir_txt = gr.Textbox(value=config.get('emb_dir'), visible=False)
+    lora_dir_txt = gr.Textbox(value=config.get('lora_dir'), visible=False)
+    taesd_dir_txt = gr.Textbox(value=config.get('taesd_dir'), visible=False)
+    phtmkr_dir_txt = gr.Textbox(value=config.get('phtmkr_dir'), visible=False)
+    upscl_dir_txt = gr.Textbox(value=config.get('upscl_dir'), visible=False)
+    cnnet_dir_txt = gr.Textbox(value=config.get('cnnet_dir'), visible=False)
 
     # Title
     img2img_title = gr.Markdown("# Image to Image")
@@ -68,7 +89,7 @@ with gr.Blocks()as img2img_block:
         model_type = gr.Dropdown(
             label="Quantization",
             choices=QUANTS,
-            value=def_type,
+            value=config.get('def_type'),
             interactive=True
         )
 
@@ -82,7 +103,7 @@ with gr.Blocks()as img2img_block:
             with gr.Row():
                 taesd_model = gr.Dropdown(
                     label="TAESD",
-                    choices=get_models(taesd_dir),
+                    choices=get_models(config.get('taesd_dir')),
                     value="",
                     allow_custom_value=True,
                     interactive=True
@@ -95,7 +116,7 @@ with gr.Blocks()as img2img_block:
             with gr.Row():
                 phtmkr_model = gr.Dropdown(
                     label="PhotoMaker",
-                    choices=get_models(phtmkr_dir),
+                    choices=get_models(config.get('phtmkr_dir')),
                     value="",
                     allow_custom_value=True,
                     interactive=True
@@ -196,7 +217,7 @@ with gr.Blocks()as img2img_block:
             ):
                 upscl = gr.Dropdown(
                     label="Upscaler",
-                    choices=get_models(upscl_dir),
+                    choices=get_models(config.get('upscl_dir')),
                     value="",
                     allow_custom_value=True,
                     interactive=True
@@ -296,7 +317,7 @@ with gr.Blocks()as img2img_block:
 
     # Generate
     gen_btn.click(
-        img2img,
+        img2img_wrapper,
         inputs=[ckpt_model, ckpt_vae, unet_model, unet_vae,
                 clip_g, clip_l, t5xxl, model_type, taesd_model,
                 phtmkr_model, phtmkr_in, phtmkr_nrml,
@@ -352,22 +373,22 @@ with gr.Blocks()as img2img_block:
         outputs=[cnnet]
     )
     save_prompt_btn.click(
-        save_prompts,
+        config.add_prompt,
         inputs=[saved_prompts, pprompt_img2img, nprompt_img2img],
         outputs=[]
     )
     del_prompt_btn.click(
-        delete_prompts,
+        config.delete_prompt,
         inputs=[saved_prompts],
         outputs=[]
     )
     reload_prompts_btn.click(
-        reload_prompts,
+        config.get_prompts,
         inputs=[],
         outputs=[saved_prompts]
     )
     load_prompt_btn.click(
-        load_prompts,
+        config.get_prompt,
         inputs=[saved_prompts],
         outputs=[pprompt_img2img, nprompt_img2img]
     )

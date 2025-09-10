@@ -8,10 +8,7 @@ import subprocess
 
 import gradio as gr
 
-from modules.config import (
-    def_ckpt, def_unet, def_ckpt_vae, def_unet_vae, def_clip_g, def_clip_l,
-    def_t5xxl
-)
+from modules.shared_instance import config
 
 
 class ModelState:
@@ -30,13 +27,13 @@ class ModelState:
     def __init__(self):
         """Initializes the ModelState with default values from the
         configuration."""
-        self.bak_ckpt_model = def_ckpt
-        self.bak_unet_model = def_unet
-        self.bak_ckpt_vae = def_ckpt_vae
-        self.bak_unet_vae = def_unet_vae
-        self.bak_clip_g = def_clip_g
-        self.bak_clip_l = def_clip_l
-        self.bak_t5xxl = def_t5xxl
+        self.bak_ckpt_model = config.get('def_ckpt')
+        self.bak_unet_model = config.get('def_unet')
+        self.bak_ckpt_vae = config.get('def_ckpt_vae')
+        self.bak_unet_vae = config.get('def_unet_vae')
+        self.bak_clip_g = config.get('def_clip_g')
+        self.bak_clip_l = config.get('def_clip_l')
+        self.bak_t5xxl = config.get('def_t5xxl')
         self.bak_guidance_btn = False
         self.bak_guidance = 3.5
 

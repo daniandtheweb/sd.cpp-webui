@@ -6,9 +6,7 @@ from PIL import Image
 
 import gradio as gr
 
-from modules.config import (
-    txt2img_dir, img2img_dir, any2video_dir
-)
+from modules.shared_instance import config
 
 
 class GalleryManager:
@@ -415,13 +413,13 @@ class GalleryManager:
 def get_next_img(subctrl):
     """Creates a new image name"""
     if subctrl == 0:
-        fimg_out = txt2img_dir
+        fimg_out = config.get('txt2img_dir')
     elif subctrl == 1:
-        fimg_out = img2img_dir
+        fimg_out = config.get('img2img_dir')
     elif subctrl == 2:
-        fimg_out = any2video_dir
+        fimg_out = config.get('any2video_dir')
     else:
-        fimg_out = txt2img_dir
+        fimg_out = config.get('txt2img_dir')
     files = os.listdir(fimg_out)
     png_files = [file for file in files if file.endswith('.png') and
                  file[:-4].isdigit()]

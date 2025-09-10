@@ -6,11 +6,7 @@ from modules.sdcpp import any2video
 from modules.utility import (
     subprocess_manager, random_seed
 )
-from modules.config import (
-    reload_prompts, save_prompts, delete_prompts, load_prompts,
-    emb_dir, lora_dir, taesd_dir, phtmkr_dir, upscl_dir, cnnet_dir,
-    def_type
-)
+from modules.shared_instance import config
 from modules.loader import (
     get_models, reload_models
 )
@@ -21,14 +17,39 @@ from modules.ui import (
 )
 
 
+ANY2VIDEO_KEYS = [
+    'in_unet_model', 'in_unet_vae', 'in_umt5_xxl', 'in_clip_vision_h',
+    'in_high_noise_model', 'in_model_type', 'in_taesd', 'in_phtmkr',
+    'in_phtmkr_in', 'in_phtmkr_nrml', 'in_img_inp', 'in_first_frame_inp',
+    'in_last_frame_inp', 'in_upscl', 'in_upscl_rep', 'in_cnnet',
+    'in_control_img', 'in_control_strength', 'in_ppromt', 'in_nprompt',
+    'in_sampling', 'in_steps', 'in_scheduler', 'in_width', 'in_height',
+    'in_batch_count', 'in_cfg', 'in_frames', 'in_fps', 'in_flow_shift_toggle',
+    'in_flow_shift', 'in_seed', 'in_clip_skip', 'in_threads',
+    'in_offload_to_cpu', 'in_vae_tiling', 'in_vae_cpu', 'in_clip_cpu',
+    'in_cnnet_cpu', 'in_canny', 'in_rng', 'in_predict', 'in_output',
+    'in_color', 'in_flash_attn', 'in_diffusion_conv_direct',
+    'in_vae_conv_direct', 'in_verbose'
+]
+
+
+def any2video_wrapper(*args):
+    """
+    Accepts all UI inputs, zips them with keys, and calls the
+    main any2video function.
+    """
+    params = dict(zip(ANY2VIDEO_KEYS, args))
+    yield from any2video(params)
+
+
 with gr.Blocks() as any2video_block:
     # Directory Textboxes
-    emb_dir_txt = gr.Textbox(value=emb_dir, visible=False)
-    lora_dir_txt = gr.Textbox(value=lora_dir, visible=False)
-    taesd_dir_txt = gr.Textbox(value=taesd_dir, visible=False)
-    phtmkr_dir_txt = gr.Textbox(value=phtmkr_dir, visible=False)
-    upscl_dir_txt = gr.Textbox(value=upscl_dir, visible=False)
-    cnnet_dir_txt = gr.Textbox(value=cnnet_dir, visible=False)
+    emb_dir_txt = gr.Textbox(value=config.get('emb_dir'), visible=False)
+    lora_dir_txt = gr.Textbox(value=config.get('lora_dir'), visible=False)
+    taesd_dir_txt = gr.Textbox(value=config.get('taesd_dir'), visible=False)
+    phtmkr_dir_txt = gr.Textbox(value=config.get('phtmkr_dir'), visible=False)
+    upscl_dir_txt = gr.Textbox(value=config.get('upscl_dir'), visible=False)
+    cnnet_dir_txt = gr.Textbox(value=config.get('cnnet_dir'), visible=False)
 
     # Title
     any2video_title = gr.Markdown("# Anything to Video")
@@ -58,7 +79,7 @@ with gr.Blocks() as any2video_block:
         model_type = gr.Dropdown(
             label="Quantization",
             choices=QUANTS,
-            value=def_type,
+            value=config.get('def_type'),
             interactive=True
         )
 
@@ -70,7 +91,7 @@ with gr.Blocks() as any2video_block:
             with gr.Row():
                 taesd_model = gr.Dropdown(
                     label="TAESD",
-                    choices=get_models(taesd_dir),
+                    choices=get_models(config.get('taesd_dir')),
                     value="",
                     allow_custom_value=True,
                     interactive=True
@@ -83,7 +104,7 @@ with gr.Blocks() as any2video_block:
             with gr.Row():
                 phtmkr_model = gr.Dropdown(
                     label="PhotoMaker",
-                    choices=get_models(phtmkr_dir),
+                    choices=get_models(config.get('phtmkr_dir')),
                     value="",
                     allow_custom_value=True,
                     interactive=True
@@ -188,7 +209,7 @@ with gr.Blocks() as any2video_block:
             ):
                 upscl = gr.Dropdown(
                     label="Upscaler",
-                    choices=get_models(upscl_dir),
+                    choices=get_models(config.get('upscl_dir')),
                     value="",
                     allow_custom_value=True,
                     interactive=True
@@ -304,7 +325,7 @@ with gr.Blocks() as any2video_block:
 
     # Generate
     gen_btn.click(
-        any2video,
+        any2video_wrapper,
         inputs=[unet_model, unet_vae, umt5_xxl, clip_vision_h,
                 high_noise_model, model_type, taesd_model, phtmkr_model,
                 phtmkr_in, phtmkr_nrml, img_inp, first_frame_inp,
@@ -347,23 +368,23 @@ with gr.Blocks() as any2video_block:
         outputs=[cnnet]
     )
     save_prompt_btn.click(
-        save_prompts,
+        config.add_prompt,
         inputs=[saved_prompts, pprompt_any2video,
                 nprompt_any2video],
         outputs=[]
     )
     del_prompt_btn.click(
-        delete_prompts,
+        config.delete_prompt,
         inputs=[saved_prompts],
         outputs=[]
     )
     reload_prompts_btn.click(
-        reload_prompts,
+        config.get_prompts,
         inputs=[],
         outputs=[saved_prompts]
     )
     load_prompt_btn.click(
-        load_prompts,
+        config.get_prompt,
         inputs=[saved_prompts],
         outputs=[pprompt_any2video, nprompt_any2video]
     )

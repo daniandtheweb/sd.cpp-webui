@@ -1,58 +1,88 @@
 """sd.cpp-webui - Model loader module"""
 
 import os
+from typing import List
 
 import gradio as gr
 
-from modules.config import (
-    ckpt_dir, unet_dir, vae_dir, clip_dir, taesd_dir,
-    lora_dir, emb_dir, upscl_dir, cnnet_dir
-)
+from modules.shared_instance import config
 
+
+SUPPORTED_EXTENSIONS = (".gguf", ".safetensors", ".sft", ".pth", ".ckpt")
 
 # Dictionary to map model types to their corresponding directories
-model_map = {
-    "Checkpoint": ckpt_dir,
-    "UNET": unet_dir,
-    "VAE": vae_dir,
-    "clip_g": clip_dir,
-    "clip_l": clip_dir,
-    "t5xxl": clip_dir,
-    "taesd": taesd_dir,
-    "Lora": lora_dir,
-    "Embeddings": emb_dir,
-    "Upscalers": upscl_dir,
-    "ControlNet": cnnet_dir
+MODEL_DIR_MAP = {
+    "Checkpoint": config.get('ckpt_dir'),
+    "UNET": config.get('unet_dir'),
+    "VAE": config.get('vae_dir'),
+    "clip_g": config.get('clip_dir'),
+    "clip_l": config.get('clip_dir'),
+    "t5xxl": config.get('clip_dir'),
+    "taesd": config.get('taesd_dir'),
+    "Lora": config.get('lora_dir'),
+    "Embeddings": config.get('emb_dir'),
+    "Upscalers": config.get('upscl_dir'),
+    "ControlNet": config.get('cnnet_dir')
 }
 
 
-def get_models(models_folder):
-    """Lists models in a folder"""
-    if os.path.isdir(models_folder):
-        extensions = (".gguf", ".safetensors", ".sft", ".pth", ".ckpt")
-        models = [model for model in os.listdir(models_folder)
-                  if os.path.isfile(os.path.join(models_folder, model)) and
-                  model.endswith(extensions)]
-        return models
+def get_models(models_folder: str) -> List[str]:
+    """
+    Lists all supported models in a folder.
 
-    print(f"The {models_folder} folder does not exist.")
-    return []
+    Args:
+        models_folder (str): The path to the directory to scan.
+
+    Returns:
+        List[str]: A list of model filenames or an empty list.
+    """
+    if not os.path.isdir(models_folder):
+        print(f"The {models_folder} folder does not exist.")
+        return []
+
+    try:
+        models = [
+            model
+            for model in os.listdir(models_folder)
+            if (os.path.isfile(os.path.join(models_folder, model))
+                and model.endswith(SUPPORTED_EXTENSIONS))
+        ]
+        return sorted(models)
+    except OSError as e:
+        print(f"Could not read files from '{models_folder}': {e}")
+        return []
 
 
-def reload_models(models_folder):
-    """Reloads models list"""
-    refreshed_models = gr.update(choices=get_models(models_folder))
-    return refreshed_models
+def reload_models(models_folder: str) -> gr.Dropdown:
+    """
+    Creates a Gradio update object to refresh a model dropdown.
+
+    Args:
+        models_folder (str): The directory containing the models to list.
+
+    Returns:
+        gr.Dropdown: A Gradio update object with the new list of models.
+    """
+    return gr.update(choices=get_models(models_folder))
 
 
-def model_choice(model_type):
-    """Outputs the folder of the selected model type"""
+def model_choice(model_type: str) -> gr.Textbox:
+    """
+    Creates a Gradio update object to set the value of a Textbox
+    to the directory of the selected model type.
+
+    Args:
+        model_type (str): The type of model selected.
+
+    Returns:
+        gr.Textbox: A Gradio update object with the corresponding
+                    directory path.
+    """
     # Get the directory from the model_map based on the model_type
-    model_dir = model_map.get(model_type)
+    model_dir = MODEL_DIR_MAP.get(model_type)
 
     if model_dir is None:
-        print(f"Model type '{model_type}' not recognized.")
+        print(f"Model type '{model_type}' not found in MODEL_DIR_MAP.")
         return gr.update(value="")
 
-    model_dir_txt = gr.update(value=model_dir)
-    return model_dir_txt
+    return gr.update(value=model_dir)
