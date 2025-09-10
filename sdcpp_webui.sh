@@ -4,58 +4,48 @@ set -e
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 cd "$SCRIPT_DIR"
 
-help_print() {
-    echo ""
-    echo ""
-    echo "Usage: ./sdcpp_webui.sh [options]"
-    echo ""
-    echo "Options:"
-    echo "    -h or --help:            Show this help"
-    echo "    --listen:                Share sd.cpp-webui on your local network"
-    echo "    --autostart:             Open the UI automatically"
-    echo "    --darkmode:              Forces the UI to launch in dark mode"
-    echo ""
-    echo ""
-    exit 0
+print_help() {
+cat << EOF
+
+Usage: ./sdcpp_webui.sh [options]
+
+Options:
+    -h or --help:            Show this help
+    --listen:                Share sd.cpp-webui on your local network
+    --autostart:             Open the UI automatically
+    --darkmode:              Forces the UI to launch in dark mode
+
+EOF
+exit 0
 }
 
 for arg in "$@"; do
   case $arg in
-    --*'='*) shift; set -- "${arg%%=*}" "${arg#*=}" "$@"; continue;;
-    -h|--help) help_print;;
-    --listen) ;;       # Passed to python
-    --autostart) ;;    # Passed to python
-    --darkmode) ;;     # Passed to python
-    *) echo "Unknown command parameter: $arg"; exit 1;;
+    -h|--help)
+      print_help
+      ;;
+    --listen|--autostart|--darkmode)
+      ;;
+    *)
+      echo "Error: Unknown command parameter: $arg"
+      print_help
+      ;;
   esac
 done
 
-if [ ! -x "sd" ] && ! command -v "sd"; then
-  echo ""
-  echo ""
-  echo "Warning: 'sd' executable not found or doesn't have execute permissions."
-  echo "For the command to work place the stable-diffusion.cpp executable in the main sd.cpp-webui folder."
-  echo "The executable must be called 'sd'."
-  echo ""
-  echo ""
+if [ ! -x "sd" ] && ! command -v "sd" > /dev/null; then
+  echo "Warning: 'sd' executable not found in this directory or your PATH."
+  echo "Please place the stable-diffusion.cpp executable (renamed to 'sd') in this folder."
+  exit 1
 fi
 
-if [ -d "venv" ]; then
-    echo "Virtual environment already exists."
-else
+if [ ! -d "venv" ]; then
     echo "Creating virtual environment..."
     python3 -m venv venv
-    echo "Virtual environment created."
 fi
 
 echo "Activating virtual environment..."
-if [ -f "venv/bin/activate" ]; then
-    source venv/bin/activate
-else
-    echo "Error: Virtual environment activation script not found."
-    exit 1
-fi
-echo "Virtual environment activated succesfully."
+source "venv/bin/activate"
 
 if pip freeze | grep -q -F -f requirements.txt; then
     echo "Requirements are satisfied."
@@ -66,4 +56,4 @@ else
 fi
 
 echo "Starting the WebUI..."
-python3 sdcpp_webui.py $@
+python3 sdcpp_webui.py "$@"

@@ -1,75 +1,62 @@
 @echo off
 setlocal
 
-set help=false
-set valid=false
+set "all_args_valid=true"
 
-:: Get the directory of the batch script
 set "SCRIPT_DIR=%~dp0"
 cd /d "%SCRIPT_DIR%"
 
+:: --- Argument Parsing Loop ---
+:: This loop validates EVERY argument. If one is invalid, it will fail.
 for %%A in (%*) do (
-    if "%%A"=="--help" (
-        set help=true
-        set valid=true
-    ) else if "%%A"=="-h" (
-        set help=true
-        set valid=true
-    ) else if "%%A"=="--listen" (
-        set valid=true
-    ) else if "%%A"=="--autostart" (
-        set valid=true
-    ) else if "%%A"=="--darkmode" (
-        set valid=true
-    )
+    if /i "%%A"=="--help" ( goto :print_help )
+    if /i "%%A"=="-h" ( goto :print_help )
+    if /i "%%A"=="--listen" ( goto :next_arg )
+    if /i "%%A"=="--autostart" ( goto :next_arg )
+    if /i "%%A"=="--darkmode" ( goto :next_arg )
+
+    echo Error: Unknown command parameter: %%A
+    set "all_args_valid=false"
+    
+    :next_arg
 )
 
-if "%valid%"=="false" (
-    echo Unknown command parameter.
-    exit /b
-)
+if "%all_args_valid%"=="false" ( exit /b 1 )
 
-if "%help%"=="true" (
-    echo.
-    echo.
-    echo Usage: sdcpp_webui_windows.bat [options]
-    echo.
-    echo Options:
-    echo     -h or --help:            Show this help
-    echo     --listen:                Share sd.cpp-webui on your local network
-    echo     --autostart:             Open the UI automatically
-    echo     --darkmode:              Forces the UI to launch in dark mode
-    echo.
-    echo.
-    exit /b
-)
+goto :main_logic
+
+:: --- Help Text Section ---
+:print_help
+echo.
+echo Usage: sdcpp_webui_windows.bat [options]
+echo.
+echo Options:
+echo     -h or --help:         Show this help
+echo     --listen:             Share sd.cpp-webui on your local network
+echo     --autostart:          Open the UI automatically
+echo     --darkmode:           Forces the UI to launch in dark mode
+echo.
+exit /b 0
+
+
+:: --- Main Script Logic ---
+:main_logic
 
 if not exist "sd.exe" (
     echo.
+    echo Warning: 'sd.exe' not found.
+    echo Please place the stable-diffusion.cpp executable (renamed to 'sd.exe') in this folder.
     echo.
-    echo Warning: 'sd' executable not found or doesn't have execute permissions.
-    echo For the command to work place the stable-diffusion.cpp executable in the main sd.cpp-webui folder.
-    echo The executable must be called 'sd.exe'.
-    echo.
-    echo.
+    exit /b 1
 )
 
-if exist "venv" (
-    echo Virtual environment already exists.
-) else (
+if not exist "venv" (
     echo Creating virtual environment...
     python -m venv venv
-    echo Virtual environment created.
 )
 
 echo Activating virtual environment...
-if exist "venv\Scripts\activate" (
-    call venv\Scripts\activate
-) else (
-    echo Error: Virtual environment activation script not found.
-    exit /b 1
-)
-echo Virtual environment activated successfully.
+call venv\Scripts\activate
 
 pip freeze | findstr /i /x /g:requirements.txt >nul
 if %errorlevel% equ 0 (
@@ -77,7 +64,6 @@ if %errorlevel% equ 0 (
 ) else (
     echo Installing requirements...
     pip install -r requirements.txt --upgrade pip
-    echo Requirements installed.
 )
 
 echo Starting the WebUI...
