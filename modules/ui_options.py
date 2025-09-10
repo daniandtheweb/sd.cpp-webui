@@ -258,6 +258,7 @@ with gr.Blocks() as options_block:
     cnnet_dir_txt = folders_opt_components['cnnet_dir_txt']
     txt2img_dir_txt = folders_opt_components['txt2img_dir_txt']
     img2img_dir_txt = folders_opt_components['img2img_dir_txt']
+    any2video_dir_txt = folders_opt_components['any2video_dir_txt']
 
     # Set Defaults and Restore Defaults Buttons
     with gr.Row():
@@ -275,7 +276,7 @@ with gr.Blocks() as options_block:
                     emb_dir_txt, lora_dir_txt,
                     taesd_dir_txt, phtmkr_dir_txt,
                     upscl_dir_txt, cnnet_dir_txt,
-                    txt2img_dir_txt, img2img_dir_txt],
+                    txt2img_dir_txt, img2img_dir_txt, any2video_dir_txt],
             outputs=[]
         )
         restore_btn = gr.Button(

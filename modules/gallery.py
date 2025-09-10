@@ -7,18 +7,19 @@ from PIL import Image
 import gradio as gr
 
 from modules.config import (
-    txt2img_dir, img2img_dir
+    txt2img_dir, img2img_dir, any2video_dir
 )
 
 
 class GalleryManager:
     """Controls the gallery block"""
 
-    def __init__(self, txt2img_gallery, img2img_gallery):
+    def __init__(self, txt2img_gallery, img2img_gallery, any2video_gallery):
         self.page_num = 1
         self.ctrl = 0
         self.txt2img_dir = txt2img_gallery
         self.img2img_dir = img2img_gallery
+        self.any2video_dir = any2video_gallery
         self.img_index = int
         self.sel_img = int
         self.img_path = str
@@ -30,6 +31,8 @@ class GalleryManager:
             return self.txt2img_dir
         if self.ctrl == 1:
             return self.img2img_dir
+        if self.ctrl == 2:
+            return self.any2video_dir
         return self.txt2img_dir
 
     def reload_gallery(self, ctrl_inp=None, fpage_num=1, subctrl=0):
@@ -415,6 +418,8 @@ def get_next_img(subctrl):
         fimg_out = txt2img_dir
     elif subctrl == 1:
         fimg_out = img2img_dir
+    elif subctrl == 2:
+        fimg_out = any2video_dir
     else:
         fimg_out = txt2img_dir
     files = os.listdir(fimg_out)

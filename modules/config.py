@@ -23,6 +23,7 @@ default_settings = {
     'cnnet_dir': os.path.join(CURRENT_DIR, "models/controlnet/"),
     'txt2img_dir': os.path.join(CURRENT_DIR, "outputs/txt2img/"),
     'img2img_dir': os.path.join(CURRENT_DIR, "outputs/img2img/"),
+    'any2video_dir': os.path.join(CURRENT_DIR, "outputs/any2video/"),
     'def_type': "Default",
     'def_sampling': "euler_a",
     'def_steps': 20,
@@ -44,7 +45,7 @@ def set_defaults(in_ckpt, in_ckpt_vae, in_unet, in_unet_vae, in_clip_g,
                  in_vae_dir_txt, in_clip_dir_txt, in_emb_dir_txt,
                  in_lora_dir_txt, in_taesd_dir_txt, in_phtmkr_dir_txt,
                  in_upscl_dir_txt, in_cnnet_dir_txt, in_txt2img_dir_txt,
-                 in_img2img_dir_txt):
+                 in_img2img_dir_txt, in_any2video_dir_txt):
     """Sets new defaults"""
     # Directory defaults
     dir_defaults = {
@@ -60,6 +61,7 @@ def set_defaults(in_ckpt, in_ckpt_vae, in_unet, in_unet_vae, in_clip_g,
         'cnnet_dir': in_cnnet_dir_txt,
         'txt2img_dir': in_txt2img_dir_txt,
         'img2img_dir': in_img2img_dir_txt,
+        'any2video_dir': in_any2video_dir_txt
     }
     config_data.update(dir_defaults)
 
@@ -210,6 +212,7 @@ upscl_dir = config_data['upscl_dir']
 cnnet_dir = config_data['cnnet_dir']
 txt2img_dir = config_data['txt2img_dir']
 img2img_dir = config_data['img2img_dir']
+any2video_dir = config_data['any2video_dir']
 
 
 if 'def_ckpt' in config_data:

@@ -7,10 +7,11 @@ import gradio as gr
 from modules.config import (
     get_prompts, ckpt_dir, vae_dir, unet_dir, clip_dir,
     emb_dir, lora_dir, taesd_dir, phtmkr_dir, upscl_dir, cnnet_dir,
-    txt2img_dir, img2img_dir, def_ckpt, def_ckpt_vae, def_unet, def_unet_vae,
-    def_clip_g, def_clip_l, def_clip_vision_h, def_t5xxl, def_umt5_xxl,
-    def_sampling, def_steps, def_scheduler, def_width, def_height,
-    def_predict, def_flash_attn, def_diffusion_conv_direct, def_vae_conv_direct
+    txt2img_dir, img2img_dir, any2video_dir, def_ckpt, def_ckpt_vae,
+    def_unet, def_unet_vae, def_clip_g, def_clip_l, def_clip_vision_h,
+    def_t5xxl, def_umt5_xxl, def_sampling, def_steps, def_scheduler,
+    def_width, def_height, def_predict, def_flash_attn,
+    def_diffusion_conv_direct, def_vae_conv_direct
 )
 from modules.loader import (
     get_models, reload_models
@@ -658,6 +659,11 @@ def create_folders_opt_ui():
             folders_opt_components['img2img_dir_txt'] = gr.Textbox(
                 label="img2img outputs folder",
                 value=img2img_dir,
+                interactive=True
+            )
+            folders_opt_components['any2video_dir_txt'] = gr.Textbox(
+                label="any2video output folder",
+                value=any2video_dir,
                 interactive=True
             )
 

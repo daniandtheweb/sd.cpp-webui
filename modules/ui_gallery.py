@@ -5,11 +5,11 @@ import gradio as gr
 from modules.gallery import GalleryManager
 
 from modules.config import (
-    txt2img_dir, img2img_dir
+    txt2img_dir, img2img_dir, any2video_dir
 )
 
 
-gallery_manager = GalleryManager(txt2img_dir, img2img_dir)
+gallery_manager = GalleryManager(txt2img_dir, img2img_dir, any2video_dir)
 
 
 with gr.Blocks() as gallery_block:
@@ -19,6 +19,9 @@ with gr.Blocks() as gallery_block:
     )
     img2img_ctrl = gr.Textbox(
         value=1, visible=False
+    )
+    any2video_ctrl = gr.Textbox(
+        value=2, visible=False
     )
 
     # Title
@@ -31,6 +34,9 @@ with gr.Blocks() as gallery_block:
         )
         img2img_btn = gr.Button(
             value="img2img", variant="primary"
+        )
+        any2video_btn = gr.Button(
+            value="any2video", variant="primary"
         )
 
     with gr.Row():
@@ -182,6 +188,11 @@ with gr.Blocks() as gallery_block:
     img2img_btn.click(
         gallery_manager.reload_gallery,
         inputs=[img2img_ctrl],
+        outputs=[gallery, page_num_select, gallery]
+    )
+    any2video_btn.click(
+        gallery_manager.reload_gallery,
+        inputs=[any2video_ctrl],
         outputs=[gallery, page_num_select, gallery]
     )
     pvw_btn.click(
