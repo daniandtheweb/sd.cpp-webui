@@ -27,20 +27,17 @@ SWITCH_V_SYMBOL = '\u2195'
 
 def create_img_model_sel_ui():
     """Create the image model selection UI"""
-    # Dictionary to hold UI components
-    img_model_components = {}
-
     ckpt_dir_txt = gr.Textbox(value=config.get('ckpt_dir'), visible=False)
     vae_dir_txt = gr.Textbox(value=config.get('vae_dir'), visible=False)
     unet_dir_txt = gr.Textbox(value=config.get('unet_dir'), visible=False)
     clip_dir_txt = gr.Textbox(value=config.get('clip_dir'), visible=False)
 
     # Model & VAE Selection
-    with gr.Tab("Checkpoint") as img_model_components['ckpt_tab']:
+    with gr.Tab("Checkpoint") as ckpt_tab:
         with gr.Row():
             with gr.Column():
                 with gr.Row():
-                    img_model_components['ckpt_model'] = gr.Dropdown(
+                    ckpt_model = gr.Dropdown(
                         label="Checkpoint Model",
                         choices=get_models(config.get('ckpt_dir')),
                         scale=7,
@@ -48,23 +45,23 @@ def create_img_model_sel_ui():
                         interactive=True
                     )
                 with gr.Row():
-                    img_model_components['reload_ckpt_btn'] = gr.Button(
+                    reload_ckpt_btn = gr.Button(
                         value=RELOAD_SYMBOL,
                         scale=1
                     )
-                    img_model_components['reload_ckpt_btn'].click(
+                    reload_ckpt_btn.click(
                         reload_models,
                         inputs=[ckpt_dir_txt],
-                        outputs=[img_model_components['ckpt_model']]
+                        outputs=[ckpt_model]
                     )
 
-                    img_model_components['clear_ckpt_model'] = gr.ClearButton(
-                        img_model_components['ckpt_model'],
+                    gr.ClearButton(
+                        ckpt_model,
                         scale=1
                     )
             with gr.Column():
                 with gr.Row():
-                    img_model_components['ckpt_vae'] = gr.Dropdown(
+                    ckpt_vae = gr.Dropdown(
                         label="Checkpoint VAE",
                         choices=get_models(config.get('vae_dir')),
                         scale=7,
@@ -72,26 +69,26 @@ def create_img_model_sel_ui():
                         interactive=True
                     )
                 with gr.Row():
-                    img_model_components['reload_vae_btn'] = gr.Button(
+                    reload_vae_btn = gr.Button(
                         value=RELOAD_SYMBOL,
                         scale=1
                     )
-                    img_model_components['reload_vae_btn'].click(
+                    reload_vae_btn.click(
                         reload_models,
                         inputs=[vae_dir_txt],
-                        outputs=[img_model_components['ckpt_vae']]
+                        outputs=[ckpt_vae]
                     )
 
-                    img_model_components['clear_vae'] = gr.ClearButton(
-                        img_model_components['ckpt_vae'],
+                    gr.ClearButton(
+                        ckpt_vae,
                         scale=1
                     )
 
-    with gr.Tab("UNET") as img_model_components['unet_tab']:
+    with gr.Tab("UNET") as unet_tab:
         with gr.Row():
             with gr.Column():
                 with gr.Row():
-                    img_model_components['unet_model'] = gr.Dropdown(
+                    unet_model = gr.Dropdown(
                         label="UNET Model",
                         choices=get_models(config.get('unet_dir')),
                         scale=7,
@@ -99,23 +96,23 @@ def create_img_model_sel_ui():
                         interactive=True
                     )
                 with gr.Row():
-                    img_model_components['reload_unet_btn'] = gr.Button(
+                    reload_unet_btn = gr.Button(
                         value=RELOAD_SYMBOL,
                         scale=1
                     )
-                    img_model_components['reload_unet_btn'].click(
+                    reload_unet_btn.click(
                         reload_models,
                         inputs=[unet_dir_txt],
-                        outputs=[img_model_components['unet_model']]
+                        outputs=[unet_model]
                     )
 
-                    img_model_components['clear_unet_model'] = gr.ClearButton(
-                        img_model_components['unet_model'],
+                    gr.ClearButton(
+                        unet_model,
                         scale=1
                     )
             with gr.Column():
                 with gr.Row():
-                    img_model_components['unet_vae'] = gr.Dropdown(
+                    unet_vae = gr.Dropdown(
                         label="UNET VAE",
                         choices=get_models(config.get('vae_dir')),
                         scale=7,
@@ -123,25 +120,25 @@ def create_img_model_sel_ui():
                         interactive=True
                     )
                 with gr.Row():
-                    img_model_components['reload_unet_vae_btn'] = gr.Button(
+                    reload_unet_vae_btn = gr.Button(
                         value=RELOAD_SYMBOL,
                         scale=1
                     )
-                    img_model_components['reload_unet_vae_btn'].click(
+                    reload_unet_vae_btn.click(
                         reload_models,
                         inputs=[vae_dir_txt],
-                        outputs=[img_model_components['unet_vae']]
+                        outputs=[unet_vae]
                     )
 
-                    img_model_components['clear_unet_vae'] = gr.ClearButton(
-                        img_model_components['unet_vae'],
+                    gr.ClearButton(
+                        unet_vae,
                         scale=1
                     )
 
         with gr.Row():
             with gr.Column():
                 with gr.Row():
-                    img_model_components['clip_g'] = gr.Dropdown(
+                    clip_g = gr.Dropdown(
                         label="clip_g",
                         choices=get_models(config.get('clip_dir')),
                         scale=7,
@@ -149,23 +146,23 @@ def create_img_model_sel_ui():
                         interactive=True
                     )
                 with gr.Row():
-                    img_model_components['reload_clip_g_btn'] = gr.Button(
+                    reload_clip_g_btn = gr.Button(
                         value=RELOAD_SYMBOL,
                         scale=1
                     )
-                    img_model_components['reload_clip_g_btn'].click(
+                    reload_clip_g_btn.click(
                         reload_models,
                         inputs=[clip_dir_txt],
-                        outputs=[img_model_components['clip_g']]
+                        outputs=[clip_g]
                     )
 
-                    img_model_components['clear_clip_g'] = gr.ClearButton(
-                        img_model_components['clip_g'],
+                    gr.ClearButton(
+                        clip_g,
                         scale=1
                     )
             with gr.Column():
                 with gr.Row():
-                    img_model_components['clip_l'] = gr.Dropdown(
+                    clip_l = gr.Dropdown(
                         label="clip_l",
                         choices=get_models(config.get('clip_dir')),
                         scale=7,
@@ -173,53 +170,64 @@ def create_img_model_sel_ui():
                         interactive=True
                     )
                 with gr.Row():
-                    img_model_components['reload_clip_l_btn'] = gr.Button(
+                    reload_clip_l_btn = gr.Button(
                         value=RELOAD_SYMBOL,
                         scale=1
                     )
-                    img_model_components['reload_clip_l_btn'].click(
+                    reload_clip_l_btn.click(
                         reload_models,
                         inputs=[clip_dir_txt],
-                        outputs=[img_model_components['clip_l']]
+                        outputs=[clip_l]
                     )
 
-                    img_model_components['clear_clip_l'] = gr.ClearButton(
-                        img_model_components['clip_l'],
+                    gr.ClearButton(
+                        clip_l,
                         scale=1
                     )
             with gr.Column():
                 with gr.Row():
-                    img_model_components['t5xxl'] = gr.Dropdown(
+                    t5xxl = gr.Dropdown(
                         label="t5xxl",
                         choices=get_models(config.get('clip_dir')),
                         scale=7, value=config.get('def_t5xxl'),
                         interactive=True
                     )
                 with gr.Row():
-                    img_model_components['reload_t5xxl_btn'] = gr.Button(
+                    reload_t5xxl_btn = gr.Button(
                         value=RELOAD_SYMBOL,
                         scale=1
                     )
-                    img_model_components['reload_t5xxl_btn'].click(
+                    reload_t5xxl_btn.click(
                         reload_models,
                         inputs=[clip_dir_txt],
-                        outputs=[img_model_components['t5xxl']]
+                        outputs=[t5xxl]
                     )
 
-                    img_model_components['clear_t5xxl'] = gr.ClearButton(
-                        img_model_components['t5xxl'],
+                    gr.ClearButton(
+                        t5xxl,
                         scale=1
                     )
 
     # Return the dictionary with all UI components
-    return img_model_components
+    return {
+        'inputs': {
+            'in_ckpt_model': ckpt_model,
+            'in_ckpt_vae': ckpt_vae,
+            'in_unet_model': unet_model,
+            'in_unet_vae': unet_vae,
+            'in_clip_g': clip_g,
+            'in_clip_l': clip_l,
+            'in_t5xxl': t5xxl,
+        },
+        'components': {
+            'ckpt_tab': ckpt_tab,
+            'unet_tab': unet_tab,
+        }
+    }
 
 
 def create_video_model_sel_ui():
     """Create the video model selection UI"""
-    # Dictionary to hold UI components
-    video_model_components = {}
-
     unet_dir_txt = gr.Textbox(value=config.get('unet_dir'), visible=False)
     vae_dir_txt = gr.Textbox(value=config.get('vae_dir'), visible=False)
     clip_dir_txt = gr.Textbox(value=config.get('clip_dir'), visible=False)
@@ -227,7 +235,7 @@ def create_video_model_sel_ui():
     with gr.Row():
         with gr.Column():
             with gr.Row():
-                video_model_components['unet_model'] = gr.Dropdown(
+                unet_model = gr.Dropdown(
                     label="UNET Model",
                     choices=get_models(config.get('unet_dir')),
                     scale=7,
@@ -235,23 +243,23 @@ def create_video_model_sel_ui():
                     interactive=True
                 )
             with gr.Row():
-                video_model_components['reload_unet_btn'] = gr.Button(
+                reload_unet_btn = gr.Button(
                     value=RELOAD_SYMBOL,
                     scale=1
                 )
-                video_model_components['reload_unet_btn'].click(
+                reload_unet_btn.click(
                     reload_models,
                     inputs=[unet_dir_txt],
-                    outputs=[video_model_components['unet_model']]
+                    outputs=[unet_model]
                 )
 
-                video_model_components['clear_unet_model'] = gr.ClearButton(
-                    video_model_components['unet_model'],
+                gr.ClearButton(
+                    unet_model,
                     scale=1
                 )
         with gr.Column():
             with gr.Row():
-                video_model_components['unet_vae'] = gr.Dropdown(
+                unet_vae = gr.Dropdown(
                     label="UNET VAE",
                     choices=get_models(config.get('vae_dir')),
                     scale=7,
@@ -259,25 +267,25 @@ def create_video_model_sel_ui():
                     interactive=True
                 )
             with gr.Row():
-                video_model_components['reload_unet_vae_btn'] = gr.Button(
+                reload_unet_vae_btn = gr.Button(
                     value=RELOAD_SYMBOL,
                     scale=1
                 )
-                video_model_components['reload_unet_vae_btn'].click(
+                reload_unet_vae_btn.click(
                     reload_models,
                     inputs=[vae_dir_txt],
-                    outputs=[video_model_components['unet_vae']]
+                    outputs=[unet_vae]
                 )
 
-                video_model_components['clear_unet_vae'] = gr.ClearButton(
-                    video_model_components['unet_vae'],
+                gr.ClearButton(
+                    unet_vae,
                     scale=1
                 )
 
     with gr.Row():
         with gr.Column():
             with gr.Row():
-                video_model_components['clip_vision_h'] = gr.Dropdown(
+                clip_vision_h = gr.Dropdown(
                     label="clip_vision_h",
                     choices=get_models(config.get('clip_dir')),
                     scale=7,
@@ -285,23 +293,23 @@ def create_video_model_sel_ui():
                     interactive=True
                 )
             with gr.Row():
-                video_model_components['reload_clip_vision_h_btn'] = gr.Button(
+                reload_clip_vision_h_btn = gr.Button(
                     value=RELOAD_SYMBOL,
                     scale=1
                 )
-                video_model_components['reload_clip_vision_h_btn'].click(
+                reload_clip_vision_h_btn.click(
                     reload_models,
                     inputs=[clip_dir_txt],
-                    outputs=[video_model_components['clip_vision_h']]
+                    outputs=[clip_vision_h]
                 )
 
-                video_model_components['clear_clip_vision_h'] = gr.ClearButton(
-                    video_model_components['clip_vision_h'],
+                gr.ClearButton(
+                    clip_vision_h,
                     scale=1
                 )
         with gr.Column():
             with gr.Row():
-                video_model_components['umt5_xxl'] = gr.Dropdown(
+                umt5_xxl = gr.Dropdown(
                     label="umt5_xxl",
                     choices=get_models(config.get('clip_dir')),
                     scale=7,
@@ -309,18 +317,18 @@ def create_video_model_sel_ui():
                     interactive=True
                 )
             with gr.Row():
-                video_model_components['reload_umt5_xxl_btn'] = gr.Button(
+                reload_umt5_xxl_btn = gr.Button(
                     value=RELOAD_SYMBOL,
                     scale=1
                 )
-                video_model_components['reload_umt5_xxl_btn'].click(
+                reload_umt5_xxl_btn.click(
                     reload_models,
                     inputs=[clip_dir_txt],
-                    outputs=[video_model_components['umt5_xxl']]
+                    outputs=[umt5_xxl]
                 )
 
-                video_model_components['clear_umt5_xxl'] = gr.ClearButton(
-                    video_model_components['umt5_xxl'],
+                gr.ClearButton(
+                    umt5_xxl,
                     scale=1
                 )
     with gr.Row():
@@ -328,46 +336,55 @@ def create_video_model_sel_ui():
             label="High Noise", open=False
         ):
             with gr.Row():
-                video_model_components['high_noise_model'] = gr.Dropdown(
+                high_noise_model = gr.Dropdown(
                     label="High Noise Diffusion model",
                     choices=get_models(config.get('unet_dir')),
                     value=None,
                     interactive=True
                 )
             with gr.Row():
-                video_model_components['reload_high_noise_model'] = gr.Button(
+                reload_high_noise_model = gr.Button(
                     value=RELOAD_SYMBOL,
                     scale=1
                 )
-                video_model_components['reload_high_noise_model'].click(
+                reload_high_noise_model.click(
                     reload_models,
                     inputs=[unet_dir_txt],
-                    outputs=[video_model_components['high_noise_model']]
+                    outputs=[high_noise_model]
                 )
 
-                video_model_components['clear_high_noise_model'] = (
-                    gr.ClearButton(
-                        video_model_components['high_noise_model'],
-                        scale=1
-                    )
+                gr.ClearButton(
+                    high_noise_model,
+                    scale=1
                 )
 
     # Return the dictionary with all UI components
-    return video_model_components
+    return {
+        'in_unet_model': unet_model,
+        'in_unet_vae': unet_vae,
+        'in_clip_vision_h': clip_vision_h,
+        'in_umt5_xxl': umt5_xxl,
+        'in_high_noise_model': high_noise_model
+    }
 
 
 def create_prompts_ui():
     """Create the prompts UI"""
-    # Dictionary to hold UI components
-    prompts_components = {}
 
-    # Prompts
+    def save_and_refresh_prompts(name, p_prompt, n_prompt):
+        config.add_prompt(name, p_prompt, n_prompt)
+        return gr.Dropdown(choices=config.get_prompts(), value=name)
+
+    def delete_and_refresh_prompts(name):
+        config.delete_prompt(name)
+        return gr.Dropdown(choices=config.get_prompts())
+
     with gr.Row():
         with gr.Accordion(
             label="Saved prompts", open=False
         ):
             with gr.Column():
-                prompts_components['saved_prompts'] = gr.Dropdown(
+                saved_prompts = gr.Dropdown(
                     label="Prompts",
                     choices=config.get_prompts(),
                     interactive=True,
@@ -375,53 +392,75 @@ def create_prompts_ui():
                 )
             with gr.Column():
                 with gr.Row():
-                    prompts_components['load_prompt_btn'] = gr.Button(
+                    load_prompt_btn = gr.Button(
                         value="Load prompt", size="lg"
                     )
-                    prompts_components['reload_prompts_btn'] = gr.Button(
+                    reload_prompts_btn = gr.Button(
                         value=RELOAD_SYMBOL
                     )
                 with gr.Row():
-                    prompts_components['save_prompt_btn'] = gr.Button(
+                    save_prompt_btn = gr.Button(
                         value="Save prompt", size="lg"
                     )
-                    prompts_components['del_prompt_btn'] = gr.Button(
+                    del_prompt_btn = gr.Button(
                         value="Delete prompt", size="lg"
                     )
     with gr.Row():
-        prompts_components['pprompt'] = gr.Textbox(
+        pprompt = gr.Textbox(
             placeholder="Positive prompt",
             label="Positive Prompt",
             lines=3,
             show_copy_button=True
         )
     with gr.Row():
-        prompts_components['nprompt'] = gr.Textbox(
+        nprompt = gr.Textbox(
             placeholder="Negative prompt",
             label="Negative Prompt",
             lines=3,
             show_copy_button=True
         )
 
+    save_prompt_btn.click(
+        save_and_refresh_prompts,
+        inputs=[saved_prompts, pprompt, nprompt],
+        outputs=[saved_prompts]
+    )
+    del_prompt_btn.click(
+        delete_and_refresh_prompts,
+        inputs=[saved_prompts],
+        outputs=[saved_prompts]
+    )
+    reload_prompts_btn.click(
+        config.get_prompts,
+        inputs=[],
+        outputs=[saved_prompts]
+    )
+    load_prompt_btn.click(
+        config.get_prompt,
+        inputs=[saved_prompts],
+        outputs=[pprompt, nprompt]
+    )
+
     # Return the dictionary with all UI components
-    return prompts_components
+    return {
+        'saved_prompts': saved_prompts,
+        'in_pprompt': pprompt,
+        'in_nprompt': nprompt
+    }
 
 
 def create_settings_ui():
     """Create settings UI"""
-    # Dictionary to hold UI components
-    settings_components = {}
-
     with gr.Row():
         with gr.Column(scale=1):
-            settings_components['sampling'] = gr.Dropdown(
+            sampling = gr.Dropdown(
                 label="Sampling method",
                 choices=SAMPLERS,
                 value=config.get('def_sampling'),
                 interactive=True
             )
         with gr.Column(scale=1):
-            settings_components['steps'] = gr.Slider(
+            steps = gr.Slider(
                 label="Steps",
                 minimum=1,
                 maximum=100,
@@ -429,7 +468,7 @@ def create_settings_ui():
                 step=1
             )
     with gr.Row():
-        settings_components['scheduler'] = gr.Dropdown(
+        scheduler = gr.Dropdown(
             label="Scheduler",
             choices=SCHEDULERS,
             value=config.get('def_scheduler'),
@@ -438,38 +477,38 @@ def create_settings_ui():
     with gr.Row():
         with gr.Row():
             with gr.Column():
-                settings_components['width'] = gr.Slider(
+                width = gr.Slider(
                     label="Width",
                     minimum=64,
                     maximum=4096,
                     value=config.get('def_width'),
                     step=64
                 )
-                settings_components['height'] = gr.Slider(
+                height = gr.Slider(
                     label="Height",
                     minimum=64,
                     maximum=4096,
                     value=config.get('def_height'),
                     step=64
                 )
-            settings_components['switch_size'] = gr.Button(
+            switch_size = gr.Button(
                 value=SWITCH_V_SYMBOL, scale=1
             )
-            settings_components['switch_size'].click(
+            switch_size.click(
                 switch_sizes,
-                inputs=[settings_components['height'],
-                        settings_components['width']],
-                outputs=[settings_components['height'],
-                         settings_components['width']]
+                inputs=[height,
+                        width],
+                outputs=[height,
+                         width]
             )
-        settings_components['batch_count'] = gr.Slider(
+        batch_count = gr.Slider(
             label="Batch count",
             minimum=1,
             maximum=99,
             value=1,
             step=1
         )
-    settings_components['cfg'] = gr.Slider(
+    cfg = gr.Slider(
         label="CFG Scale",
         minimum=1,
         maximum=30,
@@ -478,11 +517,11 @@ def create_settings_ui():
         interactive=True
     )
     with gr.Row():
-        settings_components['guidance_btn'] = gr.Checkbox(
+        guidance_btn = gr.Checkbox(
             label="Enable distilled guidance", value=False,
             visible=False
         )
-        settings_components['guidance'] = gr.Slider(
+        guidance = gr.Slider(
             label="Guidance",
             minimum=0,
             maximum=30,
@@ -493,172 +532,213 @@ def create_settings_ui():
         )
 
     # Return the dictionary with all UI components
-    return settings_components
+    return {
+        'in_sampling': sampling,
+        'in_steps': steps,
+        'in_scheduler': scheduler,
+        'in_width': width,
+        'in_height': height,
+        'in_batch_count': batch_count,
+        'in_cfg': cfg,
+        'in_guidance_btn': guidance_btn,
+        'in_guidance': guidance
+    }
 
 
 def create_cnnet_ui():
     """Create the ControlNet UI"""
-    # Dictionary to hold UI components
-    cnnet_components = {}
+    cnnet_dir_txt = gr.Textbox(value=config.get('cnnet_dir'), visible=False)
 
-    # ControlNet
     with gr.Accordion(
         label="ControlNet", open=False
     ):
-        cnnet_components['cnnet'] = gr.Dropdown(
+        cnnet = gr.Dropdown(
             label="ControlNet",
             choices=get_models(config.get('cnnet_dir')),
             value=None,
             interactive=True
         )
-        cnnet_components['reload_cnnet_btn'] = gr.Button(value=RELOAD_SYMBOL)
-        cnnet_components['clear_cnnet'] = gr.ClearButton(
-            cnnet_components['cnnet']
+        reload_cnnet_btn = gr.Button(value=RELOAD_SYMBOL)
+        gr.ClearButton(
+            cnnet
         )
-        cnnet_components['control_img'] = gr.Image(
+        control_img = gr.Image(
             sources="upload", type="filepath"
         )
-        cnnet_components['control_strength'] = gr.Slider(
+        control_strength = gr.Slider(
             label="ControlNet strength",
             minimum=0,
             maximum=1,
             step=0.01,
             value=0.9)
-        cnnet_components['cnnet_cpu'] = gr.Checkbox(label="ControlNet on CPU")
-        cnnet_components['canny'] = gr.Checkbox(label="Canny (edge detection)")
+        cnnet_cpu = gr.Checkbox(label="ControlNet on CPU")
+        canny = gr.Checkbox(label="Canny (edge detection)")
+
+    reload_cnnet_btn.click(
+        reload_models,
+        inputs=[cnnet_dir_txt],
+        outputs=[cnnet]
+    )
 
     # Return the dictionary with all UI components
-    return cnnet_components
+    return {
+        'in_cnnet': cnnet,
+        'in_control_img': control_img,
+        'in_control_strength': control_strength,
+        'in_cnnet_cpu': cnnet_cpu,
+        'in_canny': canny
+    }
 
 
 def create_extras_ui():
     """Create the extras UI"""
-    # Dictionary to hold UI components
-    extras_components = {}
-
-    # Extra Settings
     with gr.Accordion(
         label="Extra", open=False
     ):
-        extras_components['threads'] = gr.Number(
+        threads = gr.Number(
             label="Threads",
             minimum=0,
             maximum=os.cpu_count(),
             value=0
         )
-        extras_components['offload_to_cpu'] = gr.Checkbox(
+        offload_to_cpu = gr.Checkbox(
             label="Offload to CPU")
-        extras_components['vae_tiling'] = gr.Checkbox(label="VAE Tiling")
-        extras_components['vae_cpu'] = gr.Checkbox(label="VAE on CPU")
-        extras_components['clip_cpu'] = gr.Checkbox(label="CLIP on CPU")
-        extras_components['rng'] = gr.Dropdown(
+        vae_tiling = gr.Checkbox(label="VAE Tiling")
+        vae_cpu = gr.Checkbox(label="VAE on CPU")
+        clip_cpu = gr.Checkbox(label="CLIP on CPU")
+        rng = gr.Dropdown(
             label="RNG",
             choices=["std_default", "cuda"],
             value="cuda"
         )
-        extras_components['predict'] = gr.Dropdown(
+        predict = gr.Dropdown(
             label="Prediction (WIP: currently only works with PR #334)",
             choices=PREDICTION,
             value=config.get('def_predict')
         )
-        extras_components['output'] = gr.Textbox(
+        output = gr.Textbox(
             label="Output Name (optional)", value=""
         )
-        extras_components['color'] = gr.Checkbox(
+        color = gr.Checkbox(
             label="Color", value=True
         )
-        extras_components['flash_attn'] = gr.Checkbox(
+        flash_attn = gr.Checkbox(
             label="Flash Attention", value=config.get('def_flash_attn')
         )
-        extras_components['diffusion_conv_direct'] = gr.Checkbox(
+        diffusion_conv_direct = gr.Checkbox(
             label="Conv2D Direct for diffusion",
             value=config.get('def_diffusion_conv_direct')
         )
-        extras_components['vae_conv_direct'] = gr.Checkbox(
+        vae_conv_direct = gr.Checkbox(
             label="Conv2D Direct for VAE",
             value=config.get('def_vae_conv_direct')
         )
-        extras_components['verbose'] = gr.Checkbox(label="Verbose")
+        verbose = gr.Checkbox(label="Verbose")
 
     # Return the dictionary with all UI components
-    return extras_components
+    return {
+        'in_threads': threads,
+        'in_offload_to_cpu': offload_to_cpu,
+        'in_vae_tiling': vae_tiling,
+        'in_vae_cpu': vae_cpu,
+        'in_clip_cpu': clip_cpu,
+        'in_rng': rng,
+        'in_predict': predict,
+        'in_output': output,
+        'in_color': color,
+        'in_flash_attn': flash_attn,
+        'in_diffusion_conv_direct': diffusion_conv_direct,
+        'in_vae_conv_direct': vae_conv_direct,
+        'in_verbose': verbose
+    }
 
 
 def create_folders_opt_ui():
     """Create the folder options UI"""
-    # Dictionary to hold UI components
-    folders_opt_components = {}
-
     with gr.Row():
         # Folders Accordion
         with gr.Accordion(
             label="Folders", open=False
         ):
-            folders_opt_components['ckpt_dir_txt'] = gr.Textbox(
+            ckpt_dir_txt = gr.Textbox(
                 label="Checkpoint folder",
                 value=config.get('ckpt_dir'),
                 interactive=True
             )
-            folders_opt_components['unet_dir_txt'] = gr.Textbox(
+            unet_dir_txt = gr.Textbox(
                 label="UNET folder",
                 value=config.get('unet_dir'),
                 interactive=True
             )
-            folders_opt_components['vae_dir_txt'] = gr.Textbox(
+            vae_dir_txt = gr.Textbox(
                 label="VAE folder",
                 value=config.get('vae_dir'),
                 interactive=True
             )
-            folders_opt_components['clip_dir_txt'] = gr.Textbox(
+            clip_dir_txt = gr.Textbox(
                 label="clip folder",
                 value=config.get('clip_dir'),
                 interactive=True
             )
-            folders_opt_components['emb_dir_txt'] = gr.Textbox(
+            emb_dir_txt = gr.Textbox(
                 label="Embeddings folder",
                 value=config.get('emb_dir'),
                 interactive=True
             )
-            folders_opt_components['lora_dir_txt'] = gr.Textbox(
+            lora_dir_txt = gr.Textbox(
                 label="Lora folder",
                 value=config.get('lora_dir'),
                 interactive=True
             )
-            folders_opt_components['taesd_dir_txt'] = gr.Textbox(
+            taesd_dir_txt = gr.Textbox(
                 label="TAESD folder",
                 value=config.get('taesd_dir'),
                 interactive=True
             )
-            folders_opt_components['phtmkr_dir_txt'] = gr.Textbox(
+            phtmkr_dir_txt = gr.Textbox(
                 label="PhotoMaker folder",
                 value=config.get('phtmkr_dir'),
                 interactive=True
             )
-            folders_opt_components['upscl_dir_txt'] = gr.Textbox(
+            upscl_dir_txt = gr.Textbox(
                 label="Upscaler folder",
                 value=config.get('upscl_dir'),
                 interactive=True
             )
-            folders_opt_components['cnnet_dir_txt'] = gr.Textbox(
+            cnnet_dir_txt = gr.Textbox(
                 label="ControlNet folder",
                 value=config.get('cnnet_dir'),
                 interactive=True
             )
-            folders_opt_components['txt2img_dir_txt'] = gr.Textbox(
+            txt2img_dir_txt = gr.Textbox(
                 label="txt2img outputs folder",
                 value=config.get('txt2img_dir'),
                 interactive=True
             )
-            folders_opt_components['img2img_dir_txt'] = gr.Textbox(
+            img2img_dir_txt = gr.Textbox(
                 label="img2img outputs folder",
                 value=config.get('img2img_dir'),
                 interactive=True
             )
-            folders_opt_components['any2video_dir_txt'] = gr.Textbox(
+            any2video_dir_txt = gr.Textbox(
                 label="any2video output folder",
                 value=config.get('any2video_dir'),
                 interactive=True
             )
 
     # Return the dictionary with all UI components
-    return folders_opt_components
+    return {
+        'ckpt_dir_txt': ckpt_dir_txt,
+        'unet_dir_txt': unet_dir_txt,
+        'vae_dir_txt': vae_dir_txt,
+        'clip_dir_txt': clip_dir_txt,
+        'emb_dir_txt': emb_dir_txt,
+        'lora_dir_txt': lora_dir_txt,
+        'taesd_dir_txt': taesd_dir_txt,
+        'phtmkr_dir_txt': phtmkr_dir_txt,
+        'upscl_dir_txt': upscl_dir_txt,
+        'cnnet_dir_txt': cnnet_dir_txt,
+        'txt2img_dir_txt': txt2img_dir_txt,
+        'img2img_dir_txt': img2img_dir_txt,
+        'any2video_dir_txt': any2video_dir_txt
+    }

@@ -12,59 +12,16 @@ from modules.ui import (
 )
 
 
-def save_settings_wrapper(
-    ckpt_model, ckpt_vae, unet_model, unet_vae, clip_g, clip_l, clip_vision_h,
-    t5xxl, umt5_xxl, model_type, sampling, steps, scheduler, width, height,
-    predict, flash_attn, diffusion_conv_direct, vae_conv_direct, ckpt_dir_txt,
-    unet_dir_txt, vae_dir_txt, clip_dir_txt, emb_dir_txt, lora_dir_txt,
-    taesd_dir_txt, phtmkr_dir_txt, upscl_dir_txt, cnnet_dir_txt,
-    txt2img_dir_txt, img2img_dir_txt, any2video_dir_txt
-):
+def save_settings_wrapper(*args):
     """Gathers all UI values into a dictionary and calls the config manager."""
-    new_settings = {
-        # Directory Paths
-        'ckpt_dir': ckpt_dir_txt,
-        'unet_dir': unet_dir_txt,
-        'vae_dir': vae_dir_txt,
-        'clip_dir': clip_dir_txt,
-        'emb_dir': emb_dir_txt,
-        'lora_dir': lora_dir_txt,
-        'taesd_dir': taesd_dir_txt,
-        'phtmkr_dir': phtmkr_dir_txt,
-        'upscl_dir': upscl_dir_txt,
-        'cnnet_dir': cnnet_dir_txt,
-        'txt2img_dir': txt2img_dir_txt,
-        'img2img_dir': img2img_dir_txt,
-        'any2video_dir': any2video_dir_txt,
+    params = dict(zip(ordered_keys, args))
 
-        # Default Models (saved unconditionally)
-        'def_ckpt': ckpt_model,
-        'def_ckpt_vae': ckpt_vae,
-        'def_unet': unet_model,
-        'def_unet_vae': unet_vae,
-        'def_clip_g': clip_g,
-        'def_clip_l': clip_l,
-        'def_clip_vision_h': clip_vision_h,
-        'def_t5xxl': t5xxl,
-        'def_umt5_xxl': umt5_xxl,
-
-        # Other Default Settings
-        'def_type': model_type,
-        'def_sampling': sampling,
-        'def_steps': steps,
-        'def_scheduler': scheduler,
-        'def_width': width,
-        'def_height': height,
-        'def_predict': predict,
-        'def_flash_attn': flash_attn,
-        'def_diffusion_conv_direct': diffusion_conv_direct,
-        'def_vae_conv_direct': vae_conv_direct
-    }
-
-    config.update_settings(new_settings)
+    config.update_settings(params)
+    return "Settings saved successfully."
 
 
 with gr.Blocks() as options_block:
+    settings_map = {}
     # Title
     options_title = gr.Markdown("# Options")
 
@@ -82,9 +39,11 @@ with gr.Blocks() as options_block:
                 reload_ckpt_btn = gr.Button(
                     value=RELOAD_SYMBOL, scale=1
                 )
-                clear_ckpt_model = gr.ClearButton(
+                gr.ClearButton(
                     ckpt_model, scale=1
                 )
+            settings_map['def_ckpt'] = ckpt_model
+
         with gr.Column():
             with gr.Row():
                 ckpt_vae = gr.Dropdown(
@@ -97,9 +56,11 @@ with gr.Blocks() as options_block:
                 reload_vae_btn = gr.Button(
                     value=RELOAD_SYMBOL, scale=1
                 )
-                clear_vae = gr.ClearButton(
+                gr.ClearButton(
                     ckpt_vae, scale=1
                 )
+            settings_map['def_ckpt_vae'] = ckpt_vae
+
     with gr.Row():
         with gr.Column():
             with gr.Row():
@@ -114,9 +75,11 @@ with gr.Blocks() as options_block:
                 reload_unet_btn = gr.Button(
                     value=RELOAD_SYMBOL, scale=1
                 )
-                clear_unet_model = gr.ClearButton(
+                gr.ClearButton(
                     unet_model, scale=1
                 )
+            settings_map['def_unet'] = unet_model
+
         with gr.Column():
             with gr.Row():
                 unet_vae = gr.Dropdown(
@@ -129,9 +92,11 @@ with gr.Blocks() as options_block:
                 reload_vae_btn = gr.Button(
                     value=RELOAD_SYMBOL, scale=1
                 )
-                clear_unet_vae = gr.ClearButton(
+                gr.ClearButton(
                     unet_vae, scale=1
                 )
+            settings_map['def_unet_vae'] = unet_vae
+
     with gr.Row():
         with gr.Column():
             with gr.Row():
@@ -146,9 +111,11 @@ with gr.Blocks() as options_block:
                 reload_clip_g_btn = gr.Button(
                     value=RELOAD_SYMBOL, scale=1
                 )
-                clear_clip_g = gr.ClearButton(
+                gr.ClearButton(
                     clip_g, scale=1
                 )
+            settings_map['def_clip_g'] = clip_g
+
         with gr.Column():
             with gr.Row():
                 clip_l = gr.Dropdown(
@@ -162,9 +129,11 @@ with gr.Blocks() as options_block:
                 reload_clip_l_btn = gr.Button(
                     value=RELOAD_SYMBOL, scale=1
                 )
-                clear_clip_l = gr.ClearButton(
+                gr.ClearButton(
                     clip_l, scale=1
                 )
+            settings_map['def_clip_l'] = clip_l
+
         with gr.Column():
             with gr.Row():
                 clip_vision_h = gr.Dropdown(
@@ -178,9 +147,11 @@ with gr.Blocks() as options_block:
                 reload_clip_vision_h_btn = gr.Button(
                     value=RELOAD_SYMBOL, scale=1
                 )
-                clear_clip_vision_h = gr.ClearButton(
+                gr.ClearButton(
                     clip_vision_h, scale=1
                 )
+            settings_map['def_clip_vision_h'] = clip_vision_h
+
     with gr.Row():
         with gr.Column():
             with gr.Row():
@@ -195,9 +166,11 @@ with gr.Blocks() as options_block:
                 reload_t5xxl_btn = gr.Button(
                     value=RELOAD_SYMBOL, scale=1
                 )
-                clear_t5xxl = gr.ClearButton(
+                gr.ClearButton(
                     t5xxl, scale=1
                 )
+            settings_map['def_t5xxl'] = t5xxl
+
         with gr.Column():
             with gr.Row():
                 umt5_xxl = gr.Dropdown(
@@ -211,15 +184,19 @@ with gr.Blocks() as options_block:
                 reload_umt5_xxl_btn = gr.Button(
                     value=RELOAD_SYMBOL, scale=1
                 )
-                clear_umt5_xxl = gr.ClearButton(
+                gr.ClearButton(
                     umt5_xxl, scale=1
                 )
+            settings_map['def_umt5_xxl'] = umt5_xxl
+
     model_type = gr.Dropdown(
             label="Quantization",
             choices=QUANTS,
             value=config.get('def_type'),
             interactive=True
     )
+    settings_map['def_type'] = model_type
+
     with gr.Row():
         with gr.Column():
             # Sampling Method Dropdown
@@ -229,6 +206,8 @@ with gr.Blocks() as options_block:
                 value=config.get('def_sampling'),
                 interactive=True
             )
+            settings_map['def_sampling'] = sampling
+
         with gr.Column():
             # Steps Slider
             steps = gr.Slider(
@@ -238,6 +217,7 @@ with gr.Blocks() as options_block:
                 value=config.get('def_steps'),
                 step=1
             )
+            settings_map['def_steps'] = steps
 
     with gr.Row():
         # Scheduler Dropdown
@@ -247,6 +227,7 @@ with gr.Blocks() as options_block:
             value=config.get('def_scheduler'),
             interactive=True
         )
+        settings_map['def_scheduler'] = scheduler
 
     with gr.Column():
         # Size Sliders
@@ -257,6 +238,8 @@ with gr.Blocks() as options_block:
             value=config.get('def_width'),
             step=8
         )
+        settings_map['def_height'] = width
+
         height = gr.Slider(
             label="Height",
             minimum=64,
@@ -264,6 +247,7 @@ with gr.Blocks() as options_block:
             value=config.get('def_height'),
             step=8
         )
+        settings_map['def_width'] = height
 
     with gr.Row():
         # Prediction mode
@@ -273,62 +257,54 @@ with gr.Blocks() as options_block:
             value=config.get('def_predict'),
             interactive=True
         )
+        settings_map['predict'] = predict
+
     with gr.Row():
         # Boolean options
         flash_attn = gr.Checkbox(
             label="Flash Attention",
             value=config.get('def_flash_attn')
         )
+        settings_map['def_flash_attn'] = flash_attn
+
         diffusion_conv_direct = gr.Checkbox(
             label="Conv2D Direct for diffusion",
             value=config.get('def_diffusion_conv_direct')
         )
+        settings_map['def_diffusion_conv_direct'] = diffusion_conv_direct
+
         vae_conv_direct = gr.Checkbox(
             label="Conv2D Direct for VAE",
             value=config.get('def_vae_conv_direct')
         )
+        settings_map['def_vae_conv_direct'] = vae_conv_direct
 
     # Folders options
-    folders_opt_components = create_folders_opt_ui()
+    folders_ui = create_folders_opt_ui()
+    settings_map.update(folders_ui)
 
-    ckpt_dir_txt = folders_opt_components['ckpt_dir_txt']
-    unet_dir_txt = folders_opt_components['unet_dir_txt']
-    vae_dir_txt = folders_opt_components['vae_dir_txt']
-    clip_dir_txt = folders_opt_components['clip_dir_txt']
-    emb_dir_txt = folders_opt_components['emb_dir_txt']
-    lora_dir_txt = folders_opt_components['lora_dir_txt']
-    taesd_dir_txt = folders_opt_components['taesd_dir_txt']
-    phtmkr_dir_txt = folders_opt_components['phtmkr_dir_txt']
-    upscl_dir_txt = folders_opt_components['upscl_dir_txt']
-    cnnet_dir_txt = folders_opt_components['cnnet_dir_txt']
-    txt2img_dir_txt = folders_opt_components['txt2img_dir_txt']
-    img2img_dir_txt = folders_opt_components['img2img_dir_txt']
-    any2video_dir_txt = folders_opt_components['any2video_dir_txt']
+    status_textbox = gr.Textbox(label="Status", value="", interactive=False)
 
     # Set Defaults and Restore Defaults Buttons
     with gr.Row():
         set_btn = gr.Button(
             value="Set Defaults", variant="primary"
         )
-        set_btn.click(
-            save_settings_wrapper,
-            inputs=[
-                ckpt_model, ckpt_vae, unet_model, unet_vae, clip_g, clip_l,
-                clip_vision_h, t5xxl, umt5_xxl, model_type, sampling, steps,
-                scheduler, width, height, predict, flash_attn,
-                diffusion_conv_direct, vae_conv_direct, ckpt_dir_txt,
-                unet_dir_txt, vae_dir_txt, clip_dir_txt, emb_dir_txt,
-                lora_dir_txt, taesd_dir_txt, phtmkr_dir_txt, upscl_dir_txt,
-                cnnet_dir_txt, txt2img_dir_txt, img2img_dir_txt,
-                any2video_dir_txt
-            ],
-            outputs=[]
-        )
         restore_btn = gr.Button(
             value="Restore Defaults", variant="stop"
         )
-        restore_btn.click(
-            config.reset_defaults,
-            inputs=[],
-            outputs=[]
-        )
+
+    ordered_keys = sorted(settings_map.keys())
+    ordered_components = [settings_map[key] for key in ordered_keys]
+
+    set_btn.click(
+        save_settings_wrapper,
+        inputs=ordered_components,
+        outputs=[status_textbox]
+    )
+
+    restore_btn.click(
+        config.reset_defaults,
+        inputs=[],
+        outputs=[status_textbox]
+    )

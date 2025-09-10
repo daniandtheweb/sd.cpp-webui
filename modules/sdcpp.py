@@ -87,7 +87,7 @@ class CommandRunner:
         """
         Prepares the final command string for printing and computes outputs.
         """
-        prompt = self._get_param('in_ppromt', "")
+        prompt = self._get_param('in_pprompt', "")
         nprompt = self._get_param('in_nprompt', "")
 
         # Prepare a copy for printing
@@ -158,7 +158,7 @@ class Txt2ImgRunner(CommandRunner):
             )
         )
 
-        self.command.extend(['-p', self._get_param('in_ppromt', "")])
+        self.command.extend(['-p', self._get_param('in_pprompt', "")])
         if self._get_param('in_nprompt'):
             self.command.extend(['-n', self._get_param('in_nprompt')])
 
@@ -238,7 +238,7 @@ class Img2ImgRunner(Txt2ImgRunner):
         self.command.extend(['--init-img', str(self._get_param('in_img_inp'))])
         self.command.extend([
             '--strength',
-            str(self._get_param('in_strenght'))
+            str(self._get_param('in_strength'))
         ])
 
         options = {
@@ -274,7 +274,7 @@ class Any2VideoRunner(CommandRunner):
             )
         )
 
-        self.command.extend(['-p', self._get_param('in_ppromt', "")])
+        self.command.extend(['-p', self._get_param('in_pprompt', "")])
         if self._get_param('in_nprompt'):
             self.command.extend(['-n', self._get_param('in_nprompt')])
 
