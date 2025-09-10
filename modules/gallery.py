@@ -42,7 +42,7 @@ class GalleryManager:
             files = (
                 os.path.join(img_dir, f)
                 for f in os.listdir(img_dir)
-                if f.lower().endswith(('.png', '.jpg', '.jpeg'))
+                if f.lower().endswith(('.png', '.jpg', '.jpeg', '.avi'))
             )
             return sorted(files, key=os.path.getctime)
         except (FileNotFoundError, OSError):
@@ -234,9 +234,12 @@ class GalleryManager:
 
         self.current_img_path = files[self.selected_img_global_index]
 
-        if self.current_img_path.lower().endswith('.png'):
+        raw_text = None
+        file_path_lower = self.current_img_path.lower()
+
+        if file_path_lower.endswith('.png'):
             raw_text = self._parse_png_metadata(self.current_img_path)
-        else:  # jpg/jpeg
+        elif file_path_lower.endswith(('.jpg', '.jpeg')):
             raw_text = self._parse_jpg_metadata(self.current_img_path)
 
         params = self._extract_params_from_text(raw_text)

@@ -266,7 +266,7 @@ class Any2VideoRunner(CommandRunner):
         self.output_path = (
             os.path.join(
                 config.get('any2video_dir'),
-                f"{self._get_param('in_output')}.png"
+                f"{self._get_param('in_output')}.avi"
             )
             if self._get_param('in_output')
             else os.path.join(
