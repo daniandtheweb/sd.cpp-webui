@@ -35,7 +35,9 @@ class ModelState:
         self.bak_clip_l = config.get('def_clip_l')
         self.bak_t5xxl = config.get('def_t5xxl')
         self.bak_guidance_btn = False
-        self.bak_guidance = 3.5
+        self.bak_disable_dit_mask = False
+        self.bak_enable_t5_mask = False
+        self.back_t5_mask_pad = False
 
     def update(self, **kwargs):
         """Generic method to update state variables.
@@ -59,7 +61,8 @@ class ModelState:
         )
 
     def bak_unet_tab(self, unet_model, unet_vae, clip_g, clip_l, t5xxl,
-                     guidance_btn, guidance):
+                     guidance_btn, disable_dit_mask, enable_t5_mask,
+                     t5_mask_pad):
         """Updates the state with values from the UNET tab."""
         self.update(
             bak_unet_model=unet_model,
@@ -68,7 +71,9 @@ class ModelState:
             bak_clip_l=clip_l,
             bak_t5xxl=t5xxl,
             bak_guidance_btn=guidance_btn,
-            bak_guidance=guidance
+            bak_disable_dit_mask=disable_dit_mask,
+            bak_enable_t5_mask=enable_t5_mask,
+            back_t5_mask_pad=t5_mask_pad
         )
 
 
@@ -261,8 +266,8 @@ def get_path(directory, filename):
     return os.path.join(directory, filename) if filename else None
 
 
-def unet_tab_switch(ckpt_model, ckpt_vae,
-                    guidance_btn, guidance):
+def unet_tab_switch(ckpt_model, ckpt_vae, guidance_btn, guidance,
+                    disable_dit_mask, enable_t5_mask, t5_mask_pad):
     """Switches to the UNET tab"""
     model_state.bak_ckpt_tab(ckpt_model, ckpt_vae)
 
@@ -275,15 +280,20 @@ def unet_tab_switch(ckpt_model, ckpt_vae,
         gr.update(value=model_state.bak_clip_l),
         gr.update(value=model_state.bak_t5xxl),
         gr.update(value=model_state.bak_guidance_btn, visible=True),
-        gr.update(value=model_state.bak_guidance, visible=True)
+        gr.update(visible=True),
+        gr.update(value=model_state.bak_disable_dit_mask, visible=True),
+        gr.update(value=model_state.bak_enable_t5_mask, visible=True),
+        gr.update(visible=True)
     )
 
 
 def ckpt_tab_switch(unet_model, unet_vae, clip_g, clip_l, t5xxl,
-                    guidance_btn, guidance):
+                    guidance_btn, guidance, disable_dit_mask,
+                    enable_t5_mask, t5_mask_pad):
     """Switches to the checkpoint tab"""
     model_state.bak_unet_tab(unet_model, unet_vae, clip_g, clip_l, t5xxl,
-                             guidance_btn, guidance)
+                             guidance_btn, disable_dit_mask,
+                             enable_t5_mask, t5_mask_pad)
 
     return (
         gr.update(value=model_state.bak_ckpt_model),
@@ -293,6 +303,9 @@ def ckpt_tab_switch(unet_model, unet_vae, clip_g, clip_l, t5xxl,
         gr.update(value=None),
         gr.update(value=None),
         gr.update(value=None),
+        gr.update(value=False, visible=False),
+        gr.update(visible=False),
+        gr.update(value=False, visible=False),
         gr.update(value=False, visible=False),
         gr.update(visible=False)
     )

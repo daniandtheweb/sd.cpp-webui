@@ -194,6 +194,10 @@ class Txt2ImgRunner(CommandRunner):
             '--control-strength': (self._get_param('in_control_strength')
                                    if self._get_param('f_cnnet')
                                    else None),
+            '--chroma-t5-mask-pad': (self._get_param('in_t5_mask_pad')
+                                     if self._get_param('in_enable_t5_mask')
+                                     else None
+                                     ),
             '--prediction': (self._get_param('in_predict')
                              if self._get_param('in_predict') != "Default"
                              else None)
@@ -208,6 +212,10 @@ class Txt2ImgRunner(CommandRunner):
             '--control-net-cpu': self._get_param('in_cnnet_cpu'),
             '--canny': self._get_param('in_canny'),
             '--normalize-input': self._get_param('in_phtmkr_nrml'),
+            '--chroma-disable-dit-mask': (
+                self._get_param('in_disable_dit_mask')
+            ),
+            '--chroma-enable-t5-mask': self._get_param('in_enable_t5_mask'),
             '--color': self._get_param('in_color'),
             '--diffusion-fa': self._get_param('in_flash_attn'),
             '--diffusion-conv-direct': (

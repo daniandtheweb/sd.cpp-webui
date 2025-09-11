@@ -590,6 +590,33 @@ def create_cnnet_ui():
     }
 
 
+def create_chroma_ui():
+    """Create Chroma specific UI"""
+    with gr.Row():
+        disable_dit_mask = gr.Checkbox(
+            label="Disable DiT mask for Chroma",
+            visible=False
+        )
+    with gr.Row():
+        enable_t5_mask = gr.Checkbox(
+            label="Enable T5 mask for Chroma",
+            visible=False
+        )
+        t5_mask_pad = gr.Slider(
+            label="T5 mask pad size for Chroma",
+            minimum=0,
+            maximum=1024,
+            value=1,
+            step=1,
+            visible=False
+        )
+    return {
+        'in_disable_dit_mask': disable_dit_mask,
+        'in_enable_t5_mask': enable_t5_mask,
+        'in_t5_mask_pad': t5_mask_pad
+    }
+
+
 def create_extras_ui():
     """Create the extras UI"""
     with gr.Accordion(
