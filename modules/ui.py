@@ -690,12 +690,19 @@ def create_experimental_ui():
             choices=PREVIEW,
             value="none"
         )
+        preview_interval = gr.Number(
+            label="Preview interval (PR #522)",
+            value=1,
+            minimum=1,
+            interactive=True
+        )
         preview_taesd = gr.Checkbox(
             label="TAESD for preview only (WIP: PR #522)"
         )
     return {
         'in_predict': predict,
         'in_preview_mode': preview_mode,
+        'in_preview_interval': preview_interval,
         'in_preview_taesd': preview_taesd
     }
 

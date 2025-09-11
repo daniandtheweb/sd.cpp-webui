@@ -219,7 +219,10 @@ class Txt2ImgRunner(CommandRunner):
                           else None),
             '--preview-path': (self.preview_path
                                if is_preview_enabled
-                               else None)
+                               else None),
+            '--preview-interval': (self._get_param('in_preview_interval')
+                                   if is_preview_enabled
+                                   else None)
         }
         self._add_options(options)
 
