@@ -20,6 +20,7 @@ SCHEDULERS = ["discrete", "karras", "exponential", "ays", "gits", "smoothstep"]
 MODELS = ["Checkpoint", "UNET", "VAE", "clip_g", "clip_l", "t5xxl", "TAESD",
           "Lora", "Embeddings", "Upscaler", "ControlNet"]
 PREDICTION = ["Default", "eps", "v", "edm_v", "sd3_flow", "flux_flow"]
+PREVIEW = ["none", "proj", "tae", "vae"]
 RELOAD_SYMBOL = '\U0001F504'
 RANDOM_SYMBOL = '\U0001F3B2'
 SWITCH_V_SYMBOL = '\u2195'
@@ -638,11 +639,6 @@ def create_extras_ui():
             choices=["std_default", "cuda"],
             value="cuda"
         )
-        predict = gr.Dropdown(
-            label="Prediction (WIP: currently only works with PR #334)",
-            choices=PREDICTION,
-            value=config.get('def_predict')
-        )
         output = gr.Textbox(
             label="Output Name (optional)", value=""
         )
@@ -670,13 +666,37 @@ def create_extras_ui():
         'in_vae_cpu': vae_cpu,
         'in_clip_cpu': clip_cpu,
         'in_rng': rng,
-        'in_predict': predict,
         'in_output': output,
         'in_color': color,
         'in_flash_attn': flash_attn,
         'in_diffusion_conv_direct': diffusion_conv_direct,
         'in_vae_conv_direct': vae_conv_direct,
         'in_verbose': verbose
+    }
+
+
+def create_experimental_ui():
+    """Create experimental UI"""
+    with gr.Accordion(
+        label="Experimental", open=False
+    ):
+        predict = gr.Dropdown(
+            label="Prediction (WIP: PR #334)",
+            choices=PREDICTION,
+            value=config.get('def_predict')
+        )
+        preview_mode = gr.Dropdown(
+            label="Preview mode (WIP: PR #522)",
+            choices=PREVIEW,
+            value="none"
+        )
+        preview_taesd = gr.Checkbox(
+            label="TAESD for preview only (WIP: PR #522)"
+        )
+    return {
+        'in_predict': predict,
+        'in_preview_mode': preview_mode,
+        'in_preview_taesd': preview_taesd
     }
 
 

@@ -23,6 +23,7 @@ class CommandRunner:
         self.fcommand = ""
         self.outputs = []
         self.output_path = ""
+        self.preview_path = None
 
     def _resolve_paths(self):
         """Resolves all model and directory paths from the config."""
@@ -120,6 +121,11 @@ class CommandRunner:
         self._prepare_for_run()
         print(f"\n\n{self.fcommand}\n\n")
 
+        if self.preview_path:
+            gallery_update = [self.preview_path]
+        else:
+            gallery_update = None
+
         yield (self.fcommand, gr.update(visible=True, value=0),
                gr.update(visible=True, value="Initializing..."),
                gr.update(value=""), None)
@@ -137,7 +143,7 @@ class CommandRunner:
                 )
             else:
                 yield (self.fcommand, gr.update(value=update["percent"]),
-                       update["status"], gr.update(value=""), None)
+                       update["status"], gr.update(value=""), gallery_update)
 
         yield (self.fcommand, gr.update(visible=False, value=100),
                gr.update(visible=False, value=""),
@@ -163,6 +169,13 @@ class Txt2ImgRunner(CommandRunner):
             self.command.extend(['-n', self._get_param('in_nprompt')])
 
         self._add_base_args()
+
+        is_preview_enabled = (self._get_param('in_preview_mode')
+                              if self._get_param('in_preview_mode') != "none"
+                              else None
+                              )
+        if is_preview_enabled:
+            self.preview_path = self.output_path + "preview.png"
 
         options = {
             '--model': self._get_param('f_ckpt_model'),
@@ -200,7 +213,13 @@ class Txt2ImgRunner(CommandRunner):
                                      ),
             '--prediction': (self._get_param('in_predict')
                              if self._get_param('in_predict') != "Default"
-                             else None)
+                             else None),
+            '--preview': (self._get_param('in_preview_mode')
+                          if is_preview_enabled
+                          else None),
+            '--preview-path': (self.preview_path
+                               if is_preview_enabled
+                               else None)
         }
         self._add_options(options)
 
@@ -222,7 +241,10 @@ class Txt2ImgRunner(CommandRunner):
                 self._get_param('in_diffusion_conv_direct')
             ),
             '--vae-conv-direct': self._get_param('in_vae_conv_direct'),
-            '-v': self._get_param('in_verbose')
+            '-v': self._get_param('in_verbose'),
+            '--taesd-preview-only': (self._get_param('in_preview_taesd')
+                                     if is_preview_enabled
+                                     else False)
         }
         self._add_flags(flags)
 

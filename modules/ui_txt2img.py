@@ -11,7 +11,7 @@ from modules.loader import (
     get_models, reload_models
 )
 from modules.ui import (
-    create_img_model_sel_ui, create_prompts_ui,
+    create_img_model_sel_ui, create_prompts_ui, create_experimental_ui,
     create_cnnet_ui, create_chroma_ui, create_extras_ui, create_settings_ui,
     QUANTS, RELOAD_SYMBOL, RANDOM_SYMBOL
 )
@@ -156,6 +156,10 @@ with gr.Blocks() as txt2img_block:
             # Extra Settings
             extras_ui = create_extras_ui()
             inputs_map.update(extras_ui)
+
+            # Experimental
+            experimental_ui = create_experimental_ui()
+            inputs_map.update(experimental_ui)
 
         # Output
         with gr.Column(scale=1):
