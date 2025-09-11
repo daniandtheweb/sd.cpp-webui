@@ -134,10 +134,6 @@ with gr.Blocks()as img2img_block:
                 inputs_map['in_style_ratio_btn'] = style_ratio_btn
                 inputs_map['in_style_ratio'] = style_ratio
 
-            # Chroma
-            chroma_ui = create_chroma_ui()
-            inputs_map.update(chroma_ui)
-
             with gr.Row():
                 seed = gr.Number(
                     label="Seed",
@@ -186,6 +182,10 @@ with gr.Blocks()as img2img_block:
             # ControlNet
             cnnet_ui = create_cnnet_ui()
             inputs_map.update(cnnet_ui)
+
+            # Chroma
+            chroma_ui = create_chroma_ui()
+            inputs_map.update(chroma_ui)
 
             # Extra Settings
             extras_ui = create_extras_ui()
@@ -280,10 +280,7 @@ with gr.Blocks()as img2img_block:
             model_ui['inputs']['in_clip_l'],
             model_ui['inputs']['in_t5xxl'],
             settings_ui['in_guidance_btn'],
-            settings_ui['in_guidance'],
-            chroma_ui['in_disable_dit_mask'],
-            chroma_ui['in_enable_t5_mask'],
-            chroma_ui['in_t5_mask_pad']
+            settings_ui['in_guidance']
         ],
         outputs=[
             model_ui['inputs']['in_ckpt_model'],
@@ -294,10 +291,7 @@ with gr.Blocks()as img2img_block:
             model_ui['inputs']['in_clip_l'],
             model_ui['inputs']['in_t5xxl'],
             settings_ui['in_guidance_btn'],
-            settings_ui['in_guidance'],
-            chroma_ui['in_disable_dit_mask'],
-            chroma_ui['in_enable_t5_mask'],
-            chroma_ui['in_t5_mask_pad']
+            settings_ui['in_guidance']
         ]
     )
     model_ui['components']['unet_tab'].select(
@@ -306,10 +300,7 @@ with gr.Blocks()as img2img_block:
             model_ui['inputs']['in_ckpt_model'],
             model_ui['inputs']['in_ckpt_vae'],
             settings_ui['in_guidance_btn'],
-            settings_ui['in_guidance'],
-            chroma_ui['in_disable_dit_mask'],
-            chroma_ui['in_enable_t5_mask'],
-            chroma_ui['in_t5_mask_pad']
+            settings_ui['in_guidance']
         ],
         outputs=[
             model_ui['inputs']['in_ckpt_model'],
@@ -320,10 +311,7 @@ with gr.Blocks()as img2img_block:
             model_ui['inputs']['in_clip_l'],
             model_ui['inputs']['in_t5xxl'],
             settings_ui['in_guidance_btn'],
-            settings_ui['in_guidance'],
-            chroma_ui['in_disable_dit_mask'],
-            chroma_ui['in_enable_t5_mask'],
-            chroma_ui['in_t5_mask_pad']
+            settings_ui['in_guidance']
         ]
     )
     reload_taesd_btn.click(
