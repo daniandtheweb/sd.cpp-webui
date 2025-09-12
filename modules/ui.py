@@ -11,20 +11,20 @@ from modules.loader import (
 from modules.utility import (
     switch_sizes
 )
+from .get_opt import get_samplers, get_schedulers, get_previews, get_quants, get_prediction
 
 QUANTS = ["Default", "f32", "f16", "q8_0", "q4_K", "q3_K", "q2_K", "q5_1",
           "q5_0", "q4_1", "q4_0"]
-SAMPLERS = ["euler", "euler_a", "heun", "dpm2", "dpm++2s_a", "dpm++2m",
-            "dpm++2mv2", "ipndm", "ipndm_v", "lcm", "ddim_trailing", "tcd"]
-SCHEDULERS = ["discrete", "karras", "exponential", "ays", "gits", "smoothstep"]
+#QUANTS = ['Default'] + get_quants()
+SAMPLERS = get_samplers()
+SCHEDULERS = get_schedulers()
 MODELS = ["Checkpoint", "UNET", "VAE", "clip_g", "clip_l", "t5xxl", "TAESD",
           "Lora", "Embeddings", "Upscaler", "ControlNet"]
-PREDICTION = ["Default", "eps", "v", "edm_v", "sd3_flow", "flux_flow"]
-PREVIEW = ["none", "proj", "tae", "vae"]
+PREDICTION = ['Default'] + get_prediction()
+PREVIEW = get_previews()
 RELOAD_SYMBOL = '\U0001F504'
 RANDOM_SYMBOL = '\U0001F3B2'
 SWITCH_V_SYMBOL = '\u2195'
-
 
 def create_img_model_sel_ui():
     """Create the image model selection UI"""
