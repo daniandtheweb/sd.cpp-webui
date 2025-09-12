@@ -131,6 +131,7 @@ class ConfigManager:
             del self.prompts[name]
             self.save_prompts()
 
-    def get_prompt(self, name: str) -> Dict[str, str]:
-        """Retrieves a specific prompt."""
-        return self.prompts.get(name, {'positive': '', 'negative': ''})
+    def get_prompt(self, name: str) -> tuple[str, str]:
+        """Retrieves a specific prompt as two separate strings for Gradio."""
+        prompt = self.prompts.get(name, {'positive': '', 'negative': ''})
+        return prompt['positive'], prompt['negative']
