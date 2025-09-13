@@ -28,6 +28,7 @@ RELOAD_SYMBOL = '\U0001F504'
 RANDOM_SYMBOL = '\U0001F3B2'
 SWITCH_V_SYMBOL = '\u2195'
 
+
 def create_img_model_sel_ui():
     """Create the image model selection UI"""
     ckpt_dir_txt = gr.Textbox(value=config.get('ckpt_dir'), visible=False)
