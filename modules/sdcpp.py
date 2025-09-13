@@ -170,10 +170,13 @@ class Txt2ImgRunner(CommandRunner):
 
         self._add_base_args()
 
-        is_preview_enabled = (self._get_param('in_preview_mode')
-                              if self._get_param('in_preview_mode') != "none"
-                              else None
-                              )
+        preview_mode = self._get_param('in_preview_mode')
+        is_preview_enabled = (
+            preview_mode
+            if preview_mode is not None
+            and preview_mode != "none"
+            else None
+        )
         if is_preview_enabled:
             self.preview_path = self.output_path + "preview.png"
 

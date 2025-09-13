@@ -23,7 +23,7 @@ SCHEDULERS = sd_options.get_opt("schedulers")
 MODELS = ["Checkpoint", "UNET", "VAE", "clip_g", "clip_l", "t5xxl", "TAESD",
           "Lora", "Embeddings", "Upscaler", "ControlNet"]
 PREDICTION = ['Default'] + sd_options.get_opt("prediction")
-PREVIEW = sd_options.get_opt("previews")
+PREVIEW = ['none'] + sd_options.get_opt("previews")
 RELOAD_SYMBOL = '\U0001F504'
 RANDOM_SYMBOL = '\U0001F3B2'
 SWITCH_V_SYMBOL = '\u2195'
