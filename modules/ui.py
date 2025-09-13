@@ -8,20 +8,22 @@ from modules.shared_instance import config
 from modules.loader import (
     get_models, reload_models
 )
-from modules.utility import (
-    switch_sizes
-)
-from .get_opt import get_samplers, get_schedulers, get_previews, get_quants, get_prediction
 
-QUANTS = ["Default", "f32", "f16", "q8_0", "q4_K", "q3_K", "q2_K", "q5_1",
-          "q5_0", "q4_1", "q4_0"]
-#QUANTS = ['Default'] + get_quants()
-SAMPLERS = get_samplers()
-SCHEDULERS = get_schedulers()
+from modules.utility import (
+    switch_sizes, SDOptionsCache
+)
+
+# initiate cache once
+sd_options = SDOptionsCache()
+
+QUANTS = ['Default'] + sd_options.get_opt("quants")
+
+SAMPLERS = sd_options.get_opt("samplers")
+SCHEDULERS = sd_options.get_opt("schedulers")
 MODELS = ["Checkpoint", "UNET", "VAE", "clip_g", "clip_l", "t5xxl", "TAESD",
           "Lora", "Embeddings", "Upscaler", "ControlNet"]
-PREDICTION = ['Default'] + get_prediction()
-PREVIEW = get_previews()
+PREDICTION = ['Default'] + sd_options.get_opt("prediction")
+PREVIEW = sd_options.get_opt("previews")
 RELOAD_SYMBOL = '\U0001F504'
 RANDOM_SYMBOL = '\U0001F3B2'
 SWITCH_V_SYMBOL = '\u2195'
