@@ -5,6 +5,8 @@ import re
 import sys
 import shutil
 import subprocess
+import hashlib
+import json
 
 import gradio as gr
 
@@ -297,3 +299,157 @@ def ckpt_tab_switch(unet_model, unet_vae, clip_g, clip_l, t5xxl,
 
 def switch_sizes(height, width):
     return (width, height)
+
+
+class SDOptionsCache:
+    """Class to load and cache stable-diffusion.cpp command options synchronously.
+
+    This class provides a robust and efficient way to retrieve and cache
+    command-line options from the stable-diffusion.cpp executable's help output.
+    It uses file hashing to ensure the cache is always in sync with the binary.
+
+    Attributes:
+        SD_PATH: Full path to the SD binary.
+        SD: Executable name for subprocess calls (remains as before).
+        _CACHE_FILE: JSON file path to store cached options and binary hash.
+        _OPTIONS: List of SD command-line options to cache.
+        _help_cache: Dictionary holding cached option values.
+    """
+
+
+    def __init__(self):
+        """Initializes the SDOptionsCache and prepares the cache."""
+        self.SD_PATH = self._resolve_sd_path()
+        self.SD = exe_name()
+
+        self._CACHE_FILE = "options_cache.json"
+        self._OPTIONS = ["--sampling-method", "--scheduler", "--preview",
+                         "--type", "--prediction"]
+        self._help_cache = {}
+
+        self._load_help_text_sync()
+
+
+    def _resolve_sd_path(self):
+        """Return full path to SD binary across operating systems."""
+        # Use exe_name() for a consistent search in the system's PATH.
+        sd_path = shutil.which(exe_name())
+        if sd_path:
+            return sd_path
+        # Fallback to the current directory using the correct executable name.
+        fallback = os.path.join(os.getcwd(), exe_name())
+        if os.path.isfile(fallback):
+            return fallback
+        return None
+
+
+    def _hash_file(self, path):
+        """Compute SHA256 hash of a file, or return None if not accessible."""
+        h = hashlib.sha256()
+        try:
+            with open(path, "rb") as f:
+                for chunk in iter(lambda: f.read(8192), b""):
+                    h.update(chunk)
+            return h.hexdigest()
+        except (IOError, FileNotFoundError) as e:
+            logging.warning(f"Failed to hash file {path}: {e}")
+            return None
+
+
+    def _load_help_text_sync(self):
+        """Synchronously load SD --help output and cache options to JSON."""
+        sd_hash = self._hash_file(self.SD_PATH)
+
+        if os.path.exists(self._CACHE_FILE):
+            try:
+                with open(self._CACHE_FILE, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    if data.get("sd_hash") == sd_hash:
+                        self._help_cache = data.get("options", {})
+                        return
+            except (IOError, json.JSONDecodeError) as e:
+                logging.warning(f"Error reading cache file: {e}. Re-running help command.")
+                pass
+
+        help_cache = {}
+        try:
+            process = subprocess.Popen(
+                [self.SD, "--help"],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                bufsize=1,
+                universal_newlines=True
+            )
+            found_options = set()
+
+            while True:
+                line = process.stdout.readline()
+                if not line:
+                    break
+
+                for option in self._OPTIONS:
+                    if option in found_options:
+                        continue
+
+                    match = re.search(fr"{re.escape(option)}.*\{{([^\}}]+)\}}", line)
+                    if match:
+                        help_cache[option] = [v.strip() for v in match.group(1).split(",")]
+                        found_options.add(option)
+                        continue
+
+                    match2 = re.search(fr"{re.escape(option)}.*\(examples:\s*([^\)]+)\)", line)
+                    if match2:
+                        help_cache[option] = [v.strip() for v in match2.group(1).split(",")]
+                        found_options.add(option)
+                        continue
+
+                if len(found_options) == len(self._OPTIONS):
+                    process.kill()
+                    break
+
+            process.stdout.close()
+            process.stderr.close()
+            process.wait()
+
+        except FileNotFoundError:
+            logging.error(f"SD binary not found at {self.SD_PATH}. Cannot get options.")
+        except Exception as e:
+            logging.error(f"Failed to run SD --help command: {e}")
+
+        self._help_cache = {opt: help_cache.get(opt, []) for opt in self._OPTIONS}
+
+        try:
+            with open(self._CACHE_FILE, "w", encoding="utf-8") as f:
+                json.dump({"sd_hash": sd_hash, "options": self._help_cache}, f, indent=2)
+        except (IOError, json.JSONEncodeError) as e:
+            logging.error(f"Failed to write to cache file: {e}")
+
+
+    def _parse_help_option(self, option_name: str):
+        """Return cached values for a given SD --help option."""
+        return self._help_cache.get(option_name, [])
+
+
+    def get_opt(self, option: str):
+        """Public getter to return values for a named option.
+
+        Args:
+            option: Name of the option ('samplers', 'schedulers', 'previews',
+                    'quants', 'prediction').
+
+        Returns:
+            List of available values for the option.
+
+        Raises:
+            ValueError: If unknown option name is provided.
+        """
+        option_map = {
+            "samplers": "--sampling-method",
+            "schedulers": "--scheduler",
+            "previews": "--preview",
+            "quants": "--type",
+            "prediction": "--prediction"
+        }
+        if option not in option_map:
+            raise ValueError(f"Unknown option '{option}'. Valid options are: {list(option_map.keys())}")
+        return self._parse_help_option(option_map[option])
