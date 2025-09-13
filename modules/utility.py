@@ -302,10 +302,12 @@ def switch_sizes(height, width):
 
 
 class SDOptionsCache:
-    """Class to load and cache stable-diffusion.cpp command options synchronously.
+    """
+    Class to load and cache stable-diffusion.cpp command options synchronously.
 
     This class provides a robust and efficient way to retrieve and cache
-    command-line options from the stable-diffusion.cpp executable's help output.
+    command-line options from the stable-diffusion.cpp executable's helpers
+    output.
     It uses file hashing to ensure the cache is always in sync with the binary.
 
     Attributes:
@@ -315,7 +317,6 @@ class SDOptionsCache:
         _OPTIONS: List of SD command-line options to cache.
         _help_cache: Dictionary holding cached option values.
     """
-
 
     def __init__(self):
         """Initializes the SDOptionsCache and prepares the cache."""
@@ -329,7 +330,6 @@ class SDOptionsCache:
 
         self._load_help_text_sync()
 
-
     def _resolve_sd_path(self):
         """Return full path to SD binary across operating systems."""
         # Use exe_name() for a consistent search in the system's PATH.
@@ -342,7 +342,6 @@ class SDOptionsCache:
             return fallback
         return None
 
-
     def _hash_file(self, path):
         """Compute SHA256 hash of a file, or return None if not accessible."""
         h = hashlib.sha256()
@@ -352,9 +351,8 @@ class SDOptionsCache:
                     h.update(chunk)
             return h.hexdigest()
         except (IOError, FileNotFoundError) as e:
-            logging.warning(f"Failed to hash file {path}: {e}")
+            print(f"Failed to hash file {path}: {e}")
             return None
-
 
     def _load_help_text_sync(self):
         """Synchronously load SD --help output and cache options to JSON."""
@@ -368,7 +366,10 @@ class SDOptionsCache:
                         self._help_cache = data.get("options", {})
                         return
             except (IOError, json.JSONDecodeError) as e:
-                logging.warning(f"Error reading cache file: {e}. Re-running help command.")
+                print(
+                    f"Error reading cache file: {e}. "
+                    f"Re-running help command."
+                )
                 pass
 
         help_cache = {}
@@ -391,15 +392,23 @@ class SDOptionsCache:
                     if option in found_options:
                         continue
 
-                    match = re.search(fr"{re.escape(option)}.*\{{([^\}}]+)\}}", line)
+                    match = re.search(
+                        fr"{re.escape(option)}.*\{{([^\}}]+)\}}", line
+                    )
                     if match:
-                        help_cache[option] = [v.strip() for v in match.group(1).split(",")]
+                        help_cache[option] = [
+                            v.strip() for v in match.group(1).split(",")
+                        ]
                         found_options.add(option)
                         continue
 
-                    match2 = re.search(fr"{re.escape(option)}.*\(examples:\s*([^\)]+)\)", line)
+                    match2 = re.search(
+                        fr"{re.escape(option)}.*\(examples:\s*([^\)]+)\)", line
+                    )
                     if match2:
-                        help_cache[option] = [v.strip() for v in match2.group(1).split(",")]
+                        help_cache[option] = [
+                            v.strip() for v in match2.group(1).split(",")
+                        ]
                         found_options.add(option)
                         continue
 
@@ -412,23 +421,30 @@ class SDOptionsCache:
             process.wait()
 
         except FileNotFoundError:
-            logging.error(f"SD binary not found at {self.SD_PATH}. Cannot get options.")
+            print(
+                f"SD binary not found at {self.SD_PATH}. "
+                f"Cannot get options."
+            )
         except Exception as e:
-            logging.error(f"Failed to run SD --help command: {e}")
+            print(f"Failed to run SD --help command: {e}")
 
-        self._help_cache = {opt: help_cache.get(opt, []) for opt in self._OPTIONS}
+        self._help_cache = {
+            opt: help_cache.get(opt, []) for opt in self._OPTIONS
+        }
 
         try:
             with open(self._CACHE_FILE, "w", encoding="utf-8") as f:
-                json.dump({"sd_hash": sd_hash, "options": self._help_cache}, f, indent=2)
+                json.dump(
+                    {
+                     "sd_hash": sd_hash, "options": self._help_cache
+                    }, f, indent=2
+                )
         except (IOError, json.JSONEncodeError) as e:
-            logging.error(f"Failed to write to cache file: {e}")
-
+            print(f"Failed to write to cache file: {e}")
 
     def _parse_help_option(self, option_name: str):
         """Return cached values for a given SD --help option."""
         return self._help_cache.get(option_name, [])
-
 
     def get_opt(self, option: str):
         """Public getter to return values for a named option.
@@ -451,5 +467,8 @@ class SDOptionsCache:
             "prediction": "--prediction"
         }
         if option not in option_map:
-            raise ValueError(f"Unknown option '{option}'. Valid options are: {list(option_map.keys())}")
+            raise ValueError(
+                f"Unknown option '{option}'. "
+                f"Valid options are: {list(option_map.keys())}"
+            )
         return self._parse_help_option(option_map[option])
