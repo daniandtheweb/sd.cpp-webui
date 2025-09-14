@@ -25,7 +25,6 @@ sd_options = SDOptionsCache()
 def refresh_all_options():
     sd_options.refresh()
     return [
-        gr.update(choices=["Default"] + sd_options.get_opt("quants")),
         gr.update(choices=sd_options.get_opt("samplers")),
         gr.update(choices=sd_options.get_opt("schedulers")),
         gr.update(choices=["none"] + sd_options.get_opt("previews")),
@@ -311,9 +310,8 @@ with gr.Blocks() as txt2img_block:
         refresh_all_options,
         inputs=[],
         outputs=[
-            quant_ui['in_model_type'], settings_ui['in_sampling'],
-            settings_ui['in_scheduler'], experimental_ui['in_preview_mode'],
-            experimental_ui['in_predict']
+            settings_ui['in_sampling'], settings_ui['in_scheduler'],
+            experimental_ui['in_preview_mode'], experimental_ui['in_predict']
         ]
     )
 

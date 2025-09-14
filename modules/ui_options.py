@@ -19,7 +19,6 @@ sd_options = SDOptionsCache()
 def refresh_all_options():
     sd_options.refresh()
     return [
-        gr.update(choices=["Default"] + sd_options.get_opt("quants")),
         gr.update(choices=sd_options.get_opt("samplers")),
         gr.update(choices=sd_options.get_opt("schedulers"))
     ]
@@ -326,7 +325,5 @@ with gr.Blocks() as options_block:
     refresh_opt.click(
         refresh_all_options,
         inputs=[],
-        outputs=[
-            quant_ui['in_model_type'], sampling, scheduler
-        ]
+        outputs=[sampling, scheduler]
     )
