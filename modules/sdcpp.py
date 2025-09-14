@@ -145,6 +145,9 @@ class CommandRunner:
                 yield (self.fcommand, gr.update(value=update["percent"]),
                        update["status"], gr.update(value=""), gallery_update)
 
+        if self.preview_path:
+            os.remove(self.preview_path)
+
         yield (self.fcommand, gr.update(visible=False, value=100),
                gr.update(visible=False, value=""),
                gr.update(value=final_stats_str), self.outputs)
