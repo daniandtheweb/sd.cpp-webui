@@ -493,16 +493,16 @@ def create_settings_ui():
                 value=config.get('def_height'),
                 step=64
             )
-        switch_size = gr.Button(
-            value=SWITCH_V_SYMBOL, scale=1
-        )
-        switch_size.click(
-            switch_sizes,
-            inputs=[height,
-                    width],
-            outputs=[height,
-                     width]
-        )
+            switch_size = gr.Button(
+                value=SWITCH_V_SYMBOL, scale=1
+            )
+            switch_size.click(
+                switch_sizes,
+                inputs=[height,
+                        width],
+                outputs=[height,
+                         width]
+            )
         with gr.Column():
             batch_count = gr.Slider(
                 label="Batch count",
