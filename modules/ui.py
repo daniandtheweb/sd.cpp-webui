@@ -523,21 +523,23 @@ def create_settings_ui():
                          width]
             )
         with gr.Column():
-            batch_count = gr.Slider(
-                label="Batch count",
-                minimum=1,
-                maximum=99,
-                value=1,
-                step=1
-            )
-    cfg = gr.Slider(
-        label="CFG Scale",
-        minimum=1,
-        maximum=30,
-        value=7.0,
-        step=0.1,
-        interactive=True
-    )
+            with gr.Row():
+                batch_count = gr.Slider(
+                    label="Batch count",
+                    minimum=1,
+                    maximum=99,
+                    value=1,
+                    step=1
+                )
+            with gr.Row():
+                cfg = gr.Slider(
+                    label="CFG Scale",
+                    minimum=1,
+                    maximum=30,
+                    value=7.0,
+                    step=0.1,
+                    interactive=True
+                )
     with gr.Row():
         guidance_btn = gr.Checkbox(
             label="Enable distilled guidance", value=False,
