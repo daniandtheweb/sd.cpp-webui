@@ -229,6 +229,20 @@ def create_img_model_sel_ui():
     }
 
 
+def create_quant_ui():
+    """Create the model type selection UI"""
+    with gr.Row():
+        model_type = gr.Dropdown(
+            label="Quantization",
+            choices=QUANTS,
+            value=config.get('def_type'),
+            interactive=True
+        )
+    return {
+        'in_model_type': model_type
+    }
+
+
 def create_video_model_sel_ui():
     """Create the video model selection UI"""
     unet_dir_txt = gr.Textbox(value=config.get('unet_dir'), visible=False)

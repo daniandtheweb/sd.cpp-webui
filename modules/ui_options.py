@@ -7,8 +7,8 @@ from modules.loader import (
     get_models
 )
 from modules.ui import (
-    create_folders_opt_ui, RELOAD_SYMBOL, QUANTS, SAMPLERS,
-    SCHEDULERS, PREDICTION
+    create_quant_ui, create_folders_opt_ui,
+    RELOAD_SYMBOL, SAMPLERS, SCHEDULERS, PREDICTION
 )
 from modules.utility import SDOptionsCache
 
@@ -202,13 +202,9 @@ with gr.Blocks() as options_block:
                 )
             settings_map['def_umt5_xxl'] = umt5_xxl
 
-    model_type = gr.Dropdown(
-            label="Quantization",
-            choices=QUANTS,
-            value=config.get('def_type'),
-            interactive=True
-    )
-    settings_map['def_type'] = model_type
+    # Model Type Selection
+    quant_ui = create_quant_ui()
+    settings_map.update(quant_ui)
 
     with gr.Row():
         with gr.Column():
@@ -331,6 +327,6 @@ with gr.Blocks() as options_block:
         refresh_all_options,
         inputs=[],
         outputs=[
-            model_type, sampling, scheduler
+            quant_ui['in_model_type'], sampling, scheduler
         ]
     )

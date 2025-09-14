@@ -12,9 +12,10 @@ from modules.loader import (
     get_models, reload_models
 )
 from modules.ui import (
-    create_img_model_sel_ui, create_prompts_ui, create_experimental_ui,
-    create_cnnet_ui, create_chroma_ui, create_extras_ui, create_settings_ui,
-    QUANTS, RELOAD_SYMBOL, RANDOM_SYMBOL
+    create_img_model_sel_ui, create_quant_ui, create_prompts_ui,
+    create_experimental_ui, create_cnnet_ui, create_chroma_ui,
+    create_extras_ui, create_settings_ui,
+    RELOAD_SYMBOL, RANDOM_SYMBOL
 )
 
 
@@ -50,14 +51,8 @@ with gr.Blocks() as txt2img_block:
     inputs_map.update(model_ui['inputs'])
 
     # Model Type Selection
-    with gr.Row():
-        model_type = gr.Dropdown(
-            label="Quantization",
-            choices=QUANTS,
-            value=config.get('def_type'),
-            interactive=True
-        )
-        inputs_map['in_model_type'] = model_type
+    quant_ui = create_quant_ui()
+    inputs_map.update(quant_ui)
 
     # Extra Networks Selection
     with gr.Accordion(label="Extra Networks", open=False):
@@ -316,7 +311,7 @@ with gr.Blocks() as txt2img_block:
         refresh_all_options,
         inputs=[],
         outputs=[
-            model_type, settings_ui['in_sampling'],
+            quant_ui['in_model_type'], settings_ui['in_sampling'],
             settings_ui['in_scheduler'], experimental_ui['in_preview_mode'],
             experimental_ui['in_predict']
         ]
