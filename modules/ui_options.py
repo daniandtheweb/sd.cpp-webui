@@ -10,6 +10,19 @@ from modules.ui import (
     create_folders_opt_ui, RELOAD_SYMBOL, QUANTS, SAMPLERS,
     SCHEDULERS, PREDICTION
 )
+from modules.utility import SDOptionsCache
+
+
+sd_options = SDOptionsCache()
+
+
+def refresh_all_options():
+    sd_options.refresh()
+    return [
+        gr.update(choices=["Default"] + sd_options.get_opt("quants")),
+        gr.update(choices=sd_options.get_opt("samplers")),
+        gr.update(choices=sd_options.get_opt("schedulers"))
+    ]
 
 
 def save_settings_wrapper(*args):
@@ -283,6 +296,11 @@ with gr.Blocks() as options_block:
     folders_ui = create_folders_opt_ui()
     settings_map.update(folders_ui)
 
+    with gr.Row():
+        refresh_opt = gr.Button(
+            value="Refresh sd options"
+        )
+
     status_textbox = gr.Textbox(label="Status", value="", interactive=False)
 
     # Set Defaults and Restore Defaults Buttons
@@ -307,4 +325,12 @@ with gr.Blocks() as options_block:
         config.reset_defaults,
         inputs=[],
         outputs=[status_textbox]
+    )
+
+    refresh_opt.click(
+        refresh_all_options,
+        inputs=[],
+        outputs=[
+            model_type, sampling, scheduler
+        ]
     )

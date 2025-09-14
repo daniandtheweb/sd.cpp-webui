@@ -318,10 +318,12 @@ class SDOptionsCache:
         _help_cache: Dictionary holding cached option values.
     """
 
-    def __init__(self):
-        """Initializes the SDOptionsCache and prepares the cache."""
-        self.SD_PATH = self._resolve_sd_path()
+    def __init__(self, first_run=False):
+        """
+        Initializes the SDOptionsCache and prepares the cache.
+        """
         self.SD = exe_name()
+        self.SD_PATH = self._resolve_sd_path()
 
         self._CACHE_FILE = "options_cache.json"
         self._OPTIONS = ["--sampling-method", "--scheduler", "--preview",
@@ -332,12 +334,10 @@ class SDOptionsCache:
 
     def _resolve_sd_path(self):
         """Return full path to SD binary across operating systems."""
-        # Use exe_name() for a consistent search in the system's PATH.
-        sd_path = shutil.which(exe_name())
+        sd_path = shutil.which(self.SD)
         if sd_path:
             return sd_path
-        # Fallback to the current directory using the correct executable name.
-        fallback = os.path.join(os.getcwd(), exe_name())
+        fallback = os.path.join(os.getcwd(), self.SD)
         if os.path.isfile(fallback):
             return fallback
         return None
@@ -354,24 +354,8 @@ class SDOptionsCache:
             print(f"Failed to hash file {path}: {e}")
             return None
 
-    def _load_help_text_sync(self):
-        """Synchronously load SD --help output and cache options to JSON."""
-        sd_hash = self._hash_file(self.SD_PATH)
-
-        if os.path.exists(self._CACHE_FILE):
-            try:
-                with open(self._CACHE_FILE, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                    if data.get("sd_hash") == sd_hash:
-                        self._help_cache = data.get("options", {})
-                        return
-            except (IOError, json.JSONDecodeError) as e:
-                print(
-                    f"Error reading cache file: {e}. "
-                    f"Re-running help command."
-                )
-                pass
-
+    def _run_and_cache_help(self, sd_hash):
+        """Runs the --help command, parses options, and caches them."""
         help_cache = {}
         try:
             process = subprocess.Popen(
@@ -436,15 +420,46 @@ class SDOptionsCache:
             with open(self._CACHE_FILE, "w", encoding="utf-8") as f:
                 json.dump(
                     {
-                     "sd_hash": sd_hash, "options": self._help_cache
+                        "sd_hash": sd_hash, "options": self._help_cache
                     }, f, indent=2
                 )
         except (IOError, json.JSONEncodeError) as e:
             print(f"Failed to write to cache file: {e}")
 
+    def _load_help_text_sync(self, force_refresh=False):
+        """Synchronously load SD --help output and cache options to JSON."""
+        sd_hash = self._hash_file(self.SD_PATH)
+
+        if force_refresh:
+            self._run_and_cache_help(sd_hash)
+            return
+
+        if os.path.exists(self._CACHE_FILE):
+            try:
+                with open(self._CACHE_FILE, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    if data.get("sd_hash") == sd_hash:
+                        self._help_cache = data.get("options", {})
+                        if self._help_cache:
+                            return  # Successfull load from cache
+            except (IOError, json.JSONDecodeError) as e:
+                print(
+                    f"Error reading cache file: {e}. "
+                    f"Re-running help command."
+                )
+
+        # Fallback if cache is missing, invalid, or out of date
+        self._run_and_cache_help(sd_hash)
+
     def _parse_help_option(self, option_name: str):
         """Return cached values for a given SD --help option."""
         return self._help_cache.get(option_name, [])
+
+    def refresh(self):
+        """
+        Public method to force a refresh of the options from the executable.
+        """
+        self._load_help_text_sync(force_refresh=True)
 
     def get_opt(self, option: str):
         """Public getter to return values for a named option.

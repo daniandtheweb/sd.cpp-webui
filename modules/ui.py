@@ -17,13 +17,12 @@ from modules.utility import (
 sd_options = SDOptionsCache()
 
 QUANTS = ['Default'] + sd_options.get_opt("quants")
-
 SAMPLERS = sd_options.get_opt("samplers")
 SCHEDULERS = sd_options.get_opt("schedulers")
 MODELS = ["Checkpoint", "UNET", "VAE", "clip_g", "clip_l", "t5xxl", "TAESD",
           "Lora", "Embeddings", "Upscaler", "ControlNet"]
-PREDICTION = ['Default'] + sd_options.get_opt("prediction")
 PREVIEW = ['none'] + sd_options.get_opt("previews")
+PREDICTION = ['Default'] + sd_options.get_opt("prediction")
 RELOAD_SYMBOL = '\U0001F504'
 RANDOM_SYMBOL = '\U0001F3B2'
 SWITCH_V_SYMBOL = '\u2195'
@@ -479,39 +478,39 @@ def create_settings_ui():
             interactive=True
         )
     with gr.Row():
-        with gr.Row():
-            with gr.Column():
-                width = gr.Slider(
-                    label="Width",
-                    minimum=64,
-                    maximum=4096,
-                    value=config.get('def_width'),
-                    step=64
-                )
-                height = gr.Slider(
-                    label="Height",
-                    minimum=64,
-                    maximum=4096,
-                    value=config.get('def_height'),
-                    step=64
-                )
-            switch_size = gr.Button(
-                value=SWITCH_V_SYMBOL, scale=1
+        with gr.Column():
+            width = gr.Slider(
+                label="Width",
+                minimum=64,
+                maximum=4096,
+                value=config.get('def_width'),
+                step=64
             )
-            switch_size.click(
-                switch_sizes,
-                inputs=[height,
-                        width],
-                outputs=[height,
-                         width]
+            height = gr.Slider(
+                label="Height",
+                minimum=64,
+                maximum=4096,
+                value=config.get('def_height'),
+                step=64
             )
-        batch_count = gr.Slider(
-            label="Batch count",
-            minimum=1,
-            maximum=99,
-            value=1,
-            step=1
+        switch_size = gr.Button(
+            value=SWITCH_V_SYMBOL, scale=1
         )
+        switch_size.click(
+            switch_sizes,
+            inputs=[height,
+                    width],
+            outputs=[height,
+                     width]
+        )
+        with gr.Column():
+            batch_count = gr.Slider(
+                label="Batch count",
+                minimum=1,
+                maximum=99,
+                value=1,
+                step=1
+            )
     cfg = gr.Slider(
         label="CFG Scale",
         minimum=1,

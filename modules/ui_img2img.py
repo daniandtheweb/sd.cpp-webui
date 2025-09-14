@@ -4,7 +4,8 @@ import gradio as gr
 
 from modules.sdcpp import img2img
 from modules.utility import (
-    subprocess_manager, random_seed, ckpt_tab_switch, unet_tab_switch
+    subprocess_manager, random_seed, ckpt_tab_switch, unet_tab_switch,
+    SDOptionsCache
 )
 from modules.shared_instance import config
 from modules.loader import (
@@ -15,6 +16,20 @@ from modules.ui import (
     create_cnnet_ui, create_chroma_ui, create_extras_ui, create_settings_ui,
     QUANTS, RELOAD_SYMBOL, RANDOM_SYMBOL
 )
+
+
+sd_options = SDOptionsCache()
+
+
+def refresh_all_options():
+    sd_options.refresh()
+    return [
+        gr.update(choices=["Default"] + sd_options.get_opt("quants")),
+        gr.update(choices=sd_options.get_opt("samplers")),
+        gr.update(choices=sd_options.get_opt("schedulers")),
+        gr.update(choices=["none"] + sd_options.get_opt("previews")),
+        gr.update(choices=["Default"] + sd_options.get_opt("prediction"))
+    ]
 
 
 with gr.Blocks()as img2img_block:
@@ -195,6 +210,11 @@ with gr.Blocks()as img2img_block:
             experimental_ui = create_experimental_ui()
             inputs_map.update(experimental_ui)
 
+            with gr.Row():
+                refresh_opt = gr.Button(
+                    value="Refresh sd options"
+                )
+
         # Output
         with gr.Column(scale=1):
             with gr.Row():
@@ -329,6 +349,15 @@ with gr.Blocks()as img2img_block:
     )
     random_seed_btn.click(
         random_seed, inputs=[], outputs=[seed]
+    )
+    refresh_opt.click(
+        refresh_all_options,
+        inputs=[],
+        outputs=[
+            model_type, settings_ui['in_sampling'],
+            settings_ui['in_scheduler'], experimental_ui['in_preview_mode'],
+            experimental_ui['in_predict']
+        ]
     )
 
     pprompt_img2img = prompts_ui['in_pprompt']
