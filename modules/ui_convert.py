@@ -3,25 +3,14 @@
 import gradio as gr
 
 from modules.sdcpp import convert
-from modules.utility import subprocess_manager, SDOptionsCache
+from modules.utility import subprocess_manager
 from modules.shared_instance import config
 from modules.loader import (
     get_models, reload_models, model_choice
 )
 from modules.ui import (
-    MODELS, RELOAD_SYMBOL
+    MODELS, QUANTS, RELOAD_SYMBOL
 )
-
-
-sd_options = SDOptionsCache()
-
-
-QUANTS_EXPLICIT = sd_options.get_opt("quants")
-
-
-def refresh_all_options():
-    sd_options.refresh()
-    return gr.update(sd_options.get_opt("quants"))
 
 
 with gr.Blocks() as convert_block:
@@ -77,16 +66,12 @@ with gr.Blocks() as convert_block:
 
         with gr.Column():
             with gr.Row():
-                with gr.Column(scale=7):
+                with gr.Column():
                     quant_type = gr.Dropdown(
                         label="Type",
-                        choices=QUANTS_EXPLICIT,
-                        value=QUANTS_EXPLICIT[0],
+                        choices=QUANTS,
+                        value=QUANTS[0],
                         interactive=True
-                    )
-                with gr.Column(scale=1):
-                    refresh_opt = gr.Button(
-                        value="Refresh sd options"
                     )
 
             verbose = gr.Checkbox(label="Verbose")
@@ -124,10 +109,4 @@ with gr.Blocks() as convert_block:
         reload_models,
         inputs=[model_dir_txt],
         outputs=[model]
-    )
-
-    refresh_opt.click(
-        refresh_all_options,
-        inputs=[],
-        outputs=[quant_type]
     )

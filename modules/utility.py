@@ -386,16 +386,6 @@ class SDOptionsCache:
                         found_options.add(option)
                         continue
 
-                    match2 = re.search(
-                        fr"{re.escape(option)}.*\(examples:\s*([^\)]+)\)", line
-                    )
-                    if match2:
-                        help_cache[option] = [
-                            v.strip() for v in match2.group(1).split(",")
-                        ]
-                        found_options.add(option)
-                        continue
-
                 if len(found_options) == len(self._OPTIONS):
                     process.kill()
                     break
@@ -466,7 +456,7 @@ class SDOptionsCache:
 
         Args:
             option: Name of the option ('samplers', 'schedulers', 'previews',
-                    'quants', 'prediction').
+                    'prediction').
 
         Returns:
             List of available values for the option.
@@ -478,7 +468,6 @@ class SDOptionsCache:
             "samplers": "--sampling-method",
             "schedulers": "--scheduler",
             "previews": "--preview",
-            "quants": "--type",
             "prediction": "--prediction"
         }
         if option not in option_map:
