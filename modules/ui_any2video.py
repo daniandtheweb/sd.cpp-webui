@@ -330,5 +330,6 @@ with gr.Blocks() as any2video_block:
     height_any2video = settings_ui['in_height']
     steps_any2video = settings_ui['in_steps']
     sampling_any2video = settings_ui['in_sampling']
+    scheduler_any2video = settings_ui['in_scheduler']
     cfg_any2video = settings_ui['in_cfg']
     seed_any2video = inputs_map['in_seed']

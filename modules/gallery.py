@@ -2,6 +2,7 @@
 
 import os
 import re
+import json
 from PIL import Image
 from typing import List, Tuple, Dict, Any, Optional
 
@@ -96,61 +97,114 @@ class GalleryManager:
             return "JPG: No EXIF data found."
         return "JPG: No EXIF data found."
 
-    def _extract_params_from_text(self, text_data: str) -> Dict[str, Any]:
+    def _parse_comfyui_workflow(
+            self, text_data: str
+    ) -> Optional[Dict[str, Any]]:
         """
-        Uses regex to extract generation parameters from a raw metadata string.
+        Parses a ComfyUI JSON workflow using match-case
+        and a data-driven approach.
         """
-        params = {
-            'pprompt': "", 'nprompt': "", 'steps': None, 'sampler': "",
-            'cfg': None, 'seed': None
+        try:
+            json_start_index = text_data.find('{')
+            if json_start_index == -1:
+                return None
+
+            workflow_data = json.loads(text_data[json_start_index:])
+            params = {}
+            found_positive = False
+
+            keys_to_extract = ["steps", "cfg", "sampler_name", "scheduler"]
+
+            for node in workflow_data.values():
+                if not isinstance(node, dict):
+                    continue
+
+                class_type = node.get("class_type")
+                inputs = node.get("inputs", {})
+
+                match class_type:
+                    case "CLIPTextEncode":
+                        meta_title = (
+                            node.get("_meta", {}).get("title", "").lower()
+                        )
+                        if "positive" in meta_title and not found_positive:
+                            params['pprompt'] = inputs.get("text")
+                            found_positive = True
+                        elif "negative" in meta_title:
+                            params['nprompt'] = inputs.get("text")
+
+                for key in keys_to_extract:
+                    if key in inputs:
+                        params[key] = inputs[key]
+
+                if "noise_seed" in inputs:
+                    params['seed'] = inputs["noise_seed"]
+                elif "seed" in inputs:
+                    params['seed'] = inputs["seed"]
+
+                if "sampler_name" in inputs:
+                    params['sampler'] = inputs['sampler_name']
+
+            return params if any(params.values()) else None
+
+        except (json.JSONDecodeError, AttributeError):
+            return None
+
+    def _parse_a1111_text(self, text_data: str) -> Dict[str, Any]:
+        """
+        Parses A1111-style text metadata, now separating sampler and scheduler
+        based on the first space.
+        """
+        params = {}
+
+        patterns = {
+            'pprompt': r'(?:Positive prompt|parameters):\s*(.*?)(?:\n|$)',
+            'nprompt': r'Negative prompt:\s*(.*?)(?:\n|$)',
+            'steps': r'Steps:\s*(\d+)',
+            'cfg': r'CFG scale:\s*([\d.]+)',
+            'seed': r'Seed:\s*(\d+)',
         }
-        if not text_data:
-            return params
+        converters = {'steps': int, 'cfg': float, 'seed': int}
 
-        # A1111 / General Format
-        pprompt_match = re.search(
-            r'(?:Positive prompt|parameters):\s*(.*?)'
-            r'(?:\nNegative prompt:|\nSteps:|$)',
-            text_data, re.DOTALL
+        for key, pattern in patterns.items():
+            match = re.search(pattern, text_data, re.IGNORECASE)
+            if match:
+                value = match.group(1).strip().split(',')[0]
+                params[key] = converters.get(key, lambda x: x)(value)
+
+        sampler_match = re.search(
+            r'Sampler:\s*([^,]+)', text_data, re.IGNORECASE
         )
-        nprompt_match = re.search(
-            r'Negative prompt:\s*(.*?)(?:\nSteps:|$)', text_data, re.DOTALL
-        )
-
-        if pprompt_match:
-            params['pprompt'] = pprompt_match.group(1).strip()
-        if nprompt_match:
-            params['nprompt'] = nprompt_match.group(1).strip()
-
-        # Extract other key-value pairs
-        steps_match = re.search(r'Steps:\s*(\d+)', text_data)
-        sampler_match = re.search(r'Sampler:\s*([\w\s+]+)', text_data)
-        cfg_match = re.search(r'CFG scale:\s*([\d.]+)', text_data)
-        seed_match = re.search(r'Seed:\s*(\d+)', text_data)
-
-        if steps_match:
-            params['steps'] = int(steps_match.group(1))
         if sampler_match:
-            params['sampler'] = sampler_match.group(1).strip()
-        if cfg_match:
-            params['cfg'] = float(cfg_match.group(1))
-        if seed_match:
-            params['seed'] = int(seed_match.group(1))
-
-        # Fallback for ComfyUI JSON-like format
-        if not params['pprompt'] and '"positive_prompt":' in text_data:
-            pprompt_json_match = re.search(
-                r'"positive_prompt":\s*"([^"]*)"', text_data
-            )
-            nprompt_json_match = re.search(
-                r'"negative_prompt":\s*"([^"]*)"', text_data
-            )
-            if pprompt_json_match:
-                params['pprompt'] = pprompt_json_match.group(1)
-            if nprompt_json_match:
-                params['nprompt'] = nprompt_json_match.group(1)
+            full_sampler_str = sampler_match.group(1).strip()
+            parts = full_sampler_str.split(' ', 1)
+            params['sampler'] = parts[0]
+            if len(parts) > 1:
+                params['scheduler'] = parts[1]
+            else:
+                params['scheduler'] = ""
 
         return params
+
+    def _extract_params_from_text(self, text_data: str) -> Dict[str, Any]:
+        """
+        Extracts generation parameters by dispatching to the correct parser.
+        This function now has a cyclomatic complexity of just ~3.
+        """
+        default_params = {
+            'pprompt': "", 'nprompt': "", 'steps': None, 'sampler': "",
+            'scheduler': "", 'cfg': None, 'seed': None
+        }
+
+        if not text_data:
+            return default_params
+
+        comfy_params = self._parse_comfyui_workflow(text_data)
+        if comfy_params:
+            return {**default_params, **comfy_params}
+
+        a1111_params = self._parse_a1111_text(text_data)
+        return {**default_params, **a1111_params}
 
     def reload_gallery(
         self, ctrl_inp: Optional[int] = None, page_num: int = 1
@@ -216,7 +270,7 @@ class GalleryManager:
         """Reads and parses generation data from a selected image."""
         if not sel_data:
             # Return empty values if no image is selected
-            return ("", "", None, None, None, "", None, None, "", "")
+            return ("", "", None, None, None, "", "", None, None, "", "")
 
         self.selected_img_index_on_page = sel_data.index
         # Calculate the global index across all pages
@@ -228,8 +282,8 @@ class GalleryManager:
 
         if self.selected_img_global_index >= len(files):
             return (
-                "", "Image index out of range.", None, None, None, "", None,
-                None, "", ""
+                "", "Image index out of range.", None, None, None, "", "",
+                None, None, "", ""
             )
 
         self.current_img_path = files[self.selected_img_global_index]
@@ -252,8 +306,9 @@ class GalleryManager:
 
         return (
             params['pprompt'], params['nprompt'], width, height,
-            params['steps'], params['sampler'], params['cfg'], params['seed'],
-            self.current_img_path, raw_text or ""
+            params['steps'], params['sampler'], params['scheduler'],
+            params['cfg'], params['seed'], self.current_img_path,
+            raw_text or ""
         )
 
     def delete_img(self) -> Tuple[Any, ...]:
@@ -266,7 +321,7 @@ class GalleryManager:
             )
             return (
                 imgs, page_num, gallery_update, "", "", None, None, None, "",
-                None, None, "", ""
+                "", None, None, "", ""
             )
 
         try:
@@ -293,7 +348,7 @@ class GalleryManager:
         # Return a full tuple to clear all outputs
         return (
             imgs, page_num, gallery_update,
-            "", "", None, None, None, "", None, None, "", ""
+            "", "", None, None, None, "", "", None, None, "", ""
         )
 
 

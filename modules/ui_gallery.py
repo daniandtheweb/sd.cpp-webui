@@ -129,6 +129,15 @@ with gr.Blocks() as gallery_block:
                 show_copy_button=True,
                 max_lines=1
             )
+            scheduler_info = gr.Textbox(
+                label="Scheduler",
+                value="",
+                interactive=False,
+                scale=1,
+                min_width=150,
+                show_copy_button=True,
+                max_lines=1
+            )
             with gr.Row():
                 # CFG
                 cfg_info = gr.Number(
@@ -179,8 +188,8 @@ with gr.Blocks() as gallery_block:
         gallery_manager.get_img_info,
         inputs=[],
         outputs=[pprompt_info, nprompt_info, width_info, height_info,
-                 steps_info, sampler_info, cfg_info, seed_info, path_info,
-                 img_info_txt]
+                 steps_info, sampler_info, scheduler_info, cfg_info,
+                 seed_info, path_info, img_info_txt]
     )
     txt2img_btn.click(
         gallery_manager.reload_gallery,
@@ -232,6 +241,6 @@ with gr.Blocks() as gallery_block:
         inputs=[],
         outputs=[gallery, page_num_select, gallery,
                  pprompt_info, nprompt_info, width_info, height_info,
-                 steps_info, sampler_info, cfg_info, seed_info, path_info,
-                 img_info_txt]
+                 steps_info, sampler_info, scheduler_info, cfg_info,
+                 seed_info, path_info, img_info_txt]
     )

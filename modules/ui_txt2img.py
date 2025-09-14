@@ -321,5 +321,6 @@ with gr.Blocks() as txt2img_block:
     height_txt2img = settings_ui['in_height']
     steps_txt2img = settings_ui['in_steps']
     sampling_txt2img = settings_ui['in_sampling']
+    scheduler_txt2img = settings_ui['in_scheduler']
     cfg_txt2img = settings_ui['in_cfg']
     seed_txt2img = inputs_map['in_seed']

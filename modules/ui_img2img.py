@@ -359,5 +359,6 @@ with gr.Blocks()as img2img_block:
     height_img2img = settings_ui['in_height']
     steps_img2img = settings_ui['in_steps']
     sampling_img2img = settings_ui['in_sampling']
+    scheduler_img2img = settings_ui['in_scheduler']
     cfg_img2img = settings_ui['in_cfg']
     seed_img2img = inputs_map['in_seed']
