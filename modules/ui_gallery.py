@@ -25,6 +25,9 @@ with gr.Blocks() as gallery_block:
     any2video_ctrl = gr.Textbox(
         value=2, visible=False
     )
+    def_page = gr.Textbox(
+        value=1, visible=False
+    )
 
     # Title
     gallery_title = gr.Markdown('# Gallery')
@@ -193,17 +196,17 @@ with gr.Blocks() as gallery_block:
     )
     txt2img_btn.click(
         gallery_manager.reload_gallery,
-        inputs=[txt2img_ctrl],
+        inputs=[def_page, txt2img_ctrl],
         outputs=[gallery, page_num_select, gallery]
     )
     img2img_btn.click(
         gallery_manager.reload_gallery,
-        inputs=[img2img_ctrl],
+        inputs=[def_page, img2img_ctrl],
         outputs=[gallery, page_num_select, gallery]
     )
     any2video_btn.click(
         gallery_manager.reload_gallery,
-        inputs=[any2video_ctrl],
+        inputs=[def_page, any2video_ctrl],
         outputs=[gallery, page_num_select, gallery]
     )
     pvw_btn.click(

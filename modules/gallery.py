@@ -207,9 +207,18 @@ class GalleryManager:
         return {**default_params, **a1111_params}
 
     def reload_gallery(
-        self, ctrl_inp: Optional[int] = None, page_num: int = 1
+        self, page_num: int = 1, ctrl_inp: Optional[int] = None
     ) -> Tuple[List[Image.Image], int, gr.Gallery]:
         """Reloads the gallery block to a specific page."""
+        files = self._get_sorted_files()
+        total_imgs = len(files)
+        total_pages = (total_imgs + 15) // 16 or 1
+
+        if page_num > total_pages:
+            page_num = total_pages
+        elif page_num < 1:
+            page_num = 1
+
         if ctrl_inp is not None:
             self.ctrl = int(ctrl_inp)
 
