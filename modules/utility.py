@@ -245,7 +245,7 @@ def exe_name():
             return "sd.exe"
         return "./sd"
     else:
-        if (shutil.which("sd")):
+        if shutil.which("sd"):
             return "sd"
         else:
             return "./sd"
