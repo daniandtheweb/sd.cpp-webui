@@ -698,6 +698,25 @@ def create_extras_ui():
     }
 
 
+def create_env_ui():
+    """Create env UI"""
+    with gr.Accordion(
+        label="Environment variables", open=False
+    ):
+        disable_vk_coopmat = gr.Checkbox(
+            label="Disable Vulkan cooperative matrix",
+            value=False
+        )
+        disable_vk_int_dot = gr.Checkbox(
+            label="Disable Vulkan integer dot product",
+            value=False
+        )
+    return {
+        'env_GGML_VK_DISABLE_COOPMAT': disable_vk_coopmat,
+        'env_GGML_VK_DISABLE_INTEGER_DOT_PRODUCT': disable_vk_int_dot
+    }
+
+
 def create_experimental_ui():
     """Create experimental UI"""
     with gr.Accordion(

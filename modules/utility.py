@@ -162,7 +162,7 @@ class SubprocessManager:
             }
         return {}
 
-    def run_subprocess(self, command):
+    def run_subprocess(self, command, env=None):
         """
         Runs a subprocess, captures its output, and yields UI updates.
         This main method is now much simpler and delegates parsing to helpers.
@@ -179,6 +179,7 @@ class SubprocessManager:
                 universal_newlines=True,
                 bufsize=1,
                 encoding='utf-8',
+                env=env,
                 errors='replace'
             ) as self.process:
 

@@ -19,11 +19,28 @@ class CommandRunner:
     def __init__(self, mode: str, params: Dict[str, Any]):
         self.mode = mode
         self.params = params
+        self.env_vars = self._extract_env_vars()
         self.command = [SD, '-M', self.mode]
         self.fcommand = ""
         self.outputs = []
         self.output_path = ""
         self.preview_path = None
+
+    def _extract_env_vars(self) -> Dict[str, Any]:
+        """
+        Parses the params dictionary to find and extract environment
+        variables.
+        Environment variables are identified by the 'env_' prefix.
+        """
+        env_vars = {}
+        for key in list(self.params.keys()):
+            if key.startswith("env_"):
+                env_key = key[4:]
+                value = self.params.pop(key)
+
+                env_vars[env_key] = value
+
+        return env_vars
 
     def _resolve_paths(self):
         """Resolves all model and directory paths from the config."""
@@ -121,6 +138,18 @@ class CommandRunner:
         self._prepare_for_run()
         print(f"\n\n{self.fcommand}\n\n")
 
+        process_env = os.environ.copy()
+
+        if self.env_vars:
+            for key, value in self.env_vars.items():
+                if isinstance(value, bool):
+                    if value is True:
+                        process_env[key] = "1"
+                        print(f"  SET: {key}=1\n\n")
+                    elif key in process_env:
+                        del process_env[key]
+                        print(f"  UNSET: {key}\n\n")
+
         if self.preview_path:
             gallery_update = [self.preview_path]
         else:
@@ -131,7 +160,9 @@ class CommandRunner:
                gr.update(value=""), None)
 
         final_stats_str = "Process completed with unknown stats."
-        for update in subprocess_manager.run_subprocess(self.command):
+        for update in subprocess_manager.run_subprocess(
+            self.command, env=process_env
+        ):
             if "final_stats" in update:
                 stats = update["final_stats"]
                 final_stats_str = (

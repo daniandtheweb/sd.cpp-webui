@@ -14,7 +14,7 @@ from modules.loader import (
 from modules.ui import (
     create_img_model_sel_ui, create_quant_ui, create_prompts_ui,
     create_experimental_ui, create_cnnet_ui, create_chroma_ui,
-    create_extras_ui, create_settings_ui,
+    create_extras_ui, create_env_ui, create_settings_ui,
     RELOAD_SYMBOL, RANDOM_SYMBOL
 )
 
@@ -199,6 +199,10 @@ with gr.Blocks()as img2img_block:
             # Extra Settings
             extras_ui = create_extras_ui()
             inputs_map.update(extras_ui)
+
+            # Environment Variables
+            env_ui = create_env_ui()
+            inputs_map.update(env_ui)
 
             # Experimental
             experimental_ui = create_experimental_ui()
