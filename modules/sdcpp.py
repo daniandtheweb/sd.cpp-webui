@@ -29,16 +29,22 @@ class CommandRunner:
     def _extract_env_vars(self) -> Dict[str, Any]:
         """
         Parses the params dictionary to find and extract environment
-        variables.
-        Environment variables are identified by the 'env_' prefix.
+        variables, applying conditional logic as needed.
         """
         env_vars = {}
+
+        is_override_true = self.params.pop('env_vk_visible_override', False)
+        device_id = self.params.pop('env_GGML_VK_VISIBLE_DEVICES', None)
+
         for key in list(self.params.keys()):
             if key.startswith("env_"):
                 env_key = key[4:]
                 value = self.params.pop(key)
+                if env_key not in env_vars:
+                    env_vars[env_key] = value
 
-                env_vars[env_key] = value
+        if is_override_true and device_id is not None:
+            env_vars['GGML_VK_VISIBLE_DEVICES'] = device_id
 
         return env_vars
 
@@ -141,14 +147,19 @@ class CommandRunner:
         process_env = os.environ.copy()
 
         if self.env_vars:
+            settings_to_print = []
+
             for key, value in self.env_vars.items():
                 if isinstance(value, bool):
                     if value is True:
                         process_env[key] = "1"
-                        print(f"  SET: {key}=1\n\n")
-                    elif key in process_env:
-                        del process_env[key]
-                        print(f"  UNSET: {key}\n\n")
+                        settings_to_print.append(f"{key}=1")
+                elif isinstance(value, int):
+                    process_env[key] = str(value)
+                    settings_to_print.append(f"{key}={str(value)}")
+            if settings_to_print:
+                full_line = " ".join(settings_to_print)
+                print(f"  SET: {full_line}\n\n")
 
         if self.preview_path:
             gallery_update = [self.preview_path]
