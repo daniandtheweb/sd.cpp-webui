@@ -321,10 +321,15 @@ class GalleryManager:
         )
 
     def delete_img(self) -> Tuple[Any, ...]:
-        """Deletes the currently selected image and refreshes the gallery."""
+        """
+        Deletes the currently selected image. It then selects the previous
+        image, or the next if the first was deleted. If the gallery becomes
+        empty, it resets the selection.
+        """
+        # If no image is selected or the index is unknown, just refresh.
         if (not self.current_img_path or
-                not os.path.exists(self.current_img_path)):
-            # No image is selected or it's already gone, just refresh
+                not os.path.exists(self.current_img_path) or
+                self.selected_img_global_index is None):
             imgs, page_num, gallery_update = (
                 self.reload_gallery(page_num=self.page_num)
             )
@@ -333,31 +338,67 @@ class GalleryManager:
                 "", None, None, "", ""
             )
 
+        index_to_delete = self.selected_img_global_index
+        path_to_delete = self.current_img_path
+
         try:
-            os.remove(self.current_img_path)
-            print(f"Deleted {self.current_img_path}")
+            os.remove(path_to_delete)
+            print(f"Deleted {path_to_delete}")
         except OSError as e:
             print(f"Error deleting file: {e}")
-            # Fall through to refresh the UI anyway
 
-        # The image is gone, so reload everything and reset state
-        self.current_img_path = None
-        self.selected_img_index_on_page = None
+        files_after_delete = self._get_sorted_files()
 
-        # Check if the current page is now empty and go to the previous one
-        files = self._get_sorted_files()
-        total_pages = (len(files) + 15) // 16 or 1
-        if self.page_num > total_pages:
-            self.page_num = total_pages
+        if not files_after_delete:
+            self.current_img_path = None
+            self.selected_img_index_on_page = None
+            self.selected_img_global_index = None
 
-        imgs, page_num, gallery_update = (
-            self.reload_gallery(page_num=self.page_num)
-        )
+            imgs, page_num, gallery_update = (
+                self.reload_gallery(page_num=1)
+            )
 
-        # Return a full tuple to clear all outputs
+            return (
+                imgs, page_num, gallery_update,
+                "", "", None, None, None, "", "", None, None, "", ""
+            )
+
+        new_global_index = index_to_delete - 1 if index_to_delete > 0 else 0
+
+        if new_global_index >= len(files_after_delete):
+            new_global_index = len(files_after_delete) - 1
+
+        new_page_num = (new_global_index // 16) + 1
+        new_page_index = new_global_index % 16
+
+        imgs, page_num, _ = self.reload_gallery(page_num=new_page_num)
+
+        gallery_update = gr.Gallery(selected_index=new_page_index)
+
+        self.selected_img_global_index = new_global_index
+        self.selected_img_index_on_page = new_page_index
+        self.current_img_path = files_after_delete[new_global_index]
+
+        raw_text = None
+        if self.current_img_path.lower().endswith('.png'):
+            raw_text = self._parse_png_metadata(self.current_img_path)
+        elif self.current_img_path.lower().endswith(('.jpg', '.jpeg')):
+            raw_text = self._parse_jpg_metadata(self.current_img_path)
+
+        params = self._extract_params_from_text(raw_text)
+
+        try:
+            with Image.open(self.current_img_path) as img:
+                width, height = img.size
+        except Exception:
+            width, height = None, None
+
         return (
             imgs, page_num, gallery_update,
-            "", "", None, None, None, "", "", None, None, "", ""
+            params['pprompt'], params['nprompt'], width, height,
+            params['steps'], params['sampler'], params['scheduler'],
+            params['cfg'], params['seed'], self.current_img_path,
+            raw_text or ""
         )
 
 
