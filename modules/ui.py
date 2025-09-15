@@ -536,7 +536,7 @@ def create_settings_ui():
                     label="CFG Scale",
                     minimum=1,
                     maximum=30,
-                    value=7.0,
+                    value=config.get('def_cfg'),
                     step=0.1,
                     interactive=True
                 )

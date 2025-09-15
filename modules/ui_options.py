@@ -228,14 +228,27 @@ with gr.Blocks() as options_block:
             settings_map['def_steps'] = steps
 
     with gr.Row():
-        # Scheduler Dropdown
-        scheduler = gr.Dropdown(
-            label="Scheduler",
-            choices=SCHEDULERS,
-            value=config.get('def_scheduler'),
-            interactive=True
-        )
-        settings_map['def_scheduler'] = scheduler
+        with gr.Column():
+            # Scheduler Dropdown
+            scheduler = gr.Dropdown(
+                label="Scheduler",
+                choices=SCHEDULERS,
+                value=config.get('def_scheduler'),
+                interactive=True
+            )
+            settings_map['def_scheduler'] = scheduler
+
+        with gr.Column():
+            # CFG Slider
+            cfg = gr.Slider(
+                label="CFG Scale",
+                minimum=1,
+                maximum=30,
+                value=config.get('def_cfg'),
+                step=0.1,
+                interactive=True
+            )
+            settings_map['def_cfg'] = cfg
 
     with gr.Column():
         # Size Sliders

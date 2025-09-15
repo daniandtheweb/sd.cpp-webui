@@ -27,6 +27,7 @@ DEFAULT_SETTINGS = {
     'def_scheduler': "discrete",
     'def_width': 512,
     'def_height': 512,
+    'def_cfg': 7.0,
     'def_predict': "Default",
     'def_flash_attn': False,
     'def_diffusion_conv_direct': False,
