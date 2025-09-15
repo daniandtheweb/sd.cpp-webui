@@ -158,8 +158,15 @@ class GalleryManager:
         params = {}
 
         patterns = {
-            'pprompt': r'(?:Positive prompt|parameters):\s*(.*?)(?:\n|$)',
-            'nprompt': r'Negative prompt:\s*(.*?)(?:\n|$)',
+            'pprompt': (
+                r'(?:Positive prompt|parameters):\s*(.*?)'
+                r'(?=\s*(?:Negative prompt:|Steps:|CFG scale:|Seed:|'
+                r'Size:|Model:|Sampler:|$))'
+            ),
+            'nprompt': (
+                r'Negative prompt:\s*(.*?)'
+                r'(?=\s*(?:Steps:|CFG scale:|Seed:|Size:|Model:|Sampler:|$))'
+            ),
             'steps': r'Steps:\s*(\d+)',
             'cfg': r'CFG scale:\s*([\d.]+)',
             'seed': r'Seed:\s*(\d+)',
@@ -167,9 +174,16 @@ class GalleryManager:
         converters = {'steps': int, 'cfg': float, 'seed': int}
 
         for key, pattern in patterns.items():
-            match = re.search(pattern, text_data, re.IGNORECASE)
+            match = re.search(
+                pattern,
+                text_data,
+                re.IGNORECASE
+            )
             if match:
-                value = match.group(1).strip().split(',')[0]
+                value = match.group(1).strip()
+                if key not in ['pprompt', 'nprompt']:
+                    value = value.split(',')[0]
+
                 params[key] = converters.get(key, lambda x: x)(value)
 
         sampler_match = re.search(
