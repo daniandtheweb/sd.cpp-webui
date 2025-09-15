@@ -395,11 +395,14 @@ def create_prompts_ui():
 
     def save_and_refresh_prompts(name, p_prompt, n_prompt):
         config.add_prompt(name, p_prompt, n_prompt)
-        return gr.Dropdown(choices=config.get_prompts(), value=name)
+        return gr.update(choices=config.get_prompts(), value=name)
 
     def delete_and_refresh_prompts(name):
         config.delete_prompt(name)
-        return gr.Dropdown(choices=config.get_prompts())
+        return gr.update(choices=config.get_prompts())
+
+    def refresh_prompt_list():
+        return gr.update(choices=config.get_prompts())
 
     with gr.Row():
         with gr.Accordion(
@@ -453,7 +456,7 @@ def create_prompts_ui():
         outputs=[saved_prompts]
     )
     reload_prompts_btn.click(
-        config.get_prompts,
+        refresh_prompt_list,
         inputs=[],
         outputs=[saved_prompts]
     )
