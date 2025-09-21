@@ -233,13 +233,13 @@ class Txt2ImgRunner(CommandRunner):
             '--vae': (self._get_param('f_ckpt_vae')
                       or self._get_param('f_unet_vae')),
             '--clip_g': (self._get_param('f_clip_g')
-                         if self._get_param('f_unet_model')
+                         if self._get_param('f_ckpt_model') is None
                          else None),
             '--clip_l': (self._get_param('f_clip_l')
-                         if self._get_param('f_unet_model')
+                         if self._get_param('f_ckpt_model') is None
                          else None),
             '--t5xxl': (self._get_param('f_t5xxl')
-                        if self._get_param('f_unet_model')
+                        if self._get_param('f_ckpt_model') is None
                         else None),
             '--taesd': self._get_param('f_taesd'),
             '--stacked-id-embd-dir': self._get_param('f_phtmkr'),
