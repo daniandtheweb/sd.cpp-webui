@@ -289,7 +289,6 @@ class Txt2ImgRunner(CommandRunner):
             '--clip-on-cpu': self._get_param('in_clip_cpu'),
             '--control-net-cpu': self._get_param('in_cnnet_cpu'),
             '--canny': self._get_param('in_canny'),
-            '--normalize-input': self._get_param('in_phtmkr_nrml'),
             '--chroma-disable-dit-mask': (
                 self._get_param('in_disable_dit_mask')
             ),
@@ -416,7 +415,6 @@ class Any2VideoRunner(CommandRunner):
             '--clip-on-cpu': self._get_param('in_clip_cpu'),
             '--control-net-cpu': self._get_param('in_cnnet_cpu'),
             '--canny': self._get_param('in_canny'),
-            '--normalize-input': self._get_param('in_phtmkr_nrml'),
             '--color': self._get_param('in_color'),
             '--diffusion-fa': self._get_param('in_flash_attn'),
             '--diffusion-conv-direct': (

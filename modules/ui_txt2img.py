@@ -90,13 +90,8 @@ with gr.Blocks() as txt2img_block:
             )
         with gr.Row():
             gr.ClearButton(phtmkr_in)
-        with gr.Row():
-            phtmkr_nrml = gr.Checkbox(
-                label="Normalize PhotoMaker input", value=False
-            )
         inputs_map['in_phtmkr'] = phtmkr_model
         inputs_map['in_phtmkr_in'] = phtmkr_in
-        inputs_map['in_phtmkr_nrml'] = phtmkr_nrml
 
     # Prompts
     prompts_ui = create_prompts_ui()
