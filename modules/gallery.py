@@ -87,7 +87,6 @@ class GalleryManager:
                 if exif_data:
                     exif = exif_data.get(37510)  # 37510 = UserComment tag
                     if exif:
-                        # Decoding can be tricky, this is a common approach
                         return (
                             f"JPG: Exif\nPositive prompt: "
                             f"{exif.decode('utf-8', errors='ignore')[8:]}"
@@ -159,12 +158,12 @@ class GalleryManager:
 
         patterns = {
             'pprompt': (
-                r'(?:Positive prompt|parameters):\s*(.*?)'
+                r'(?s)(?:Positive prompt|parameters):\s*(.*?)'
                 r'(?=\s*(?:Negative prompt:|Steps:|CFG scale:|Seed:|'
                 r'Size:|Model:|Sampler:|$))'
             ),
             'nprompt': (
-                r'Negative prompt:\s*(.*?)'
+                r'(?s)Negative prompt:\s*(.*?)'
                 r'(?=\s*(?:Steps:|CFG scale:|Seed:|Size:|Model:|Sampler:|$))'
             ),
             'steps': r'Steps:\s*(\d+)',
