@@ -192,7 +192,8 @@ with gr.Blocks() as txt2img_block:
                     value=0,
                     interactive=False,
                     visible=False,
-                    label="Progress"
+                    label="Progress",
+                    show_reset_button=False
                 )
             with gr.Row():
                 progress_textbox = gr.Textbox(
