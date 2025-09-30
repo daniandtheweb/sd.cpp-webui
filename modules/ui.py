@@ -40,6 +40,8 @@ def create_img_model_sel_ui():
     unet_dir_txt = gr.Textbox(value=config.get('unet_dir'), visible=False)
     clip_dir_txt = gr.Textbox(value=config.get('clip_dir'), visible=False)
 
+    diffusion_mode = gr.Number(value=0, visible=False)
+
     # Model & VAE Selection
     with gr.Tab("Checkpoint") as ckpt_tab:
         with gr.Row():
@@ -219,6 +221,7 @@ def create_img_model_sel_ui():
     # Return the dictionary with all UI components
     return {
         'inputs': {
+            'in_diffusion_mode': diffusion_mode,
             'in_ckpt_model': ckpt_model,
             'in_ckpt_vae': ckpt_vae,
             'in_unet_model': unet_model,

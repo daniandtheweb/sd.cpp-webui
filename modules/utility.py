@@ -267,6 +267,7 @@ def unet_tab_switch(ckpt_model, ckpt_vae, guidance_btn, guidance):
     model_state.bak_ckpt_tab(ckpt_model, ckpt_vae)
 
     return (
+        gr.update(value=1),
         gr.update(value=None),
         gr.update(value=model_state.bak_unet_model),
         gr.update(value=None),
@@ -286,6 +287,7 @@ def ckpt_tab_switch(unet_model, unet_vae, clip_g, clip_l, t5xxl,
                              guidance_btn)
 
     return (
+        gr.update(value=0),
         gr.update(value=model_state.bak_ckpt_model),
         gr.update(value=None),
         gr.update(value=model_state.bak_ckpt_vae),

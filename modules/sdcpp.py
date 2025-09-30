@@ -226,20 +226,25 @@ class Txt2ImgRunner(CommandRunner):
             self.preview_path = self.output_path + "preview.png"
 
         options = {
-            '--model': self._get_param('f_ckpt_model'),
+            '--model': (self._get_param('f_ckpt_model')
+                        if self._get_param('in_diffusion_mode') == 0
+                        else None),
             '--diffusion-model': (self._get_param('f_unet_model')
-                                  if self._get_param('f_ckpt_model') is None
+                                  if self._get_param('in_diffusion_mode') == 1
                                   else None),
             '--vae': (self._get_param('f_ckpt_vae')
-                      or self._get_param('f_unet_vae')),
+                      if self._get_param('in_diffusion_mode') == 0
+                      else self._get_param('f_unet_vae')
+                      if self._get_param('in_diffusion_mode') == 1
+                      else None),
             '--clip_g': (self._get_param('f_clip_g')
-                         if self._get_param('f_ckpt_model') is None
+                         if self._get_param('in_diffusion_mode') == 1
                          else None),
             '--clip_l': (self._get_param('f_clip_l')
-                         if self._get_param('f_ckpt_model') is None
+                         if self._get_param('in_diffusion_mode') == 1
                          else None),
             '--t5xxl': (self._get_param('f_t5xxl')
-                        if self._get_param('f_ckpt_model') is None
+                        if self._get_param('in_diffusion_mode') == 1
                         else None),
             '--taesd': self._get_param('f_taesd'),
             '--stacked-id-embd-dir': self._get_param('f_phtmkr'),

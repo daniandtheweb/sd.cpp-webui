@@ -300,6 +300,7 @@ with gr.Blocks()as img2img_block:
             settings_ui['in_guidance']
         ],
         outputs=[
+            model_ui['inputs']['in_diffusion_mode'],
             model_ui['inputs']['in_ckpt_model'],
             model_ui['inputs']['in_unet_model'],
             model_ui['inputs']['in_ckpt_vae'],
@@ -320,6 +321,7 @@ with gr.Blocks()as img2img_block:
             settings_ui['in_guidance']
         ],
         outputs=[
+            model_ui['inputs']['in_diffusion_mode'],
             model_ui['inputs']['in_ckpt_model'],
             model_ui['inputs']['in_unet_model'],
             model_ui['inputs']['in_ckpt_vae'],
