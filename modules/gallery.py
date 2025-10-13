@@ -16,10 +16,11 @@ class GalleryManager:
 
     def __init__(
         self, txt2img_gallery: str, img2img_gallery: str,
-        any2video_gallery: str
+        any2video_gallery: str, upscale_gallery: str
     ):
         self.dirs: List[str] = [
-            txt2img_gallery, img2img_gallery, any2video_gallery
+            txt2img_gallery, img2img_gallery, any2video_gallery,
+            upscale_gallery
         ]
         self.page_num: int = 1
         self.ctrl: int = 0
@@ -227,6 +228,11 @@ class GalleryManager:
         total_imgs = len(files)
         total_pages = (total_imgs + 15) // 16 or 1
 
+        try:
+             page_num = int(page_num)
+        except (ValueError, TypeError):
+             page_num = 1
+
         if page_num > total_pages:
             page_num = total_pages
         elif page_num < 1:
@@ -245,11 +251,19 @@ class GalleryManager:
 
         imgs = [Image.open(path) for path in page_files]
 
+        dir_map = {
+            0: 'txt2img',
+            1: 'img2img',
+            2: 'any2video',
+            3: 'upscale'
+        }
+        current_label = dir_map.get(self.ctrl, 'Gallery')
+
         # Reset selections when reloading
         self.selected_img_index_on_page = None
         self.current_img_path = None
 
-        return imgs, self.page_num, gr.Gallery(selected_index=None)
+        return imgs, self.page_num, gr.Gallery(selected_index=None), gr.update(label=current_label)
 
     def _navigate_page(
         self, direction: int
@@ -384,7 +398,7 @@ class GalleryManager:
         new_page_num = (new_global_index // 16) + 1
         new_page_index = new_global_index % 16
 
-        imgs, page_num, _ = self.reload_gallery(page_num=new_page_num)
+        imgs, page_num, _, _ = self.reload_gallery(page_num=new_page_num)
 
         gallery_update = gr.Gallery(selected_index=new_page_index)
 
@@ -420,7 +434,8 @@ def get_next_img(subctrl: int) -> str:
     dir_map = {
         0: 'txt2img_dir',
         1: 'img2img_dir',
-        2: 'any2video_dir'
+        2: 'any2video_dir',
+        3: 'upscale_dir'
     }
     dir_key = dir_map.get(subctrl, 'txt2img_dir')
     img_out_dir = config.get(dir_key)

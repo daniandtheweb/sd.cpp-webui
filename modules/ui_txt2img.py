@@ -130,6 +130,9 @@ with gr.Blocks() as txt2img_block:
             with gr.Accordion(
                 label="Upscale", open=False
             ):
+                upscl_enabled = gr.Checkbox(
+                    label="Enable Upscale", value=False
+                )
                 upscl = gr.Dropdown(
                     label="Upscaler",
                     choices=get_models(config.get('upscl_dir')),
@@ -137,15 +140,17 @@ with gr.Blocks() as txt2img_block:
                     allow_custom_value=True,
                     interactive=True
                 )
-                reload_upscl_btn = gr.Button(value=RELOAD_SYMBOL)
-                gr.ClearButton(upscl)
+                with gr.Row():
+                    reload_upscl_btn = gr.Button(value=RELOAD_SYMBOL)
+                    gr.ClearButton(upscl)
                 upscl_rep = gr.Slider(
                     label="Upscaler repeats",
                     minimum=1,
                     maximum=5,
                     value=1,
-                    step=0.1
+                    step=1
                 )
+                inputs_map['in_upscl_enabled'] = upscl_enabled
                 inputs_map['in_upscl'] = upscl
                 inputs_map['in_upscl_rep'] = upscl_rep
 

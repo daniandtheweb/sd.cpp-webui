@@ -622,6 +622,9 @@ def create_cnnet_ui():
     with gr.Accordion(
         label="ControlNet", open=False
     ):
+        cnnet_enabled = gr.Checkbox(
+            label="Enable ControlNet", value=False
+        )
         cnnet = gr.Dropdown(
             label="ControlNet",
             choices=get_models(config.get('cnnet_dir')),
@@ -652,6 +655,7 @@ def create_cnnet_ui():
 
     # Return the dictionary with all UI components
     return {
+        'in_cnnet_enabled': cnnet_enabled,
         'in_cnnet': cnnet,
         'in_control_img': control_img,
         'in_control_strength': control_strength,

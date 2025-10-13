@@ -15,18 +15,20 @@ from modules.ui_txt2img import (
 from modules.ui_img2img import (
     img2img_block, pprompt_img2img, nprompt_img2img, width_img2img,
     height_img2img, steps_img2img, sampling_img2img, scheduler_img2img,
-    cfg_img2img, seed_img2img, img_inp
+    cfg_img2img, seed_img2img, img_inp_img2img
 )
 from modules.ui_any2video import (
     any2video_block, pprompt_any2video, nprompt_any2video, width_any2video,
     height_any2video, steps_any2video, sampling_any2video, scheduler_any2video,
     cfg_any2video, seed_any2video
 )
+from modules.ui_upscale import img_inp_upscale
 from modules.ui_gallery import (
     gallery_block, cpy_2_txt2img_btn, cpy_2_img2img_btn, cpy_2_any2video_btn,
-    pprompt_info, nprompt_info, width_info, height_info, steps_info,
-    sampler_info, scheduler_info, cfg_info, seed_info, path_info
+    cpy_2_upscale_btn, pprompt_info, nprompt_info, width_info, height_info,
+    steps_info, sampler_info, scheduler_info, cfg_info, seed_info, path_info
 )
+from modules.ui_upscale import upscale_block
 from modules.ui_convert import convert_block
 from modules.ui_options import options_block
 from modules.config import ConfigManager
@@ -92,6 +94,8 @@ def sdcpp_launch(
                 any2video_block.render()
             with gr.TabItem("Gallery", id="gallery"):
                 gallery_block.render()
+            with gr.TabItem("Upscaler", id="upscale"):
+                upscale_block.render()
             with gr.TabItem("Checkpoint Converter", id="convert"):
                 convert_block.render()
             with gr.TabItem("Options", id="options"):
@@ -119,7 +123,7 @@ def sdcpp_launch(
             outputs=[
                 tabs, pprompt_img2img, nprompt_img2img, width_img2img,
                 height_img2img, steps_img2img, sampling_img2img,
-                scheduler_img2img, cfg_img2img, seed_img2img, img_inp
+                scheduler_img2img, cfg_img2img, seed_img2img, img_inp_img2img
             ]
         )
         # Copy data from gallery image to any2video.
@@ -130,7 +134,12 @@ def sdcpp_launch(
                 tabs, pprompt_any2video, nprompt_any2video,
                 width_any2video, height_any2video, steps_any2video,
                 sampling_any2video, scheduler_any2video, cfg_any2video,
-                seed_any2video, img_inp]
+                seed_any2video]
+        )
+        cpy_2_upscale_btn.click(
+            create_copy_fn("upscale"),
+            inputs=[path_info],
+            outputs=[tabs, img_inp_upscale]
         )
 
     # Pass the arguments to sdcpp.launch with argument unpacking

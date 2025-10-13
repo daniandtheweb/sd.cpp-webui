@@ -165,6 +165,9 @@ with gr.Blocks() as any2video_block:
             with gr.Accordion(
                 label="Upscale", open=False
             ):
+                upscl_enabled = gr.Checkbox(
+                    label="Enable Upscale", value=False
+                )
                 upscl = gr.Dropdown(
                     label="Upscaler",
                     choices=get_models(config.get('upscl_dir')),
@@ -172,15 +175,17 @@ with gr.Blocks() as any2video_block:
                     allow_custom_value=True,
                     interactive=True
                 )
-                reload_upscl_btn = gr.Button(value=RELOAD_SYMBOL)
-                gr.ClearButton(upscl)
+                with gr.Row():
+                    reload_upscl_btn = gr.Button(value=RELOAD_SYMBOL)
+                    gr.ClearButton(upscl)
                 upscl_rep = gr.Slider(
                     label="Upscaler repeats",
                     minimum=1,
                     maximum=5,
                     value=1,
-                    step=0.1
+                    step=1
                 )
+                inputs_map['in_upscl_enabled'] = upscl_enabled
                 inputs_map['in_upscl'] = upscl
                 inputs_map['in_upscl_rep'] = upscl_rep
 
@@ -211,9 +216,10 @@ with gr.Blocks() as any2video_block:
                 with gr.Accordion(
                     label="Image to Video", open=False
                 ):
-                    img_inp = gr.Image(
+                    img_inp_any2video = gr.Image(
                         sources="upload", type="filepath"
                     )
+                    inputs_map['in_img_inp'] = img_inp_any2video
             with gr.Row():
                 with gr.Accordion(
                     label="First-Last Frame Video", open=False
@@ -222,10 +228,12 @@ with gr.Blocks() as any2video_block:
                         first_frame_inp = gr.Image(
                             sources="upload", type="filepath"
                         )
+                        inputs_map['in_first_frame_inp'] = first_frame_inp
                     with gr.Row():
                         last_frame_inp = gr.Image(
                             sources="upload", type="filepath"
                         )
+                        inputs_map['in_last_frame_inp'] = last_frame_inp
 
             with gr.Row():
                 gen_btn = gr.Button(

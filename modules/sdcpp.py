@@ -260,19 +260,23 @@ class Txt2ImgRunner(CommandRunner):
             '--flow-shift': (self._get_param('in_flow_shift')
                              if self._get_param('in_flow_shift_toggle')
                              else None),
-            '--upscale-model': self._get_param('f_upscl'),
+            '--upscale-model': (self._get_param('f_upscl')
+                                if self._get_param('in_upscl_enabled')
+                                else None),
             '--upscale-repeats': (self._get_param('in_upscl_rep')
-                                  if self._get_param('f_upscl')
+                                  if self._get_param('in_upscl_enabled')
                                   else None),
             '--type': (self._get_param('in_model_type')
                        if self._get_param('in_model_type') != "Default"
                        else None),
-            '--control-net': self._get_param('f_cnnet'),
+            '--control-net': (self._get_param('f_cnnet')
+                              if self._get_param('in_cnnet_enabled')
+                              else None),
             '--control-image': (self._get_param('in_control_img')
-                                if self._get_param('f_cnnet')
+                                if self._get_param('in_cnnet_enabled')
                                 else None),
             '--control-strength': (self._get_param('in_control_strength')
-                                   if self._get_param('f_cnnet')
+                                   if self._get_param('in_cnnet_enabled')
                                    else None),
             '--chroma-t5-mask-pad': (self._get_param('in_t5_mask_pad')
                                      if self._get_param('in_enable_t5_mask')
@@ -396,9 +400,11 @@ class Any2VideoRunner(CommandRunner):
                                       else None),
             '--init-img': init_img,
             '--end-img': self._get_param('in_last_frame_inp'),
-            '--upscale-model': self._get_param('f_upscl'),
+            '--upscale-model': (self._get_param('f_upscl')
+                                if self._get_param('in_upscl_enabled')
+                                else None),
             '--upscale-repeats': (self._get_param('in_upscl_rep')
-                                  if self._get_param('f_upscl')
+                                  if self._get_param('in_upscl_enabled')
                                   else None),
             '--type': (self._get_param('in_model_type')
                        if self._get_param('in_model_type') != "Default"
@@ -406,12 +412,14 @@ class Any2VideoRunner(CommandRunner):
             '--flow-shift': (self._get_param('in_flow_shift')
                              if self._get_param('in_flow_shift_toggle')
                              else None),
-            '--control-net': self._get_param('f_cnnet'),
+            '--control-net': (self._get_param('f_cnnet')
+                              if self._get_param('in_cnnet_enabled')
+                              else None),
             '--control-image': (self._get_param('in_control_img')
-                                if self._get_param('f_cnnet')
+                                if self._get_param('in_cnnet_enabled')
                                 else None),
             '--control-strength': (self._get_param('in_control_strength')
-                                   if self._get_param('f_cnnet')
+                                   if self._get_param('in_cnnet_enabled')
                                    else None),
             '--prediction': (self._get_param('in_predict')
                              if self._get_param('in_predict') != "Default"
@@ -437,6 +445,37 @@ class Any2VideoRunner(CommandRunner):
         self._add_flags(flags)
 
 
+class UpscaleRunner(CommandRunner):
+    def build_command(self):
+        self._resolve_paths()
+        self.output_path = (
+            os.path.join(
+                config.get('upscale_dir'),
+                f"{self._get_param('in_output')}.png"
+            )
+            if self._get_param('in_output')
+            else os.path.join(
+                config.get('upscale_dir'), get_next_img(subctrl=3)
+            )
+        )
+
+        init_img = (self._get_param('in_img_inp')
+                    or self._get_param('in_first_frame_inp'))
+        options = {
+            '--init-img': init_img,
+            '--upscale-model': self._get_param('f_upscl'),
+            '--upscale-repeats': self._get_param('in_upscl_rep'),
+            '-o': self.output_path,
+        }
+        self._add_options(options)
+
+        flags = {
+            '--color': self._get_param('in_color'),
+            '-v': self._get_param('in_verbose')
+        }
+        self._add_flags(flags)
+
+
 def txt2img(params: dict) -> Generator:
     """Creates and runs a Txt2ImgRunner from a params dictionary."""
     runner = Txt2ImgRunner(mode="img_gen", params=params)
@@ -457,6 +496,11 @@ def any2video(params: dict) -> Generator:
     runner.build_command()
     yield from runner.run()
 
+def upscale(params: dict) -> Generator:
+    """Creates and runs an UpscaleRunner."""
+    runner = UpscaleRunner(mode="upscale", params=params)
+    runner.build_command()
+    yield from runner.run()
 
 def convert(
     in_orig_model: str, in_model_dir: str, in_quant_type: str,

@@ -10,7 +10,8 @@ from modules.shared_instance import config
 gallery_manager = GalleryManager(
     config.get('txt2img_dir'),
     config.get('img2img_dir'),
-    config.get('any2video_dir')
+    config.get('any2video_dir'),
+    config.get('upscale_dir')
 )
 
 
@@ -24,6 +25,9 @@ with gr.Blocks() as gallery_block:
     )
     any2video_ctrl = gr.Textbox(
         value=2, visible=False
+    )
+    upscl_ctrl = gr.Textbox(
+        value=3, visible=False
     )
     def_page = gr.Textbox(
         value=1, visible=False
@@ -42,6 +46,9 @@ with gr.Blocks() as gallery_block:
         )
         any2video_btn = gr.Button(
             value="any2video", variant="primary"
+        )
+        upscl_btn = gr.Button(
+            value="upscale", variant="primary"
         )
 
     with gr.Row():
@@ -182,6 +189,8 @@ with gr.Blocks() as gallery_block:
                 cpy_2_img2img_btn = gr.Button(value="Copy to img2img")
                 # Copy to any2video
                 cpy_2_any2video_btn = gr.Button(value="Copy to any2video")
+                # Copy to upscale
+                cpy_2_upscale_btn = gr.Button(value="Copy to upscale")
             # Delete image Button
             del_img = gr.Button(
                 value="Delete", variant="stop")
@@ -197,47 +206,52 @@ with gr.Blocks() as gallery_block:
     txt2img_btn.click(
         gallery_manager.reload_gallery,
         inputs=[def_page, txt2img_ctrl],
-        outputs=[gallery, page_num_select, gallery]
+        outputs=[gallery, page_num_select, gallery, gallery]
     )
     img2img_btn.click(
         gallery_manager.reload_gallery,
         inputs=[def_page, img2img_ctrl],
-        outputs=[gallery, page_num_select, gallery]
+        outputs=[gallery, page_num_select, gallery, gallery]
     )
     any2video_btn.click(
         gallery_manager.reload_gallery,
         inputs=[def_page, any2video_ctrl],
-        outputs=[gallery, page_num_select, gallery]
+        outputs=[gallery, page_num_select, gallery, gallery]
+    )
+    upscl_btn.click(
+        gallery_manager.reload_gallery,
+        inputs=[def_page, upscl_ctrl],
+        outputs=[gallery, page_num_select, gallery, gallery]
     )
     pvw_btn.click(
         gallery_manager.prev_page,
         inputs=[],
-        outputs=[gallery, page_num_select, gallery]
+        outputs=[gallery, page_num_select, gallery, gallery]
     )
     nxt_btn.click(
         gallery_manager.next_page,
         inputs=[],
-        outputs=[gallery, page_num_select, gallery]
+        outputs=[gallery, page_num_select, gallery, gallery]
     )
     first_btn.click(
         gallery_manager.reload_gallery,
         inputs=[],
-        outputs=[gallery, page_num_select, gallery]
+        outputs=[gallery, page_num_select, gallery, gallery]
     )
     last_btn.click(
         gallery_manager.last_page,
         inputs=[],
-        outputs=[gallery, page_num_select, gallery]
+        outputs=[gallery, page_num_select, gallery, gallery]
     )
     go_btn.click(
         gallery_manager.reload_gallery,
         inputs=[page_num_select],
-        outputs=[gallery, page_num_select, gallery]
+        outputs=[gallery, page_num_select, gallery, gallery]
     )
     page_num_select.submit(
         gallery_manager.reload_gallery,
         inputs=[page_num_select],
-        outputs=[gallery, page_num_select, gallery]
+        outputs=[gallery, page_num_select, gallery, gallery]
     )
     del_img.click(
         gallery_manager.delete_img,
