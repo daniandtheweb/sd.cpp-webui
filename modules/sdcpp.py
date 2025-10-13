@@ -55,8 +55,8 @@ class CommandRunner:
             'vae_dir': ['in_ckpt_vae', 'in_unet_vae'],
             'unet_dir': ['in_unet_model', 'in_high_noise_model'],
             'clip_dir': [
-                'in_clip_g', 'in_clip_l', 'in_t5xxl', 'in_umt5_xxl',
-                'in_clip_vision_h'
+                'in_clip_g', 'in_clip_l', 'in_t5xxl', 'in_qwen2vl',
+                'in_umt5_xxl', 'in_clip_vision_h'
             ],
             'taesd_dir': ['in_taesd'],
             'phtmkr_dir': ['in_phtmkr'],
@@ -246,6 +246,9 @@ class Txt2ImgRunner(CommandRunner):
             '--t5xxl': (self._get_param('f_t5xxl')
                         if self._get_param('in_diffusion_mode') == 1
                         else None),
+            '--qwen2vl': (self._get_param('f_qwen2vl')
+                          if self._get_param('in_diffusion_mode') == 1
+                          else None),
             '--taesd': self._get_param('f_taesd'),
             '--stacked-id-embd-dir': self._get_param('f_phtmkr'),
             '--input-id-images-dir': (self._get_param('in_phtmkr_in')
@@ -254,6 +257,9 @@ class Txt2ImgRunner(CommandRunner):
             '--guidance': (self._get_param('in_guidance')
                            if self._get_param('in_guidance_btn')
                            else None),
+            '--flow-shift': (self._get_param('in_flow_shift')
+                             if self._get_param('in_flow_shift_toggle')
+                             else None),
             '--upscale-model': self._get_param('f_upscl'),
             '--upscale-repeats': (self._get_param('in_upscl_rep')
                                   if self._get_param('f_upscl')

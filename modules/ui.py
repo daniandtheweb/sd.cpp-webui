@@ -23,8 +23,8 @@ QUANTS = [
 SAMPLERS = sd_options.get_opt("samplers")
 SCHEDULERS = sd_options.get_opt("schedulers")
 MODELS = [
-    "Checkpoint", "UNET", "VAE", "clip_g", "clip_l", "t5xxl", "TAESD",
-    "Lora", "Embeddings", "Upscaler", "ControlNet"
+    "Checkpoint", "UNET", "VAE", "clip_g", "clip_l", "t5xxl", "qwen2vl",
+    "TAESD", "Lora", "Embeddings", "Upscaler", "ControlNet"
 ]
 PREVIEW = ['none'] + sd_options.get_opt("previews")
 PREDICTION = ['Default'] + sd_options.get_opt("prediction")
@@ -217,6 +217,29 @@ def create_img_model_sel_ui():
                         t5xxl,
                         scale=1
                     )
+            with gr.Column():
+                with gr.Row():
+                    qwen2vl = gr.Dropdown(
+                        label="qwen2vl",
+                        choices=get_models(config.get('clip_dir')),
+                        scale=7, value=config.get('def_qwen2vl'),
+                        interactive=True
+                    )
+                with gr.Row():
+                    reload_qwen2vl_btn = gr.Button(
+                        value=RELOAD_SYMBOL,
+                        scale=1
+                    )
+                    reload_qwen2vl_btn.click(
+                        reload_models,
+                        inputs=[clip_dir_txt],
+                        outputs=[qwen2vl]
+                    )
+                    
+                    gr.ClearButton(
+                        qwen2vl,
+                        scale=1
+                    )
 
     # Return the dictionary with all UI components
     return {
@@ -229,6 +252,7 @@ def create_img_model_sel_ui():
             'in_clip_g': clip_g,
             'in_clip_l': clip_l,
             'in_t5xxl': t5xxl,
+            'in_qwen2vl': qwen2vl,
         },
         'components': {
             'ckpt_tab': ckpt_tab,
@@ -560,6 +584,20 @@ def create_settings_ui():
             interactive=True,
             visible=False
         )
+    with gr.Row():
+        flow_shift_btn = gr.Checkbox(
+            label="Enable Flow Shift", value=False,
+            visible=False
+        )
+        flow_shift = gr.Number(
+            label="Flow Shift",
+            minimum=1.0,
+            maximum=12.0,
+            value=3.0,
+            interactive=True,
+            step=0.1,
+            visible=False
+        )
 
     # Return the dictionary with all UI components
     return {
@@ -571,7 +609,9 @@ def create_settings_ui():
         'in_batch_count': batch_count,
         'in_cfg': cfg,
         'in_guidance_btn': guidance_btn,
-        'in_guidance': guidance
+        'in_guidance': guidance,
+        'in_flow_shift_btn': flow_shift_btn,
+        'in_flow_shift': flow_shift
     }
 
 

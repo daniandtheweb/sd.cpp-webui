@@ -201,6 +201,25 @@ with gr.Blocks() as options_block:
                 )
             settings_map['def_umt5_xxl'] = umt5_xxl
 
+    with gr.Row():
+        with gr.Column():
+            with gr.Row():
+                qwen2vl = gr.Dropdown(
+                    label="qwen2vl",
+                    choices=get_models(config.get('clip_dir')),
+                    scale=7,
+                    value=config.get('def_qwen2vl'),
+                    interactive=True
+                )
+            with gr.Row():
+                reload_qwen2vl_btn = gr.Button(
+                    value=RELOAD_SYMBOL, scale=1
+                )
+                gr.ClearButton(
+                    qwen2vl, scale=1
+                )
+            settings_map['def_qwen2vl'] = qwen2vl
+
     # Model Type Selection
     quant_ui = create_quant_ui()
     settings_map.update(quant_ui)

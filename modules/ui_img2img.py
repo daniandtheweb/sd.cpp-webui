@@ -296,8 +296,11 @@ with gr.Blocks()as img2img_block:
             model_ui['inputs']['in_clip_g'],
             model_ui['inputs']['in_clip_l'],
             model_ui['inputs']['in_t5xxl'],
+            model_ui['inputs']['in_qwen2vl'],
             settings_ui['in_guidance_btn'],
-            settings_ui['in_guidance']
+            settings_ui['in_guidance'],
+            settings_ui['in_flow_shift_btn'],
+            settings_ui['in_flow_shift']
         ],
         outputs=[
             model_ui['inputs']['in_diffusion_mode'],
@@ -308,8 +311,11 @@ with gr.Blocks()as img2img_block:
             model_ui['inputs']['in_clip_g'],
             model_ui['inputs']['in_clip_l'],
             model_ui['inputs']['in_t5xxl'],
+            model_ui['inputs']['in_qwen2vl'],
             settings_ui['in_guidance_btn'],
-            settings_ui['in_guidance']
+            settings_ui['in_guidance'],
+            settings_ui['in_flow_shift_btn'],
+            settings_ui['in_flow_shift']
         ]
     )
     model_ui['components']['unet_tab'].select(
@@ -318,7 +324,9 @@ with gr.Blocks()as img2img_block:
             model_ui['inputs']['in_ckpt_model'],
             model_ui['inputs']['in_ckpt_vae'],
             settings_ui['in_guidance_btn'],
-            settings_ui['in_guidance']
+            settings_ui['in_guidance'],
+            settings_ui['in_flow_shift_btn'],
+            settings_ui['in_flow_shift']
         ],
         outputs=[
             model_ui['inputs']['in_diffusion_mode'],
@@ -329,8 +337,11 @@ with gr.Blocks()as img2img_block:
             model_ui['inputs']['in_clip_g'],
             model_ui['inputs']['in_clip_l'],
             model_ui['inputs']['in_t5xxl'],
+            model_ui['inputs']['in_qwen2vl'],
             settings_ui['in_guidance_btn'],
-            settings_ui['in_guidance']
+            settings_ui['in_guidance'],
+            settings_ui['in_flow_shift_btn'],
+            settings_ui['in_flow_shift']
         ]
     )
     reload_taesd_btn.click(
