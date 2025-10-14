@@ -42,24 +42,35 @@ with gr.Blocks() as upscale_block:
                     outputs=[upscl]
                 )
                 gr.ClearButton(upscl)
-            init_width = gr.Slider(
-                label="Initial Width",
-                minimum=1,
-                maximum=4096,
-                value=config.get('def_width'),
-                step=1
-            )
-            init_height = gr.Slider(
-                label="Initial Height",
-                minimum=1,
-                maximum=4096,
-                value=config.get('def_height'),
-                step=1
-            )
-            switch_size = gr.Button(
-                value=SWITCH_V_SYMBOL, scale=1
-            )
-            switch_size.click(
+            with gr.Group():
+                rescale_bool = gr.Checkbox(
+                    label="Allow changing initial size",
+                    value=False
+                )
+                with gr.Row():
+                    init_width = gr.Slider(
+                        label="Initial Width",
+                        minimum=1,
+                        maximum=4096,
+                        value=config.get('def_width'),
+                        step=1,
+                        show_reset_button=False,
+                        interactive=False
+                    )
+                    init_height = gr.Slider(
+                        label="Initial Height",
+                        minimum=1,
+                        maximum=4096,
+                        value=config.get('def_height'),
+                        step=1,
+                        show_reset_button=False,
+                        interactive=False
+                    )
+                switch_size_btn = gr.Button(
+                    value=SWITCH_V_SYMBOL, scale=1,
+                    interactive=False
+                )
+            switch_size_btn.click(
                 switch_sizes,
                 inputs=[init_height,
                         init_width],
@@ -170,12 +181,30 @@ with gr.Blocks() as upscale_block:
             gr.update(value=int(width)), gr.update(value=int(height))
         )
 
+    def rescale(rescale_bool):
+        if rescale_bool:
+            return(
+                gr.update(interactive=True), gr.update(interactive=True),
+                gr.update(interactive=True)
+            )
+        else:
+            return(
+                gr.update(interactive=False), gr.update(interactive=False),
+                gr.update(interactive=False)
+            )
+
     # Interactive Bindings
 
     img_inp_upscale.change(
         size_extractor,
         inputs=img_inp_upscale,
         outputs=[init_width, init_height]
+    )
+
+    rescale_bool.change(
+        rescale,
+        inputs=rescale_bool,
+        outputs=[init_width, init_height, switch_size_btn]
     )
 
     upscl_btn.click(
