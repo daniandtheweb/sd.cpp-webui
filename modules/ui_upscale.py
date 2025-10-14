@@ -1,15 +1,18 @@
 """sd.cpp-webui - Upscale UI"""
 
 import gradio as gr
+from PIL import Image
 
 from modules.sdcpp import upscale
-from modules.utility import subprocess_manager
+from modules.utility import (
+    subprocess_manager, switch_sizes
+)
 from modules.shared_instance import config
 from modules.loader import (
     get_models, reload_models
 )
 from modules.ui import (
-    RELOAD_SYMBOL
+    RELOAD_SYMBOL, SWITCH_V_SYMBOL
 )
 
 
@@ -39,6 +42,30 @@ with gr.Blocks() as upscale_block:
                     outputs=[upscl]
                 )
                 gr.ClearButton(upscl)
+            init_width = gr.Slider(
+                label="Initial Width",
+                minimum=1,
+                maximum=4096,
+                value=config.get('def_width'),
+                step=1
+            )
+            init_height = gr.Slider(
+                label="Initial Height",
+                minimum=1,
+                maximum=4096,
+                value=config.get('def_height'),
+                step=1
+            )
+            switch_size = gr.Button(
+                value=SWITCH_V_SYMBOL, scale=1
+            )
+            switch_size.click(
+                switch_sizes,
+                inputs=[init_height,
+                        init_width],
+                outputs=[init_height,
+                         init_width]
+            )
             upscl_rep = gr.Slider(
                 label="Upscaler repeats",
                 minimum=1,
@@ -113,6 +140,8 @@ with gr.Blocks() as upscale_block:
     inputs_map = {
         'in_img_inp': img_inp_upscale,
         'in_upscl': upscl,
+        'in_init_width': init_width,
+        'in_init_height': init_height,
         'in_upscl_rep': upscl_rep,
         'in_output': output,
         'in_color': color,
@@ -131,7 +160,24 @@ with gr.Blocks() as upscale_block:
         params = dict(zip(ordered_keys, args))
         yield from upscale(params)
 
+    def size_extractor(img_inp):
+        try:
+            with Image.open(img_inp) as img:
+                width, height = img.size
+        except Exception:
+            width, height = None, None
+        return (
+            gr.update(value=int(width)), gr.update(value=int(height))
+        )
+
     # Interactive Bindings
+
+    img_inp_upscale.change(
+        size_extractor,
+        inputs=img_inp_upscale,
+        outputs=[init_width, init_height]
+    )
+
     upscl_btn.click(
         upscale_wrapper,
         inputs=ordered_components,
