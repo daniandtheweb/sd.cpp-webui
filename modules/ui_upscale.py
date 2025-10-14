@@ -27,21 +27,22 @@ with gr.Blocks() as upscale_block:
                 img_inp_upscale = gr.Image(
                     sources="upload", type="filepath"
                 )
-            upscl = gr.Dropdown(
-                label="Upscaler",
-                choices=get_models(config.get('upscl_dir')),
-                value="",
-                allow_custom_value=True,
-                interactive=True
-            )
-            with gr.Row():
-                reload_btn = gr.Button(value=RELOAD_SYMBOL)
-                reload_btn.click(
-                    reload_models,
-                    inputs=[upscl_dir_txt],
-                    outputs=[upscl]
+            with gr.Group():
+                upscl = gr.Dropdown(
+                    label="Upscaler",
+                    choices=get_models(config.get('upscl_dir')),
+                    value="",
+                    allow_custom_value=True,
+                    interactive=True
                 )
-                gr.ClearButton(upscl)
+                with gr.Row():
+                    reload_btn = gr.Button(value=RELOAD_SYMBOL)
+                    reload_btn.click(
+                        reload_models,
+                        inputs=[upscl_dir_txt],
+                        outputs=[upscl]
+                    )
+                    gr.ClearButton(upscl)
             with gr.Group():
                 rescale_bool = gr.Checkbox(
                     label="Allow changing initial size",
@@ -98,55 +99,56 @@ with gr.Blocks() as upscale_block:
 
         # Output
         with gr.Column():
-            with gr.Row():
-                upscl_btn = gr.Button(
-                    value="Upscale", size="lg",
-                    variant="primary"
-                )
-                kill_btn = gr.Button(
-                    value="Stop", size="lg",
-                    variant="stop"
-                )
-            with gr.Row():
-                progress_slider = gr.Slider(
-                    minimum=0,
-                    maximum=100,
-                    value=0,
-                    interactive=False,
-                    visible=False,
-                    label="Progress"
-                )
-            with gr.Row():
-                progress_textbox = gr.Textbox(
-                    label="Progress:",
-                    visible=False,
-                    interactive=False
-                )
-            with gr.Row():
-                img_final = gr.Gallery(
-                    label="Generated images",
-                    show_label=False,
-                    columns=[3],
-                    rows=[1],
-                    object_fit="contain",
-                    height="auto",
-                    interactive=False
-                )
-            with gr.Row():
-                stats = gr.Textbox(
-                    label="Statistics:",
-                    show_label=True,
-                    value="",
-                    interactive=False
-                )
-            with gr.Row():
-                command = gr.Textbox(
-                    label="stable-diffusion.cpp command:",
-                    show_label=True,
-                    value="",
-                    interactive=False,
-                    show_copy_button=True,
-                )
+            with gr.Group():
+                with gr.Row():
+                    upscl_btn = gr.Button(
+                        value="Upscale", size="lg",
+                        variant="primary"
+                    )
+                    kill_btn = gr.Button(
+                        value="Stop", size="lg",
+                        variant="stop"
+                    )
+                with gr.Row():
+                    progress_slider = gr.Slider(
+                        minimum=0,
+                        maximum=100,
+                        value=0,
+                        interactive=False,
+                        visible=False,
+                        label="Progress"
+                    )
+                with gr.Row():
+                    progress_textbox = gr.Textbox(
+                        label="Progress:",
+                        visible=False,
+                        interactive=False
+                    )
+                with gr.Row():
+                    img_final = gr.Gallery(
+                        label="Generated images",
+                        show_label=False,
+                        columns=[3],
+                        rows=[1],
+                        object_fit="contain",
+                        height="auto",
+                        interactive=False
+                    )
+                with gr.Row():
+                    stats = gr.Textbox(
+                        label="Statistics:",
+                        show_label=True,
+                        value="",
+                        interactive=False
+                    )
+                with gr.Row():
+                    command = gr.Textbox(
+                        label="stable-diffusion.cpp command:",
+                        show_label=True,
+                        value="",
+                        interactive=False,
+                        show_copy_button=True,
+                    )
 
     inputs_map = {
         'in_img_inp': img_inp_upscale,

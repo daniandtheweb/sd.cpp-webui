@@ -39,186 +39,196 @@ with gr.Blocks() as options_block:
 
     with gr.Row():
         with gr.Column():
-            with gr.Row():
-                ckpt_model = gr.Dropdown(
-                    label="Checkpoint Model",
-                    choices=get_models(config.get('ckpt_dir')),
-                    scale=7,
-                    value=config.get('def_ckpt'),
-                    interactive=True
-                )
-            with gr.Row():
-                reload_ckpt_btn = gr.Button(
-                    value=RELOAD_SYMBOL, scale=1
-                )
-                gr.ClearButton(
-                    ckpt_model, scale=1
-                )
-            settings_map['def_ckpt'] = ckpt_model
+            with gr.Group():
+                with gr.Row():
+                    ckpt_model = gr.Dropdown(
+                        label="Checkpoint Model",
+                        choices=get_models(config.get('ckpt_dir')),
+                        scale=7,
+                        value=config.get('def_ckpt'),
+                        interactive=True
+                    )
+                with gr.Row():
+                    reload_ckpt_btn = gr.Button(
+                        value=RELOAD_SYMBOL, scale=1
+                    )
+                    gr.ClearButton(
+                        ckpt_model, scale=1
+                    )
+                settings_map['def_ckpt'] = ckpt_model
 
         with gr.Column():
-            with gr.Row():
-                ckpt_vae = gr.Dropdown(
-                    label="Checkpoint VAE",
-                    choices=get_models(config.get('vae_dir')),
-                    scale=7, value=config.get('def_ckpt_vae'),
-                    interactive=True
-                )
-            with gr.Row():
-                reload_vae_btn = gr.Button(
-                    value=RELOAD_SYMBOL, scale=1
-                )
-                gr.ClearButton(
-                    ckpt_vae, scale=1
-                )
-            settings_map['def_ckpt_vae'] = ckpt_vae
-
-    with gr.Row():
-        with gr.Column():
-            with gr.Row():
-                unet_model = gr.Dropdown(
-                    label="UNET Model",
-                    choices=get_models(config.get('unet_dir')),
-                    scale=7,
-                    value=config.get('def_unet'),
-                    interactive=True
-                )
-            with gr.Row():
-                reload_unet_btn = gr.Button(
-                    value=RELOAD_SYMBOL, scale=1
-                )
-                gr.ClearButton(
-                    unet_model, scale=1
-                )
-            settings_map['def_unet'] = unet_model
-
-        with gr.Column():
-            with gr.Row():
-                unet_vae = gr.Dropdown(
-                    label="UNET VAE",
-                    choices=get_models(config.get('vae_dir')),
-                    scale=7, value=config.get('def_unet_vae'),
-                    interactive=True
-                )
-            with gr.Row():
-                reload_vae_btn = gr.Button(
-                    value=RELOAD_SYMBOL, scale=1
-                )
-                gr.ClearButton(
-                    unet_vae, scale=1
-                )
-            settings_map['def_unet_vae'] = unet_vae
+            with gr.Group():
+                with gr.Row():
+                    ckpt_vae = gr.Dropdown(
+                        label="Checkpoint VAE",
+                        choices=get_models(config.get('vae_dir')),
+                        scale=7, value=config.get('def_ckpt_vae'),
+                        interactive=True
+                    )
+                with gr.Row():
+                    reload_vae_btn = gr.Button(
+                        value=RELOAD_SYMBOL, scale=1
+                    )
+                    gr.ClearButton(
+                        ckpt_vae, scale=1
+                    )
+                settings_map['def_ckpt_vae'] = ckpt_vae
 
     with gr.Row():
         with gr.Column():
-            with gr.Row():
-                clip_g = gr.Dropdown(
-                    label="clip_g",
-                    choices=get_models(config.get('clip_dir')),
-                    scale=7,
-                    value=config.get('def_clip_g'),
-                    interactive=True
-                )
-            with gr.Row():
-                reload_clip_g_btn = gr.Button(
-                    value=RELOAD_SYMBOL, scale=1
-                )
-                gr.ClearButton(
-                    clip_g, scale=1
-                )
-            settings_map['def_clip_g'] = clip_g
+            with gr.Group():
+                with gr.Row():
+                    unet_model = gr.Dropdown(
+                        label="UNET Model",
+                        choices=get_models(config.get('unet_dir')),
+                        scale=7,
+                        value=config.get('def_unet'),
+                        interactive=True
+                    )
+                with gr.Row():
+                    reload_unet_btn = gr.Button(
+                        value=RELOAD_SYMBOL, scale=1
+                    )
+                    gr.ClearButton(
+                        unet_model, scale=1
+                    )
+                settings_map['def_unet'] = unet_model
 
         with gr.Column():
-            with gr.Row():
-                clip_l = gr.Dropdown(
-                    label="clip_l",
-                    choices=get_models(config.get('clip_dir')),
-                    scale=7,
-                    value=config.get('def_clip_l'),
-                    interactive=True
-                )
-            with gr.Row():
-                reload_clip_l_btn = gr.Button(
-                    value=RELOAD_SYMBOL, scale=1
-                )
-                gr.ClearButton(
-                    clip_l, scale=1
-                )
-            settings_map['def_clip_l'] = clip_l
-
-        with gr.Column():
-            with gr.Row():
-                clip_vision_h = gr.Dropdown(
-                    label="clip_vision_h",
-                    choices=get_models(config.get('clip_dir')),
-                    scale=7,
-                    value=config.get('def_clip_vision_h'),
-                    interactive=True
-                )
-            with gr.Row():
-                reload_clip_vision_h_btn = gr.Button(
-                    value=RELOAD_SYMBOL, scale=1
-                )
-                gr.ClearButton(
-                    clip_vision_h, scale=1
-                )
-            settings_map['def_clip_vision_h'] = clip_vision_h
+            with gr.Group():
+                with gr.Row():
+                    unet_vae = gr.Dropdown(
+                        label="UNET VAE",
+                        choices=get_models(config.get('vae_dir')),
+                        scale=7, value=config.get('def_unet_vae'),
+                        interactive=True
+                    )
+                with gr.Row():
+                    reload_vae_btn = gr.Button(
+                        value=RELOAD_SYMBOL, scale=1
+                    )
+                    gr.ClearButton(
+                        unet_vae, scale=1
+                    )
+                settings_map['def_unet_vae'] = unet_vae
 
     with gr.Row():
         with gr.Column():
-            with gr.Row():
-                t5xxl = gr.Dropdown(
-                    label="t5xxl",
-                    choices=get_models(config.get('clip_dir')),
-                    scale=7,
-                    value=config.get('def_t5xxl'),
-                    interactive=True
-                )
-            with gr.Row():
-                reload_t5xxl_btn = gr.Button(
-                    value=RELOAD_SYMBOL, scale=1
-                )
-                gr.ClearButton(
-                    t5xxl, scale=1
-                )
-            settings_map['def_t5xxl'] = t5xxl
+            with gr.Group():
+                with gr.Row():
+                    clip_g = gr.Dropdown(
+                        label="clip_g",
+                        choices=get_models(config.get('clip_dir')),
+                        scale=7,
+                        value=config.get('def_clip_g'),
+                        interactive=True
+                    )
+                with gr.Row():
+                    reload_clip_g_btn = gr.Button(
+                        value=RELOAD_SYMBOL, scale=1
+                    )
+                    gr.ClearButton(
+                        clip_g, scale=1
+                    )
+                settings_map['def_clip_g'] = clip_g
 
         with gr.Column():
-            with gr.Row():
-                umt5_xxl = gr.Dropdown(
-                    label="umt5_xxl",
-                    choices=get_models(config.get('clip_dir')),
-                    scale=7,
-                    value=config.get('def_umt5_xxl'),
-                    interactive=True
-                )
-            with gr.Row():
-                reload_umt5_xxl_btn = gr.Button(
-                    value=RELOAD_SYMBOL, scale=1
-                )
-                gr.ClearButton(
-                    umt5_xxl, scale=1
-                )
-            settings_map['def_umt5_xxl'] = umt5_xxl
+            with gr.Group():
+                with gr.Row():
+                    clip_l = gr.Dropdown(
+                        label="clip_l",
+                        choices=get_models(config.get('clip_dir')),
+                        scale=7,
+                        value=config.get('def_clip_l'),
+                        interactive=True
+                    )
+                with gr.Row():
+                    reload_clip_l_btn = gr.Button(
+                        value=RELOAD_SYMBOL, scale=1
+                    )
+                    gr.ClearButton(
+                        clip_l, scale=1
+                    )
+                settings_map['def_clip_l'] = clip_l
+
+        with gr.Column():
+            with gr.Group():
+                with gr.Row():
+                    clip_vision_h = gr.Dropdown(
+                        label="clip_vision_h",
+                        choices=get_models(config.get('clip_dir')),
+                        scale=7,
+                        value=config.get('def_clip_vision_h'),
+                        interactive=True
+                    )
+                with gr.Row():
+                    reload_clip_vision_h_btn = gr.Button(
+                        value=RELOAD_SYMBOL, scale=1
+                    )
+                    gr.ClearButton(
+                        clip_vision_h, scale=1
+                    )
+                settings_map['def_clip_vision_h'] = clip_vision_h
 
     with gr.Row():
         with gr.Column():
-            with gr.Row():
-                qwen2vl = gr.Dropdown(
-                    label="qwen2vl",
-                    choices=get_models(config.get('clip_dir')),
-                    scale=7,
-                    value=config.get('def_qwen2vl'),
-                    interactive=True
-                )
-            with gr.Row():
-                reload_qwen2vl_btn = gr.Button(
-                    value=RELOAD_SYMBOL, scale=1
-                )
-                gr.ClearButton(
-                    qwen2vl, scale=1
-                )
-            settings_map['def_qwen2vl'] = qwen2vl
+            with gr.Group():
+                with gr.Row():
+                    t5xxl = gr.Dropdown(
+                        label="t5xxl",
+                        choices=get_models(config.get('clip_dir')),
+                        scale=7,
+                        value=config.get('def_t5xxl'),
+                        interactive=True
+                    )
+                with gr.Row():
+                    reload_t5xxl_btn = gr.Button(
+                        value=RELOAD_SYMBOL, scale=1
+                    )
+                    gr.ClearButton(
+                        t5xxl, scale=1
+                    )
+                settings_map['def_t5xxl'] = t5xxl
+
+        with gr.Column():
+            with gr.Group():
+                with gr.Row():
+                    umt5_xxl = gr.Dropdown(
+                        label="umt5_xxl",
+                        choices=get_models(config.get('clip_dir')),
+                        scale=7,
+                        value=config.get('def_umt5_xxl'),
+                        interactive=True
+                    )
+                with gr.Row():
+                    reload_umt5_xxl_btn = gr.Button(
+                        value=RELOAD_SYMBOL, scale=1
+                    )
+                    gr.ClearButton(
+                        umt5_xxl, scale=1
+                    )
+                settings_map['def_umt5_xxl'] = umt5_xxl
+
+    with gr.Row():
+        with gr.Column():
+            with gr.Group():
+                with gr.Row():
+                    qwen2vl = gr.Dropdown(
+                        label="qwen2vl",
+                        choices=get_models(config.get('clip_dir')),
+                        scale=7,
+                        value=config.get('def_qwen2vl'),
+                        interactive=True
+                    )
+                with gr.Row():
+                    reload_qwen2vl_btn = gr.Button(
+                        value=RELOAD_SYMBOL, scale=1
+                    )
+                    gr.ClearButton(
+                        qwen2vl, scale=1
+                    )
+                settings_map['def_qwen2vl'] = qwen2vl
 
     # Model Type Selection
     quant_ui = create_quant_ui()
@@ -328,16 +338,17 @@ with gr.Blocks() as options_block:
             value="Refresh sd options"
         )
 
-    status_textbox = gr.Textbox(label="Status", value="", interactive=False)
+    with gr.Group():
+        status_textbox = gr.Textbox(label="Status", value="", interactive=False)
 
-    # Set Defaults and Restore Defaults Buttons
-    with gr.Row():
-        set_btn = gr.Button(
-            value="Set Defaults", variant="primary"
-        )
-        restore_btn = gr.Button(
-            value="Restore Defaults", variant="stop"
-        )
+        # Set Defaults and Restore Defaults Buttons
+        with gr.Row():
+            set_btn = gr.Button(
+                value="Set new options", variant="primary"
+            )
+            restore_btn = gr.Button(
+                value="Restore Defaults", variant="stop"
+            )
 
     ordered_keys = sorted(settings_map.keys())
     ordered_components = [settings_map[key] for key in ordered_keys]

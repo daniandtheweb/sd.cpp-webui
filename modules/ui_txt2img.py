@@ -55,41 +55,44 @@ with gr.Blocks() as txt2img_block:
 
     # Extra Networks Selection
     with gr.Accordion(label="Extra Networks", open=False):
-        taesd_title = gr.Markdown("## TAESD")
         with gr.Row():
-            taesd_model = gr.Dropdown(
-                label="TAESD",
-                choices=get_models(config.get('taesd_dir')),
-                value="",
-                allow_custom_value=True,
-                interactive=True
-            )
-        with gr.Row():
-            reload_taesd_btn = gr.Button(value=RELOAD_SYMBOL)
-            gr.ClearButton(taesd_model)
-        inputs_map['in_taesd'] = taesd_model
+            with gr.Group():
+                with gr.Row():
+                    taesd_model = gr.Dropdown(
+                        label="TAESD",
+                        choices=get_models(config.get('taesd_dir')),
+                        value="",
+                        allow_custom_value=True,
+                        interactive=True
+                    )
+                with gr.Row():
+                    reload_taesd_btn = gr.Button(value=RELOAD_SYMBOL)
+                    gr.ClearButton(taesd_model)
+                inputs_map['in_taesd'] = taesd_model
 
         with gr.Row():
-            phtmkr_title = gr.Markdown("## PhotoMaker")
+            with gr.Group():
+                with gr.Row():
+                    phtmkr_model = gr.Dropdown(
+                        label="PhotoMaker",
+                        choices=get_models(config.get('phtmkr_dir')),
+                        value="",
+                        allow_custom_value=True,
+                        interactive=True
+                    )
+                with gr.Row():
+                    reload_phtmkr_btn = gr.Button(value=RELOAD_SYMBOL)
+                    gr.ClearButton(phtmkr_model)
         with gr.Row():
-            phtmkr_model = gr.Dropdown(
-                label="PhotoMaker",
-                choices=get_models(config.get('phtmkr_dir')),
-                value="",
-                allow_custom_value=True,
-                interactive=True
-            )
-        with gr.Row():
-            reload_phtmkr_btn = gr.Button(value=RELOAD_SYMBOL)
-            gr.ClearButton(phtmkr_model)
-        with gr.Row():
-            phtmkr_in = gr.Textbox(
-                label="PhotoMaker images directory",
-                value="",
-                interactive=True
-            )
-        with gr.Row():
-            gr.ClearButton(phtmkr_in)
+            with gr.Group():
+                with gr.Row():
+                    phtmkr_in = gr.Textbox(
+                        label="PhotoMaker images directory",
+                        value="",
+                        interactive=True
+                    )
+                with gr.Row():
+                    gr.ClearButton(phtmkr_in)
         inputs_map['in_phtmkr'] = phtmkr_model
         inputs_map['in_phtmkr_in'] = phtmkr_in
 
@@ -181,55 +184,56 @@ with gr.Blocks() as txt2img_block:
 
         # Output
         with gr.Column(scale=1):
-            with gr.Row():
-                gen_btn = gr.Button(
-                    value="Generate", size="lg",
-                    variant="primary"
-                )
-                kill_btn = gr.Button(
-                    value="Stop", size="lg",
-                    variant="stop"
-                )
-            with gr.Row():
-                progress_slider = gr.Slider(
-                    minimum=0,
-                    maximum=100,
-                    value=0,
-                    interactive=False,
-                    visible=False,
-                    label="Progress",
-                    show_reset_button=False
-                )
-            with gr.Row():
-                progress_textbox = gr.Textbox(
-                    label="Status:",
-                    visible=False,
-                    interactive=False
-                )
-            with gr.Row():
-                img_final = gr.Gallery(
-                    label="Generated images",
-                    show_label=False,
-                    columns=[3],
-                    rows=[1],
-                    object_fit="contain",
-                    height="auto"
-                )
-            with gr.Row():
-                stats = gr.Textbox(
-                    label="Statistics:",
-                    show_label=True,
-                    value="",
-                    interactive=False
-                )
-            with gr.Row():
-                command = gr.Textbox(
-                    label="stable-diffusion.cpp command:",
-                    show_label=True,
-                    value="",
-                    interactive=False,
-                    show_copy_button=True,
-                )
+            with gr.Group():
+                with gr.Row():
+                    gen_btn = gr.Button(
+                        value="Generate", size="lg",
+                        variant="primary"
+                    )
+                    kill_btn = gr.Button(
+                        value="Stop", size="lg",
+                        variant="stop"
+                    )
+                with gr.Row():
+                    progress_slider = gr.Slider(
+                        minimum=0,
+                        maximum=100,
+                        value=0,
+                        interactive=False,
+                        visible=False,
+                        label="Progress",
+                        show_reset_button=False
+                    )
+                with gr.Row():
+                    progress_textbox = gr.Textbox(
+                        label="Status:",
+                        visible=False,
+                        interactive=False
+                    )
+                with gr.Row():
+                    img_final = gr.Gallery(
+                        label="Generated images",
+                        show_label=False,
+                        columns=[3],
+                        rows=[1],
+                        object_fit="contain",
+                        height="auto"
+                    )
+                with gr.Row():
+                    stats = gr.Textbox(
+                        label="Statistics:",
+                        show_label=True,
+                        value="",
+                        interactive=False
+                    )
+                with gr.Row():
+                    command = gr.Textbox(
+                        label="stable-diffusion.cpp command:",
+                        show_label=True,
+                        value="",
+                        interactive=False,
+                        show_copy_button=True,
+                    )
 
     ordered_keys = sorted(inputs_map.keys())
     ordered_components = [inputs_map[key] for key in ordered_keys]

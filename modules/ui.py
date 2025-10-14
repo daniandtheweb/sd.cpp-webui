@@ -46,200 +46,208 @@ def create_img_model_sel_ui():
     with gr.Tab("Checkpoint") as ckpt_tab:
         with gr.Row():
             with gr.Column():
-                with gr.Row():
-                    ckpt_model = gr.Dropdown(
-                        label="Checkpoint Model",
-                        choices=get_models(config.get('ckpt_dir')),
-                        scale=7,
-                        value=config.get('def_ckpt'),
-                        interactive=True
-                    )
-                with gr.Row():
-                    reload_ckpt_btn = gr.Button(
-                        value=RELOAD_SYMBOL,
-                        scale=1
-                    )
-                    reload_ckpt_btn.click(
-                        reload_models,
-                        inputs=[ckpt_dir_txt],
-                        outputs=[ckpt_model]
-                    )
+                with gr.Group():
+                    with gr.Row():
+                        ckpt_model = gr.Dropdown(
+                            label="Checkpoint Model",
+                            choices=get_models(config.get('ckpt_dir')),
+                            scale=7,
+                            value=config.get('def_ckpt'),
+                            interactive=True
+                        )
+                    with gr.Row():
+                        reload_ckpt_btn = gr.Button(
+                            value=RELOAD_SYMBOL,
+                            scale=1
+                        )
+                        reload_ckpt_btn.click(
+                            reload_models,
+                            inputs=[ckpt_dir_txt],
+                            outputs=[ckpt_model]
+                        )
 
-                    gr.ClearButton(
-                        ckpt_model,
-                        scale=1
-                    )
+                        gr.ClearButton(
+                            ckpt_model,
+                            scale=1
+                        )
             with gr.Column():
-                with gr.Row():
-                    ckpt_vae = gr.Dropdown(
-                        label="Checkpoint VAE",
-                        choices=get_models(config.get('vae_dir')),
-                        scale=7,
-                        value=config.get('def_ckpt_vae'),
-                        interactive=True
-                    )
-                with gr.Row():
-                    reload_vae_btn = gr.Button(
-                        value=RELOAD_SYMBOL,
-                        scale=1
-                    )
-                    reload_vae_btn.click(
-                        reload_models,
-                        inputs=[vae_dir_txt],
-                        outputs=[ckpt_vae]
-                    )
+                with gr.Group():
+                    with gr.Row():
+                        ckpt_vae = gr.Dropdown(
+                            label="Checkpoint VAE",
+                            choices=get_models(config.get('vae_dir')),
+                            scale=7,
+                            value=config.get('def_ckpt_vae'),
+                            interactive=True
+                        )
+                    with gr.Row():
+                        reload_vae_btn = gr.Button(
+                            value=RELOAD_SYMBOL,
+                            scale=1
+                        )
+                        reload_vae_btn.click(
+                            reload_models,
+                            inputs=[vae_dir_txt],
+                            outputs=[ckpt_vae]
+                        )
 
-                    gr.ClearButton(
-                        ckpt_vae,
-                        scale=1
-                    )
+                        gr.ClearButton(
+                            ckpt_vae,
+                            scale=1
+                        )
 
     with gr.Tab("UNET") as unet_tab:
         with gr.Row():
             with gr.Column():
-                with gr.Row():
-                    unet_model = gr.Dropdown(
-                        label="UNET Model",
-                        choices=get_models(config.get('unet_dir')),
-                        scale=7,
-                        value=config.get('def_unet'),
-                        interactive=True
-                    )
-                with gr.Row():
-                    reload_unet_btn = gr.Button(
-                        value=RELOAD_SYMBOL,
-                        scale=1
-                    )
-                    reload_unet_btn.click(
-                        reload_models,
-                        inputs=[unet_dir_txt],
-                        outputs=[unet_model]
-                    )
+                with gr.Group():
+                    with gr.Row():
+                        unet_model = gr.Dropdown(
+                            label="UNET Model",
+                            choices=get_models(config.get('unet_dir')),
+                            scale=7,
+                            value=config.get('def_unet'),
+                            interactive=True
+                        )
+                    with gr.Row():
+                        reload_unet_btn = gr.Button(
+                            value=RELOAD_SYMBOL,
+                            scale=1
+                        )
+                        reload_unet_btn.click(
+                            reload_models,
+                            inputs=[unet_dir_txt],
+                            outputs=[unet_model]
+                        )
 
-                    gr.ClearButton(
-                        unet_model,
-                        scale=1
-                    )
+                        gr.ClearButton(
+                            unet_model,
+                            scale=1
+                        )
             with gr.Column():
-                with gr.Row():
-                    unet_vae = gr.Dropdown(
-                        label="UNET VAE",
-                        choices=get_models(config.get('vae_dir')),
-                        scale=7,
-                        value=config.get('def_unet_vae'),
-                        interactive=True
-                    )
-                with gr.Row():
-                    reload_unet_vae_btn = gr.Button(
-                        value=RELOAD_SYMBOL,
-                        scale=1
-                    )
-                    reload_unet_vae_btn.click(
-                        reload_models,
-                        inputs=[vae_dir_txt],
-                        outputs=[unet_vae]
-                    )
+                with gr.Group():
+                    with gr.Row():
+                        unet_vae = gr.Dropdown(
+                            label="UNET VAE",
+                            choices=get_models(config.get('vae_dir')),
+                            scale=7,
+                            value=config.get('def_unet_vae'),
+                            interactive=True
+                        )
+                    with gr.Row():
+                        reload_unet_vae_btn = gr.Button(
+                            value=RELOAD_SYMBOL,
+                            scale=1
+                        )
+                        reload_unet_vae_btn.click(
+                            reload_models,
+                            inputs=[vae_dir_txt],
+                            outputs=[unet_vae]
+                        )
 
-                    gr.ClearButton(
-                        unet_vae,
-                        scale=1
-                    )
+                        gr.ClearButton(
+                            unet_vae,
+                            scale=1
+                        )
 
         with gr.Row():
             with gr.Column():
-                with gr.Row():
-                    clip_g = gr.Dropdown(
-                        label="clip_g",
-                        choices=get_models(config.get('clip_dir')),
-                        scale=7,
-                        value=config.get('def_clip_g'),
-                        interactive=True
-                    )
-                with gr.Row():
-                    reload_clip_g_btn = gr.Button(
-                        value=RELOAD_SYMBOL,
-                        scale=1
-                    )
-                    reload_clip_g_btn.click(
-                        reload_models,
-                        inputs=[clip_dir_txt],
-                        outputs=[clip_g]
-                    )
+                with gr.Group():
+                    with gr.Row():
+                        clip_g = gr.Dropdown(
+                            label="clip_g",
+                            choices=get_models(config.get('clip_dir')),
+                            scale=7,
+                            value=config.get('def_clip_g'),
+                            interactive=True
+                        )
+                    with gr.Row():
+                        reload_clip_g_btn = gr.Button(
+                            value=RELOAD_SYMBOL,
+                            scale=1
+                        )
+                        reload_clip_g_btn.click(
+                            reload_models,
+                            inputs=[clip_dir_txt],
+                            outputs=[clip_g]
+                        )
 
-                    gr.ClearButton(
-                        clip_g,
-                        scale=1
-                    )
+                        gr.ClearButton(
+                            clip_g,
+                            scale=1
+                        )
             with gr.Column():
-                with gr.Row():
-                    clip_l = gr.Dropdown(
-                        label="clip_l",
-                        choices=get_models(config.get('clip_dir')),
-                        scale=7,
-                        value=config.get('def_clip_l'),
-                        interactive=True
-                    )
-                with gr.Row():
-                    reload_clip_l_btn = gr.Button(
-                        value=RELOAD_SYMBOL,
-                        scale=1
-                    )
-                    reload_clip_l_btn.click(
-                        reload_models,
-                        inputs=[clip_dir_txt],
-                        outputs=[clip_l]
-                    )
+                with gr.Group():
+                    with gr.Row():
+                        clip_l = gr.Dropdown(
+                            label="clip_l",
+                            choices=get_models(config.get('clip_dir')),
+                            scale=7,
+                            value=config.get('def_clip_l'),
+                            interactive=True
+                        )
+                    with gr.Row():
+                        reload_clip_l_btn = gr.Button(
+                            value=RELOAD_SYMBOL,
+                            scale=1
+                        )
+                        reload_clip_l_btn.click(
+                            reload_models,
+                            inputs=[clip_dir_txt],
+                            outputs=[clip_l]
+                        )
 
-                    gr.ClearButton(
-                        clip_l,
-                        scale=1
-                    )
+                        gr.ClearButton(
+                            clip_l,
+                            scale=1
+                        )
             with gr.Column():
-                with gr.Row():
-                    t5xxl = gr.Dropdown(
-                        label="t5xxl",
-                        choices=get_models(config.get('clip_dir')),
-                        scale=7, value=config.get('def_t5xxl'),
-                        interactive=True
-                    )
-                with gr.Row():
-                    reload_t5xxl_btn = gr.Button(
-                        value=RELOAD_SYMBOL,
-                        scale=1
-                    )
-                    reload_t5xxl_btn.click(
-                        reload_models,
-                        inputs=[clip_dir_txt],
-                        outputs=[t5xxl]
-                    )
+                with gr.Group():
+                    with gr.Row():
+                        t5xxl = gr.Dropdown(
+                            label="t5xxl",
+                            choices=get_models(config.get('clip_dir')),
+                            scale=7, value=config.get('def_t5xxl'),
+                            interactive=True
+                        )
+                    with gr.Row():
+                        reload_t5xxl_btn = gr.Button(
+                            value=RELOAD_SYMBOL,
+                            scale=1
+                        )
+                        reload_t5xxl_btn.click(
+                            reload_models,
+                            inputs=[clip_dir_txt],
+                            outputs=[t5xxl]
+                        )
 
-                    gr.ClearButton(
-                        t5xxl,
-                        scale=1
-                    )
+                        gr.ClearButton(
+                            t5xxl,
+                            scale=1
+                        )
             with gr.Column():
-                with gr.Row():
-                    qwen2vl = gr.Dropdown(
-                        label="qwen2vl",
-                        choices=get_models(config.get('clip_dir')),
-                        scale=7, value=config.get('def_qwen2vl'),
-                        interactive=True
-                    )
-                with gr.Row():
-                    reload_qwen2vl_btn = gr.Button(
-                        value=RELOAD_SYMBOL,
-                        scale=1
-                    )
-                    reload_qwen2vl_btn.click(
-                        reload_models,
-                        inputs=[clip_dir_txt],
-                        outputs=[qwen2vl]
-                    )
-                    
-                    gr.ClearButton(
-                        qwen2vl,
-                        scale=1
-                    )
+                with gr.Group():
+                    with gr.Row():
+                        qwen2vl = gr.Dropdown(
+                            label="qwen2vl",
+                            choices=get_models(config.get('clip_dir')),
+                            scale=7, value=config.get('def_qwen2vl'),
+                            interactive=True
+                        )
+                    with gr.Row():
+                        reload_qwen2vl_btn = gr.Button(
+                            value=RELOAD_SYMBOL,
+                            scale=1
+                        )
+                        reload_qwen2vl_btn.click(
+                            reload_models,
+                            inputs=[clip_dir_txt],
+                            outputs=[qwen2vl]
+                        )
+                        
+                        gr.ClearButton(
+                            qwen2vl,
+                            scale=1
+                        )
 
     # Return the dictionary with all UI components
     return {
@@ -283,129 +291,134 @@ def create_video_model_sel_ui():
 
     with gr.Row():
         with gr.Column():
-            with gr.Row():
-                unet_model = gr.Dropdown(
-                    label="UNET Model",
-                    choices=get_models(config.get('unet_dir')),
-                    scale=7,
-                    value=config.get('def_unet'),
-                    interactive=True
-                )
-            with gr.Row():
-                reload_unet_btn = gr.Button(
-                    value=RELOAD_SYMBOL,
-                    scale=1
-                )
-                reload_unet_btn.click(
-                    reload_models,
-                    inputs=[unet_dir_txt],
-                    outputs=[unet_model]
-                )
+            with gr.Group():
+                with gr.Row():
+                    unet_model = gr.Dropdown(
+                        label="UNET Model",
+                        choices=get_models(config.get('unet_dir')),
+                        scale=7,
+                        value=config.get('def_unet'),
+                        interactive=True
+                    )
+                with gr.Row():
+                    reload_unet_btn = gr.Button(
+                        value=RELOAD_SYMBOL,
+                        scale=1
+                    )
+                    reload_unet_btn.click(
+                        reload_models,
+                        inputs=[unet_dir_txt],
+                        outputs=[unet_model]
+                    )
 
-                gr.ClearButton(
-                    unet_model,
-                    scale=1
-                )
+                    gr.ClearButton(
+                        unet_model,
+                        scale=1
+                    )
         with gr.Column():
-            with gr.Row():
-                unet_vae = gr.Dropdown(
-                    label="UNET VAE",
-                    choices=get_models(config.get('vae_dir')),
-                    scale=7,
-                    value=config.get('def_unet_vae'),
-                    interactive=True
-                )
-            with gr.Row():
-                reload_unet_vae_btn = gr.Button(
-                    value=RELOAD_SYMBOL,
-                    scale=1
-                )
-                reload_unet_vae_btn.click(
-                    reload_models,
-                    inputs=[vae_dir_txt],
-                    outputs=[unet_vae]
-                )
+            with gr.Group():
+                with gr.Row():
+                    unet_vae = gr.Dropdown(
+                        label="UNET VAE",
+                        choices=get_models(config.get('vae_dir')),
+                        scale=7,
+                        value=config.get('def_unet_vae'),
+                        interactive=True
+                    )
+                with gr.Row():
+                    reload_unet_vae_btn = gr.Button(
+                        value=RELOAD_SYMBOL,
+                        scale=1
+                    )
+                    reload_unet_vae_btn.click(
+                        reload_models,
+                        inputs=[vae_dir_txt],
+                        outputs=[unet_vae]
+                    )
 
-                gr.ClearButton(
-                    unet_vae,
-                    scale=1
-                )
+                    gr.ClearButton(
+                        unet_vae,
+                        scale=1
+                    )
 
     with gr.Row():
         with gr.Column():
-            with gr.Row():
-                clip_vision_h = gr.Dropdown(
-                    label="clip_vision_h",
-                    choices=get_models(config.get('clip_dir')),
-                    scale=7,
-                    value=config.get('def_clip_vision_h'),
-                    interactive=True
-                )
-            with gr.Row():
-                reload_clip_vision_h_btn = gr.Button(
-                    value=RELOAD_SYMBOL,
-                    scale=1
-                )
-                reload_clip_vision_h_btn.click(
-                    reload_models,
-                    inputs=[clip_dir_txt],
-                    outputs=[clip_vision_h]
-                )
+            with gr.Group():
+                with gr.Row():
+                    clip_vision_h = gr.Dropdown(
+                        label="clip_vision_h",
+                        choices=get_models(config.get('clip_dir')),
+                        scale=7,
+                        value=config.get('def_clip_vision_h'),
+                        interactive=True
+                    )
+                with gr.Row():
+                    reload_clip_vision_h_btn = gr.Button(
+                        value=RELOAD_SYMBOL,
+                        scale=1
+                    )
+                    reload_clip_vision_h_btn.click(
+                        reload_models,
+                        inputs=[clip_dir_txt],
+                        outputs=[clip_vision_h]
+                    )
 
-                gr.ClearButton(
-                    clip_vision_h,
-                    scale=1
-                )
+                    gr.ClearButton(
+                        clip_vision_h,
+                        scale=1
+                    )
         with gr.Column():
-            with gr.Row():
-                umt5_xxl = gr.Dropdown(
-                    label="umt5_xxl",
-                    choices=get_models(config.get('clip_dir')),
-                    scale=7,
-                    value=config.get('def_umt5_xxl'),
-                    interactive=True
-                )
-            with gr.Row():
-                reload_umt5_xxl_btn = gr.Button(
-                    value=RELOAD_SYMBOL,
-                    scale=1
-                )
-                reload_umt5_xxl_btn.click(
-                    reload_models,
-                    inputs=[clip_dir_txt],
-                    outputs=[umt5_xxl]
-                )
+            with gr.Group():
+                with gr.Row():
+                    umt5_xxl = gr.Dropdown(
+                        label="umt5_xxl",
+                        choices=get_models(config.get('clip_dir')),
+                        scale=7,
+                        value=config.get('def_umt5_xxl'),
+                        interactive=True
+                    )
+                with gr.Row():
+                    reload_umt5_xxl_btn = gr.Button(
+                        value=RELOAD_SYMBOL,
+                        scale=1
+                    )
+                    reload_umt5_xxl_btn.click(
+                        reload_models,
+                        inputs=[clip_dir_txt],
+                        outputs=[umt5_xxl]
+                    )
 
-                gr.ClearButton(
-                    umt5_xxl,
-                    scale=1
-                )
+                    gr.ClearButton(
+                        umt5_xxl,
+                        scale=1
+                    )
     with gr.Row():
         with gr.Accordion(
             label="High Noise", open=False
         ):
-            with gr.Row():
-                high_noise_model = gr.Dropdown(
-                    label="High Noise Diffusion model",
-                    choices=get_models(config.get('unet_dir')),
-                    value=None,
-                    interactive=True
-                )
-            with gr.Row():
-                reload_high_noise_model = gr.Button(
-                    value=RELOAD_SYMBOL,
-                    scale=1
-                )
-                reload_high_noise_model.click(
-                    reload_models,
-                    inputs=[unet_dir_txt],
-                    outputs=[high_noise_model]
-                )
+            with gr.Group():
+                with gr.Row():
+                    high_noise_model = gr.Dropdown(
+                        label="High Noise Diffusion model",
+                        choices=get_models(config.get('unet_dir')),
+                        value=None,
+                        interactive=True
+                    )
 
-                gr.ClearButton(
-                    high_noise_model,
-                    scale=1
-                )
+                with gr.Row():
+                    reload_high_noise_model = gr.Button(
+                        value=RELOAD_SYMBOL,
+                        scale=1
+                    )
+                    reload_high_noise_model.click(
+                        reload_models,
+                        inputs=[unet_dir_txt],
+                        outputs=[high_noise_model]
+                    )
+                    gr.ClearButton(
+                        high_noise_model,
+                        scale=1
+                    )
 
     # Return the dictionary with all UI components
     return {
@@ -625,16 +638,18 @@ def create_cnnet_ui():
         cnnet_enabled = gr.Checkbox(
             label="Enable ControlNet", value=False
         )
-        cnnet = gr.Dropdown(
-            label="ControlNet",
-            choices=get_models(config.get('cnnet_dir')),
-            value=None,
-            interactive=True
-        )
-        reload_cnnet_btn = gr.Button(value=RELOAD_SYMBOL)
-        gr.ClearButton(
-            cnnet
-        )
+        with gr.Group():
+            cnnet = gr.Dropdown(
+                label="ControlNet",
+                choices=get_models(config.get('cnnet_dir')),
+                value=None,
+                interactive=True
+            )
+            with gr.Row():
+                reload_cnnet_btn = gr.Button(value=RELOAD_SYMBOL)
+                gr.ClearButton(
+                    cnnet
+                )
         control_img = gr.Image(
             sources="upload", type="filepath"
         )

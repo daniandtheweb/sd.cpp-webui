@@ -51,24 +51,27 @@ with gr.Blocks() as gallery_block:
             value="upscale", variant="primary"
         )
 
-    with gr.Row():
-        pvw_btn = gr.Button(value="Previous")
-        nxt_btn = gr.Button(value="Next")
+    with gr.Group():
+        with gr.Row():
+            pvw_btn = gr.Button(value="Previous")
+            nxt_btn = gr.Button(value="Next")
 
-    with gr.Row():
-        first_btn = gr.Button(value="First page")
-        last_btn = gr.Button(value="Last page")
+    with gr.Group():
+        with gr.Row():
+            first_btn = gr.Button(value="First page")
+            last_btn = gr.Button(value="Last page")
 
-    with gr.Row():
-        page_num_select = gr.Number(
-            label="Page:",
-            value=1,
-            interactive=True,
-            scale=7
-        )
-        go_btn = gr.Button(
-            value="Go", scale=1
-        )
+    with gr.Group():
+        with gr.Row():
+            page_num_select = gr.Number(
+                label="Page:",
+                value=1,
+                interactive=True,
+                scale=7
+            )
+            go_btn = gr.Button(
+                value="Go", scale=1
+            )
 
     with gr.Row():
         with gr.Column():

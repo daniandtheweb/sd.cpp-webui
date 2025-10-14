@@ -43,21 +43,22 @@ with gr.Blocks() as convert_block:
 
     with gr.Row():
         with gr.Column():
-            with gr.Row():
-                model = gr.Dropdown(
-                    label="Model",
-                    choices=get_models(config.get('ckpt_dir')),
-                    scale=5,
-                    interactive=True
-                )
-                reload_btn = gr.Button(
-                    RELOAD_SYMBOL, scale=1
-                )
-                reload_btn.click(
-                    reload_models,
-                    inputs=[model_dir_txt],
-                    outputs=[model]
-                )
+            with gr.Group():
+                with gr.Row():
+                    model = gr.Dropdown(
+                        label="Model",
+                        choices=get_models(config.get('ckpt_dir')),
+                        scale=5,
+                        interactive=True
+                    )
+                    reload_btn = gr.Button(
+                        RELOAD_SYMBOL, scale=1
+                    )
+                    reload_btn.click(
+                        reload_models,
+                        inputs=[model_dir_txt],
+                        outputs=[model]
+                    )
             with gr.Row():
                 gguf_name = gr.Textbox(
                     label="Output Name (optional, must end with .gguf)",
