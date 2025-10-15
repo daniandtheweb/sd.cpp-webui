@@ -1,10 +1,12 @@
 """sd.cpp-webui - Anything to Video UI"""
 
 import gradio as gr
+from functools import partial
 
 from modules.sdcpp import any2video
 from modules.utility import (
-    subprocess_manager, random_seed, SDOptionsCache
+    subprocess_manager, random_seed, update_interactivity,
+    SDOptionsCache
 )
 from modules.shared_instance import config
 from modules.loader import (
@@ -129,7 +131,7 @@ with gr.Blocks() as any2video_block:
             with gr.Accordion(
                 label="Flow Shift", open=False
             ):
-                flow_shift_toggle = gr.Checkbox(
+                flow_shift_bool = gr.Checkbox(
                     label="Enable Flow Shift", value=False
                 )
                 flow_shift = gr.Number(
@@ -137,11 +139,13 @@ with gr.Blocks() as any2video_block:
                     minimum=1.0,
                     maximum=12.0,
                     value=3.0,
-                    interactive=True,
+                    interactive=False,
                     step=0.1
                 )
-            inputs_map['in_flow_shift_toggle'] = flow_shift_toggle
+            inputs_map['in_flow_shift_bool'] = flow_shift_bool
             inputs_map['in_flow_shift'] = flow_shift
+
+            flow_shift_comp = [flow_shift]
 
             with gr.Row():
                 seed = gr.Number(
@@ -306,6 +310,12 @@ with gr.Blocks() as any2video_block:
             settings_ui['in_sampling'], settings_ui['in_scheduler'],
             experimental_ui['in_preview_mode'], extras_ui['in_predict']
         ]
+    )
+
+    flow_shift_bool.change(
+        partial(update_interactivity, len(flow_shift_comp)),
+        inputs=flow_shift_bool,
+        outputs=flow_shift_comp
     )
 
     pprompt_any2video = prompts_ui['in_pprompt']

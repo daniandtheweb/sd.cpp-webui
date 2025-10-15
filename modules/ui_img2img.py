@@ -1,11 +1,12 @@
 """sd.cpp-webui - Image to image UI"""
 
 import gradio as gr
+from functools import partial
 
 from modules.sdcpp import img2img
 from modules.utility import (
     subprocess_manager, random_seed, ckpt_tab_switch, unet_tab_switch,
-    SDOptionsCache
+    update_interactivity, SDOptionsCache
 )
 from modules.shared_instance import config
 from modules.loader import (
@@ -108,16 +109,21 @@ with gr.Blocks()as img2img_block:
             inputs_map.update(settings_ui)
 
             with gr.Row():
-                img_cfg_btn = gr.Checkbox(label="Enable Image CFG")
+                img_cfg_bool = gr.Checkbox(
+                    label="Enable Image CFG",
+                    value=False
+                )
                 img_cfg = gr.Slider(
                     label="Image CFG (inpaint or instruct-pix2pix models)",
                     minimum=1,
                     maximum=30,
                     value=7.0,
                     step=0.1,
-                    interactive=True
+                    interactive=False
                 )
                 inputs_map['in_img_cfg'] = img_cfg
+
+                cfg_comp = [img_cfg]
 
             with gr.Row():
                 strenght = gr.Slider(
@@ -130,16 +136,22 @@ with gr.Blocks()as img2img_block:
                 inputs_map['in_strenght'] = strenght
 
             with gr.Row():
-                style_ratio_btn = gr.Checkbox(label="Enable style-ratio")
+                style_ratio_bool = gr.Checkbox(
+                    label="Enable style-ratio",
+                    value=False
+                )
                 style_ratio = gr.Slider(
                     label="Style ratio",
                     minimum=0,
                     maximum=100,
                     step=1,
-                    value=20
+                    value=20,
+                    interactive=False
                 )
-                inputs_map['in_style_ratio_btn'] = style_ratio_btn
+                inputs_map['in_style_ratio_bool'] = style_ratio_bool
                 inputs_map['in_style_ratio'] = style_ratio
+
+                style_comp = [style_ratio]
 
             with gr.Row():
                 seed = gr.Number(
@@ -283,9 +295,9 @@ with gr.Blocks()as img2img_block:
             model_ui['inputs']['in_clip_l'],
             model_ui['inputs']['in_t5xxl'],
             model_ui['inputs']['in_qwen2vl'],
-            settings_ui['in_guidance_btn'],
+            settings_ui['in_guidance_bool'],
             settings_ui['in_guidance'],
-            settings_ui['in_flow_shift_btn'],
+            settings_ui['in_flow_shift_bool'],
             settings_ui['in_flow_shift']
         ],
         outputs=[
@@ -298,9 +310,9 @@ with gr.Blocks()as img2img_block:
             model_ui['inputs']['in_clip_l'],
             model_ui['inputs']['in_t5xxl'],
             model_ui['inputs']['in_qwen2vl'],
-            settings_ui['in_guidance_btn'],
+            settings_ui['in_guidance_bool'],
             settings_ui['in_guidance'],
-            settings_ui['in_flow_shift_btn'],
+            settings_ui['in_flow_shift_bool'],
             settings_ui['in_flow_shift']
         ]
     )
@@ -309,9 +321,9 @@ with gr.Blocks()as img2img_block:
         inputs=[
             model_ui['inputs']['in_ckpt_model'],
             model_ui['inputs']['in_ckpt_vae'],
-            settings_ui['in_guidance_btn'],
+            settings_ui['in_guidance_bool'],
             settings_ui['in_guidance'],
-            settings_ui['in_flow_shift_btn'],
+            settings_ui['in_flow_shift_bool'],
             settings_ui['in_flow_shift']
         ],
         outputs=[
@@ -324,9 +336,9 @@ with gr.Blocks()as img2img_block:
             model_ui['inputs']['in_clip_l'],
             model_ui['inputs']['in_t5xxl'],
             model_ui['inputs']['in_qwen2vl'],
-            settings_ui['in_guidance_btn'],
+            settings_ui['in_guidance_bool'],
             settings_ui['in_guidance'],
-            settings_ui['in_flow_shift_btn'],
+            settings_ui['in_flow_shift_bool'],
             settings_ui['in_flow_shift']
         ]
     )
@@ -346,6 +358,18 @@ with gr.Blocks()as img2img_block:
             settings_ui['in_sampling'], settings_ui['in_scheduler'],
             experimental_ui['in_preview_mode'], extras_ui['in_predict']
         ]
+    )
+
+    img_cfg_bool.change(
+        partial(update_interactivity, len(cfg_comp)),
+        inputs=img_cfg_bool,
+        outputs=cfg_comp
+    )
+
+    style_ratio_bool.change(
+        partial(update_interactivity, len(style_comp)),
+        inputs=style_ratio_bool,
+        outputs=style_comp
     )
 
     pprompt_img2img = prompts_ui['in_pprompt']

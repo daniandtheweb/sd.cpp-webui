@@ -585,7 +585,7 @@ def create_settings_ui():
                     interactive=True
                 )
     with gr.Row():
-        guidance_btn = gr.Checkbox(
+        guidance_bool = gr.Checkbox(
             label="Enable distilled guidance", value=False,
             visible=False
         )
@@ -595,11 +595,20 @@ def create_settings_ui():
             maximum=30,
             value=3.5,
             step=0.1,
-            interactive=True,
+            interactive=False,
             visible=False
         )
+
+        guidance_comp = [guidance]
+
+        guidance_bool.change(
+            partial(update_interactivity, len(guidance_comp)),
+            inputs=guidance_bool,
+            outputs=guidance_comp
+        )
+
     with gr.Row():
-        flow_shift_btn = gr.Checkbox(
+        flow_shift_bool = gr.Checkbox(
             label="Enable Flow Shift", value=False,
             visible=False
         )
@@ -608,9 +617,17 @@ def create_settings_ui():
             minimum=1.0,
             maximum=12.0,
             value=3.0,
-            interactive=True,
+            interactive=False,
             step=0.1,
             visible=False
+        )
+
+        flow_shift_comp = [flow_shift]
+
+        flow_shift_bool.change(
+            partial(update_interactivity, len(flow_shift_comp)),
+            inputs=flow_shift_bool,
+            outputs=flow_shift_comp
         )
 
     # Return the dictionary with all UI components
@@ -622,9 +639,9 @@ def create_settings_ui():
         'in_height': height,
         'in_batch_count': batch_count,
         'in_cfg': cfg,
-        'in_guidance_btn': guidance_btn,
+        'in_guidance_bool': guidance_bool,
         'in_guidance': guidance,
-        'in_flow_shift_btn': flow_shift_btn,
+        'in_flow_shift_bool': flow_shift_bool,
         'in_flow_shift': flow_shift
     }
 

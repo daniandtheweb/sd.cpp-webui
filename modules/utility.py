@@ -39,8 +39,8 @@ class ModelState:
         self.bak_clip_l = config.get('def_clip_l')
         self.bak_t5xxl = config.get('def_t5xxl')
         self.bak_qwen2vl = config.get('def_qwen2vl')
-        self.bak_guidance_btn = False
-        self.bak_flow_shift_btn = False
+        self.bak_guidance_bool = False
+        self.bak_flow_shift_bool = False
 
     def update(self, **kwargs):
         """Generic method to update state variables.
@@ -64,7 +64,7 @@ class ModelState:
         )
 
     def bak_unet_tab(self, unet_model, unet_vae, clip_g, clip_l, t5xxl,
-                     qwen2vl, guidance_btn, flow_shift_btn):
+                     qwen2vl, guidance_bool, flow_shift_bool):
         """Updates the state with values from the UNET tab."""
         self.update(
             bak_unet_model=unet_model,
@@ -73,8 +73,8 @@ class ModelState:
             bak_clip_l=clip_l,
             bak_t5xxl=t5xxl,
             bak_qwen2vl=qwen2vl,
-            bak_guidance_btn=guidance_btn,
-            bak_flow_shift_btn=flow_shift_btn,
+            bak_guidance_bool=guidance_bool,
+            bak_flow_shift_bool=flow_shift_bool,
         )
 
 
@@ -264,8 +264,8 @@ def get_path(directory, filename):
     return os.path.join(directory, filename) if filename else None
 
 
-def unet_tab_switch(ckpt_model, ckpt_vae, guidance_btn, guidance,
-                    flow_shift_btn, flow_shift):
+def unet_tab_switch(ckpt_model, ckpt_vae, guidance_bool, guidance,
+                    flow_shift_bool, flow_shift):
     """Switches to the UNET tab"""
     model_state.bak_ckpt_tab(ckpt_model, ckpt_vae)
 
@@ -279,19 +279,19 @@ def unet_tab_switch(ckpt_model, ckpt_vae, guidance_btn, guidance,
         gr.update(value=model_state.bak_clip_l),
         gr.update(value=model_state.bak_t5xxl),
         gr.update(value=model_state.bak_qwen2vl),
-        gr.update(value=model_state.bak_guidance_btn, visible=True),
+        gr.update(value=model_state.bak_guidance_bool, visible=True),
         gr.update(visible=True),
-        gr.update(value=model_state.bak_flow_shift_btn, visible=True),
+        gr.update(value=model_state.bak_flow_shift_bool, visible=True),
         gr.update(visible=True),
     )
 
 
 def ckpt_tab_switch(unet_model, unet_vae, clip_g, clip_l, t5xxl,
-                    qwen2vl, guidance_btn, guidance,
-                    flow_shift_btn, flow_shift):
+                    qwen2vl, guidance_bool, guidance,
+                    flow_shift_bool, flow_shift):
     """Switches to the checkpoint tab"""
     model_state.bak_unet_tab(unet_model, unet_vae, clip_g, clip_l, t5xxl,
-                             qwen2vl, guidance_btn, flow_shift_btn)
+                             qwen2vl, guidance_bool, flow_shift_bool)
 
     return (
         gr.update(value=0),
@@ -330,6 +330,10 @@ def update_interactivity(count, checkbox_value):
     Generates a specified number of gr.update objects to set interactivity.
     """
     is_interactive = bool(checkbox_value)
+
+    if count == 1:
+        return gr.update(interactive=is_interactive)
+
     return tuple(gr.update(interactive=is_interactive) for _ in range(count))
 
 

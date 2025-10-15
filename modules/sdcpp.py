@@ -255,10 +255,10 @@ class Txt2ImgRunner(CommandRunner):
                                       if self._get_param('f_phtmkr')
                                       else None),
             '--guidance': (self._get_param('in_guidance')
-                           if self._get_param('in_guidance_btn')
+                           if self._get_param('in_guidance_bool')
                            else None),
             '--flow-shift': (self._get_param('in_flow_shift')
-                             if self._get_param('in_flow_shift_toggle')
+                             if self._get_param('in_flow_shift_bool')
                              else None),
             '--upscale-model': (self._get_param('f_upscl')
                                 if self._get_param('in_upscl_bool')
@@ -346,10 +346,10 @@ class Img2ImgRunner(Txt2ImgRunner):
 
         options = {
             '--img-cfg-scale': (self._get_param('in_img_cfg')
-                                if self._get_param('in_img_cfg_btn')
+                                if self._get_param('in_img_cfg_bool')
                                 else None),
             '--style-ratio': (self._get_param('in_style_ratio')
-                              if self._get_param('in_style_ratio_btn')
+                              if self._get_param('in_style_ratio_bool')
                               else None),
         }
         self._add_options(options)
@@ -410,7 +410,7 @@ class Any2VideoRunner(CommandRunner):
                        if self._get_param('in_model_type') != "Default"
                        else None),
             '--flow-shift': (self._get_param('in_flow_shift')
-                             if self._get_param('in_flow_shift_toggle')
+                             if self._get_param('in_flow_shift_bool')
                              else None),
             '--control-net': (self._get_param('f_cnnet')
                               if self._get_param('in_cnnet_bool')

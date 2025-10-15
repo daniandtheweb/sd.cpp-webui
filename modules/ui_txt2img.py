@@ -245,9 +245,9 @@ with gr.Blocks() as txt2img_block:
             model_ui['inputs']['in_clip_l'],
             model_ui['inputs']['in_t5xxl'],
             model_ui['inputs']['in_qwen2vl'],
-            settings_ui['in_guidance_btn'],
+            settings_ui['in_guidance_bool'],
             settings_ui['in_guidance'],
-            settings_ui['in_flow_shift_btn'],
+            settings_ui['in_flow_shift_bool'],
             settings_ui['in_flow_shift']
         ],
         outputs=[
@@ -260,9 +260,9 @@ with gr.Blocks() as txt2img_block:
             model_ui['inputs']['in_clip_l'],
             model_ui['inputs']['in_t5xxl'],
             model_ui['inputs']['in_qwen2vl'],
-            settings_ui['in_guidance_btn'],
+            settings_ui['in_guidance_bool'],
             settings_ui['in_guidance'],
-            settings_ui['in_flow_shift_btn'],
+            settings_ui['in_flow_shift_bool'],
             settings_ui['in_flow_shift']
         ]
     )
@@ -271,9 +271,9 @@ with gr.Blocks() as txt2img_block:
         inputs=[
             model_ui['inputs']['in_ckpt_model'],
             model_ui['inputs']['in_ckpt_vae'],
-            settings_ui['in_guidance_btn'],
+            settings_ui['in_guidance_bool'],
             settings_ui['in_guidance'],
-            settings_ui['in_flow_shift_btn'],
+            settings_ui['in_flow_shift_bool'],
             settings_ui['in_flow_shift']
         ],
         outputs=[
@@ -286,9 +286,9 @@ with gr.Blocks() as txt2img_block:
             model_ui['inputs']['in_clip_l'],
             model_ui['inputs']['in_t5xxl'],
             model_ui['inputs']['in_qwen2vl'],
-            settings_ui['in_guidance_btn'],
+            settings_ui['in_guidance_bool'],
             settings_ui['in_guidance'],
-            settings_ui['in_flow_shift_btn'],
+            settings_ui['in_flow_shift_bool'],
             settings_ui['in_flow_shift']
         ]
     )
