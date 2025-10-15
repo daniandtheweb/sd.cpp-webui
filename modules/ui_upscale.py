@@ -13,12 +13,14 @@ from modules.loader import (
     get_models, reload_models
 )
 from modules.ui import (
-    RELOAD_SYMBOL, SWITCH_V_SYMBOL
+    create_env_ui, RELOAD_SYMBOL, SWITCH_V_SYMBOL
 )
 
 
 with gr.Blocks() as upscale_block:
+    # Directory Textboxes
     upscl_dir_txt = gr.Textbox(value=config.get('upscl_dir'), visible=False)
+
     # Title
     upscale_title = gr.Markdown("# Upscale")
 
@@ -99,6 +101,9 @@ with gr.Blocks() as upscale_block:
                     )
                     verbose = gr.Checkbox(label="Verbose")
 
+            # Environment Variables
+            env_ui = create_env_ui()
+
         # Output
         with gr.Column():
             with gr.Group():
@@ -160,7 +165,8 @@ with gr.Blocks() as upscale_block:
         'in_upscl_rep': upscl_rep,
         'in_output': output,
         'in_color': color,
-        'in_verbose': verbose
+        'in_verbose': verbose,
+        **env_ui
     }
 
     ordered_keys = sorted(inputs_map.keys())

@@ -304,7 +304,7 @@ with gr.Blocks() as any2video_block:
         inputs=[],
         outputs=[
             settings_ui['in_sampling'], settings_ui['in_scheduler'],
-            experimental_ui['in_preview_mode'], experimental_ui['in_predict']
+            experimental_ui['in_preview_mode'], extras_ui['in_predict']
         ]
     )
 

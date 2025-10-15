@@ -804,6 +804,11 @@ def create_extras_ui():
             choices=["std_default", "cuda"],
             value="cuda"
         )
+        predict = gr.Dropdown(
+            label="Prediction",
+            choices=PREDICTION,
+            value=config.get('def_predict')
+        )
         output = gr.Textbox(
             label="Output Name (optional)", value=""
         )
@@ -831,6 +836,7 @@ def create_extras_ui():
         'in_vae_cpu': vae_cpu,
         'in_clip_cpu': clip_cpu,
         'in_rng': rng,
+        'in_predict': predict,
         'in_output': output,
         'in_color': color,
         'in_flash_attn': flash_attn,
@@ -877,11 +883,6 @@ def create_experimental_ui():
     with gr.Accordion(
         label="Experimental", open=False
     ):
-        predict = gr.Dropdown(
-            label="Prediction (WIP: PR #334)",
-            choices=PREDICTION,
-            value=config.get('def_predict')
-        )
         preview_mode = gr.Dropdown(
             label="Preview mode (WIP: PR #522)",
             choices=PREVIEW,
@@ -897,7 +898,6 @@ def create_experimental_ui():
             label="TAESD for preview only (WIP: PR #522)"
         )
     return {
-        'in_predict': predict,
         'in_preview_mode': preview_mode,
         'in_preview_interval': preview_interval,
         'in_preview_taesd': preview_taesd
