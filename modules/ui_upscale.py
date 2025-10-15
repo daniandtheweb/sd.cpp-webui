@@ -1,11 +1,12 @@
 """sd.cpp-webui - Upscale UI"""
 
 import gradio as gr
-from PIL import Image
+from functools import partial
 
 from modules.sdcpp import upscale
 from modules.utility import (
-    subprocess_manager, switch_sizes
+    subprocess_manager, switch_sizes, size_extractor,
+    update_interactivity
 )
 from modules.shared_instance import config
 from modules.loader import (
@@ -71,6 +72,7 @@ with gr.Blocks() as upscale_block:
                     value=SWITCH_V_SYMBOL, scale=1,
                     interactive=False
                 )
+                rescale_comp=[init_width, init_height, switch_size_btn]
             switch_size_btn.click(
                 switch_sizes,
                 inputs=[init_height,
@@ -164,6 +166,7 @@ with gr.Blocks() as upscale_block:
     ordered_keys = sorted(inputs_map.keys())
     ordered_components = [inputs_map[key] for key in ordered_keys]
 
+
     def upscale_wrapper(*args):
         """
         Accepts all UI inputs, zips them with keys, and calls the
@@ -173,38 +176,23 @@ with gr.Blocks() as upscale_block:
         params = dict(zip(ordered_keys, args))
         yield from upscale(params)
 
-    def size_extractor(img_inp):
-        try:
-            with Image.open(img_inp) as img:
-                width, height = img.size
-        except Exception:
-            width, height = None, None
+    def size_updater(img_inp):
+        width, height = size_extractor(img_inp)
         return (
             gr.update(value=int(width)), gr.update(value=int(height))
         )
 
-    def rescale(rescale_bool):
-        if rescale_bool:
-            return(
-                gr.update(interactive=True), gr.update(interactive=True),
-                gr.update(interactive=True)
-            )
-        else:
-            return(
-                gr.update(interactive=False), gr.update(interactive=False),
-                gr.update(interactive=False)
-            )
 
     # Interactive Bindings
 
     img_inp_upscale.change(
-        size_extractor,
+        size_updater,
         inputs=img_inp_upscale,
         outputs=[init_width, init_height]
     )
 
     rescale_bool.change(
-        rescale,
+        partial(update_interactivity, len(rescale_comp)),
         inputs=rescale_bool,
         outputs=[init_width, init_height, switch_size_btn]
     )

@@ -1,6 +1,7 @@
 """sd.cpp-webui - Reusable UI module"""
 
 import os
+from functools import partial
 
 import gradio as gr
 
@@ -10,7 +11,7 @@ from modules.loader import (
 )
 
 from modules.utility import (
-    switch_sizes, SDOptionsCache
+    switch_sizes, update_interactivity, SDOptionsCache
 )
 
 # initiate cache once
@@ -625,6 +626,59 @@ def create_settings_ui():
         'in_guidance': guidance,
         'in_flow_shift_btn': flow_shift_btn,
         'in_flow_shift': flow_shift
+    }
+
+
+def create_upscl_ui():
+    """Create the upscale UI"""
+    upscl_dir_txt = gr.Textbox(value=config.get('upscl_dir'), visible=False)
+
+    with gr.Accordion(
+        label="Upscale", open=False
+    ):
+        upscl_bool = gr.Checkbox(
+            label="Enable Upscale", value=False
+        )
+        upscl = gr.Dropdown(
+            label="Upscaler",
+            choices=get_models(config.get('upscl_dir')),
+            value="",
+            allow_custom_value=True,
+            interactive=False
+        )
+        with gr.Row():
+            reload_upscl_btn = gr.Button(
+                value=RELOAD_SYMBOL,
+                interactive=False
+            )
+            clear_upscl_btn = gr.ClearButton(
+                upscl,
+                interactive=False)
+        upscl_rep = gr.Slider(
+            label="Upscaler repeats",
+            minimum=1,
+            maximum=5,
+            value=1,
+            step=1,
+            interactive=False
+        )
+
+    upscale_comp = [upscl, reload_upscl_btn, clear_upscl_btn, upscl_rep]
+
+    reload_upscl_btn.click(
+        reload_models, inputs=[upscl_dir_txt], outputs=[upscl]
+    )
+
+    upscl_bool.change(
+        partial(update_interactivity, len(upscale_comp)),
+        inputs=upscl_bool,
+        outputs=[upscl, reload_upscl_btn, clear_upscl_btn, upscl_rep]
+    )
+    
+    return {
+        'in_upscl_bool': upscl_bool,
+        'in_upscl': upscl,
+        'in_upscl_rep': upscl_rep
     }
 
 

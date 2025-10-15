@@ -261,10 +261,10 @@ class Txt2ImgRunner(CommandRunner):
                              if self._get_param('in_flow_shift_toggle')
                              else None),
             '--upscale-model': (self._get_param('f_upscl')
-                                if self._get_param('in_upscl_enabled')
+                                if self._get_param('in_upscl_bool')
                                 else None),
             '--upscale-repeats': (self._get_param('in_upscl_rep')
-                                  if self._get_param('in_upscl_enabled')
+                                  if self._get_param('in_upscl_bool')
                                   else None),
             '--type': (self._get_param('in_model_type')
                        if self._get_param('in_model_type') != "Default"
@@ -401,10 +401,10 @@ class Any2VideoRunner(CommandRunner):
             '--init-img': init_img,
             '--end-img': self._get_param('in_last_frame_inp'),
             '--upscale-model': (self._get_param('f_upscl')
-                                if self._get_param('in_upscl_enabled')
+                                if self._get_param('in_upscl_bool')
                                 else None),
             '--upscale-repeats': (self._get_param('in_upscl_rep')
-                                  if self._get_param('in_upscl_enabled')
+                                  if self._get_param('in_upscl_bool')
                                   else None),
             '--type': (self._get_param('in_model_type')
                        if self._get_param('in_model_type') != "Default"

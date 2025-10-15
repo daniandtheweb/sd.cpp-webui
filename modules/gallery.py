@@ -9,6 +9,7 @@ from typing import List, Tuple, Dict, Any, Optional
 import gradio as gr
 
 from modules.shared_instance import config
+from modules.utility import size_extractor
 
 
 class GalleryManager:
@@ -334,11 +335,7 @@ class GalleryManager:
 
         params = self._extract_params_from_text(raw_text)
 
-        try:
-            with Image.open(self.current_img_path) as img:
-                width, height = img.size
-        except Exception:
-            width, height = None, None
+        width, height = size_extractor(self.current_img_path)
 
         return (
             params['pprompt'], params['nprompt'], width, height,
@@ -414,11 +411,7 @@ class GalleryManager:
 
         params = self._extract_params_from_text(raw_text)
 
-        try:
-            with Image.open(self.current_img_path) as img:
-                width, height = img.size
-        except Exception:
-            width, height = None, None
+        width, height = size_extractor(self.current_img_path)
 
         return (
             imgs, page_num, gallery_update,

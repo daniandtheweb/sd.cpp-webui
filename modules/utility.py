@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import hashlib
 import json
+from PIL import Image
 
 import gradio as gr
 
@@ -309,6 +310,25 @@ def ckpt_tab_switch(unet_model, unet_vae, clip_g, clip_l, t5xxl,
 
 def switch_sizes(height, width):
     return (width, height)
+
+
+def size_extractor(image):
+        try:
+            with Image.open(image) as img:
+                width, height = img.size
+        except Exception:
+            width, height = None, None
+        return (
+            width, height
+        )
+
+
+def update_interactivity(count, checkbox_value):
+    """
+    Generates a specified number of gr.update objects to set interactivity.
+    """
+    is_interactive = bool(checkbox_value)
+    return tuple(gr.update(interactive=is_interactive) for _ in range(count))
 
 
 class SDOptionsCache:

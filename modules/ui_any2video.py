@@ -12,8 +12,9 @@ from modules.loader import (
 )
 from modules.ui import (
     create_video_model_sel_ui, create_quant_ui, create_prompts_ui,
-    create_cnnet_ui, create_extras_ui, create_env_ui, create_settings_ui,
-    create_experimental_ui, RELOAD_SYMBOL, RANDOM_SYMBOL
+    create_cnnet_ui, create_extras_ui, create_upscl_ui, create_env_ui,
+    create_settings_ui, create_experimental_ui, RELOAD_SYMBOL,
+    RANDOM_SYMBOL
 )
 
 
@@ -165,32 +166,8 @@ with gr.Blocks() as any2video_block:
             inputs_map['in_clip_skip'] = clip_skip
 
             # Upscale
-            with gr.Accordion(
-                label="Upscale", open=False
-            ):
-                upscl_enabled = gr.Checkbox(
-                    label="Enable Upscale", value=False
-                )
-                upscl = gr.Dropdown(
-                    label="Upscaler",
-                    choices=get_models(config.get('upscl_dir')),
-                    value="",
-                    allow_custom_value=True,
-                    interactive=True
-                )
-                with gr.Row():
-                    reload_upscl_btn = gr.Button(value=RELOAD_SYMBOL)
-                    gr.ClearButton(upscl)
-                upscl_rep = gr.Slider(
-                    label="Upscaler repeats",
-                    minimum=1,
-                    maximum=5,
-                    value=1,
-                    step=1
-                )
-                inputs_map['in_upscl_enabled'] = upscl_enabled
-                inputs_map['in_upscl'] = upscl
-                inputs_map['in_upscl_rep'] = upscl_rep
+            upscl_ui = create_upscl_ui()
+            inputs_map.update(upscl_ui)
 
             # ControlNet
             cnnet_ui = create_cnnet_ui()
@@ -318,9 +295,6 @@ with gr.Blocks() as any2video_block:
     )
     reload_phtmkr_btn.click(
         reload_models, inputs=[phtmkr_dir_txt], outputs=[phtmkr_model]
-    )
-    reload_upscl_btn.click(
-        reload_models, inputs=[upscl_dir_txt], outputs=[upscl]
     )
     random_seed_btn.click(
         random_seed, inputs=[], outputs=[seed]
