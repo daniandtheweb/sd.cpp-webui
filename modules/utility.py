@@ -198,9 +198,11 @@ class SubprocessManager:
                         phase = "Loading Model"
                     elif 'sampling using' in output_line:
                         phase = "Sampling"
+                    elif 'upscaling from' in output_line:
+                        phase = "Upscaling"
 
                     if "|" in output_line and "/" in output_line:
-                        if phase == "Sampling":
+                        if phase in ["Sampling", "Upscaling"]:
                             update_data = self._parse_progress_update(
                                 output_line,
                                 final_stats
