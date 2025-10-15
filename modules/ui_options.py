@@ -10,7 +10,7 @@ from modules.ui import (
     create_quant_ui, create_folders_opt_ui,
     RELOAD_SYMBOL, SAMPLERS, SCHEDULERS, PREDICTION
 )
-from modules.utility import SDOptionsCache
+from modules.utils.utility import SDOptionsCache
 
 
 sd_options = SDOptionsCache()

@@ -3,9 +3,11 @@
 import gradio as gr
 
 from modules.sdcpp import txt2img
-from modules.utility import (
-    subprocess_manager, random_seed, ckpt_tab_switch, unet_tab_switch,
-    SDOptionsCache
+from modules.utils.utility import (
+    subprocess_manager, random_seed, SDOptionsCache
+)
+from modules.utils.ui_handler import (
+    ckpt_tab_switch, unet_tab_switch
 )
 from modules.shared_instance import config
 from modules.loader import (

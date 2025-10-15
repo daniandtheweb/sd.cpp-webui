@@ -10,8 +10,11 @@ from modules.loader import (
     get_models, reload_models
 )
 
-from modules.utility import (
-    switch_sizes, update_interactivity, SDOptionsCache
+from modules.utils.utility import (
+    switch_sizes, SDOptionsCache
+)
+from modules.utils.ui_handler import (
+    update_interactivity
 )
 
 # initiate cache once

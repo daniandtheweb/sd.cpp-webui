@@ -4,9 +4,11 @@ import gradio as gr
 from functools import partial
 
 from modules.sdcpp import img2img
-from modules.utility import (
-    subprocess_manager, random_seed, ckpt_tab_switch, unet_tab_switch,
-    update_interactivity, SDOptionsCache
+from modules.utils.utility import (
+    subprocess_manager, random_seed, SDOptionsCache
+)
+from modules.utils.ui_handler import (
+    ckpt_tab_switch, unet_tab_switch, update_interactivity
 )
 from modules.shared_instance import config
 from modules.loader import (
