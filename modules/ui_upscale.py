@@ -194,7 +194,7 @@ with gr.Blocks() as upscale_block:
     rescale_bool.change(
         partial(update_interactivity, len(rescale_comp)),
         inputs=rescale_bool,
-        outputs=[init_width, init_height, switch_size_btn]
+        outputs=rescale_comp
     )
 
     upscl_btn.click(

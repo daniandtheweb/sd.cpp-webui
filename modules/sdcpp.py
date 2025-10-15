@@ -270,13 +270,13 @@ class Txt2ImgRunner(CommandRunner):
                        if self._get_param('in_model_type') != "Default"
                        else None),
             '--control-net': (self._get_param('f_cnnet')
-                              if self._get_param('in_cnnet_enabled')
+                              if self._get_param('in_cnnet_bool')
                               else None),
             '--control-image': (self._get_param('in_control_img')
-                                if self._get_param('in_cnnet_enabled')
+                                if self._get_param('in_cnnet_bool')
                                 else None),
             '--control-strength': (self._get_param('in_control_strength')
-                                   if self._get_param('in_cnnet_enabled')
+                                   if self._get_param('in_cnnet_bool')
                                    else None),
             '--chroma-t5-mask-pad': (self._get_param('in_t5_mask_pad')
                                      if self._get_param('in_enable_t5_mask')
@@ -413,13 +413,13 @@ class Any2VideoRunner(CommandRunner):
                              if self._get_param('in_flow_shift_toggle')
                              else None),
             '--control-net': (self._get_param('f_cnnet')
-                              if self._get_param('in_cnnet_enabled')
+                              if self._get_param('in_cnnet_bool')
                               else None),
             '--control-image': (self._get_param('in_control_img')
-                                if self._get_param('in_cnnet_enabled')
+                                if self._get_param('in_cnnet_bool')
                                 else None),
             '--control-strength': (self._get_param('in_control_strength')
-                                   if self._get_param('in_cnnet_enabled')
+                                   if self._get_param('in_cnnet_bool')
                                    else None),
             '--prediction': (self._get_param('in_predict')
                              if self._get_param('in_predict') != "Default"

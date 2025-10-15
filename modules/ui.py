@@ -663,16 +663,16 @@ def create_upscl_ui():
             interactive=False
         )
 
-    upscale_comp = [upscl, reload_upscl_btn, clear_upscl_btn, upscl_rep]
+    upscl_comp = [upscl, reload_upscl_btn, clear_upscl_btn, upscl_rep]
 
     reload_upscl_btn.click(
         reload_models, inputs=[upscl_dir_txt], outputs=[upscl]
     )
 
     upscl_bool.change(
-        partial(update_interactivity, len(upscale_comp)),
+        partial(update_interactivity, len(upscl_comp)),
         inputs=upscl_bool,
-        outputs=[upscl, reload_upscl_btn, clear_upscl_btn, upscl_rep]
+        outputs=upscl_comp
     )
     
     return {
@@ -689,7 +689,7 @@ def create_cnnet_ui():
     with gr.Accordion(
         label="ControlNet", open=False
     ):
-        cnnet_enabled = gr.Checkbox(
+        cnnet_bool = gr.Checkbox(
             label="Enable ControlNet", value=False
         )
         with gr.Group():
@@ -697,24 +697,41 @@ def create_cnnet_ui():
                 label="ControlNet",
                 choices=get_models(config.get('cnnet_dir')),
                 value=None,
-                interactive=True
+                interactive=False
             )
             with gr.Row():
-                reload_cnnet_btn = gr.Button(value=RELOAD_SYMBOL)
-                gr.ClearButton(
-                    cnnet
+                reload_cnnet_btn = gr.Button(
+                    value=RELOAD_SYMBOL,
+                    interactive=False)
+                clear_cnnet_btn = gr.ClearButton(
+                    cnnet,
+                    interactive=False
                 )
         control_img = gr.Image(
-            sources="upload", type="filepath"
+            sources="upload", type="filepath",
+            interactive=False
         )
         control_strength = gr.Slider(
             label="ControlNet strength",
             minimum=0,
             maximum=1,
             step=0.01,
-            value=0.9)
-        cnnet_cpu = gr.Checkbox(label="ControlNet on CPU")
-        canny = gr.Checkbox(label="Canny (edge detection)")
+            value=0.9,
+            interactive=False
+        )
+        cnnet_cpu = gr.Checkbox(
+            label="ControlNet on CPU",
+            interactive=False
+        )
+        canny = gr.Checkbox(
+            label="Canny (edge detection)",
+            interactive=False
+        )
+
+    cnnet_comp = [
+        cnnet, reload_cnnet_btn, clear_cnnet_btn, control_img,
+        control_strength, cnnet_cpu, canny
+    ]
 
     reload_cnnet_btn.click(
         reload_models,
@@ -722,9 +739,15 @@ def create_cnnet_ui():
         outputs=[cnnet]
     )
 
+    cnnet_bool.change(
+        partial(update_interactivity, len(cnnet_comp)),
+        inputs=cnnet_bool,
+        outputs=cnnet_comp
+    )
+
     # Return the dictionary with all UI components
     return {
-        'in_cnnet_enabled': cnnet_enabled,
+        'in_cnnet_bool': cnnet_bool,
         'in_cnnet': cnnet,
         'in_control_img': control_img,
         'in_control_strength': control_strength,
