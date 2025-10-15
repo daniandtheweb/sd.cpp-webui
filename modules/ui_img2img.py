@@ -5,10 +5,13 @@ from functools import partial
 
 from modules.sdcpp import img2img
 from modules.utils.utility import (
-    subprocess_manager, random_seed, SDOptionsCache
+    subprocess_manager, random_seed
 )
 from modules.utils.ui_handler import (
     ckpt_tab_switch, unet_tab_switch, update_interactivity
+)
+from modules.utils.sd_interface import (
+    SDOptionsCache
 )
 from modules.shared_instance import config
 from modules.loader import (

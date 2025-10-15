@@ -9,7 +9,7 @@ from typing import List, Tuple, Dict, Any, Optional
 import gradio as gr
 
 from modules.shared_instance import config
-from modules.utils.utility import size_extractor
+from modules.utils.image_utils import size_extractor
 
 
 class GalleryManager:

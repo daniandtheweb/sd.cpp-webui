@@ -5,10 +5,13 @@ from functools import partial
 
 from modules.sdcpp import upscale
 from modules.utils.utility import (
-    subprocess_manager, switch_sizes, size_extractor
+    subprocess_manager
 )
 from modules.utils.ui_handler import (
     update_interactivity
+)
+from modules.utils.image_utils import (
+    switch_sizes, size_extractor
 )
 from modules.shared_instance import config
 from modules.loader import (
