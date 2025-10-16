@@ -8,7 +8,7 @@ from modules.shared_instance import config
 from modules.loader import (
     get_models, reload_models, model_choice
 )
-from modules.ui import (
+from modules.ui.constants import (
     MODELS, QUANTS, RELOAD_SYMBOL
 )
 

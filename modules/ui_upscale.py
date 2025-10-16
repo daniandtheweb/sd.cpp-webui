@@ -17,9 +17,8 @@ from modules.shared_instance import config
 from modules.loader import (
     get_models, reload_models
 )
-from modules.ui import (
-    create_env_ui, RELOAD_SYMBOL, SWITCH_V_SYMBOL
-)
+from modules.ui.environment import create_env_ui
+from modules.ui.constants import RELOAD_SYMBOL, SWITCH_V_SYMBOL
 
 
 with gr.Blocks() as upscale_block:

@@ -3,13 +3,12 @@
 import gradio as gr
 
 from modules.shared_instance import config
-from modules.loader import (
-    get_models
-)
-from modules.ui import (
-    create_quant_ui, create_folders_opt_ui,
+from modules.loader import get_models
+from modules.ui.constants import (
     RELOAD_SYMBOL, SAMPLERS, SCHEDULERS, PREDICTION
 )
+from modules.ui.generation_settings import create_quant_ui
+from modules.ui.folder_settings import create_folders_opt_ui
 from modules.utils.sd_interface import SDOptionsCache
 
 

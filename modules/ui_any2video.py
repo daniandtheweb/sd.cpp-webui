@@ -17,12 +17,17 @@ from modules.shared_instance import config
 from modules.loader import (
     get_models, reload_models
 )
-from modules.ui import (
-    create_video_model_sel_ui, create_quant_ui, create_prompts_ui,
-    create_cnnet_ui, create_extras_ui, create_upscl_ui, create_env_ui,
-    create_settings_ui, create_experimental_ui, RELOAD_SYMBOL,
-    RANDOM_SYMBOL
+from modules.ui.constants import RELOAD_SYMBOL, RANDOM_SYMBOL
+from modules.ui.models import create_video_model_sel_ui
+from modules.ui.prompts import create_prompts_ui
+from modules.ui.generation_settings import (
+    create_quant_ui, create_generation_settings_ui
 )
+from modules.ui.upscale import create_upscl_ui
+from modules.ui.controlnet import create_cnnet_ui
+from modules.ui.advanced_settings import create_extras_ui
+from modules.ui.environment import create_env_ui
+from modules.ui.experimental import create_experimental_ui
 
 
 sd_options = SDOptionsCache()
@@ -110,8 +115,8 @@ with gr.Blocks() as any2video_block:
     with gr.Row():
         with gr.Column(scale=1):
 
-            settings_ui = create_settings_ui()
-            inputs_map.update(settings_ui)
+            generation_settings_ui = create_generation_settings_ui()
+            inputs_map.update(generation_settings_ui)
 
             with gr.Row():
                 frames = gr.Number(
@@ -312,7 +317,8 @@ with gr.Blocks() as any2video_block:
         refresh_all_options,
         inputs=[],
         outputs=[
-            settings_ui['in_sampling'], settings_ui['in_scheduler'],
+            generation_settings_ui['in_sampling'],
+            generation_settings_ui['in_scheduler'],
             experimental_ui['in_preview_mode'], extras_ui['in_predict']
         ]
     )
@@ -325,10 +331,10 @@ with gr.Blocks() as any2video_block:
 
     pprompt_any2video = prompts_ui['in_pprompt']
     nprompt_any2video = prompts_ui['in_nprompt']
-    width_any2video = settings_ui['in_width']
-    height_any2video = settings_ui['in_height']
-    steps_any2video = settings_ui['in_steps']
-    sampling_any2video = settings_ui['in_sampling']
-    scheduler_any2video = settings_ui['in_scheduler']
-    cfg_any2video = settings_ui['in_cfg']
+    width_any2video = generation_settings_ui['in_width']
+    height_any2video = generation_settings_ui['in_height']
+    steps_any2video = generation_settings_ui['in_steps']
+    sampling_any2video = generation_settings_ui['in_sampling']
+    scheduler_any2video = generation_settings_ui['in_scheduler']
+    cfg_any2video = generation_settings_ui['in_cfg']
     seed_any2video = inputs_map['in_seed']

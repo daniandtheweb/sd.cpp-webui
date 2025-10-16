@@ -17,12 +17,18 @@ from modules.shared_instance import config
 from modules.loader import (
     get_models, reload_models
 )
-from modules.ui import (
-    create_img_model_sel_ui, create_quant_ui, create_prompts_ui,
-    create_experimental_ui, create_upscl_ui, create_cnnet_ui,
-    create_chroma_ui, create_extras_ui, create_env_ui,
-    create_settings_ui, RELOAD_SYMBOL, RANDOM_SYMBOL
+from modules.ui.constants import RELOAD_SYMBOL, RANDOM_SYMBOL
+from modules.ui.models import create_img_model_sel_ui
+from modules.ui.prompts import create_prompts_ui
+from modules.ui.generation_settings import (
+    create_quant_ui, create_generation_settings_ui
 )
+from modules.ui.upscale import create_upscl_ui
+from modules.ui.controlnet import create_cnnet_ui
+from modules.ui.chroma import create_chroma_ui
+from modules.ui.advanced_settings import create_extras_ui
+from modules.ui.environment import create_env_ui
+from modules.ui.experimental import create_experimental_ui
 
 
 sd_options = SDOptionsCache()
@@ -110,8 +116,8 @@ with gr.Blocks()as img2img_block:
     with gr.Row():
         with gr.Column(scale=1):
 
-            settings_ui = create_settings_ui()
-            inputs_map.update(settings_ui)
+            generation_settings_ui = create_generation_settings_ui()
+            inputs_map.update(generation_settings_ui)
 
             with gr.Row():
                 img_cfg_bool = gr.Checkbox(
@@ -300,10 +306,10 @@ with gr.Blocks()as img2img_block:
             model_ui['inputs']['in_clip_l'],
             model_ui['inputs']['in_t5xxl'],
             model_ui['inputs']['in_qwen2vl'],
-            settings_ui['in_guidance_bool'],
-            settings_ui['in_guidance'],
-            settings_ui['in_flow_shift_bool'],
-            settings_ui['in_flow_shift']
+            generation_settings_ui['in_guidance_bool'],
+            generation_settings_ui['in_guidance'],
+            generation_settings_ui['in_flow_shift_bool'],
+            generation_settings_ui['in_flow_shift']
         ],
         outputs=[
             model_ui['inputs']['in_diffusion_mode'],
@@ -315,10 +321,10 @@ with gr.Blocks()as img2img_block:
             model_ui['inputs']['in_clip_l'],
             model_ui['inputs']['in_t5xxl'],
             model_ui['inputs']['in_qwen2vl'],
-            settings_ui['in_guidance_bool'],
-            settings_ui['in_guidance'],
-            settings_ui['in_flow_shift_bool'],
-            settings_ui['in_flow_shift']
+            generation_settings_ui['in_guidance_bool'],
+            generation_settings_ui['in_guidance'],
+            generation_settings_ui['in_flow_shift_bool'],
+            generation_settings_ui['in_flow_shift']
         ]
     )
     model_ui['components']['unet_tab'].select(
@@ -326,10 +332,10 @@ with gr.Blocks()as img2img_block:
         inputs=[
             model_ui['inputs']['in_ckpt_model'],
             model_ui['inputs']['in_ckpt_vae'],
-            settings_ui['in_guidance_bool'],
-            settings_ui['in_guidance'],
-            settings_ui['in_flow_shift_bool'],
-            settings_ui['in_flow_shift']
+            generation_settings_ui['in_guidance_bool'],
+            generation_settings_ui['in_guidance'],
+            generation_settings_ui['in_flow_shift_bool'],
+            generation_settings_ui['in_flow_shift']
         ],
         outputs=[
             model_ui['inputs']['in_diffusion_mode'],
@@ -341,10 +347,10 @@ with gr.Blocks()as img2img_block:
             model_ui['inputs']['in_clip_l'],
             model_ui['inputs']['in_t5xxl'],
             model_ui['inputs']['in_qwen2vl'],
-            settings_ui['in_guidance_bool'],
-            settings_ui['in_guidance'],
-            settings_ui['in_flow_shift_bool'],
-            settings_ui['in_flow_shift']
+            generation_settings_ui['in_guidance_bool'],
+            generation_settings_ui['in_guidance'],
+            generation_settings_ui['in_flow_shift_bool'],
+            generation_settings_ui['in_flow_shift']
         ]
     )
     reload_taesd_btn.click(
@@ -360,7 +366,8 @@ with gr.Blocks()as img2img_block:
         refresh_all_options,
         inputs=[],
         outputs=[
-            settings_ui['in_sampling'], settings_ui['in_scheduler'],
+            generation_settings_ui['in_sampling'],
+            generation_settings_ui['in_scheduler'],
             experimental_ui['in_preview_mode'], extras_ui['in_predict']
         ]
     )
@@ -379,10 +386,10 @@ with gr.Blocks()as img2img_block:
 
     pprompt_img2img = prompts_ui['in_pprompt']
     nprompt_img2img = prompts_ui['in_nprompt']
-    width_img2img = settings_ui['in_width']
-    height_img2img = settings_ui['in_height']
-    steps_img2img = settings_ui['in_steps']
-    sampling_img2img = settings_ui['in_sampling']
-    scheduler_img2img = settings_ui['in_scheduler']
-    cfg_img2img = settings_ui['in_cfg']
+    width_img2img = generation_settings_ui['in_width']
+    height_img2img = generation_settings_ui['in_height']
+    steps_img2img = generation_settings_ui['in_steps']
+    sampling_img2img = generation_settings_ui['in_sampling']
+    scheduler_img2img = generation_settings_ui['in_scheduler']
+    cfg_img2img = generation_settings_ui['in_cfg']
     seed_img2img = inputs_map['in_seed']
