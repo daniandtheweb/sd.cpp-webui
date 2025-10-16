@@ -78,19 +78,19 @@ def unet_tab_switch(ckpt_model, ckpt_vae, guidance_bool, guidance,
     model_state.bak_ckpt_tab(ckpt_model, ckpt_vae)
 
     return (
-        gr.update(value=1),
-        gr.update(value=None),
-        gr.update(value=model_state.bak_unet_model),
-        gr.update(value=None),
-        gr.update(value=model_state.bak_unet_vae),
-        gr.update(value=model_state.bak_clip_g),
-        gr.update(value=model_state.bak_clip_l),
-        gr.update(value=model_state.bak_t5xxl),
-        gr.update(value=model_state.bak_qwen2vl),
-        gr.update(value=model_state.bak_guidance_bool, visible=True),
-        gr.update(visible=True),
-        gr.update(value=model_state.bak_flow_shift_bool, visible=True),
-        gr.update(visible=True),
+        gr.update(value=1),                                                # + UNET Tab
+        gr.update(value=None),                                             # - Checkpoint Model
+        gr.update(value=model_state.bak_unet_model),                       # + UNET Model
+        gr.update(value=None),                                             # - Checkpoint VAE
+        gr.update(value=model_state.bak_unet_vae),                         # + UNET VAE
+        gr.update(value=model_state.bak_clip_g),                           # + clip_g
+        gr.update(value=model_state.bak_clip_l),                           # + clip_l
+        gr.update(value=model_state.bak_t5xxl),                            # + t5xxl
+        gr.update(value=model_state.bak_qwen2vl),                          # + qwen2vl
+        gr.update(value=model_state.bak_guidance_bool, visible=True),      # + guidance_bool
+        gr.update(visible=True),                                           # + guidance
+        gr.update(value=model_state.bak_flow_shift_bool, visible=True),    # + flow_shift_bool
+        gr.update(visible=True),                                           # + flow_shift
     )
 
 
@@ -102,19 +102,19 @@ def ckpt_tab_switch(unet_model, unet_vae, clip_g, clip_l, t5xxl,
                              qwen2vl, guidance_bool, flow_shift_bool)
 
     return (
-        gr.update(value=0),
-        gr.update(value=model_state.bak_ckpt_model),
-        gr.update(value=None),
-        gr.update(value=model_state.bak_ckpt_vae),
-        gr.update(value=None),
-        gr.update(value=None),
-        gr.update(value=None),
-        gr.update(value=None),
-        gr.update(value=None),
-        gr.update(value=False, visible=False),
-        gr.update(visible=False),
-        gr.update(value=False, visible=False),
-        gr.update(visible=False),
+        gr.update(value=0),                             # + Checkpoint Tab
+        gr.update(value=model_state.bak_ckpt_model),    # + Checkpoint Model
+        gr.update(value=None),                          # - UNET Model
+        gr.update(value=model_state.bak_ckpt_vae),      # + Checkpoint VAE
+        gr.update(value=None),                          # - UNET VAE
+        gr.update(value=None),                          # - clip_g
+        gr.update(value=None),                          # - clip_l
+        gr.update(value=None),                          # - t5xxl
+        gr.update(value=None),                          # - qwen2vl
+        gr.update(value=False, visible=False),          # - guidance_bool
+        gr.update(visible=False),                       # - guidance
+        gr.update(value=False, visible=False),          # - flow_shift_bool
+        gr.update(visible=False),                       # - flow_shift
     )
 
 
