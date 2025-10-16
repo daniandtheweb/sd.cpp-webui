@@ -4,16 +4,15 @@ import gradio as gr
 from functools import partial
 
 from modules.sdcpp import upscale
-from modules.utils.utility import (
-    subprocess_manager
-)
 from modules.utils.ui_handler import (
     update_interactivity
 )
 from modules.utils.image_utils import (
     switch_sizes, size_extractor
 )
-from modules.shared_instance import config
+from modules.shared_instance import (
+    config, subprocess_manager
+)
 from modules.loader import (
     get_models, reload_models
 )

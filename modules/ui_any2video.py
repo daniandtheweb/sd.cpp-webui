@@ -4,16 +4,11 @@ import gradio as gr
 from functools import partial
 
 from modules.sdcpp import any2video
-from modules.utils.utility import (
-    subprocess_manager, random_seed
+from modules.utils.utility import random_seed
+from modules.utils.ui_handler import update_interactivity
+from modules.shared_instance import (
+    config, sd_options, subprocess_manager
 )
-from modules.utils.ui_handler import(
-    update_interactivity
-)
-from modules.utils.sd_interface import (
-    SDOptionsCache
-)
-from modules.shared_instance import config
 from modules.loader import (
     get_models, reload_models
 )
@@ -28,9 +23,6 @@ from modules.ui.controlnet import create_cnnet_ui
 from modules.ui.advanced_settings import create_extras_ui
 from modules.ui.environment import create_env_ui
 from modules.ui.experimental import create_experimental_ui
-
-
-sd_options = SDOptionsCache()
 
 
 def refresh_all_options():

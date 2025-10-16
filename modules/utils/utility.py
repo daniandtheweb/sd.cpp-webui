@@ -172,9 +172,6 @@ class SubprocessManager:
             print("No subprocess running.")
 
 
-subprocess_manager = SubprocessManager()
-
-
 def random_seed():
     """Sets the seed to -1"""
     return gr.update(value=-1)

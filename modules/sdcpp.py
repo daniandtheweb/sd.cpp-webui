@@ -5,13 +5,11 @@ from typing import Dict, Any, Generator
 
 import gradio as gr
 
-from modules.utils.utility import subprocess_manager, get_path
-from modules.utils.sd_interface import exe_name
+from modules.utils.utility import get_path
 from modules.gallery import get_next_img
-from modules.shared_instance import config
-
-
-SD = exe_name()
+from modules.shared_instance import (
+    config, subprocess_manager, SD
+)
 
 
 class CommandRunner:

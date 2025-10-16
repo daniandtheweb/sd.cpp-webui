@@ -3,8 +3,9 @@
 import gradio as gr
 
 from modules.sdcpp import convert
-from modules.utils.utility import subprocess_manager
-from modules.shared_instance import config
+from modules.shared_instance import (
+    config, subprocess_manager
+)
 from modules.loader import (
     get_models, reload_models, model_choice
 )
