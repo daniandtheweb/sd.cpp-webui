@@ -10,6 +10,7 @@ from modules.shared_instance import config
 gallery_manager = GalleryManager(
     config.get('txt2img_dir'),
     config.get('img2img_dir'),
+    config.get('imgedit_dir'),
     config.get('any2video_dir'),
     config.get('upscale_dir')
 )
@@ -23,11 +24,14 @@ with gr.Blocks() as gallery_block:
     img2img_ctrl = gr.Textbox(
         value=1, visible=False
     )
-    any2video_ctrl = gr.Textbox(
+    imgedit_ctrl = gr.Textbox(
         value=2, visible=False
     )
-    upscl_ctrl = gr.Textbox(
+    any2video_ctrl = gr.Textbox(
         value=3, visible=False
+    )
+    upscl_ctrl = gr.Textbox(
+        value=4, visible=False
     )
     def_page = gr.Textbox(
         value=1, visible=False
@@ -43,6 +47,9 @@ with gr.Blocks() as gallery_block:
         )
         img2img_btn = gr.Button(
             value="img2img", variant="primary"
+        )
+        imgedit_btn = gr.Button(
+            value="imgedit", variant="primary"
         )
         any2video_btn = gr.Button(
             value="any2video", variant="primary"
@@ -190,6 +197,8 @@ with gr.Blocks() as gallery_block:
                 cpy_2_txt2img_btn = gr.Button(value="Copy to txt2img")
                 # Copy to img2img
                 cpy_2_img2img_btn = gr.Button(value="Copy to img2img")
+                # Copy to imgedit
+                cpy_2_imgedit_btn = gr.Button(value="Copy to imgedit")
                 # Copy to any2video
                 cpy_2_any2video_btn = gr.Button(value="Copy to any2video")
                 # Copy to upscale
@@ -214,6 +223,11 @@ with gr.Blocks() as gallery_block:
     img2img_btn.click(
         gallery_manager.reload_gallery,
         inputs=[def_page, img2img_ctrl],
+        outputs=[gallery, page_num_select, gallery, gallery]
+    )
+    imgedit_btn.click(
+        gallery_manager.reload_gallery,
+        inputs=[def_page, imgedit_ctrl],
         outputs=[gallery, page_num_select, gallery, gallery]
     )
     any2video_btn.click(

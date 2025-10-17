@@ -24,7 +24,7 @@ def create_quant_ui():
     }
 
 
-def create_generation_settings_ui():
+def create_generation_settings_ui(unet_mode: bool = False):
     """Create settings UI"""
     with gr.Row():
         with gr.Column(scale=1):
@@ -51,30 +51,31 @@ def create_generation_settings_ui():
         )
     with gr.Row():
         with gr.Column():
-            width = gr.Slider(
-                label="Width",
-                minimum=64,
-                maximum=4096,
-                value=config.get('def_width'),
-                step=64
-            )
-            height = gr.Slider(
-                label="Height",
-                minimum=64,
-                maximum=4096,
-                value=config.get('def_height'),
-                step=64
-            )
-            switch_size = gr.Button(
-                value=SWITCH_V_SYMBOL, scale=1
-            )
-            switch_size.click(
-                switch_sizes,
-                inputs=[height,
-                        width],
-                outputs=[height,
-                         width]
-            )
+            with gr.Group():
+                width = gr.Slider(
+                    label="Width",
+                    minimum=64,
+                    maximum=4096,
+                    value=config.get('def_width'),
+                    step=64
+                )
+                height = gr.Slider(
+                    label="Height",
+                    minimum=64,
+                    maximum=4096,
+                    value=config.get('def_height'),
+                    step=64
+                )
+                switch_size = gr.Button(
+                    value=SWITCH_V_SYMBOL, scale=1
+                )
+                switch_size.click(
+                    switch_sizes,
+                    inputs=[height,
+                            width],
+                    outputs=[height,
+                             width]
+                )
         with gr.Column():
             with gr.Row():
                 batch_count = gr.Slider(
@@ -96,7 +97,7 @@ def create_generation_settings_ui():
     with gr.Row():
         guidance_bool = gr.Checkbox(
             label="Enable distilled guidance", value=False,
-            visible=False
+            visible=unet_mode
         )
         guidance = gr.Slider(
             label="Guidance",
@@ -105,7 +106,7 @@ def create_generation_settings_ui():
             value=3.5,
             step=0.1,
             interactive=False,
-            visible=False
+            visible=unet_mode
         )
 
         guidance_comp = [guidance]
@@ -119,7 +120,7 @@ def create_generation_settings_ui():
     with gr.Row():
         flow_shift_bool = gr.Checkbox(
             label="Enable Flow Shift", value=False,
-            visible=False
+            visible=unet_mode
         )
         flow_shift = gr.Number(
             label="Flow Shift",
@@ -128,7 +129,7 @@ def create_generation_settings_ui():
             value=3.0,
             interactive=False,
             step=0.1,
-            visible=False
+            visible=unet_mode
         )
 
         flow_shift_comp = [flow_shift]

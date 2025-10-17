@@ -2,7 +2,9 @@
 
 import gradio as gr
 
-from modules.shared_instance import config
+from modules.shared_instance import (
+    config, sd_options
+)
 
 
 class ModelState:
@@ -128,3 +130,13 @@ def update_interactivity(count, checkbox_value):
         return gr.update(interactive=is_interactive)
 
     return tuple(gr.update(interactive=is_interactive) for _ in range(count))
+
+
+def refresh_all_options():
+    sd_options.refresh()
+    return [
+        gr.update(choices=sd_options.get_opt("samplers")),
+        gr.update(choices=sd_options.get_opt("schedulers")),
+        gr.update(choices=["none"] + sd_options.get_opt("previews")),
+        gr.update(choices=["Default"] + sd_options.get_opt("prediction"))
+    ]

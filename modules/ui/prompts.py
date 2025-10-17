@@ -6,7 +6,7 @@ from modules.shared_instance import config
 from .constants import RELOAD_SYMBOL
 
 
-def create_prompts_ui():
+def create_prompts_ui(nprompt_support = True):
     """Create the prompts UI"""
 
     def save_and_refresh_prompts(name, p_prompt, n_prompt):
@@ -51,14 +51,16 @@ def create_prompts_ui():
             placeholder="Positive prompt",
             label="Positive Prompt",
             lines=3,
-            show_copy_button=True
+            show_copy_button=True,
+            visible=True
         )
     with gr.Row():
         nprompt = gr.Textbox(
             placeholder="Negative prompt",
             label="Negative Prompt",
             lines=3,
-            show_copy_button=True
+            show_copy_button=True,
+            visible=nprompt_support
         )
 
     save_prompt_btn.click(

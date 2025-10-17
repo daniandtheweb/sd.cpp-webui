@@ -17,11 +17,12 @@ class GalleryManager:
 
     def __init__(
         self, txt2img_gallery: str, img2img_gallery: str,
-        any2video_gallery: str, upscale_gallery: str
+        imgedit_gallery: str, any2video_gallery: str,
+        upscale_gallery: str
     ):
         self.dirs: List[str] = [
-            txt2img_gallery, img2img_gallery, any2video_gallery,
-            upscale_gallery
+            txt2img_gallery, img2img_gallery, imgedit_gallery,
+            any2video_gallery, upscale_gallery
         ]
         self.page_num: int = 1
         self.ctrl: int = 0
@@ -255,8 +256,9 @@ class GalleryManager:
         dir_map = {
             0: 'txt2img',
             1: 'img2img',
-            2: 'any2video',
-            3: 'upscale'
+            2: 'imgedit',
+            3: 'any2video',
+            4: 'upscale'
         }
         current_label = dir_map.get(self.ctrl, 'Gallery')
 
@@ -427,8 +429,9 @@ def get_next_img(subctrl: int) -> str:
     dir_map = {
         0: 'txt2img_dir',
         1: 'img2img_dir',
-        2: 'any2video_dir',
-        3: 'upscale_dir'
+        2: 'imgedit_dir',
+        3: 'any2video_dir',
+        4: 'upscale_dir'
     }
     dir_key = dir_map.get(subctrl, 'txt2img_dir')
     img_out_dir = config.get(dir_key)

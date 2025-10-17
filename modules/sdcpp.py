@@ -198,17 +198,20 @@ class CommandRunner:
                gr.update(value=final_stats_str), self.outputs)
 
 
-class Txt2ImgRunner(CommandRunner):
-    def build_command(self):
+class ImageGenerationRunner(CommandRunner):
+    """A common base for txt2img, img2img, and imgedit runners."""
+
+    def build_command(self, output_dir_key: str, subctrl_id: int):
+        """Builds the common command for image generation."""
         self._resolve_paths()
         self.output_path = (
             os.path.join(
-                config.get('txt2img_dir'),
+                config.get(output_dir_key),
                 f"{self._get_param('in_output')}.png"
             )
             if self._get_param('in_output')
             else os.path.join(
-                config.get('txt2img_dir'), get_next_img(subctrl=0)
+                config.get(output_dir_key), get_next_img(subctrl=subctrl_id)
             )
         )
 
@@ -221,8 +224,7 @@ class Txt2ImgRunner(CommandRunner):
         preview_mode = self._get_param('in_preview_mode')
         is_preview_enabled = (
             preview_mode
-            if preview_mode is not None
-            and preview_mode != "none"
+            if preview_mode is not None and preview_mode != "none"
             else None
         )
         if is_preview_enabled:
@@ -259,6 +261,9 @@ class Txt2ImgRunner(CommandRunner):
             '--qwen2vl': (self._get_param('f_qwen2vl')
                           if self._get_param('in_diffusion_mode') == 1
                           else None),
+            '--qwen2vl_vision': (self._get_param('f_qwen2vl_vision')
+                                 if self._get_param('in_diffusion_mode') == 1
+                                 else None),
             # TAESD
             '--taesd': self._get_param('f_taesd'),
             # PhotoMaker
@@ -269,8 +274,8 @@ class Txt2ImgRunner(CommandRunner):
                                    if self._get_param('in_phtmkr_bool')
                                    else None),
             '--pm-id-embed-path': (self._get_param('f_phtmkr_emb')
-                                      if self._get_param('in_phtmkr_bool')
-                                      else None),
+                                   if self._get_param('in_phtmkr_bool')
+                                   else None),
             '--pm-style-strength': (self._get_param('in_phtmkr_strength')
                                     if self._get_param('in_phtmkr_bool')
                                     else None),
@@ -351,19 +356,19 @@ class Txt2ImgRunner(CommandRunner):
         self._add_flags(flags)
 
 
-class Img2ImgRunner(Txt2ImgRunner):
+class Txt2ImgRunner(ImageGenerationRunner):
+    """Builds and runs the txt2img command."""
     def build_command(self):
-        super().build_command()
+        super().build_command(
+            output_dir_key='txt2img_dir', subctrl_id=0
+        )
 
-        self.output_path = (
-            os.path.join(
-                config.get('img2img_dir'),
-                f"{self._get_param('in_output')}.png"
-            )
-            if self._get_param('in_output')
-            else os.path.join(
-                config.get('img2img_dir'), get_next_img(subctrl=1)
-            )
+
+class Img2ImgRunner(ImageGenerationRunner):
+    """Builds and runs the img2img command."""
+    def build_command(self):
+        super().build_command(
+            output_dir_key='img2img_dir', subctrl_id=1
         )
 
         # Add img2img specific arguments
@@ -384,6 +389,15 @@ class Img2ImgRunner(Txt2ImgRunner):
         self._add_options(options)
 
 
+class ImgEditRunner(ImageGenerationRunner):
+    """Builds and runs the image editing (instruct) command."""
+    def build_command(self):
+        super().build_command(
+            output_dir_key='imgedit_dir', subctrl_id=2
+        )
+        self.command.extend(['--ref-image', str(self._get_param('in_ref_img'))])
+
+
 class Any2VideoRunner(CommandRunner):
     def _add_base_args(self):
         # Override to add video-specific base arguments
@@ -402,7 +416,7 @@ class Any2VideoRunner(CommandRunner):
             )
             if self._get_param('in_output')
             else os.path.join(
-                config.get('any2video_dir'), get_next_img(subctrl=2)
+                config.get('any2video_dir'), get_next_img(subctrl=3)
             )
         )
 
@@ -484,7 +498,7 @@ class UpscaleRunner(CommandRunner):
             )
             if self._get_param('in_output')
             else os.path.join(
-                config.get('upscale_dir'), get_next_img(subctrl=3)
+                config.get('upscale_dir'), get_next_img(subctrl=4)
             )
         )
 
@@ -517,6 +531,13 @@ def txt2img(params: dict) -> Generator:
 def img2img(params: dict) -> Generator:
     """Creates and runs an Img2ImgRunner."""
     runner = Img2ImgRunner(mode="img_gen", params=params)
+    runner.build_command()
+    yield from runner.run()
+
+
+def imgedit(params: dict) -> Generator:
+    """Creates and runs an ImgEditRunner."""
+    runner = ImgEditRunner(mode="img_gen", params=params)
     runner.build_command()
     yield from runner.run()
 

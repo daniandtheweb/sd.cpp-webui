@@ -6,10 +6,11 @@ from functools import partial
 from modules.sdcpp import img2img
 from modules.utils.utility import random_seed
 from modules.utils.ui_handler import (
-    ckpt_tab_switch, unet_tab_switch, update_interactivity
+    ckpt_tab_switch, unet_tab_switch, update_interactivity,
+    refresh_all_options
 )
 from modules.shared_instance import (
-    config, sd_options, subprocess_manager
+    config, subprocess_manager
 )
 from modules.loader import (
     get_models, reload_models
@@ -31,25 +32,10 @@ from modules.ui.environment import create_env_ui
 from modules.ui.experimental import create_experimental_ui
 
 
-def refresh_all_options():
-    sd_options.refresh()
-    return [
-        gr.update(choices=sd_options.get_opt("samplers")),
-        gr.update(choices=sd_options.get_opt("schedulers")),
-        gr.update(choices=["none"] + sd_options.get_opt("previews")),
-        gr.update(choices=["Default"] + sd_options.get_opt("prediction"))
-    ]
-
-
 with gr.Blocks()as img2img_block:
     inputs_map = {}
     # Directory Textboxes
-    emb_dir_txt = gr.Textbox(value=config.get('emb_dir'), visible=False)
-    lora_dir_txt = gr.Textbox(value=config.get('lora_dir'), visible=False)
     taesd_dir_txt = gr.Textbox(value=config.get('taesd_dir'), visible=False)
-    phtmkr_dir_txt = gr.Textbox(value=config.get('phtmkr_dir'), visible=False)
-    upscl_dir_txt = gr.Textbox(value=config.get('upscl_dir'), visible=False)
-    cnnet_dir_txt = gr.Textbox(value=config.get('cnnet_dir'), visible=False)
 
     # Title
     img2img_title = gr.Markdown("# Image to Image")

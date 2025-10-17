@@ -7,6 +7,7 @@ __pycache__/
 *.png
 *.jpg
 *.json
+*.part
 sd*
 !sd*.py
 /venv

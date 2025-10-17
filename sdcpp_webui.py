@@ -17,6 +17,9 @@ from modules.ui_img2img import (
     height_img2img, steps_img2img, sampling_img2img, scheduler_img2img,
     cfg_img2img, seed_img2img, img_inp_img2img
 )
+from modules.ui_imgedit import (
+    imgedit_block, width_imgedit, height_imgedit, ref_img_imgedit
+)
 from modules.ui_any2video import (
     any2video_block, pprompt_any2video, nprompt_any2video, width_any2video,
     height_any2video, steps_any2video, sampling_any2video, scheduler_any2video,
@@ -24,9 +27,10 @@ from modules.ui_any2video import (
 )
 from modules.ui_upscale import img_inp_upscale
 from modules.ui_gallery import (
-    gallery_block, cpy_2_txt2img_btn, cpy_2_img2img_btn, cpy_2_any2video_btn,
-    cpy_2_upscale_btn, pprompt_info, nprompt_info, width_info, height_info,
-    steps_info, sampler_info, scheduler_info, cfg_info, seed_info, path_info
+    gallery_block, cpy_2_txt2img_btn, cpy_2_img2img_btn, cpy_2_imgedit_btn,
+    cpy_2_any2video_btn, cpy_2_upscale_btn, pprompt_info, nprompt_info,
+    width_info, height_info, steps_info, sampler_info, scheduler_info,
+    cfg_info, seed_info, path_info
 )
 from modules.ui_upscale import upscale_block
 from modules.ui_convert import convert_block
@@ -90,6 +94,8 @@ def sdcpp_launch(
                 txt2img_block.render()
             with gr.TabItem("img2img", id="img2img"):
                 img2img_block.render()
+            with gr.TabItem("imgedit", id="imgedit"):
+                imgedit_block.render()
             with gr.TabItem("any2video", id="any2video"):
                 any2video_block.render()
             with gr.TabItem("Gallery", id="gallery"):
@@ -125,6 +131,12 @@ def sdcpp_launch(
                 height_img2img, steps_img2img, sampling_img2img,
                 scheduler_img2img, cfg_img2img, seed_img2img, img_inp_img2img
             ]
+        )
+        # Copy data from gallery image to imgedit
+        cpy_2_imgedit_btn.click(
+            create_copy_fn("imgedit"),
+            inputs=[width_info, height_info, path_info],
+            outputs=[tabs, width_imgedit, height_imgedit, ref_img_imgedit]
         )
         # Copy data from gallery image to any2video.
         cpy_2_any2video_btn.click(

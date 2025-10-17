@@ -1,13 +1,10 @@
-"""sd.cpp-webui - Anything to Video UI"""
+"""sd.cpp-webui - Image edit UI"""
 
 import gradio as gr
-from functools import partial
 
-from modules.sdcpp import any2video
+from modules.sdcpp import imgedit
 from modules.utils.utility import random_seed
-from modules.utils.ui_handler import (
-    update_interactivity, refresh_all_options
-)
+from modules.utils.ui_handler import refresh_all_options
 from modules.shared_instance import (
     config, subprocess_manager
 )
@@ -15,7 +12,8 @@ from modules.loader import (
     get_models, reload_models
 )
 from modules.ui.constants import RELOAD_SYMBOL, RANDOM_SYMBOL
-from modules.ui.models import create_video_model_sel_ui
+from modules.ui.models import create_unet_model_sel_ui
+from modules.ui.photomaker import create_photomaker_ui
 from modules.ui.prompts import create_prompts_ui
 from modules.ui.generation_settings import (
     create_quant_ui, create_generation_settings_ui
@@ -28,22 +26,19 @@ from modules.ui.environment import create_env_ui
 from modules.ui.experimental import create_experimental_ui
 
 
-with gr.Blocks() as any2video_block:
+with gr.Blocks() as imgedit_block:
     inputs_map = {}
+    diffusion_mode = gr.Number(value=1, visible=False)
     # Directory Textboxes
-    emb_dir_txt = gr.Textbox(value=config.get('emb_dir'), visible=False)
-    lora_dir_txt = gr.Textbox(value=config.get('lora_dir'), visible=False)
     taesd_dir_txt = gr.Textbox(value=config.get('taesd_dir'), visible=False)
-    phtmkr_dir_txt = gr.Textbox(value=config.get('phtmkr_dir'), visible=False)
-    upscl_dir_txt = gr.Textbox(value=config.get('upscl_dir'), visible=False)
-    cnnet_dir_txt = gr.Textbox(value=config.get('cnnet_dir'), visible=False)
 
     # Title
-    any2video_title = gr.Markdown("# Anything to Video")
+    imgedit_title = gr.Markdown("# Image Edit")
 
     # Model & VAE Selection
-    model_ui = create_video_model_sel_ui()
+    model_ui = create_unet_model_sel_ui()
     inputs_map.update(model_ui)
+    inputs_map['in_diffusion_mode'] = diffusion_mode
 
     # Model Type Selection
     quant_ui = create_quant_ui()
@@ -66,55 +61,20 @@ with gr.Blocks() as any2video_block:
                     gr.ClearButton(taesd_model)
                 inputs_map['in_taesd'] = taesd_model
 
+        # PhotoMaker
+        photomaker_ui = create_photomaker_ui()
+        inputs_map.update(photomaker_ui)
+
     # Prompts
-    prompts_ui = create_prompts_ui()
+    prompts_ui = create_prompts_ui(nprompt_support = False)
     inputs_map.update(prompts_ui)
 
     # Settings
     with gr.Row():
         with gr.Column(scale=1):
 
-            generation_settings_ui = create_generation_settings_ui()
+            generation_settings_ui = create_generation_settings_ui(unet_mode=True)
             inputs_map.update(generation_settings_ui)
-
-            with gr.Row():
-                frames = gr.Number(
-                    label="Video Frames",
-                    minimum=1,
-                    value=1,
-                    scale=1,
-                    interactive=True,
-                    step=1
-                )
-                fps = gr.Number(
-                    label="FPS",
-                    minimum=1,
-                    value=24,
-                    scale=1,
-                    interactive=True,
-                    step=1
-                )
-            inputs_map['in_frames'] = frames
-            inputs_map['in_fps'] = fps
-
-            with gr.Accordion(
-                label="Flow Shift", open=False
-            ):
-                flow_shift_bool = gr.Checkbox(
-                    label="Enable Flow Shift", value=False
-                )
-                flow_shift = gr.Number(
-                    label="Flow Shift",
-                    minimum=1.0,
-                    maximum=12.0,
-                    value=3.0,
-                    interactive=False,
-                    step=0.1
-                )
-            inputs_map['in_flow_shift_bool'] = flow_shift_bool
-            inputs_map['in_flow_shift'] = flow_shift
-
-            flow_shift_comp = [flow_shift]
 
             with gr.Row():
                 with gr.Group():
@@ -146,7 +106,6 @@ with gr.Blocks() as any2video_block:
             # ControlNet
             cnnet_ui = create_cnnet_ui()
             inputs_map.update(cnnet_ui)
-
             # ETA
             eta_ui = create_eta_ui()
             inputs_map.update(eta_ui)
@@ -171,27 +130,10 @@ with gr.Blocks() as any2video_block:
         # Output
         with gr.Column(scale=1):
             with gr.Row():
-                with gr.Accordion(
-                    label="Image to Video", open=False
-                ):
-                    img_inp_any2video = gr.Image(
-                        sources="upload", type="filepath"
-                    )
-                    inputs_map['in_img_inp'] = img_inp_any2video
-            with gr.Row():
-                with gr.Accordion(
-                    label="First-Last Frame Video", open=False
-                ):
-                    with gr.Row():
-                        first_frame_inp = gr.Image(
-                            sources="upload", type="filepath"
-                        )
-                        inputs_map['in_first_frame_inp'] = first_frame_inp
-                    with gr.Row():
-                        last_frame_inp = gr.Image(
-                            sources="upload", type="filepath"
-                        )
-                        inputs_map['in_last_frame_inp'] = last_frame_inp
+                ref_img_imgedit = gr.Image(
+                    sources="upload", type="filepath"
+                )
+                inputs_map['in_ref_img'] = ref_img_imgedit
             with gr.Group():
                 with gr.Row():
                     gen_btn = gr.Button(
@@ -209,7 +151,8 @@ with gr.Blocks() as any2video_block:
                         value=0,
                         interactive=False,
                         visible=False,
-                        label="Progress"
+                        label="Progress",
+                        show_reset_button=False
                     )
                 with gr.Row():
                     progress_textbox = gr.Textbox(
@@ -218,8 +161,8 @@ with gr.Blocks() as any2video_block:
                         interactive=False
                     )
                 with gr.Row():
-                    video_final = gr.Gallery(
-                        label="Generated videos",
+                    img_final = gr.Gallery(
+                        label="Generated images",
                         show_label=False,
                         columns=[3],
                         rows=[1],
@@ -245,29 +188,26 @@ with gr.Blocks() as any2video_block:
     ordered_keys = sorted(inputs_map.keys())
     ordered_components = [inputs_map[key] for key in ordered_keys]
 
-    def any2video_wrapper(*args):
+    def imgedit_wrapper(*args):
         """
         Accepts all UI inputs, zips them with keys, and calls the
-        main any2video function.
+        main imgedit function.
         """
         # This line programmatically creates the dictionary.
         params = dict(zip(ordered_keys, args))
-        yield from any2video(params)
+        yield from imgedit(params)
 
     # Generate
     gen_btn.click(
-        any2video_wrapper,
+        imgedit_wrapper,
         inputs=ordered_components,
-        outputs=[command, progress_slider, progress_textbox, stats,
-                 video_final]
+        outputs=[command, progress_slider, progress_textbox, stats, img_final]
     )
     kill_btn.click(
         subprocess_manager.kill_subprocess,
         inputs=[],
         outputs=[]
     )
-
-    # Interactive Bindings
     reload_taesd_btn.click(
         reload_models, inputs=[taesd_dir_txt], outputs=[taesd_model]
     )
@@ -284,18 +224,5 @@ with gr.Blocks() as any2video_block:
         ]
     )
 
-    flow_shift_bool.change(
-        partial(update_interactivity, len(flow_shift_comp)),
-        inputs=flow_shift_bool,
-        outputs=flow_shift_comp
-    )
-
-    pprompt_any2video = prompts_ui['in_pprompt']
-    nprompt_any2video = prompts_ui['in_nprompt']
-    width_any2video = generation_settings_ui['in_width']
-    height_any2video = generation_settings_ui['in_height']
-    steps_any2video = generation_settings_ui['in_steps']
-    sampling_any2video = generation_settings_ui['in_sampling']
-    scheduler_any2video = generation_settings_ui['in_scheduler']
-    cfg_any2video = generation_settings_ui['in_cfg']
-    seed_any2video = inputs_map['in_seed']
+    width_imgedit = generation_settings_ui['in_width']
+    height_imgedit = generation_settings_ui['in_height']

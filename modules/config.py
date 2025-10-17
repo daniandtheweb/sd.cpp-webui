@@ -20,6 +20,7 @@ DEFAULT_SETTINGS = {
     'cnnet_dir': os.path.join(CURRENT_DIR, "models/controlnet/"),
     'txt2img_dir': os.path.join(CURRENT_DIR, "outputs/txt2img/"),
     'img2img_dir': os.path.join(CURRENT_DIR, "outputs/img2img/"),
+    'imgedit_dir': os.path.join(CURRENT_DIR, "outputs/imgedit/"),
     'any2video_dir': os.path.join(CURRENT_DIR, "outputs/any2video/"),
     'upscale_dir': os.path.join(CURRENT_DIR, "outputs/upscale/"),
     'def_type': "Default",
