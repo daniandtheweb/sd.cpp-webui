@@ -20,6 +20,7 @@ from modules.ui.generation_settings import (
 )
 from modules.ui.upscale import create_upscl_ui
 from modules.ui.controlnet import create_cnnet_ui
+from modules.ui.eta import create_eta_ui
 from modules.ui.advanced_settings import create_extras_ui
 from modules.ui.environment import create_env_ui
 from modules.ui.experimental import create_experimental_ui
@@ -124,17 +125,18 @@ with gr.Blocks() as any2video_block:
             flow_shift_comp = [flow_shift]
 
             with gr.Row():
-                seed = gr.Number(
-                    label="Seed",
-                    minimum=-1,
-                    maximum=10**16,
-                    value=-1,
-                    scale=5
-                )
-                random_seed_btn = gr.Button(
-                    value=RANDOM_SYMBOL, scale=1
-                )
-                inputs_map['in_seed'] = seed
+                with gr.Group():
+                    seed = gr.Number(
+                        label="Seed",
+                        minimum=-1,
+                        maximum=10**16,
+                        value=-1,
+                        scale=5
+                    )
+                    random_seed_btn = gr.Button(
+                        value=RANDOM_SYMBOL, scale=1
+                    )
+                    inputs_map['in_seed'] = seed
 
             clip_skip = gr.Slider(
                 label="CLIP skip",
@@ -152,6 +154,10 @@ with gr.Blocks() as any2video_block:
             # ControlNet
             cnnet_ui = create_cnnet_ui()
             inputs_map.update(cnnet_ui)
+
+            # ETA
+            eta_ui = create_eta_ui()
+            inputs_map.update(eta_ui)
 
             # Extra Settings
             extras_ui = create_extras_ui()

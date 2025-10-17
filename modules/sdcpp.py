@@ -284,6 +284,10 @@ class Txt2ImgRunner(CommandRunner):
             '--timestep-shift': (self._get_param('in_timestep_shift')
                                  if self._get_param('in_timestep_shift_bool')
                                  else None),
+            # ETA for DDIM and TCD
+            '--eta': (self._get_param('in_eta')
+                      if self._get_param('in_eta_bool')
+                      else None),
             # Upscale
             '--upscale-model': (self._get_param('f_upscl')
                                 if self._get_param('in_upscl_bool')

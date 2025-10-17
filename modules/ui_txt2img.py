@@ -24,6 +24,7 @@ from modules.ui.upscale import create_upscl_ui
 from modules.ui.controlnet import create_cnnet_ui
 from modules.ui.chroma import create_chroma_ui
 from modules.ui.timestep_shift import create_timestep_shift_ui
+from modules.ui.eta import create_eta_ui
 from modules.ui.advanced_settings import create_extras_ui
 from modules.ui.environment import create_env_ui
 from modules.ui.experimental import create_experimental_ui
@@ -92,17 +93,18 @@ with gr.Blocks() as txt2img_block:
             inputs_map.update(generation_settings_ui)
 
             with gr.Row():
-                seed = gr.Number(
-                    label="Seed",
-                    minimum=-1,
-                    maximum=10**16,
-                    value=-1,
-                    scale=5
-                )
-                random_seed_btn = gr.Button(
-                    value=RANDOM_SYMBOL, scale=1
-                )
-                inputs_map['in_seed'] = seed
+                with gr.Group():
+                    seed = gr.Number(
+                        label="Seed",
+                        minimum=-1,
+                        maximum=10**16,
+                        value=-1,
+                        scale=5
+                    )
+                    random_seed_btn = gr.Button(
+                        value=RANDOM_SYMBOL, scale=1
+                    )
+                    inputs_map['in_seed'] = seed
 
             clip_skip = gr.Slider(
                 label="CLIP skip",
@@ -128,6 +130,10 @@ with gr.Blocks() as txt2img_block:
             # Timestep shift
             timestep_shift_ui = create_timestep_shift_ui()
             inputs_map.update(timestep_shift_ui)
+
+            # ETA
+            eta_ui = create_eta_ui()
+            inputs_map.update(eta_ui)
 
             # Extra Settings
             extras_ui = create_extras_ui()
