@@ -225,13 +225,17 @@ class Txt2ImgRunner(CommandRunner):
             self.preview_path = self.output_path + "preview.png"
 
         options = {
+            # Weight type
+            '--type': (self._get_param('in_model_type')
+                       if self._get_param('in_model_type') != "Default"
+                       else None),
             # VAE
             '--vae': (self._get_param('f_ckpt_vae')
                       if self._get_param('in_diffusion_mode') == 0
                       else self._get_param('f_unet_vae')
                       if self._get_param('in_diffusion_mode') == 1
                       else None),
-            # SD1.x, SD2.x, SD-Turbo, SDXL, SDXL-Turbo
+            # SD1.x, SD2.x, SD-Turbo, SDXL, SDXL-Turbo, NitroFusion
             '--model': (self._get_param('f_ckpt_model')
                         if self._get_param('in_diffusion_mode') == 0
                         else None),
@@ -272,6 +276,10 @@ class Txt2ImgRunner(CommandRunner):
             '--flow-shift': (self._get_param('in_flow_shift')
                              if self._get_param('in_flow_shift_bool')
                              else None),
+            # Timestep shift for NitroFusion
+            '--timestep-shift': (self._get_param('in_timestep_shift')
+                                 if self._get_param('in_timestep_shift_bool')
+                                 else None),
             # Upscale
             '--upscale-model': (self._get_param('f_upscl')
                                 if self._get_param('in_upscl_bool')
@@ -279,10 +287,6 @@ class Txt2ImgRunner(CommandRunner):
             '--upscale-repeats': (self._get_param('in_upscl_rep')
                                   if self._get_param('in_upscl_bool')
                                   else None),
-            # Weight type
-            '--type': (self._get_param('in_model_type')
-                       if self._get_param('in_model_type') != "Default"
-                       else None),
             # ControlNet
             '--control-net': (self._get_param('f_cnnet')
                               if self._get_param('in_cnnet_bool')
