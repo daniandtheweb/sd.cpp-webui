@@ -15,14 +15,13 @@ This program acts primarily as a command generator for **stable-diffusion.cpp**,
 
 - SD1.x, SD2.x, SD-Turbo, SDXL, SDXL-Turbo, NitroFusion
 - SD3, SD3.5, Flux-dev, Flux-schnell, Chroma, Qwen Image
+- Flux Kontext, Qwen Image Edit
 - Wan2.1, Wan2.2
 - TAESD
 - PhotoMaker
 - ControlNet
 - Upscaling models
 - LoRAs and embeddings
-
-  Image edit models like Qwen Image Edit or Flux Kontext are work in progress.
 
 ## Installation and Running
 
