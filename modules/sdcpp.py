@@ -225,17 +225,20 @@ class Txt2ImgRunner(CommandRunner):
             self.preview_path = self.output_path + "preview.png"
 
         options = {
-            '--model': (self._get_param('f_ckpt_model')
-                        if self._get_param('in_diffusion_mode') == 0
-                        else None),
-            '--diffusion-model': (self._get_param('f_unet_model')
-                                  if self._get_param('in_diffusion_mode') == 1
-                                  else None),
+            # VAE
             '--vae': (self._get_param('f_ckpt_vae')
                       if self._get_param('in_diffusion_mode') == 0
                       else self._get_param('f_unet_vae')
                       if self._get_param('in_diffusion_mode') == 1
                       else None),
+            # SD1.x, SD2.x, SD-Turbo, SDXL, SDXL-Turbo
+            '--model': (self._get_param('f_ckpt_model')
+                        if self._get_param('in_diffusion_mode') == 0
+                        else None),
+            # SD3, SD3.5, Flux-dev, Flux-schnell, Chroma, Qwen Image
+            '--diffusion-model': (self._get_param('f_unet_model')
+                                  if self._get_param('in_diffusion_mode') == 1
+                                  else None),
             '--clip_g': (self._get_param('f_clip_g')
                          if self._get_param('in_diffusion_mode') == 1
                          else None),
@@ -248,26 +251,39 @@ class Txt2ImgRunner(CommandRunner):
             '--qwen2vl': (self._get_param('f_qwen2vl')
                           if self._get_param('in_diffusion_mode') == 1
                           else None),
+            # TAESD
             '--taesd': self._get_param('f_taesd'),
-            '--stacked-id-embd-dir': self._get_param('f_phtmkr'),
-            '--input-id-images-dir': (self._get_param('in_phtmkr_in')
-                                      if self._get_param('f_phtmkr')
+            # PhotoMaker
+            '--photo-maker': (self._get_param('f_phtmkr')
+                              if self._get_param('in_phtmkr_bool')
+                              else None),
+            '--pm-id-images-dir': (self._get_param('f_phtmkr_id')
+                                   if self._get_param('in_phtmkr_bool')
+                                   else None),
+            '--pm-id-embed-path': (self._get_param('f_phtmkr_emb')
+                                      if self._get_param('in_phtmkr_bool')
                                       else None),
+            '--pm-style-strength': (self._get_param('in_phtmkr_strength')
+                                    if self._get_param('in_phtmkr_bool')
+                                    else None),
             '--guidance': (self._get_param('in_guidance')
                            if self._get_param('in_guidance_bool')
                            else None),
             '--flow-shift': (self._get_param('in_flow_shift')
                              if self._get_param('in_flow_shift_bool')
                              else None),
+            # Upscale
             '--upscale-model': (self._get_param('f_upscl')
                                 if self._get_param('in_upscl_bool')
                                 else None),
             '--upscale-repeats': (self._get_param('in_upscl_rep')
                                   if self._get_param('in_upscl_bool')
                                   else None),
+            # Weight type
             '--type': (self._get_param('in_model_type')
                        if self._get_param('in_model_type') != "Default"
                        else None),
+            # ControlNet
             '--control-net': (self._get_param('f_cnnet')
                               if self._get_param('in_cnnet_bool')
                               else None),
@@ -281,9 +297,11 @@ class Txt2ImgRunner(CommandRunner):
                                      if self._get_param('in_enable_t5_mask')
                                      else None
                                      ),
+            # Prediction type override
             '--prediction': (self._get_param('in_predict')
                              if self._get_param('in_predict') != "Default"
                              else None),
+            # Preview
             '--preview': (self._get_param('in_preview_mode')
                           if is_preview_enabled
                           else None),
@@ -385,18 +403,17 @@ class Any2VideoRunner(CommandRunner):
         init_img = (self._get_param('in_img_inp')
                     or self._get_param('in_first_frame_inp'))
         options = {
-            '--diffusion-model': self._get_param('f_unet_model'),
+            # VAE
             '--vae': self._get_param('f_unet_vae'),
+            # Wan2.1, Wan2.2
+            '--diffusion-model': self._get_param('f_unet_model'),
             '--clip_vision': self._get_param('f_clip_vision_h'),
             '--t5xxl': self._get_param('f_umt5_xxl'),
             '--high-noise-diffusion-model': (
                 self._get_param('f_high_noise_model')
             ),
+            # TAESD
             '--taesd': self._get_param('f_taesd'),
-            '--stacked-id-embd-dir': self._get_param('f_phtmkr'),
-            '--input-id-images-dir': (self._get_param('in_phtmkr_in')
-                                      if self._get_param('f_phtmkr')
-                                      else None),
             '--init-img': init_img,
             '--end-img': self._get_param('in_last_frame_inp'),
             '--upscale-model': (self._get_param('f_upscl')
@@ -411,6 +428,7 @@ class Any2VideoRunner(CommandRunner):
             '--flow-shift': (self._get_param('in_flow_shift')
                              if self._get_param('in_flow_shift_bool')
                              else None),
+            # ControlNet
             '--control-net': (self._get_param('f_cnnet')
                               if self._get_param('in_cnnet_bool')
                               else None),

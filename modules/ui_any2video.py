@@ -73,32 +73,6 @@ with gr.Blocks() as any2video_block:
                     gr.ClearButton(taesd_model)
                 inputs_map['in_taesd'] = taesd_model
 
-        with gr.Row():
-            with gr.Group():
-                with gr.Row():
-                    phtmkr_model = gr.Dropdown(
-                        label="PhotoMaker",
-                        choices=get_models(config.get('phtmkr_dir')),
-                        value="",
-                        allow_custom_value=True,
-                        interactive=True
-                    )
-                with gr.Row():
-                    reload_phtmkr_btn = gr.Button(value=RELOAD_SYMBOL)
-                    gr.ClearButton(phtmkr_model)
-        with gr.Row():
-            with gr.Group():
-                with gr.Row():
-                    phtmkr_in = gr.Textbox(
-                        label="PhotoMaker images directory",
-                        value="",
-                        interactive=True
-                    )
-                with gr.Row():
-                    gr.ClearButton(phtmkr_in)
-                inputs_map['in_phtmkr'] = phtmkr_model
-                inputs_map['in_phtmkr_in'] = phtmkr_in
-
     # Prompts
     prompts_ui = create_prompts_ui()
     inputs_map.update(prompts_ui)
@@ -298,9 +272,6 @@ with gr.Blocks() as any2video_block:
     # Interactive Bindings
     reload_taesd_btn.click(
         reload_models, inputs=[taesd_dir_txt], outputs=[taesd_model]
-    )
-    reload_phtmkr_btn.click(
-        reload_models, inputs=[phtmkr_dir_txt], outputs=[phtmkr_model]
     )
     random_seed_btn.click(
         random_seed, inputs=[], outputs=[seed]

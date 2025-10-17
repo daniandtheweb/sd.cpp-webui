@@ -15,6 +15,7 @@ from modules.loader import (
 )
 from modules.ui.constants import RELOAD_SYMBOL, RANDOM_SYMBOL
 from modules.ui.models import create_img_model_sel_ui
+from modules.ui.photomaker import create_photomaker_ui
 from modules.ui.prompts import create_prompts_ui
 from modules.ui.generation_settings import (
     create_quant_ui, create_generation_settings_ui
@@ -43,7 +44,6 @@ with gr.Blocks() as txt2img_block:
     emb_dir_txt = gr.Textbox(value=config.get('emb_dir'), visible=False)
     lora_dir_txt = gr.Textbox(value=config.get('lora_dir'), visible=False)
     taesd_dir_txt = gr.Textbox(value=config.get('taesd_dir'), visible=False)
-    phtmkr_dir_txt = gr.Textbox(value=config.get('phtmkr_dir'), visible=False)
     upscl_dir_txt = gr.Textbox(value=config.get('upscl_dir'), visible=False)
     cnnet_dir_txt = gr.Textbox(value=config.get('cnnet_dir'), visible=False)
 
@@ -75,31 +75,9 @@ with gr.Blocks() as txt2img_block:
                     gr.ClearButton(taesd_model)
                 inputs_map['in_taesd'] = taesd_model
 
-        with gr.Row():
-            with gr.Group():
-                with gr.Row():
-                    phtmkr_model = gr.Dropdown(
-                        label="PhotoMaker",
-                        choices=get_models(config.get('phtmkr_dir')),
-                        value="",
-                        allow_custom_value=True,
-                        interactive=True
-                    )
-                with gr.Row():
-                    reload_phtmkr_btn = gr.Button(value=RELOAD_SYMBOL)
-                    gr.ClearButton(phtmkr_model)
-        with gr.Row():
-            with gr.Group():
-                with gr.Row():
-                    phtmkr_in = gr.Textbox(
-                        label="PhotoMaker images directory",
-                        value="",
-                        interactive=True
-                    )
-                with gr.Row():
-                    gr.ClearButton(phtmkr_in)
-        inputs_map['in_phtmkr'] = phtmkr_model
-        inputs_map['in_phtmkr_in'] = phtmkr_in
+        # PhotoMaker
+        photomaker_ui = create_photomaker_ui()
+        inputs_map.update(photomaker_ui)
 
     # Prompts
     prompts_ui = create_prompts_ui()
@@ -299,9 +277,6 @@ with gr.Blocks() as txt2img_block:
     )
     reload_taesd_btn.click(
         reload_models, inputs=[taesd_dir_txt], outputs=[taesd_model]
-    )
-    reload_phtmkr_btn.click(
-        reload_models, inputs=[phtmkr_dir_txt], outputs=[phtmkr_model]
     )
     random_seed_btn.click(
         random_seed, inputs=[], outputs=[seed]
