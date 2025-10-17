@@ -7,10 +7,22 @@ This program acts primarily as a command generator for **stable-diffusion.cpp**,
 ## Features
 
 - Minimal python dependencies (Gradio is the main one, no PyTorch required)
-- Supports all **stable-diffusion.cpp** features
+- Supports most **stable-diffusion.cpp** features (the missing ones are work in progress)
 - Built-in image gallery
 - Metadata reader
 
+## **stable-diffusion.cpp**'s supported models
+
+- SD1.x, SD2.x, SD-Turbo, SDXL, SDXL-Turbo, NitroFusion
+- SD3, SD3.5, Flux-dev, Flux-schnell, Chroma, Qwen Image
+- Wan2.1, Wan2.2
+- TAESD
+- PhotoMaker
+- ControlNet
+- Upscaling models
+- LoRAs and embeddings
+
+  Image edit models like Qwen Image Edit or Flux Kontext are work in progress.
 
 ## Installation and Running
 
