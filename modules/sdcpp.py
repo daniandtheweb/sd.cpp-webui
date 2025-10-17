@@ -32,8 +32,10 @@ class CommandRunner:
         """
         env_vars = {}
 
-        is_override_true = self.params.pop('env_vk_visible_override', False)
-        device_id = self.params.pop('env_GGML_VK_VISIBLE_DEVICES', None)
+        is_vk_override_true = self.params.pop('env_vk_visible_override', False)
+        vk_device_id = self.params.pop('env_GGML_VK_VISIBLE_DEVICES', None)
+        is_cuda_override_true = self.params.pop('env_cuda_visible_override', False)        
+        cuda_device_id = self.params.pop('env_CUDA_VISIBLE_DEVICES', None)
 
         for key in list(self.params.keys()):
             if key.startswith("env_"):
@@ -42,8 +44,10 @@ class CommandRunner:
                 if env_key not in env_vars:
                     env_vars[env_key] = value
 
-        if is_override_true and device_id is not None:
-            env_vars['GGML_VK_VISIBLE_DEVICES'] = device_id
+        if is_vk_override_true and vk_device_id is not None:
+            env_vars['GGML_VK_VISIBLE_DEVICES'] = vk_device_id
+        if is_cuda_override_true and cuda_device_id is not None:
+            env_vars['CUDA_VISIBLE_DEVICES'] = cuda_device_id
 
         return env_vars
 
