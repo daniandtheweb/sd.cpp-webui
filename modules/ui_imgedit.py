@@ -21,6 +21,7 @@ from modules.ui.generation_settings import (
 from modules.ui.upscale import create_upscl_ui
 from modules.ui.controlnet import create_cnnet_ui
 from modules.ui.eta import create_eta_ui
+from modules.ui.vae_tiling import create_vae_tiling_ui
 from modules.ui.advanced_settings import create_extras_ui
 from modules.ui.environment import create_env_ui
 from modules.ui.experimental import create_experimental_ui
@@ -106,9 +107,14 @@ with gr.Blocks() as imgedit_block:
             # ControlNet
             cnnet_ui = create_cnnet_ui()
             inputs_map.update(cnnet_ui)
+
             # ETA
             eta_ui = create_eta_ui()
             inputs_map.update(eta_ui)
+
+            # VAE Tiling
+            vae_tiling_ui = create_vae_tiling_ui()
+            inputs_map.update(vae_tiling_ui)
 
             # Extra Settings
             extras_ui = create_extras_ui()

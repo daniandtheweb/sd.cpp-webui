@@ -22,7 +22,6 @@ def create_extras_ui():
         )
         offload_to_cpu = gr.Checkbox(
             label="Offload to CPU")
-        vae_tiling = gr.Checkbox(label="VAE Tiling")
         vae_cpu = gr.Checkbox(label="VAE on CPU")
         clip_cpu = gr.Checkbox(label="CLIP on CPU")
         rng = gr.Dropdown(
@@ -58,7 +57,6 @@ def create_extras_ui():
     return {
         'in_threads': threads,
         'in_offload_to_cpu': offload_to_cpu,
-        'in_vae_tiling': vae_tiling,
         'in_vae_cpu': vae_cpu,
         'in_clip_cpu': clip_cpu,
         'in_rng': rng,

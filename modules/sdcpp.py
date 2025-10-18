@@ -312,8 +312,17 @@ class ImageGenerationRunner(CommandRunner):
                                    else None),
             '--chroma-t5-mask-pad': (self._get_param('in_t5_mask_pad')
                                      if self._get_param('in_enable_t5_mask')
-                                     else None
-                                     ),
+                                     else None),
+            # VAE Tiling
+            '--vae-tile-overlap': (self._get_param('in_vae_tile_overlap')
+                                   if self._get_param('in_vae_tiling')
+                                   else None),
+            '--vae-tile-size': (f"{size}x{size}"
+                                if self._get_param('in_vae_tiling') and (size := self._get_param('in_vae_tile_size'))
+                                else None),
+            '--vae-relative-tile-size': (f"{size}x{size}"
+                                         if self._get_param('in_vae_relative_bool') and (size := self._get_param('in_vae_relative_tile_size'))
+                                         else None),
             # Prediction type override
             '--prediction': (self._get_param('in_predict')
                              if self._get_param('in_predict') != "Default"
