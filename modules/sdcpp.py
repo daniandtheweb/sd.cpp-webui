@@ -235,6 +235,9 @@ class ImageGenerationRunner(CommandRunner):
             '--type': (self._get_param('in_model_type')
                        if self._get_param('in_model_type') != "Default"
                        else None),
+            '--tensor-type-rules': (self._get_param('in_tensor_type_rules')
+                                    if self._get_param('in_tensor_type_rules' != "")
+                                    else None),
             # VAE
             '--vae': (self._get_param('f_ckpt_vae')
                       if self._get_param('in_diffusion_mode') == 0
