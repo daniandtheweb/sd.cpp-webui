@@ -23,12 +23,14 @@ class SDOptionsCache:
     This class provides a robust and efficient way to retrieve and cache
     command-line options from the stable-diffusion.cpp executable's helpers
     output.
-    It uses file hashing to ensure the cache is always in sync with the binary.
+    It uses file hashes of both the sd binary and this script to ensure the
+    cache is always in sync.
 
     Attributes:
         SD_PATH: Full path to the SD binary.
+        SCRIPT_PATH: Full path to this Python script.
         SD: Executable name for subprocess calls (remains as before).
-        _CACHE_FILE: JSON file path to store cached options and binary hash.
+        _CACHE_FILE: JSON file path to store cached options and dependency hashes.
         _OPTIONS: List of SD command-line options to cache.
         _help_cache: Dictionary holding cached option values.
     """
@@ -39,6 +41,7 @@ class SDOptionsCache:
         """
         self.SD = exe_name()
         self.SD_PATH = self._resolve_sd_path()
+        self.SCRIPT_PATH = os.path.abspath(__file__)
 
         self._CACHE_FILE = "options_cache.json"
         self._OPTIONS = ["--sampling-method", "--scheduler", "--preview",
@@ -69,45 +72,27 @@ class SDOptionsCache:
             print(f"Failed to hash file {path}: {e}")
             return None
 
-    def _run_and_cache_help(self, sd_hash):
+    def _run_and_cache_help(self):
         """Runs the --help command, parses options, and caches them."""
         help_cache = {}
         try:
-            process = subprocess.Popen(
+            process = subprocess.run(
                 [self.SD, "--help"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                bufsize=1,
-                universal_newlines=True
+                capture_output=True,
+                text=True,
+                check=False
             )
-            found_options = set()
+            help_text = process.stdout
 
-            while True:
-                line = process.stdout.readline()
-                if not line:
-                    break
-
-                for option in self._OPTIONS:
-                    if option in found_options:
-                        continue
-
-                    match = re.search(
-                        fr"{re.escape(option)}.*\{{([^\}}]+)\}}", line
-                    )
-                    if match:
-                        help_cache[option] = [
-                            v.strip() for v in match.group(1).split(",")
-                        ]
-                        found_options.add(option)
-                        continue
-
-                if len(found_options) == len(self._OPTIONS):
-                    process.kill()
-                    break
-
-            process.stdout.close()
-            process.stderr.close()
-            process.wait()
+            for option in self._OPTIONS:
+                match = re.search(
+                    fr"{re.escape(option)}.*?\[([^\]]+)\]", help_text, re.DOTALL
+                )
+                if match:
+                    values_str = match.group(1).replace('\n', ' ')
+                    help_cache[option] = [
+                        v.strip() for v in values_str.split(',') if v.strip()
+                    ]
 
         except FileNotFoundError:
             print(
@@ -121,11 +106,16 @@ class SDOptionsCache:
             opt: help_cache.get(opt, []) for opt in self._OPTIONS
         }
 
+        sd_hash = self._hash_file(self.SD_PATH)
+        script_hash = self._hash_file(self.SCRIPT_PATH)
+
         try:
             with open(self._CACHE_FILE, "w", encoding="utf-8") as f:
                 json.dump(
                     {
-                        "sd_hash": sd_hash, "options": self._help_cache
+                        "sd_hash": sd_hash,
+                        "script_hash": script_hash,
+                        "options": self._help_cache
                     }, f, indent=2
                 )
         except (IOError, json.JSONEncodeError) as e:
@@ -133,28 +123,36 @@ class SDOptionsCache:
 
     def _load_help_text_sync(self, force_refresh=False):
         """Synchronously load SD --help output and cache options to JSON."""
-        sd_hash = self._hash_file(self.SD_PATH)
-
         if force_refresh:
-            self._run_and_cache_help(sd_hash)
+            self._run_and_cache_help()
             return
 
+        if not self.SD_PATH or not os.path.exists(self.SD_PATH):
+            self._run_and_cache_help()
+            return
+
+        cache_valid = False
         if os.path.exists(self._CACHE_FILE):
             try:
                 with open(self._CACHE_FILE, "r", encoding="utf-8") as f:
                     data = json.load(f)
-                    if data.get("sd_hash") == sd_hash:
-                        self._help_cache = data.get("options", {})
-                        if self._help_cache:
-                            return  # Successfull load from cache
+
+                current_sd_hash = self._hash_file(self.SD_PATH)
+                current_script_hash = self._hash_file(self.SCRIPT_PATH)
+
+                if (data.get("sd_hash") == current_sd_hash and
+                        data.get("script_hash") == current_script_hash):
+                    self._help_cache = data.get("options", {})
+                    if self._help_cache:
+                        cache_valid = True
+
             except (IOError, json.JSONDecodeError) as e:
                 print(
-                    f"Error reading cache file: {e}. "
-                    f"Re-running help command."
+                    f"Error reading cache file: {e}. Rebuilding cache."
                 )
 
-        # Fallback if cache is missing, invalid, or out of date
-        self._run_and_cache_help(sd_hash)
+        if not cache_valid:
+            self._run_and_cache_help()
 
     def _parse_help_option(self, option_name: str):
         """Return cached values for a given SD --help option."""
