@@ -7,34 +7,33 @@ import argparse
 
 import gradio as gr
 
-from modules.ui_txt2img import (
+from modules.txt2img_ui import (
     txt2img_block, pprompt_txt2img, nprompt_txt2img, width_txt2img,
     height_txt2img, steps_txt2img, sampling_txt2img, scheduler_txt2img,
     cfg_txt2img, seed_txt2img
 )
-from modules.ui_img2img import (
+from modules.img2img_ui import (
     img2img_block, pprompt_img2img, nprompt_img2img, width_img2img,
     height_img2img, steps_img2img, sampling_img2img, scheduler_img2img,
     cfg_img2img, seed_img2img, img_inp_img2img
 )
-from modules.ui_imgedit import (
+from modules.imgedit_ui import (
     imgedit_block, width_imgedit, height_imgedit, ref_img_imgedit
 )
-from modules.ui_any2video import (
+from modules.any2video_ui import (
     any2video_block, pprompt_any2video, nprompt_any2video, width_any2video,
     height_any2video, steps_any2video, sampling_any2video, scheduler_any2video,
     cfg_any2video, seed_any2video
 )
-from modules.ui_upscale import img_inp_upscale
-from modules.ui_gallery import (
+from modules.upscale_ui import upscale_block, img_inp_upscale
+from modules.gallery_ui import (
     gallery_block, cpy_2_txt2img_btn, cpy_2_img2img_btn, cpy_2_imgedit_btn,
     cpy_2_any2video_btn, cpy_2_upscale_btn, pprompt_info, nprompt_info,
     width_info, height_info, steps_info, sampler_info, scheduler_info,
     cfg_info, seed_info, path_info
 )
-from modules.ui_upscale import upscale_block
-from modules.ui_convert import convert_block
-from modules.ui_options import options_block
+from modules.convert_ui import convert_block
+from modules.options_ui import options_block
 from modules.config import ConfigManager
 
 
