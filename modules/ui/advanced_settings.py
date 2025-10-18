@@ -51,6 +51,10 @@ def create_extras_ui():
             label="Conv2D Direct for VAE",
             value=config.get('def_vae_conv_direct')
         )
+        force_sdxl_vae_conv_scale = gr.Checkbox(
+            label="Force conv scale on SDXL VAE",
+            value=False
+        )
         verbose = gr.Checkbox(label="Verbose")
 
     # Return the dictionary with all UI components
@@ -66,5 +70,6 @@ def create_extras_ui():
         'in_flash_attn': flash_attn,
         'in_diffusion_conv_direct': diffusion_conv_direct,
         'in_vae_conv_direct': vae_conv_direct,
+        'in_force_sdxl_vae_conv_scale': force_sdxl_vae_conv_scale,
         'in_verbose': verbose
     }

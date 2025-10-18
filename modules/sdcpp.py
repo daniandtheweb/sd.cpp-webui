@@ -357,6 +357,7 @@ class ImageGenerationRunner(CommandRunner):
                 self._get_param('in_diffusion_conv_direct')
             ),
             '--vae-conv-direct': self._get_param('in_vae_conv_direct'),
+            '--force-sdxl-vae-conv-scale': self._get_param('in_force_sdxl_vae_conv_scale'),
             '-v': self._get_param('in_verbose'),
             '--taesd-preview-only': (self._get_param('in_preview_taesd')
                                      if is_preview_enabled
