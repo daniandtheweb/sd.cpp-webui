@@ -270,10 +270,10 @@ class ImageGenerationRunner(CommandRunner):
             '--photo-maker': (self._get_param('f_phtmkr')
                               if self._get_param('in_phtmkr_bool')
                               else None),
-            '--pm-id-images-dir': (self._get_param('f_phtmkr_id')
+            '--pm-id-images-dir': (self._get_param('in_phtmkr_id')
                                    if self._get_param('in_phtmkr_bool')
                                    else None),
-            '--pm-id-embed-path': (self._get_param('f_phtmkr_emb')
+            '--pm-id-embed-path': (self._get_param('in_phtmkr_emb')
                                    if self._get_param('in_phtmkr_bool')
                                    else None),
             '--pm-style-strength': (self._get_param('in_phtmkr_strength')
