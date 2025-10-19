@@ -201,6 +201,27 @@ class CommandRunner:
 class ImageGenerationRunner(CommandRunner):
     """A common base for txt2img, img2img, and imgedit runners."""
 
+    def _get_model_options(self) -> Dict[str, Any]:
+        """Builds and returns a dictionary of model and VAE options."""
+        options = {}
+        diffusion_mode = self._get_param('in_diffusion_mode')
+        
+        if diffusion_mode == 0:
+            options['--model'] = self._get_param('f_ckpt_model')
+            options['--vae'] = self._get_param('f_ckpt_vae')
+        elif diffusion_mode == 1:
+            options['--diffusion-model'] = self._get_param('f_unet_model')
+            options['--vae'] = self._get_param('f_unet_vae')
+            options['--clip_g'] = self._get_param('f_clip_g')
+            options['--clip_l'] = self._get_param('f_clip_l')
+            options['--t5xxl'] = self._get_param('f_t5xxl')
+            options['--qwen2vl'] = self._get_param('f_qwen2vl')
+            options['--qwen2vl_vision'] = self._get_param('f_qwen2vl_vision')
+        
+        # Filter out any keys that have a None value before returning
+        return {k: v for k, v in options.items() if v is not None}
+
+
     def build_command(self, output_dir_key: str, subctrl_id: int):
         """Builds the common command for image generation."""
         self._resolve_paths()
@@ -231,6 +252,8 @@ class ImageGenerationRunner(CommandRunner):
             self.preview_path = self.output_path + "preview.png"
 
         options = {
+            # Models
+            **self._get_model_options(),
             # Weight type
             '--type': (self._get_param('in_model_type')
                        if self._get_param('in_model_type') != "Default"
@@ -238,53 +261,20 @@ class ImageGenerationRunner(CommandRunner):
             '--tensor-type-rules': (self._get_param('in_tensor_type_rules')
                                     if self._get_param('in_tensor_type_rules' != "")
                                     else None),
-            # VAE
-            '--vae': (self._get_param('f_ckpt_vae')
-                      if self._get_param('in_diffusion_mode') == 0
-                      else self._get_param('f_unet_vae')
-                      if self._get_param('in_diffusion_mode') == 1
-                      else None),
-            # SD1.x, SD2.x, SD-Turbo, SDXL, SDXL-Turbo, NitroFusion
-            '--model': (self._get_param('f_ckpt_model')
-                        if self._get_param('in_diffusion_mode') == 0
-                        else None),
-            # SD3, SD3.5, Flux-dev, Flux-schnell, Chroma, Qwen Image
-            '--diffusion-model': (self._get_param('f_unet_model')
-                                  if self._get_param('in_diffusion_mode') == 1
-                                  else None),
-            '--clip_g': (self._get_param('f_clip_g')
-                         if self._get_param('in_diffusion_mode') == 1
-                         else None),
-            '--clip_l': (self._get_param('f_clip_l')
-                         if self._get_param('in_diffusion_mode') == 1
-                         else None),
-            '--t5xxl': (self._get_param('f_t5xxl')
-                        if self._get_param('in_diffusion_mode') == 1
-                        else None),
-            '--qwen2vl': (self._get_param('f_qwen2vl')
-                          if self._get_param('in_diffusion_mode') == 1
-                          else None),
-            '--qwen2vl_vision': (self._get_param('f_qwen2vl_vision')
-                                 if self._get_param('in_diffusion_mode') == 1
-                                 else None),
             # TAESD
             '--taesd': self._get_param('f_taesd'),
             # PhotoMaker
-            '--photo-maker': (self._get_param('f_phtmkr')
-                              if self._get_param('in_phtmkr_bool')
-                              else None),
-            '--pm-id-images-dir': (self._get_param('in_phtmkr_id')
-                                   if self._get_param('in_phtmkr_bool')
-                                   else None),
-            '--pm-id-embed-path': (self._get_param('in_phtmkr_emb')
-                                   if self._get_param('in_phtmkr_bool')
-                                   else None),
-            '--pm-style-strength': (self._get_param('in_phtmkr_strength')
-                                    if self._get_param('in_phtmkr_bool')
-                                    else None),
+            **({
+                '--photo-maker': self._get_param('f_phtmkr'),
+                '--pm-id-images-dir': self._get_param('in_phtmkr_id'),
+                '--pm-id-embed-path': self._get_param('in_phtmkr_emb'),
+                '--pm-style-strength': self._get_param('in_phtmkr_strength')
+            } if self._get_param('in_phtmkr_bool') else {}),
+            # Guidance
             '--guidance': (self._get_param('in_guidance')
                            if self._get_param('in_guidance_bool')
                            else None),
+            # Flow Shift
             '--flow-shift': (self._get_param('in_flow_shift')
                              if self._get_param('in_flow_shift_bool')
                              else None),
@@ -297,49 +287,40 @@ class ImageGenerationRunner(CommandRunner):
                       if self._get_param('in_eta_bool')
                       else None),
             # Upscale
-            '--upscale-model': (self._get_param('f_upscl')
-                                if self._get_param('in_upscl_bool')
-                                else None),
-            '--upscale-repeats': (self._get_param('in_upscl_rep')
-                                  if self._get_param('in_upscl_bool')
-                                  else None),
+            **({
+                '--upscale-model': self._get_param('f_upscl'),
+                '--upscale-repeats': self._get_param('in_upscl_rep')
+            } if self._get_param('in_upscl_bool') else {}),
             # ControlNet
-            '--control-net': (self._get_param('f_cnnet')
-                              if self._get_param('in_cnnet_bool')
-                              else None),
-            '--control-image': (self._get_param('in_control_img')
-                                if self._get_param('in_cnnet_bool')
-                                else None),
-            '--control-strength': (self._get_param('in_control_strength')
-                                   if self._get_param('in_cnnet_bool')
-                                   else None),
+            **({
+                '--control-net': self._get_param('f_cnnet'),
+                '--control-image': self._get_param('in_control_img'),
+                '--control-strength': self._get_param('in_control_strength')
+            } if self._get_param('in_cnnet_bool') else {}),
+            # Chroma
             '--chroma-t5-mask-pad': (self._get_param('in_t5_mask_pad')
                                      if self._get_param('in_enable_t5_mask')
                                      else None),
             # VAE Tiling
-            '--vae-tile-overlap': (self._get_param('in_vae_tile_overlap')
-                                   if self._get_param('in_vae_tiling')
-                                   else None),
-            '--vae-tile-size': (f"{size}x{size}"
-                                if self._get_param('in_vae_tiling') and (size := self._get_param('in_vae_tile_size'))
-                                else None),
-            '--vae-relative-tile-size': (f"{size}x{size}"
-                                         if self._get_param('in_vae_relative_bool') and (size := self._get_param('in_vae_relative_tile_size'))
-                                         else None),
+            **({
+                '--vae-tile-overlap': self._get_param('in_vae_tile_overlap'),
+                '--vae-tile-size': (f"{size}x{size}"
+                                    if (size := self._get_param('in_vae_tile_size'))
+                                    else None),
+                '--vae-relative-tile-size': (f"{size}x{size}"
+                                             if self._get_param('in_vae_relative_bool') and (size := self._get_param('in_vae_relative_tile_size'))
+                                             else None),
+            } if self._get_param('in_vae_tiling') else {}),
             # Prediction type override
             '--prediction': (self._get_param('in_predict')
                              if self._get_param('in_predict') != "Default"
                              else None),
             # Preview
-            '--preview': (self._get_param('in_preview_mode')
-                          if is_preview_enabled
-                          else None),
-            '--preview-path': (self.preview_path
-                               if is_preview_enabled
-                               else None),
-            '--preview-interval': (self._get_param('in_preview_interval')
-                                   if is_preview_enabled
-                                   else None)
+            **({
+                '--preview': self._get_param('in_preview_mode'),
+                '--preview-path': self.preview_path,
+                '--preview-interval': self._get_param('in_preview_interval'),
+            } if is_preview_enabled else {})
         }
         self._add_options(options)
 
