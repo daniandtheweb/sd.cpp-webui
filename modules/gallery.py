@@ -380,7 +380,7 @@ class GalleryManager:
             self.selected_img_index_on_page = None
             self.selected_img_global_index = None
 
-            imgs, page_num, gallery_update = (
+            imgs, page_num, gallery_update, _ = (
                 self.reload_gallery(page_num=1)
             )
 
