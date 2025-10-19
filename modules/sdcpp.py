@@ -1,6 +1,7 @@
 """sd.cpp-webui - stable-diffusion.cpp command module"""
 
 import os
+from enum import IntEnum
 from typing import Dict, Any, Generator
 
 import gradio as gr
@@ -10,6 +11,11 @@ from modules.gallery import get_next_img
 from modules.shared_instance import (
     config, subprocess_manager, SD
 )
+
+
+class DiffusionMode(IntEnum):
+    CHECKPOINT = 0
+    UNET = 1
 
 
 class CommandRunner:
@@ -50,6 +56,16 @@ class CommandRunner:
             env_vars['CUDA_VISIBLE_DEVICES'] = cuda_device_id
 
         return env_vars
+
+    def _set_output_path(self, dir_key: str, subctrl_id: int, extension: str):
+        """Determines and sets the output path for the command."""
+        output_dir = config.get(dir_key)
+        filename = self._get_param('in_output')
+
+        if filename:
+            self.output_path = os.path.join(output_dir, f"{filename}.{extension}")
+        else:
+            self.output_path = os.path.join(output_dir, get_next_img(subctrl=subctrl_id))
 
     def _resolve_paths(self):
         """Resolves all model and directory paths from the config."""
@@ -206,10 +222,10 @@ class ImageGenerationRunner(CommandRunner):
         options = {}
         diffusion_mode = self._get_param('in_diffusion_mode')
         
-        if diffusion_mode == 0:
+        if diffusion_mode == DiffusionMode.CHECKPOINT:
             options['--model'] = self._get_param('f_ckpt_model')
             options['--vae'] = self._get_param('f_ckpt_vae')
-        elif diffusion_mode == 1:
+        elif diffusion_mode == DiffusionMode.UNET:
             options['--diffusion-model'] = self._get_param('f_unet_model')
             options['--vae'] = self._get_param('f_unet_vae')
             options['--clip_g'] = self._get_param('f_clip_g')
@@ -225,16 +241,7 @@ class ImageGenerationRunner(CommandRunner):
     def build_command(self, output_dir_key: str, subctrl_id: int):
         """Builds the common command for image generation."""
         self._resolve_paths()
-        self.output_path = (
-            os.path.join(
-                config.get(output_dir_key),
-                f"{self._get_param('in_output')}.png"
-            )
-            if self._get_param('in_output')
-            else os.path.join(
-                config.get(output_dir_key), get_next_img(subctrl=subctrl_id)
-            )
-        )
+        self._set_output_path(output_dir_key, subctrl_id, 'png')
 
         self.command.extend(['-p', self._get_param('in_pprompt', "")])
         if self._get_param('in_nprompt'):
@@ -259,7 +266,7 @@ class ImageGenerationRunner(CommandRunner):
                        if self._get_param('in_model_type') != "Default"
                        else None),
             '--tensor-type-rules': (self._get_param('in_tensor_type_rules')
-                                    if self._get_param('in_tensor_type_rules' != "")
+                                    if self._get_param('in_tensor_type_rules') != ""
                                     else None),
             # TAESD
             '--taesd': self._get_param('f_taesd'),
@@ -400,16 +407,7 @@ class Any2VideoRunner(CommandRunner):
 
     def build_command(self):
         self._resolve_paths()
-        self.output_path = (
-            os.path.join(
-                config.get('any2video_dir'),
-                f"{self._get_param('in_output')}.avi"
-            )
-            if self._get_param('in_output')
-            else os.path.join(
-                config.get('any2video_dir'), get_next_img(subctrl=3)
-            )
-        )
+        self._set_output_path('any2video_dir', 3, 'avi')
 
         self.command.extend(['-p', self._get_param('in_pprompt', "")])
         if self._get_param('in_nprompt'):
@@ -482,16 +480,7 @@ class Any2VideoRunner(CommandRunner):
 class UpscaleRunner(CommandRunner):
     def build_command(self):
         self._resolve_paths()
-        self.output_path = (
-            os.path.join(
-                config.get('upscale_dir'),
-                f"{self._get_param('in_output')}.png"
-            )
-            if self._get_param('in_output')
-            else os.path.join(
-                config.get('upscale_dir'), get_next_img(subctrl=4)
-            )
-        )
+        self._set_output_path('upscale_dir', 4, 'png')
 
         init_img = (self._get_param('in_img_inp')
                     or self._get_param('in_first_frame_inp'))
