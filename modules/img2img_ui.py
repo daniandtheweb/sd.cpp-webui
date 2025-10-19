@@ -108,24 +108,6 @@ with gr.Blocks()as img2img_block:
                 inputs_map['in_strength'] = strength
 
             with gr.Row():
-                style_ratio_bool = gr.Checkbox(
-                    label="Enable style-ratio",
-                    value=False
-                )
-                style_ratio = gr.Slider(
-                    label="Style ratio",
-                    minimum=0,
-                    maximum=100,
-                    step=1,
-                    value=20,
-                    interactive=False
-                )
-                inputs_map['in_style_ratio_bool'] = style_ratio_bool
-                inputs_map['in_style_ratio'] = style_ratio
-
-                style_comp = [style_ratio]
-
-            with gr.Row():
                 with gr.Group():
                     seed = gr.Number(
                         label="Seed",
@@ -347,12 +329,6 @@ with gr.Blocks()as img2img_block:
         partial(update_interactivity, len(cfg_comp)),
         inputs=img_cfg_bool,
         outputs=cfg_comp
-    )
-
-    style_ratio_bool.change(
-        partial(update_interactivity, len(style_comp)),
-        inputs=style_ratio_bool,
-        outputs=style_comp
     )
 
     pprompt_img2img = prompts_ui['in_pprompt']

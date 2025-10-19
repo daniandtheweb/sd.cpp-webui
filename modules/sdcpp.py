@@ -395,9 +395,6 @@ class Img2ImgRunner(ImageGenerationRunner):
             '--img-cfg-scale': (self._get_param('in_img_cfg')
                                 if self._get_param('in_img_cfg_bool')
                                 else None),
-            '--style-ratio': (self._get_param('in_style_ratio')
-                              if self._get_param('in_style_ratio_bool')
-                              else None),
         }
         self._add_options(options)
 
