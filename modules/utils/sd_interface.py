@@ -86,7 +86,7 @@ class SDOptionsCache:
 
             for option in self._OPTIONS:
                 match = re.search(
-                    fr"{re.escape(option)}.*?\[([^\]]+)\]", help_text, re.DOTALL
+                    fr"^\s*{re.escape(option)}\s.*?\[([^\]]+)\]", help_text, re.MULTILINE
                 )
                 if match:
                     values_str = match.group(1).replace('\n', ' ')
