@@ -98,14 +98,14 @@ with gr.Blocks()as img2img_block:
                 cfg_comp = [img_cfg]
 
             with gr.Row():
-                strenght = gr.Slider(
-                    label="Noise strenght",
+                strength = gr.Slider(
+                    label="Noise strength",
                     minimum=0,
                     maximum=1,
                     step=0.01,
                     value=0.75
                 )
-                inputs_map['in_strenght'] = strenght
+                inputs_map['in_strength'] = strength
 
             with gr.Row():
                 style_ratio_bool = gr.Checkbox(
