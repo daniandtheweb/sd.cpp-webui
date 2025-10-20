@@ -32,7 +32,22 @@ This program acts primarily as a command generator for **stable-diffusion.cpp**,
 
 ### Setup
 
-Just run [`sdcpp_webui.sh`](https://github.com/daniandtheweb/sd.cpp-webui/blob/master/docs/linux.md) for Linux/MacOS or [`sdcpp_webui_windows.ps1`](https://github.com/daniandtheweb/sd.cpp-webui/blob/master/docs/windows.md)(WIP) for Windows.
+- Detailed instructions for Linux/MacOS: [`sdcpp_webui.sh`](https://github.com/daniandtheweb/sd.cpp-webui/blob/master/docs/linux.md)
+- Detailed instructions for Windows: [`sdcpp_webui_windows.ps1`](https://github.com/daniandtheweb/sd.cpp-webui/blob/master/docs/windows.md)(WIP)
+
+- Quick Start for experienced users:
+
+  1. Clone the repository:
+  
+      ```bash
+      git clone https://github.com/daniandtheweb/sd.cpp-webui.git
+      ```
+
+  2. Obtain the `stable-diffusion.cpp` binary (sd for Linux/MacOS or sd.exe for Windows) by compiling or downloading it from the releases and place it in the main `sd.cpp-webui` folder.
+  
+  3. Run `sdcpp_webui.sh` if you're on Linux/MacOS or `sdcpp_webui_windows.ps1`(WIP) if you're on Windows.
+
+  4. Access the WebUI with the browser at `http://localhost:7860/`.
 
 
 <img width="2617" height="1828" alt="sdcpp_webui_screenshot" src="https://github.com/user-attachments/assets/1119195a-6c7c-483d-b475-d0ef6ae96fb0" />
