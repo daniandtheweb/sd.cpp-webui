@@ -38,6 +38,16 @@ Just run [`sdcpp_webui.sh`](https://github.com/daniandtheweb/sd.cpp-webui/blob/m
 <img width="2617" height="1828" alt="sdcpp_webui_screenshot" src="https://github.com/user-attachments/assets/1119195a-6c7c-483d-b475-d0ef6ae96fb0" />
 
 
+## Contributors
+
+Thank you to all the contributors!
+
+[![Contributors](https://contrib.rocks/image?repo=daniandtheweb/sd.cpp-webui)](https://github.com/daniandtheweb/sd.cpp-webui/graphs/contributors)
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=daniandtheweb/sd.cpp-webui&type=Date)](https://star-history.com/#daniandtheweb/sd.cpp-webui&Date)
+
 ## Credits
 
 - stable-diffusion.cpp - [https://github.com/leejet/stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp)
