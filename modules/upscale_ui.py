@@ -1,7 +1,8 @@
 """sd.cpp-webui - Upscale UI"""
 
-import gradio as gr
 from functools import partial
+
+import gradio as gr
 
 from modules.sdcpp import upscale
 from modules.utils.ui_handler import (

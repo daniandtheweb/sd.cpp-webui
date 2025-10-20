@@ -3,8 +3,8 @@
 import os
 import re
 import json
-from PIL import Image
 from typing import List, Tuple, Dict, Any, Optional
+from PIL import Image
 
 import gradio as gr
 
@@ -231,9 +231,9 @@ class GalleryManager:
         total_pages = (total_imgs + 15) // 16 or 1
 
         try:
-             page_num = int(page_num)
+            page_num = int(page_num)
         except (ValueError, TypeError):
-             page_num = 1
+            page_num = 1
 
         if page_num > total_pages:
             page_num = total_pages
@@ -356,7 +356,7 @@ class GalleryManager:
         if (not self.current_img_path or
                 not os.path.exists(self.current_img_path) or
                 self.selected_img_global_index is None):
-            imgs, page_num, gallery_update = (
+            imgs, page_num, gallery_update, _ = (
                 self.reload_gallery(page_num=self.page_num)
             )
             return (

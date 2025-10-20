@@ -1,7 +1,8 @@
 """sd.cpp-webui - Anything to Video UI"""
 
-import gradio as gr
 from functools import partial
+
+import gradio as gr
 
 from modules.sdcpp import any2video
 from modules.utils.utility import random_seed

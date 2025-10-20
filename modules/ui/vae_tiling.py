@@ -54,7 +54,7 @@ def create_vae_tiling_ui():
             partial(update_interactivity, len(vae_tile_comp)),
             inputs=vae_tiling,
             outputs=vae_tile_comp
-        ) 
+        )
 
         vae_relative_bool.change(
             partial(update_interactivity, 1),

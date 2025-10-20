@@ -40,7 +40,7 @@ class CommandRunner:
 
         is_vk_override_true = self.params.pop('env_vk_visible_override', False)
         vk_device_id = self.params.pop('env_GGML_VK_VISIBLE_DEVICES', None)
-        is_cuda_override_true = self.params.pop('env_cuda_visible_override', False)        
+        is_cuda_override_true = self.params.pop('env_cuda_visible_override', False)
         cuda_device_id = self.params.pop('env_CUDA_VISIBLE_DEVICES', None)
 
         for key in list(self.params.keys()):
@@ -221,7 +221,7 @@ class ImageGenerationRunner(CommandRunner):
         """Builds and returns a dictionary of model and VAE options."""
         options = {}
         diffusion_mode = self._get_param('in_diffusion_mode')
-        
+
         if diffusion_mode == DiffusionMode.CHECKPOINT:
             options['--model'] = self._get_param('f_ckpt_model')
             options['--vae'] = self._get_param('f_ckpt_vae')
@@ -233,7 +233,7 @@ class ImageGenerationRunner(CommandRunner):
             options['--t5xxl'] = self._get_param('f_t5xxl')
             options['--qwen2vl'] = self._get_param('f_qwen2vl')
             options['--qwen2vl_vision'] = self._get_param('f_qwen2vl_vision')
-        
+
         # Filter out any keys that have a None value before returning
         return {k: v for k, v in options.items() if v is not None}
 
@@ -315,7 +315,10 @@ class ImageGenerationRunner(CommandRunner):
                                     if (size := self._get_param('in_vae_tile_size'))
                                     else None),
                 '--vae-relative-tile-size': (f"{size}x{size}"
-                                             if self._get_param('in_vae_relative_bool') and (size := self._get_param('in_vae_relative_tile_size'))
+                                             if (
+                                             self._get_param('in_vae_relative_bool') and
+                                             (size := self._get_param('in_vae_relative_tile_size'))
+                                             )
                                              else None),
             } if self._get_param('in_vae_tiling') else {}),
             # Prediction type override
@@ -358,7 +361,7 @@ class ImageGenerationRunner(CommandRunner):
 
 
 class Txt2ImgRunner(ImageGenerationRunner):
-    """Builds and runs the txt2img command."""
+    """Builds the txt2img command."""
     def build_command(self):
         super().build_command(
             output_dir_key='txt2img_dir', subctrl_id=0
@@ -366,7 +369,7 @@ class Txt2ImgRunner(ImageGenerationRunner):
 
 
 class Img2ImgRunner(ImageGenerationRunner):
-    """Builds and runs the img2img command."""
+    """Builds the img2img command."""
     def build_command(self):
         super().build_command(
             output_dir_key='img2img_dir', subctrl_id=1
@@ -388,7 +391,7 @@ class Img2ImgRunner(ImageGenerationRunner):
 
 
 class ImgEditRunner(ImageGenerationRunner):
-    """Builds and runs the image editing (instruct) command."""
+    """Builds the image editing (instruct) command."""
     def build_command(self):
         super().build_command(
             output_dir_key='imgedit_dir', subctrl_id=2
@@ -397,6 +400,7 @@ class ImgEditRunner(ImageGenerationRunner):
 
 
 class Any2VideoRunner(CommandRunner):
+    """Builds the any2video command."""
     def _add_base_args(self):
         # Override to add video-specific base arguments
         super()._add_base_args()
@@ -478,6 +482,7 @@ class Any2VideoRunner(CommandRunner):
 
 
 class UpscaleRunner(CommandRunner):
+    """Builds the upscale command."""
     def build_command(self):
         self._resolve_paths()
         self._set_output_path('upscale_dir', 4, 'png')
@@ -502,7 +507,7 @@ class UpscaleRunner(CommandRunner):
 
 
 def txt2img(params: dict) -> Generator:
-    """Creates and runs a Txt2ImgRunner from a params dictionary."""
+    """Creates and runs a Txt2ImgRunner."""
     runner = Txt2ImgRunner(mode="img_gen", params=params)
     runner.build_command()
     yield from runner.run()

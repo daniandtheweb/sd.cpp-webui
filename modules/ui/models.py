@@ -8,7 +8,9 @@ from modules.loader import (
 )
 from .constants import RELOAD_SYMBOL
 
-def _create_model_dropdown_widget(label, choices_dir_key, default_value_key, reload_input_component):
+def _create_model_dropdown_widget(
+        label, choices_dir_key, default_value_key, reload_input_component
+):
     """
     Creates a standardized gr.Group containing a Dropdown, Reload button, and Clear button.
 
@@ -16,7 +18,8 @@ def _create_model_dropdown_widget(label, choices_dir_key, default_value_key, rel
         label (str): The label for the gr.Dropdown.
         choices_dir_key (str): The config key for the directory path to get model choices.
         default_value_key (str): The config key for the default model selection.
-        reload_input_component (gr.Textbox): The hidden textbox holding the path for the reload button.
+        reload_input_component (gr.Textbox): The hidden textbox holding the path for
+                                             the reload button.
 
     Returns:
         tuple: A tuple containing the created (gr.Dropdown, gr.Button)
@@ -44,7 +47,7 @@ def _create_model_dropdown_widget(label, choices_dir_key, default_value_key, rel
                 dropdown,
                 scale=1
             )
-    return dropdown, reload_btn
+    return dropdown
 
 def create_ckpt_model_sel_ui():
     """Create the checkpoint model selection UI using a helper for clarity"""
@@ -53,14 +56,14 @@ def create_ckpt_model_sel_ui():
 
     with gr.Row():
         with gr.Column():
-            ckpt_model, reload_ckpt_btn = _create_model_dropdown_widget(
+            ckpt_model = _create_model_dropdown_widget(
                 label="Checkpoint Model",
                 choices_dir_key='ckpt_dir',
                 default_value_key='def_ckpt',
                 reload_input_component=ckpt_dir_txt
             )
         with gr.Column():
-            ckpt_vae, reload_vae_btn = _create_model_dropdown_widget(
+            ckpt_vae = _create_model_dropdown_widget(
                 label="Checkpoint VAE",
                 choices_dir_key='vae_dir',
                 default_value_key='def_ckpt_vae',
@@ -80,14 +83,14 @@ def create_unet_model_sel_ui():
 
     with gr.Row():
         with gr.Column():
-            unet_model, reload_unet_btn = _create_model_dropdown_widget(
+            unet_model = _create_model_dropdown_widget(
                 label="UNET Model",
                 choices_dir_key='unet_dir',
                 default_value_key='def_unet',
                 reload_input_component=unet_dir_txt
             )
         with gr.Column():
-            unet_vae, reload_unet_vae_btn = _create_model_dropdown_widget(
+            unet_vae = _create_model_dropdown_widget(
                 label="UNET VAE",
                 choices_dir_key='vae_dir',
                 default_value_key='def_unet_vae',
@@ -95,35 +98,35 @@ def create_unet_model_sel_ui():
             )
     with gr.Row():
         with gr.Column():
-            clip_g, reload_clip_g_btn = _create_model_dropdown_widget(
+            clip_g = _create_model_dropdown_widget(
                 label="clip_g",
                 choices_dir_key='clip_dir',
                 default_value_key='def_clip_g',
                 reload_input_component=clip_dir_txt
             )
         with gr.Column():
-            clip_l, reload_clip_l_btn = _create_model_dropdown_widget(
+            clip_l = _create_model_dropdown_widget(
                 label="clip_l",
                 choices_dir_key='clip_dir',
                 default_value_key='def_clip_l',
                 reload_input_component=clip_dir_txt
             )
         with gr.Column():
-            t5xxl, reload_t5xxl_btn = _create_model_dropdown_widget(
+            t5xxl = _create_model_dropdown_widget(
                 label="t5xxl",
                 choices_dir_key='clip_dir',
                 default_value_key='def_t5xxl',
                 reload_input_component=clip_dir_txt
             )
         with gr.Column():
-            qwen2vl, reload_qwen2vl_btn = _create_model_dropdown_widget(
+            qwen2vl = _create_model_dropdown_widget(
                 label="qwen2vl",
                 choices_dir_key='clip_dir',
                 default_value_key='def_qwen2vl',
                 reload_input_component=clip_dir_txt
             )
         with gr.Column():
-            qwen2vl_vision, reload_qwen2vl_vision_btn = _create_model_dropdown_widget(
+            qwen2vl_vision = _create_model_dropdown_widget(
                 label="qwen2vl_vision",
                 choices_dir_key='clip_dir',
                 default_value_key='def_qwen2vl_vision',
@@ -171,14 +174,14 @@ def create_video_model_sel_ui():
 
     with gr.Row():
         with gr.Column():
-            unet_model, reload_unet_btn = _create_model_dropdown_widget(
+            unet_model = _create_model_dropdown_widget(
                 label="UNET Model",
                 choices_dir_key='unet_dir',
                 default_value_key='def_unet',
                 reload_input_component=unet_dir_txt
             )
         with gr.Column():
-            unet_vae, reload_unet_vae_btn = _create_model_dropdown_widget(
+            unet_vae = _create_model_dropdown_widget(
                 label="UNET VAE",
                 choices_dir_key='vae_dir',
                 default_value_key='def_unet_vae',
@@ -186,14 +189,14 @@ def create_video_model_sel_ui():
             )
     with gr.Row():
         with gr.Column():
-            clip_vision_h, reload_clip_vision_h_btn = _create_model_dropdown_widget(
+            clip_vision_h = _create_model_dropdown_widget(
                 label="clip_vision_h",
                 choices_dir_key='clip_dir',
                 default_value_key='def_clip_vision_h',
                 reload_input_component=clip_dir_txt
             )
         with gr.Column():
-            umt5_xxl, reload_umt5_xxl_btn = _create_model_dropdown_widget(
+            umt5_xxl = _create_model_dropdown_widget(
                 label="umt5_xxl",
                 choices_dir_key='clip_dir',
                 default_value_key='def_umt5_xxl',
@@ -203,7 +206,7 @@ def create_video_model_sel_ui():
         with gr.Accordion(
             label="High Noise", open=False
         ):
-            high_noise_model, reload_high_noise_model = _create_model_dropdown_widget(
+            high_noise_model = _create_model_dropdown_widget(
                 label="high_noise_model",
                 choices_dir_key='unet_dir',
                 default_value_key=None,

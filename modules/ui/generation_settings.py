@@ -168,4 +168,3 @@ def create_generation_settings_ui(unet_mode: bool = False):
         'in_flow_shift_bool': flow_shift_bool,
         'in_flow_shift': flow_shift
     }
-

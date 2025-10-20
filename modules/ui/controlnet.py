@@ -83,4 +83,3 @@ def create_cnnet_ui():
         'in_cnnet_cpu': cnnet_cpu,
         'in_canny': canny
     }
-

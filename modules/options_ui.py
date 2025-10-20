@@ -2,24 +2,24 @@
 
 import gradio as gr
 
-from modules.shared_instance import config
+from modules.shared_instance import (
+    config, sd_options
+)
 from modules.loader import get_models
 from modules.ui.constants import (
     RELOAD_SYMBOL, SAMPLERS, SCHEDULERS, PREDICTION
 )
 from modules.ui.generation_settings import create_quant_ui
 from modules.ui.folder_settings import create_folders_opt_ui
-from modules.utils.sd_interface import SDOptionsCache
-
-
-sd_options = SDOptionsCache()
 
 
 def refresh_all_options():
+    """Updates the available options from the sd executable."""
     sd_options.refresh()
     return [
         gr.update(choices=sd_options.get_opt("samplers")),
-        gr.update(choices=sd_options.get_opt("schedulers"))
+        gr.update(choices=sd_options.get_opt("schedulers")),
+        gr.update(choices=sd_options.get_opt("prediction"))
     ]
 
 
@@ -367,5 +367,5 @@ with gr.Blocks() as options_block:
     refresh_opt.click(
         refresh_all_options,
         inputs=[],
-        outputs=[sampling, scheduler]
+        outputs=[sampling, scheduler, predict]
     )

@@ -1,7 +1,8 @@
 """sd.cpp-webui - Image to image UI"""
 
-import gradio as gr
 from functools import partial
+
+import gradio as gr
 
 from modules.sdcpp import img2img
 from modules.utils.utility import random_seed
