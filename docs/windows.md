@@ -58,7 +58,28 @@
     cd sd.cpp-webui
     ```
 
-3. Execute the launch script, this will automatically create a virtual environment and install all the necessary Python packages:
+3. Obtain the `stable-diffusion.cpp` binary:
+
+    - Compile from source:
+
+       1. Obtain the source code:
+
+           ```bash
+           git clone https://github.com/leejet/stable-diffusion.cpp.git
+           ```
+
+       2. Compile following the instructions from `stable-diffusion.cpp`'s repository.
+
+       3. Copy the compiled `sd.exe` binary to the main `sd.cpp_webui` directory.
+
+    - Download a precompiled binary:
+
+       1. Download a precompiled release from the Releases section of `stable-diffusion.cpp`'s repository.
+
+       2. Copy the `sd.exe` binary to the main `sd.cpp_webui` directory.
+
+
+4. Execute the launch script, this will automatically create a virtual environment and install all the necessary Python packages:
 
     ```powershell
     .\sdcpp_webui_windows.ps1 --autostart
