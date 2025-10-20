@@ -32,7 +32,7 @@ This program acts primarily as a command generator for **stable-diffusion.cpp**,
 
 ### Setup
 
-Just run [`sdcpp_webui.sh`](https://github.com/daniandtheweb/sd.cpp-webui/blob/main/docs/linux.md) for Linux/MacOS or [`sdcpp_webui_windows.ps1`](https://github.com/daniandtheweb/sd.cpp-webui/blob/main/docs/windows.md) for Windows.
+Just run [`sdcpp_webui.sh`](https://github.com/daniandtheweb/sd.cpp-webui/blob/master/docs/linux.md) for Linux/MacOS or [`sdcpp_webui_windows.ps1`](https://github.com/daniandtheweb/sd.cpp-webui/blob/master/docs/windows.md) for Windows.
 
 
 ![swappy-20240904-145835](https://github.com/user-attachments/assets/78c52f9e-f6f7-454d-aa77-b3288571fe4e)
