@@ -6,6 +6,10 @@ QUANTS = [
     "Default", "f32", "f16", "q8_0", "q6_K", "q5_K", "q5_1",
     "q5_0", "q4_K", "q4_1", "q4_0", "q3_K", "q2_K"
 ]
+FIELDS = [
+    "pprompt", "nprompt", "width", "height", "steps",
+    "sampling", "scheduler", "cfg", "seed"
+]
 SAMPLERS = sd_options.get_opt("samplers")
 SCHEDULERS = sd_options.get_opt("schedulers")
 MODELS = [

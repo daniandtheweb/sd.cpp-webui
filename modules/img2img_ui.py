@@ -33,6 +33,7 @@ from modules.ui.advanced_settings import create_extras_ui
 from modules.ui.environment import create_env_ui
 from modules.ui.experimental import create_experimental_ui
 
+img2img_params = {}
 
 with gr.Blocks()as img2img_block:
     inputs_map = {}
@@ -332,12 +333,12 @@ with gr.Blocks()as img2img_block:
         outputs=cfg_comp
     )
 
-    pprompt_img2img = prompts_ui['in_pprompt']
-    nprompt_img2img = prompts_ui['in_nprompt']
-    width_img2img = generation_settings_ui['in_width']
-    height_img2img = generation_settings_ui['in_height']
-    steps_img2img = generation_settings_ui['in_steps']
-    sampling_img2img = generation_settings_ui['in_sampling']
-    scheduler_img2img = generation_settings_ui['in_scheduler']
-    cfg_img2img = generation_settings_ui['in_cfg']
-    seed_img2img = inputs_map['in_seed']
+    img2img_params['pprompt'] = prompts_ui['in_pprompt']
+    img2img_params['nprompt'] = prompts_ui['in_nprompt']
+    img2img_params['width'] = generation_settings_ui['in_width']
+    img2img_params['height'] = generation_settings_ui['in_height']
+    img2img_params['steps'] = generation_settings_ui['in_steps']
+    img2img_params['sampling'] = generation_settings_ui['in_sampling']
+    img2img_params['scheduler'] = generation_settings_ui['in_scheduler']
+    img2img_params['cfg'] = generation_settings_ui['in_cfg']
+    img2img_params['seed'] = inputs_map['in_seed']

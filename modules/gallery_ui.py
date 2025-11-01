@@ -5,6 +5,7 @@ import gradio as gr
 from modules.gallery import GalleryManager
 
 from modules.shared_instance import config
+from modules.ui.constants import FIELDS
 
 
 gallery_manager = GalleryManager(
@@ -15,6 +16,7 @@ gallery_manager = GalleryManager(
     config.get('upscale_dir')
 )
 
+info_params = {}
 
 with gr.Blocks() as gallery_block:
     # Controls
@@ -95,7 +97,7 @@ with gr.Blocks() as gallery_block:
 
         with gr.Column():
             # Positive prompts
-            pprompt_info = gr.Textbox(
+            info_params['pprompt'] = gr.Textbox(
                 label="Positive prompt:",
                 value="",
                 interactive=False,
@@ -105,7 +107,7 @@ with gr.Blocks() as gallery_block:
                 max_lines=4
             )
             # Negative prompts
-            nprompt_info = gr.Textbox(
+            info_params['nprompt'] = gr.Textbox(
                 label="Negative prompt:",
                 value="",
                 interactive=False,
@@ -116,7 +118,7 @@ with gr.Blocks() as gallery_block:
             )
             with gr.Row():
                 # Width
-                width_info = gr.Number(
+                info_params['width'] = gr.Number(
                     label="Width",
                     value=None,
                     interactive=False,
@@ -124,7 +126,7 @@ with gr.Blocks() as gallery_block:
                     min_width=150
                 )
                 # Height
-                height_info = gr.Number(
+                info_params['height'] = gr.Number(
                     label="Height",
                     value=None,
                     interactive=False,
@@ -132,7 +134,7 @@ with gr.Blocks() as gallery_block:
                     min_width=150
                 )
             # Steps
-            steps_info = gr.Number(
+            info_params['steps'] = gr.Number(
                 label="Steps",
                 value=None,
                 interactive=False,
@@ -140,7 +142,7 @@ with gr.Blocks() as gallery_block:
                 min_width=150
             )
             # Sampler
-            sampler_info = gr.Textbox(
+            info_params['sampling'] = gr.Textbox(
                 label="Sampler",
                 value="",
                 interactive=False,
@@ -149,7 +151,7 @@ with gr.Blocks() as gallery_block:
                 show_copy_button=True,
                 max_lines=1
             )
-            scheduler_info = gr.Textbox(
+            info_params['scheduler'] = gr.Textbox(
                 label="Scheduler",
                 value="",
                 interactive=False,
@@ -160,7 +162,7 @@ with gr.Blocks() as gallery_block:
             )
             with gr.Row():
                 # CFG
-                cfg_info = gr.Number(
+                info_params['cfg'] = gr.Number(
                     label="CFG",
                     value=None,
                     interactive=False,
@@ -168,7 +170,7 @@ with gr.Blocks() as gallery_block:
                     min_width=150
                 )
                 # Seed
-                seed_info = gr.Number(
+                info_params['seed'] = gr.Number(
                     label="Seed",
                     value=None,
                     interactive=False,
@@ -207,13 +209,12 @@ with gr.Blocks() as gallery_block:
             del_img = gr.Button(
                 value="Delete", variant="stop")
 
+    param_ctrls = [info_params[f] for f in FIELDS]
     # Interactive bindings
     gallery.select(
         gallery_manager.get_img_info,
         inputs=[],
-        outputs=[pprompt_info, nprompt_info, width_info, height_info,
-                 steps_info, sampler_info, scheduler_info, cfg_info,
-                 seed_info, path_info, img_info_txt]
+        outputs=param_ctrls + [path_info, img_info_txt]
     )
     txt2img_btn.click(
         gallery_manager.reload_gallery,
@@ -273,8 +274,6 @@ with gr.Blocks() as gallery_block:
     del_img.click(
         gallery_manager.delete_img,
         inputs=[],
-        outputs=[gallery, page_num_select, gallery,
-                 pprompt_info, nprompt_info, width_info, height_info,
-                 steps_info, sampler_info, scheduler_info, cfg_info,
-                 seed_info, path_info, img_info_txt]
+        outputs=[gallery, page_num_select, gallery] + param_ctrls
+                + [path_info, img_info_txt]
     )

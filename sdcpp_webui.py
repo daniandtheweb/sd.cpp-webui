@@ -8,33 +8,26 @@ import argparse
 import gradio as gr
 
 from modules.txt2img_ui import (
-    txt2img_block, pprompt_txt2img, nprompt_txt2img, width_txt2img,
-    height_txt2img, steps_txt2img, sampling_txt2img, scheduler_txt2img,
-    cfg_txt2img, seed_txt2img
+    txt2img_block, txt2img_params
 )
 from modules.img2img_ui import (
-    img2img_block, pprompt_img2img, nprompt_img2img, width_img2img,
-    height_img2img, steps_img2img, sampling_img2img, scheduler_img2img,
-    cfg_img2img, seed_img2img, img_inp_img2img
+    img2img_block, img2img_params, img_inp_img2img
 )
 from modules.imgedit_ui import (
     imgedit_block, width_imgedit, height_imgedit, ref_img_imgedit
 )
 from modules.any2video_ui import (
-    any2video_block, pprompt_any2video, nprompt_any2video, width_any2video,
-    height_any2video, steps_any2video, sampling_any2video, scheduler_any2video,
-    cfg_any2video, seed_any2video
+    any2video_block, any2video_params
 )
 from modules.upscale_ui import upscale_block, img_inp_upscale
 from modules.gallery_ui import (
     gallery_block, cpy_2_txt2img_btn, cpy_2_img2img_btn, cpy_2_imgedit_btn,
-    cpy_2_any2video_btn, cpy_2_upscale_btn, pprompt_info, nprompt_info,
-    width_info, height_info, steps_info, sampler_info, scheduler_info,
-    cfg_info, seed_info, path_info
+    cpy_2_any2video_btn, cpy_2_upscale_btn, info_params, path_info
 )
 from modules.convert_ui import convert_block
 from modules.options_ui import options_block
 from modules.config import ConfigManager
+from modules.ui.constants import FIELDS
 
 
 os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
@@ -106,46 +99,31 @@ def sdcpp_launch(
             with gr.TabItem("Options", id="options"):
                 options_block.render()
 
-        common_inputs = [
-            pprompt_info, nprompt_info, width_info, height_info,
-            steps_info, sampler_info, scheduler_info, cfg_info, seed_info
-        ]
+        common_inputs = [info_params[f] for f in FIELDS]
 
         # Copy data from gallery image to txt2img.
         cpy_2_txt2img_btn.click(
             create_copy_fn("txt2img"),
             inputs=common_inputs,
-            outputs=[
-                tabs, pprompt_txt2img, nprompt_txt2img, width_txt2img,
-                height_txt2img, steps_txt2img, sampling_txt2img,
-                scheduler_txt2img, cfg_txt2img, seed_txt2img
-            ]
+            outputs=[tabs] + [txt2img_params[f] for f in FIELDS]
         )
         # Copy data from gallery image to img2img.
         cpy_2_img2img_btn.click(
             create_copy_fn("img2img"),
             inputs=common_inputs + [path_info],
-            outputs=[
-                tabs, pprompt_img2img, nprompt_img2img, width_img2img,
-                height_img2img, steps_img2img, sampling_img2img,
-                scheduler_img2img, cfg_img2img, seed_img2img, img_inp_img2img
-            ]
+            outputs=[tabs] + [img2img_params[f] for f in FIELDS] + [img_inp_img2img]
         )
         # Copy data from gallery image to imgedit
         cpy_2_imgedit_btn.click(
             create_copy_fn("imgedit"),
-            inputs=[width_info, height_info, path_info],
+            inputs=[info_params['width'], info_params['height'], path_info],
             outputs=[tabs, width_imgedit, height_imgedit, ref_img_imgedit]
         )
         # Copy data from gallery image to any2video.
         cpy_2_any2video_btn.click(
             create_copy_fn("any2video"),
             inputs=common_inputs + [path_info],
-            outputs=[
-                tabs, pprompt_any2video, nprompt_any2video,
-                width_any2video, height_any2video, steps_any2video,
-                sampling_any2video, scheduler_any2video, cfg_any2video,
-                seed_any2video]
+            outputs=[tabs] + [any2video_params[f] for f in FIELDS]
         )
         cpy_2_upscale_btn.click(
             create_copy_fn("upscale"),

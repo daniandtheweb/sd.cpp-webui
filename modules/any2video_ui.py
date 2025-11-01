@@ -29,6 +29,7 @@ from modules.ui.advanced_settings import create_extras_ui
 from modules.ui.environment import create_env_ui
 from modules.ui.experimental import create_experimental_ui
 
+any2video_params = {}
 
 with gr.Blocks() as any2video_block:
     inputs_map = {}
@@ -296,12 +297,12 @@ with gr.Blocks() as any2video_block:
         outputs=flow_shift_comp
     )
 
-    pprompt_any2video = prompts_ui['in_pprompt']
-    nprompt_any2video = prompts_ui['in_nprompt']
-    width_any2video = generation_settings_ui['in_width']
-    height_any2video = generation_settings_ui['in_height']
-    steps_any2video = generation_settings_ui['in_steps']
-    sampling_any2video = generation_settings_ui['in_sampling']
-    scheduler_any2video = generation_settings_ui['in_scheduler']
-    cfg_any2video = generation_settings_ui['in_cfg']
-    seed_any2video = inputs_map['in_seed']
+    any2video_params['pprompt'] = prompts_ui['in_pprompt']
+    any2video_params['nprompt'] = prompts_ui['in_nprompt']
+    any2video_params['width'] = generation_settings_ui['in_width']
+    any2video_params['height'] = generation_settings_ui['in_height']
+    any2video_params['steps'] = generation_settings_ui['in_steps']
+    any2video_params['sampling'] = generation_settings_ui['in_sampling']
+    any2video_params['scheduler'] = generation_settings_ui['in_scheduler']
+    any2video_params['cfg'] = generation_settings_ui['in_cfg']
+    any2video_params['seed'] = inputs_map['in_seed']
