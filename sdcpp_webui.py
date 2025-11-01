@@ -118,7 +118,7 @@ def sdcpp_launch(
         )
         # Copy data from gallery image to img2img.
         cpy_2_img2img_btn.click(
-            create_copy_fn("img2img", FIELDS),
+            create_copy_fn("img2img", FIELDS + ['input_image']),
             inputs=common_inputs + [path_info],
             outputs=[tabs] + [img2img_params[f] for f in FIELDS] + [img_inp_img2img]
         )
