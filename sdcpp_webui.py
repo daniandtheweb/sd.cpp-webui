@@ -27,7 +27,7 @@ from modules.gallery_ui import (
 from modules.convert_ui import convert_block
 from modules.options_ui import options_block
 from modules.config import ConfigManager
-from modules.ui.constants import FIELDS
+from modules.ui.constants import FIELDS, SAMPLERS, SCHEDULERS
 
 
 os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
@@ -35,7 +35,7 @@ os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
 config = ConfigManager()
 
 
-def create_copy_fn(tab_id: str) -> callable:
+def create_copy_fn(tab_id: str, fields: list = None) -> callable:
     """
     Creates a function that that switches to a specific tab
     and passes through its arguments.
@@ -49,7 +49,16 @@ def create_copy_fn(tab_id: str) -> callable:
     def copy_fn(*args):
         # The first return value switches the tab,
         # the rest are the passed-through arguments.
-        return [gr.Tabs(selected=tab_id), *args]
+        values = args
+        if fields:
+            values = []
+            for name, value in zip(fields, args):
+                if name == 'sampling' and value not in SAMPLERS:
+                    value = config.get('def_sampling')
+                elif name == 'scheduler' and value not in SCHEDULERS:
+                    value = config.get('def_scheduler')
+                values.append(value)
+        return [gr.Tabs(selected=tab_id), *values]
     return copy_fn
 
 
@@ -103,13 +112,13 @@ def sdcpp_launch(
 
         # Copy data from gallery image to txt2img.
         cpy_2_txt2img_btn.click(
-            create_copy_fn("txt2img"),
+            create_copy_fn("txt2img", FIELDS),
             inputs=common_inputs,
             outputs=[tabs] + [txt2img_params[f] for f in FIELDS]
         )
         # Copy data from gallery image to img2img.
         cpy_2_img2img_btn.click(
-            create_copy_fn("img2img"),
+            create_copy_fn("img2img", FIELDS),
             inputs=common_inputs + [path_info],
             outputs=[tabs] + [img2img_params[f] for f in FIELDS] + [img_inp_img2img]
         )
@@ -121,7 +130,7 @@ def sdcpp_launch(
         )
         # Copy data from gallery image to any2video.
         cpy_2_any2video_btn.click(
-            create_copy_fn("any2video"),
+            create_copy_fn("any2video", FIELDS),
             inputs=common_inputs + [path_info],
             outputs=[tabs] + [any2video_params[f] for f in FIELDS]
         )
