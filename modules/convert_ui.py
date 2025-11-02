@@ -75,6 +75,17 @@ with gr.Blocks() as convert_block:
                         value=QUANTS[0],
                         interactive=True
                     )
+                    with gr.Accordion(
+                        label="Weight type per tensor pattern",
+                        open=False
+                    ):
+                        tensor_type_rules = gr.Textbox(
+                            show_label=False,
+                            container=False,
+                            value="",
+                            placeholder="example: \"^vae\\.=f16,model\\.=q8_0\"",
+                            interactive=True
+                        )
 
             verbose = gr.Checkbox(label="Verbose")
 
@@ -97,7 +108,7 @@ with gr.Blocks() as convert_block:
     # Interactive Bindings
     convert_btn.click(
         convert,
-        inputs=[model, model_dir_txt, quant_type,
+        inputs=[model, model_dir_txt, quant_type, tensor_type_rules,
                 gguf_name, verbose],
         outputs=[result]
     )

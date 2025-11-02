@@ -540,7 +540,7 @@ def upscale(params: dict) -> Generator:
     yield from runner.run()
 
 def convert(
-    in_orig_model: str, in_model_dir: str, in_quant_type: str,
+    in_orig_model: str, in_model_dir: str, in_quant_type: str, in_tensor_type_rules: str = None,
     in_gguf_name: str = None, in_verbose: bool = False
 ) -> str:
     """Synchronously runs the model conversion command."""
@@ -560,6 +560,8 @@ def convert(
         '-o', gguf_path,
         '--type', in_quant_type
     ]
+    if in_tensor_type_rules:
+        command.extend(['--tensor-type-rules', in_tensor_type_rules])
     if in_verbose:
         command.append('-v')
 
