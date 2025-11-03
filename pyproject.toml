@@ -9,6 +9,12 @@ dependencies = [
     "gradio==5.44.1"
 ]
 
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-mock",
+]
+
 [project.urls]
 Repository = "https://github.com/daniandtheweb/sd.cpp-webui"
 
