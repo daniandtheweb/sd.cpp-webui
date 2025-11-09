@@ -7,7 +7,7 @@ from modules.shared_instance import (
 )
 from modules.loader import get_models
 from modules.ui.constants import (
-    RELOAD_SYMBOL, SAMPLERS, SCHEDULERS, PREDICTION
+    RELOAD_SYMBOL, SAMPLERS, SCHEDULERS, PREDICTION, PREVIEW
 )
 from modules.ui.generation_settings import create_quant_ui
 from modules.ui.folder_settings import create_folders_opt_ui
@@ -235,6 +235,26 @@ with gr.Blocks() as options_block:
 
     with gr.Row():
         with gr.Column():
+            with gr.Group():
+                with gr.Row():
+                    taesd = gr.Dropdown(
+                        label="TAESD",
+                        choices=get_models(config.get('taesd_dir')),
+                        value=config.get('def_taesd'),
+                        interactive=True
+                    )
+                with gr.Row():
+                    reload_taesd_btn = gr.Button(
+                        value=RELOAD_SYMBOL, scale=1
+                    )
+                    gr.ClearButton(
+                        taesd, scale=1
+                    )
+                settings_map['def_taesd'] = taesd
+
+
+    with gr.Row():
+        with gr.Column():
             # Sampling Method Dropdown
             sampling = gr.Dropdown(
                 label="Sampling method",
@@ -327,6 +347,28 @@ with gr.Blocks() as options_block:
             value=config.get('def_vae_conv_direct')
         )
         settings_map['def_vae_conv_direct'] = vae_conv_direct
+
+    with gr.Row():
+        # Preview options
+        preview_mode = gr.Dropdown(
+            label="Preview mode",
+            choices=PREVIEW,
+            value="none"
+        )
+        settings_map['def_preview_mode'] = preview_mode
+
+        preview_interval = gr.Number(
+            label="Preview interval",
+            value=1,
+            minimum=1,
+            interactive=True
+        )
+        settings_map['def_preview_interval'] = preview_interval
+
+        preview_taesd = gr.Checkbox(
+            label="TAESD for preview only"
+        )
+        settings_map['def_preview_taesd'] = preview_taesd
 
     # Folders options
     folders_ui = create_folders_opt_ui()

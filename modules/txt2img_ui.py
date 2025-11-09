@@ -28,7 +28,7 @@ from modules.ui.eta import create_eta_ui
 from modules.ui.vae_tiling import create_vae_tiling_ui
 from modules.ui.advanced_settings import create_extras_ui
 from modules.ui.environment import create_env_ui
-from modules.ui.experimental import create_experimental_ui
+#from modules.ui.experimental import create_experimental_ui
 
 txt2img_params = {}
 
@@ -51,19 +51,20 @@ with gr.Blocks() as txt2img_block:
     # Extra Networks Selection
     with gr.Accordion(label="Extra Networks", open=False):
         with gr.Row():
-            with gr.Group():
-                with gr.Row():
-                    taesd_model = gr.Dropdown(
-                        label="TAESD",
-                        choices=get_models(config.get('taesd_dir')),
-                        value="",
-                        allow_custom_value=True,
-                        interactive=True
-                    )
-                with gr.Row():
-                    reload_taesd_btn = gr.Button(value=RELOAD_SYMBOL)
-                    gr.ClearButton(taesd_model)
-                inputs_map['in_taesd'] = taesd_model
+            with gr.Column():
+                with gr.Group():
+                    with gr.Row():
+                        taesd_model = gr.Dropdown(
+                            label="TAESD",
+                            choices=get_models(config.get('taesd_dir')),
+                            value=config.get('def_taesd'),
+                            allow_custom_value=True,
+                            interactive=True
+                        )
+                    with gr.Row():
+                        reload_taesd_btn = gr.Button(value=RELOAD_SYMBOL)
+                        gr.ClearButton(taesd_model)
+                    inputs_map['in_taesd'] = taesd_model
 
         # PhotoMaker
         photomaker_ui = create_photomaker_ui()
@@ -136,8 +137,8 @@ with gr.Blocks() as txt2img_block:
             inputs_map.update(env_ui)
 
             # Experimental
-            experimental_ui = create_experimental_ui()
-            inputs_map.update(experimental_ui)
+            # experimental_ui = create_experimental_ui()
+            # inputs_map.update(experimental_ui)
 
             with gr.Row():
                 refresh_opt = gr.Button(
@@ -290,7 +291,7 @@ with gr.Blocks() as txt2img_block:
         outputs=[
             generation_settings_ui['in_sampling'],
             generation_settings_ui['in_scheduler'],
-            experimental_ui['in_preview_mode'], extras_ui['in_predict']
+            extras_ui['in_preview_mode'], extras_ui['in_predict']
         ]
     )
 

@@ -33,7 +33,8 @@ DEFAULT_SETTINGS = {
     'def_predict': "Default",
     'def_flash_attn': False,
     'def_diffusion_conv_direct': False,
-    'def_vae_conv_direct': False
+    'def_vae_conv_direct': False,
+    'def_preview_interval': 1,
 }
 
 
