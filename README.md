@@ -8,6 +8,7 @@ This program acts primarily as a command generator for **stable-diffusion.cpp**,
 
 - Minimal python dependencies (Gradio is the main one, no PyTorch required)
 - Supports most **stable-diffusion.cpp** features (the missing ones are work in progress)
+- Live preview using **stable-diffusion.cpp**'s preview option
 - Built-in image gallery
 - Metadata reader
 
