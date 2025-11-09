@@ -350,25 +350,38 @@ with gr.Blocks() as options_block:
 
     with gr.Row():
         # Preview options
+        preview_bool = gr.Checkbox(
+            label="Enable Preview",
+            value=config.get('def_preview_bool')
+        )
+        settings_map['def_preview_bool'] = preview_bool
+
         preview_mode = gr.Dropdown(
             label="Preview mode",
             choices=PREVIEW,
-            value="none"
+            value=config.get('def_preview_mode')
         )
         settings_map['def_preview_mode'] = preview_mode
 
         preview_interval = gr.Number(
             label="Preview interval",
-            value=1,
+            value=config.get('def_preview_interval'),
             minimum=1,
             interactive=True
         )
         settings_map['def_preview_interval'] = preview_interval
 
         preview_taesd = gr.Checkbox(
-            label="TAESD for preview only"
+            label="TAESD for preview only",
+            value=config.get('def_preview_taesd')
         )
         settings_map['def_preview_taesd'] = preview_taesd
+
+        preview_noisy = gr.Checkbox(
+            label="Preview noisy",
+            value=config.get('def_preview_noisy')
+        )
+        settings_map['def_preview_noisy'] = preview_noisy
 
     # Folders options
     folders_ui = create_folders_opt_ui()

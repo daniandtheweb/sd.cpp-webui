@@ -16,7 +16,7 @@ MODELS = [
     "Checkpoint", "UNET", "VAE", "clip_g", "clip_l", "t5xxl", "qwen2vl",
     "TAESD", "Lora", "Embeddings", "Upscaler", "ControlNet"
 ]
-PREVIEW = ['none'] + sd_options.get_opt("previews")
+PREVIEW = sd_options.get_opt("previews")
 PREDICTION = ['Default'] + sd_options.get_opt("prediction")
 RELOAD_SYMBOL = '\U0001F504'
 RANDOM_SYMBOL = '\U0001F3B2'

@@ -55,6 +55,10 @@ def create_extras_ui():
                 value=False
             )
         with gr.Group():
+            preview_bool = gr.Checkbox(
+                label="Enable Preview",
+                value=config.get('def_preview_bool')
+            )
             preview_mode = gr.Dropdown(
                 label="Preview mode",
                 choices=PREVIEW,
@@ -69,6 +73,10 @@ def create_extras_ui():
             preview_taesd = gr.Checkbox(
                 label="TAESD for preview only",
                 value=config.get('def_preview_taesd')
+            )
+            preview_noisy = gr.Checkbox(
+                label="Preview noisy",
+                value=config.get('def_preview_noisy')
             )
         color = gr.Checkbox(
             label="Color", value=True
@@ -89,8 +97,10 @@ def create_extras_ui():
         'in_diffusion_conv_direct': diffusion_conv_direct,
         'in_vae_conv_direct': vae_conv_direct,
         'in_force_sdxl_vae_conv_scale': force_sdxl_vae_conv_scale,
+        'in_preview_bool': preview_bool,
         'in_preview_mode': preview_mode,
         'in_preview_interval': preview_interval,
         'in_preview_taesd': preview_taesd,
+        'in_preview_noisy': preview_noisy,
         'in_verbose': verbose
     }

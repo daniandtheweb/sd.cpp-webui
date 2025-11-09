@@ -249,13 +249,7 @@ class ImageGenerationRunner(CommandRunner):
 
         self._add_base_args()
 
-        preview_mode = self._get_param('in_preview_mode')
-        is_preview_enabled = (
-            preview_mode
-            if preview_mode is not None and preview_mode != "none"
-            else None
-        )
-        if is_preview_enabled:
+        if self._get_param('in_preview_bool'):
             self.preview_path = self.output_path + "preview.png"
 
         options = {
@@ -330,7 +324,7 @@ class ImageGenerationRunner(CommandRunner):
                 '--preview': self._get_param('in_preview_mode'),
                 '--preview-path': self.preview_path,
                 '--preview-interval': self._get_param('in_preview_interval'),
-            } if is_preview_enabled else {})
+            } if self._get_param('in_preview_bool') else {})
         }
         self._add_options(options)
 
@@ -345,17 +339,20 @@ class ImageGenerationRunner(CommandRunner):
                 self._get_param('in_disable_dit_mask')
             ),
             '--chroma-enable-t5-mask': self._get_param('in_enable_t5_mask'),
-            '--color': self._get_param('in_color'),
             '--diffusion-fa': self._get_param('in_flash_attn'),
             '--diffusion-conv-direct': (
                 self._get_param('in_diffusion_conv_direct')
             ),
             '--vae-conv-direct': self._get_param('in_vae_conv_direct'),
             '--force-sdxl-vae-conv-scale': self._get_param('in_force_sdxl_vae_conv_scale'),
-            '-v': self._get_param('in_verbose'),
             '--taesd-preview-only': (self._get_param('in_preview_taesd')
-                                     if is_preview_enabled
-                                     else False)
+                                     if self._get_param('in_preview_bool')
+                                     else False),
+            '--preview-noisy': (self._get_param('in_preview_noisy')
+                                if self._get_param('in_preview_bool')
+                                else False),
+            '--color': self._get_param('in_color'),
+            '-v': self._get_param('in_verbose'),
         }
         self._add_flags(flags)
 
