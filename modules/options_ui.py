@@ -13,6 +13,9 @@ from modules.ui.generation_settings import create_quant_ui
 from modules.ui.folder_settings import create_folders_opt_ui
 
 
+OUTPUT_SCHEMES = ["Sequential", "Timestamp", "TimestampMS", "EpochTime"]
+
+
 def refresh_all_options():
     """Updates the available options from the sd executable."""
     sd_options.refresh()
@@ -382,6 +385,16 @@ with gr.Blocks() as options_block:
             value=config.get('def_preview_noisy')
         )
         settings_map['def_preview_noisy'] = preview_noisy
+
+    with gr.Row():
+        # Output options
+        output_scheme = gr.Dropdown(
+            label="Output Scheme",
+            choices=OUTPUT_SCHEMES,
+            value=config.get('def_output_scheme'),
+            interactive=True
+        )
+        settings_map['def_output_scheme'] = output_scheme
 
     # Folders options
     folders_ui = create_folders_opt_ui()

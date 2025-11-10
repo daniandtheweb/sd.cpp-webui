@@ -35,6 +35,7 @@ DEFAULT_SETTINGS = {
     'def_diffusion_conv_direct': False,
     'def_vae_conv_direct': False,
     'def_preview_interval': 1,
+    'def_output_scheme': "Sequential",
 }
 
 

@@ -1,6 +1,8 @@
 """sd.cpp-webui - stable-diffusion.cpp command module"""
 
 import os
+import time
+import datetime
 from enum import IntEnum
 from typing import Dict, Any, Generator
 
@@ -61,11 +63,30 @@ class CommandRunner:
         """Determines and sets the output path for the command."""
         output_dir = config.get(dir_key)
         filename = self._get_param('in_output')
+        output_scheme = config.get('def_output_scheme')
 
         if filename:
             self.output_path = os.path.join(output_dir, f"{filename}.{extension}")
         else:
-            self.output_path = os.path.join(output_dir, get_next_img(subctrl=subctrl_id))
+            match output_scheme:
+                case "Sequential":
+                    # Default
+                    self.output_path = os.path.join(output_dir, get_next_img(subctrl=subctrl_id))
+                case "Timestamp":
+                    # By-second timestamp
+                    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                    self.output_path = os.path.join(output_dir, f"{timestamp}.{extension}")
+                case "TimestampMS":
+                    # By-microsecond timestamp
+                    timestamp_ms = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+                    self.output_path = os.path.join(output_dir, f"{timestamp_ms}.{extension}")
+                case "EpochTime":
+                    # Unix/Epoch time in seconds
+                    epoch_time = int(time.time())
+                    self.output_path = os.path.join(output_dir, f"{epoch_time}.{extension}")
+                case _:
+                    # Default fallback
+                    self.output_path = os.path.join(output_dir, get_next_img(subctrl=subctrl_id))
 
     def _resolve_paths(self):
         """Resolves all model and directory paths from the config."""
@@ -250,7 +271,8 @@ class ImageGenerationRunner(CommandRunner):
         self._add_base_args()
 
         if self._get_param('in_preview_bool'):
-            self.preview_path = self.output_path + "preview.png"
+            base_name, extension = os.path.splitext(self.output_path)
+            self.preview_path = base_name + "_preview" + extension
 
         options = {
             # Models
