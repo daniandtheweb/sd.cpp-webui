@@ -100,6 +100,13 @@ with gr.Blocks() as upscale_block:
                     output = gr.Textbox(
                         label="Output Name (optional)", value=""
                     )
+                    flash_attn = gr.Checkbox(
+                        label="Flash Attention", value=config.get('def_flash_attn')
+                    )
+                    diffusion_conv_direct = gr.Checkbox(
+                        label="Conv2D Direct for diffusion",
+                        value=config.get('def_diffusion_conv_direct')
+                    )
                     color = gr.Checkbox(
                         label="Color", value=True
                     )
@@ -168,6 +175,8 @@ with gr.Blocks() as upscale_block:
         'in_init_height': init_height,
         'in_upscl_rep': upscl_rep,
         'in_output': output,
+        'in_flash_attn': flash_attn,
+        'in_diffusion_conv_direct': diffusion_conv_direct,
         'in_color': color,
         'in_verbose': verbose,
         **env_ui

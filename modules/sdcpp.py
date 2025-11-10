@@ -497,6 +497,10 @@ class UpscaleRunner(CommandRunner):
         self._add_options(options)
 
         flags = {
+            '--diffusion-fa': self._get_param('in_flash_attn'),
+            '--diffusion-conv-direct': (
+                self._get_param('in_diffusion_conv_direct')
+            ),
             '--color': self._get_param('in_color'),
             '-v': self._get_param('in_verbose')
         }
