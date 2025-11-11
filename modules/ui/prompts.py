@@ -24,28 +24,37 @@ def create_prompts_ui(nprompt_support = True):
         with gr.Accordion(
             label="Saved prompts", open=False
         ):
-            with gr.Column():
-                saved_prompts = gr.Dropdown(
-                    label="Prompts",
-                    choices=config.get_prompts(),
-                    interactive=True,
-                    allow_custom_value=True
-                )
-            with gr.Column():
-                with gr.Row():
-                    load_prompt_btn = gr.Button(
-                        value="Load prompt", size="lg"
+            with gr.Group():
+                with gr.Column():
+                    saved_prompts = gr.Dropdown(
+                        label="Prompts",
+                        choices=config.get_prompts(),
+                        interactive=True,
+                        allow_custom_value=False
                     )
-                    reload_prompts_btn = gr.Button(
-                        value=RELOAD_SYMBOL
+                with gr.Column():
+                    with gr.Row():
+                        load_prompt_btn = gr.Button(
+                            value="Load prompt", size="lg",
+                        )
+                        reload_prompts_btn = gr.Button(
+                            value=RELOAD_SYMBOL
+                        )
+                    with gr.Row():
+                        del_prompt_btn = gr.Button(
+                            value="Delete prompt", size="lg",
+                            variant="stop"
+                        )
+            with gr.Group():
+                with gr.Column():
+                    new_prompt = gr.Textbox(
+                        label="New Prompt name",
+                        placeholder="Prompt preset name"
                     )
-                with gr.Row():
+                with gr.Column():
                     save_prompt_btn = gr.Button(
-                        value="Save prompt", size="lg"
-                    )
-                    del_prompt_btn = gr.Button(
-                        value="Delete prompt", size="lg"
-                    )
+                        value="Save prompt", size="lg",
+                    ) 
     with gr.Row():
         pprompt = gr.Textbox(
             placeholder="Positive prompt",
@@ -65,7 +74,7 @@ def create_prompts_ui(nprompt_support = True):
 
     save_prompt_btn.click(
         save_and_refresh_prompts,
-        inputs=[saved_prompts, pprompt, nprompt],
+        inputs=[new_prompt, pprompt, nprompt],
         outputs=[saved_prompts]
     )
     del_prompt_btn.click(
