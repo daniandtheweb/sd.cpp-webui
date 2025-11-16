@@ -132,6 +132,7 @@ class CommandRunner:
             '--lora-model-dir', config.get('lora_dir'),
             '-t', str(self._get_param('in_threads')),
             '--rng', str(self._get_param('in_rng')),
+            '--sampler-rng', str(self._get_param('in_sampler_rng')),
             '-o', self.output_path
         ])
 

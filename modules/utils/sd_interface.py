@@ -45,7 +45,7 @@ class SDOptionsCache:
 
         self._CACHE_FILE = "options_cache.json"
         self._OPTIONS = ["--sampling-method", "--scheduler", "--preview",
-                         "--type", "--prediction"]
+                         "--type", "--prediction", "--rng", "--sampler-rng"]
         self._help_cache = {}
 
         self._load_help_text_sync()
@@ -181,7 +181,9 @@ class SDOptionsCache:
             "samplers": "--sampling-method",
             "schedulers": "--scheduler",
             "previews": "--preview",
-            "prediction": "--prediction"
+            "prediction": "--prediction",
+            "rng": "--rng",
+            "sampler_rng": "--sampler-rng"
         }
         if option not in option_map:
             raise ValueError(

@@ -16,6 +16,8 @@ MODELS = [
     "Checkpoint", "UNET", "VAE", "clip_g", "clip_l", "t5xxl", "qwen2vl",
     "TAESD", "Lora", "Embeddings", "Upscaler", "ControlNet"
 ]
+RNG = sd_options.get_opt("rng")
+SAMPLER_RNG = sd_options.get_opt("sampler_rng")
 PREVIEW = sd_options.get_opt("previews")
 PREDICTION = ['Default'] + sd_options.get_opt("prediction")
 RELOAD_SYMBOL = '\U0001F504'

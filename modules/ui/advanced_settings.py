@@ -6,7 +6,9 @@ import gradio as gr
 
 from modules.shared_instance import config
 
-from modules.ui.constants import PREDICTION, PREVIEW
+from modules.ui.constants import(
+    RNG, SAMPLER_RNG, PREDICTION, PREVIEW
+)
 
 
 def create_extras_ui():
@@ -27,7 +29,12 @@ def create_extras_ui():
             clip_cpu = gr.Checkbox(label="CLIP on CPU")
         rng = gr.Dropdown(
             label="RNG",
-            choices=["std_default", "cuda"],
+            choices=RNG,
+            value="cuda"
+        )
+        sampler_rng = gr.Dropdown(
+            label="Sampler RNG",
+            choices=SAMPLER_RNG,
             value="cuda"
         )
         predict = gr.Dropdown(
@@ -90,6 +97,7 @@ def create_extras_ui():
         'in_vae_cpu': vae_cpu,
         'in_clip_cpu': clip_cpu,
         'in_rng': rng,
+        'in_sampler_rng': sampler_rng,
         'in_predict': predict,
         'in_output': output,
         'in_color': color,
