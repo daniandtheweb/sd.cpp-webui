@@ -133,6 +133,7 @@ class CommandRunner:
             '-t', str(self._get_param('in_threads')),
             '--rng', str(self._get_param('in_rng')),
             '--sampler-rng', str(self._get_param('in_sampler_rng')),
+            '--lora-apply-mode', str(self._get_param('in_lora_apply')),
             '-o', self.output_path
         ])
 

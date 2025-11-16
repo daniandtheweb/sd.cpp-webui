@@ -42,6 +42,11 @@ def create_extras_ui():
             choices=PREDICTION,
             value=config.get('def_predict')
         )
+        lora_apply = gr.Dropdown(
+            label="Lora apply mode",
+            choices=["auto", "immediately", "at_runtime"],
+            value="auto"
+        )
         output = gr.Textbox(
             label="Output Name (optional)", value=""
         )
@@ -99,6 +104,7 @@ def create_extras_ui():
         'in_rng': rng,
         'in_sampler_rng': sampler_rng,
         'in_predict': predict,
+        'in_lora_apply': lora_apply,
         'in_output': output,
         'in_color': color,
         'in_flash_attn': flash_attn,
