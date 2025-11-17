@@ -2,7 +2,7 @@ import os
 import pytest
 from modules.utils.sd_interface import SDOptionsCache
 
-SD_VERSION = "master-362-742a733"
+SD_VERSION = "master-367-b88cc32"
 
 
 @pytest.fixture(autouse=True)
@@ -69,7 +69,7 @@ def test_options_cache(app_cwd):
         ("previews", ["none", "proj", "tae", "vae"]),
         ("prediction", ["eps", "v", "edm_v", "sd3_flow", "flux_flow"]),
         ("rng", ["std_default", "cuda", "cpu"]),
-        ("sampler_rng", []),
+        ("sampler_rng", ["std_default", "cuda", "cpu"]),
     ],
 )
 def test_options_parse(option, expected) -> None:
