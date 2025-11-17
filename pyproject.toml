@@ -15,3 +15,9 @@ Repository = "https://github.com/daniandtheweb/sd.cpp-webui"
 [tool.setuptools.packages.find]
 include = ["modules*"]
 namespaces = false
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    # Ignore the specific deprecation warning from the websockets library
+    "ignore:.*websockets.legacy is deprecated.*:DeprecationWarning",
+]
