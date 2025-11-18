@@ -229,7 +229,7 @@ class CommandRunner:
                 yield (self.fcommand, gr.update(value=update["percent"]),
                        update["status"], gr.update(value=""), gallery_update)
 
-        if self.preview_path:
+        if self.preview_path and os.path.isfile(self.preview_path):
             os.remove(self.preview_path)
 
         yield (self.fcommand, gr.update(visible=False, value=100),
