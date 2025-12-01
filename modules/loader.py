@@ -18,7 +18,7 @@ MODEL_DIR_MAP = {
     "clip_g": config.get('clip_dir'),
     "clip_l": config.get('clip_dir'),
     "t5xxl": config.get('clip_dir'),
-    "qwen2vl": config.get('clip_dir'),
+    "llm": config.get('clip_dir'),
     "taesd": config.get('taesd_dir'),
     "Lora": config.get('lora_dir'),
     "Embeddings": config.get('emb_dir'),

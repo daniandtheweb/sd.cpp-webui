@@ -18,7 +18,7 @@ class ModelState:
         bak_clip_g: The backup CLIP_G model.
         bak_clip_l: The backup CLIP_L model.
         bak_t5xxl: The backup T5-XXL model.
-        bak_qwen2vl: The backup QWEN2VL model.
+        bak_llm: The backup LLM model.
     """
 
     def __init__(self):
@@ -31,7 +31,7 @@ class ModelState:
         self.bak_clip_g = config.get('def_clip_g')
         self.bak_clip_l = config.get('def_clip_l')
         self.bak_t5xxl = config.get('def_t5xxl')
-        self.bak_qwen2vl = config.get('def_qwen2vl')
+        self.bak_llm = config.get('def_llm')
         self.bak_guidance_bool = False
         self.bak_flow_shift_bool = False
 
@@ -57,7 +57,7 @@ class ModelState:
         )
 
     def bak_unet_tab(self, unet_model, unet_vae, clip_g, clip_l, t5xxl,
-                     qwen2vl, guidance_bool, flow_shift_bool):
+                     llm, guidance_bool, flow_shift_bool):
         """Updates the state with values from the UNET tab."""
         self.update(
             bak_unet_model=unet_model,
@@ -65,7 +65,7 @@ class ModelState:
             bak_clip_g=clip_g,
             bak_clip_l=clip_l,
             bak_t5xxl=t5xxl,
-            bak_qwen2vl=qwen2vl,
+            bak_llm=llm,
             bak_guidance_bool=guidance_bool,
             bak_flow_shift_bool=flow_shift_bool,
         )
@@ -88,7 +88,7 @@ def unet_tab_switch(ckpt_model, ckpt_vae, guidance_bool, guidance,
         gr.update(value=model_state.bak_clip_g),                           # + clip_g
         gr.update(value=model_state.bak_clip_l),                           # + clip_l
         gr.update(value=model_state.bak_t5xxl),                            # + t5xxl
-        gr.update(value=model_state.bak_qwen2vl),                          # + qwen2vl
+        gr.update(value=model_state.bak_llm),                              # + llm
         gr.update(value=model_state.bak_guidance_bool, visible=True),      # + guidance_bool
         gr.update(visible=True),                                           # + guidance
         gr.update(value=model_state.bak_flow_shift_bool, visible=True),    # + flow_shift_bool
@@ -97,11 +97,11 @@ def unet_tab_switch(ckpt_model, ckpt_vae, guidance_bool, guidance,
 
 
 def ckpt_tab_switch(unet_model, unet_vae, clip_g, clip_l, t5xxl,
-                    qwen2vl, guidance_bool, guidance,
+                    llm, guidance_bool, guidance,
                     flow_shift_bool, flow_shift):
     """Switches to the checkpoint tab"""
     model_state.bak_unet_tab(unet_model, unet_vae, clip_g, clip_l, t5xxl,
-                             qwen2vl, guidance_bool, flow_shift_bool)
+                             llm, guidance_bool, flow_shift_bool)
 
     return (
         gr.update(value=0),                             # + Checkpoint Tab
@@ -112,7 +112,7 @@ def ckpt_tab_switch(unet_model, unet_vae, clip_g, clip_l, t5xxl,
         gr.update(value=None),                          # - clip_g
         gr.update(value=None),                          # - clip_l
         gr.update(value=None),                          # - t5xxl
-        gr.update(value=None),                          # - qwen2vl
+        gr.update(value=None),                          # - llm
         gr.update(value=False, visible=False),          # - guidance_bool
         gr.update(visible=False),                       # - guidance
         gr.update(value=False, visible=False),          # - flow_shift_bool

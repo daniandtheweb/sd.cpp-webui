@@ -216,21 +216,21 @@ with gr.Blocks() as options_block:
         with gr.Column():
             with gr.Group():
                 with gr.Row():
-                    qwen2vl = gr.Dropdown(
-                        label="qwen2vl",
+                    llm = gr.Dropdown(
+                        label="llm",
                         choices=get_models(config.get('clip_dir')),
                         scale=7,
-                        value=config.get('def_qwen2vl'),
+                        value=config.get('def_llm'),
                         interactive=True
                     )
                 with gr.Row():
-                    reload_qwen2vl_btn = gr.Button(
+                    reload_llm_btn = gr.Button(
                         value=RELOAD_SYMBOL, scale=1
                     )
                     gr.ClearButton(
-                        qwen2vl, scale=1
+                        llm, scale=1
                     )
-                settings_map['def_qwen2vl'] = qwen2vl
+                settings_map['def_llm'] = llm
 
     # Model Type Selection
     quant_ui = create_quant_ui()

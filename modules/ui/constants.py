@@ -13,7 +13,7 @@ FIELDS = [
 SAMPLERS = sd_options.get_opt("samplers")
 SCHEDULERS = sd_options.get_opt("schedulers")
 MODELS = [
-    "Checkpoint", "UNET", "VAE", "clip_g", "clip_l", "t5xxl", "qwen2vl",
+    "Checkpoint", "UNET", "VAE", "clip_g", "clip_l", "t5xxl", "llm",
     "TAESD", "Lora", "Embeddings", "Upscaler", "ControlNet"
 ]
 RNG = sd_options.get_opt("rng")

@@ -95,7 +95,7 @@ class CommandRunner:
             'vae_dir': ['in_ckpt_vae', 'in_unet_vae'],
             'unet_dir': ['in_unet_model', 'in_high_noise_model'],
             'clip_dir': [
-                'in_clip_g', 'in_clip_l', 'in_t5xxl', 'in_qwen2vl',
+                'in_clip_g', 'in_clip_l', 'in_t5xxl', 'in_llm',
                 'in_umt5_xxl', 'in_clip_vision_h'
             ],
             'taesd_dir': ['in_taesd'],
@@ -254,8 +254,8 @@ class ImageGenerationRunner(CommandRunner):
             options['--clip_g'] = self._get_param('f_clip_g')
             options['--clip_l'] = self._get_param('f_clip_l')
             options['--t5xxl'] = self._get_param('f_t5xxl')
-            options['--qwen2vl'] = self._get_param('f_qwen2vl')
-            options['--qwen2vl_vision'] = self._get_param('f_qwen2vl_vision')
+            options['--llm'] = self._get_param('f_llm')
+            options['--llm_vision'] = self._get_param('f_llm_vision')
 
         # Filter out any keys that have a None value before returning
         return {k: v for k, v in options.items() if v is not None}

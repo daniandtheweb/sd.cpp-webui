@@ -119,17 +119,17 @@ def create_unet_model_sel_ui():
                 reload_input_component=clip_dir_txt
             )
         with gr.Column():
-            qwen2vl = _create_model_dropdown_widget(
-                label="qwen2vl",
+            llm = _create_model_dropdown_widget(
+                label="llm",
                 choices_dir_key='clip_dir',
-                default_value_key='def_qwen2vl',
+                default_value_key='def_llm',
                 reload_input_component=clip_dir_txt
             )
         with gr.Column():
-            qwen2vl_vision = _create_model_dropdown_widget(
-                label="qwen2vl_vision",
+            llm_vision = _create_model_dropdown_widget(
+                label="llm_vision",
                 choices_dir_key='clip_dir',
-                default_value_key='def_qwen2vl_vision',
+                default_value_key='def_llm_vision',
                 reload_input_component=clip_dir_txt
             )
     return {
@@ -138,8 +138,8 @@ def create_unet_model_sel_ui():
         'in_clip_g': clip_g,
         'in_clip_l': clip_l,
         'in_t5xxl': t5xxl,
-        'in_qwen2vl': qwen2vl,
-        'in_qwen2vl_vision': qwen2vl_vision
+        'in_llm': llm,
+        'in_llm_vision': llm_vision
     }
 
 
