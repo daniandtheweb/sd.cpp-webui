@@ -13,21 +13,27 @@ def create_easycache_ui():
             value=False
         )
         ec_threshold = gr.Number(
+            label="Threshold",
             value=0.2,
             minimum=0,
             maximum=1,
+            step=0.001,
             interactive=True,
         )
         ec_start = gr.Number(
+            label="Start percent",
             value=0.15,
             minimum=0,
             maximum=1,
+            step=0.01,
             interactive=True,
         )
         ec_end = gr.Number(
+            label="End percent",
             value=0.95,
             minimum=0,
             maximum=1,
+            step=0.01,
             interactive=True,
         )
 
