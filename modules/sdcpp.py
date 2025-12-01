@@ -339,6 +339,12 @@ class ImageGenerationRunner(CommandRunner):
                                              )
                                              else None),
             } if self._get_param('in_vae_tiling') else {}),
+            # EasyCache
+            **({
+                '--easycache': f"{self._get_param('in_ec_threshold')},"
+                               f"{self._get_param('in_ec_start')},"
+                               f"{self._get_param('in_ec_end')}"
+            } if self._get_param('in_easycache_bool') else {}),
             # Prediction type override
             '--prediction': (self._get_param('in_predict')
                              if self._get_param('in_predict') != "Default"

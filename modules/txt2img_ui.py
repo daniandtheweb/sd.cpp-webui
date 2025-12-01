@@ -26,6 +26,7 @@ from modules.ui.chroma import create_chroma_ui
 from modules.ui.timestep_shift import create_timestep_shift_ui
 from modules.ui.eta import create_eta_ui
 from modules.ui.vae_tiling import create_vae_tiling_ui
+from modules.ui.easycache import create_easycache_ui
 from modules.ui.advanced_settings import create_extras_ui
 from modules.ui.environment import create_env_ui
 #from modules.ui.experimental import create_experimental_ui
@@ -127,6 +128,10 @@ with gr.Blocks() as txt2img_block:
             # VAE Tiling
             vae_tiling_ui = create_vae_tiling_ui()
             inputs_map.update(vae_tiling_ui)
+
+            # EasyCache
+            easycache_ui = create_easycache_ui()
+            inputs_map.update(easycache_ui)
 
             # Extra Settings
             extras_ui = create_extras_ui()
