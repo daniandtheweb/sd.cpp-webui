@@ -79,98 +79,104 @@ with gr.Blocks() as any2video_block:
     with gr.Row():
         with gr.Column(scale=1):
 
-            generation_settings_ui = create_generation_settings_ui()
-            inputs_map.update(generation_settings_ui)
+            with gr.Tab("Generation Settings"):
 
-            with gr.Row():
-                frames = gr.Number(
-                    label="Video Frames",
-                    minimum=1,
-                    value=1,
-                    scale=1,
-                    interactive=True,
+                generation_settings_ui = create_generation_settings_ui()
+                inputs_map.update(generation_settings_ui)
+
+                with gr.Row():
+                    frames = gr.Number(
+                        label="Video Frames",
+                        minimum=1,
+                        value=1,
+                        scale=1,
+                        interactive=True,
+                        step=1
+                    )
+                    fps = gr.Number(
+                        label="FPS",
+                        minimum=1,
+                        value=24,
+                        scale=1,
+                        interactive=True,
+                        step=1
+                    )
+                inputs_map['in_frames'] = frames
+                inputs_map['in_fps'] = fps
+
+                with gr.Accordion(
+                    label="Flow Shift", open=False
+                ):
+                    flow_shift_bool = gr.Checkbox(
+                        label="Enable Flow Shift", value=False
+                    )
+                    flow_shift = gr.Number(
+                        label="Flow Shift",
+                        minimum=1.0,
+                        maximum=12.0,
+                        value=3.0,
+                        interactive=False,
+                        step=0.1
+                    )
+                inputs_map['in_flow_shift_bool'] = flow_shift_bool
+                inputs_map['in_flow_shift'] = flow_shift
+
+                flow_shift_comp = [flow_shift]
+
+                with gr.Row():
+                    with gr.Group():
+                        seed = gr.Number(
+                            label="Seed",
+                            minimum=-1,
+                            maximum=10**16,
+                            value=-1,
+                            scale=5
+                        )
+                        random_seed_btn = gr.Button(
+                            value=RANDOM_SYMBOL, scale=1
+                        )
+                        inputs_map['in_seed'] = seed
+
+                clip_skip = gr.Slider(
+                    label="CLIP skip",
+                    minimum=-1,
+                    maximum=12,
+                    value=-1,
                     step=1
                 )
-                fps = gr.Number(
-                    label="FPS",
-                    minimum=1,
-                    value=24,
-                    scale=1,
-                    interactive=True,
-                    step=1
-                )
-            inputs_map['in_frames'] = frames
-            inputs_map['in_fps'] = fps
+                inputs_map['in_clip_skip'] = clip_skip
 
-            with gr.Accordion(
-                label="Flow Shift", open=False
-            ):
-                flow_shift_bool = gr.Checkbox(
-                    label="Enable Flow Shift", value=False
-                )
-                flow_shift = gr.Number(
-                    label="Flow Shift",
-                    minimum=1.0,
-                    maximum=12.0,
-                    value=3.0,
-                    interactive=False,
-                    step=0.1
-                )
-            inputs_map['in_flow_shift_bool'] = flow_shift_bool
-            inputs_map['in_flow_shift'] = flow_shift
+            with gr.Tab("Image Enhancement"):
 
-            flow_shift_comp = [flow_shift]
+                # Upscale
+                upscl_ui = create_upscl_ui()
+                inputs_map.update(upscl_ui)
 
-            with gr.Row():
-                with gr.Group():
-                    seed = gr.Number(
-                        label="Seed",
-                        minimum=-1,
-                        maximum=10**16,
-                        value=-1,
-                        scale=5
-                    )
-                    random_seed_btn = gr.Button(
-                        value=RANDOM_SYMBOL, scale=1
-                    )
-                    inputs_map['in_seed'] = seed
+                # ControlNet
+                cnnet_ui = create_cnnet_ui()
+                inputs_map.update(cnnet_ui)
 
-            clip_skip = gr.Slider(
-                label="CLIP skip",
-                minimum=-1,
-                maximum=12,
-                value=-1,
-                step=1
-            )
-            inputs_map['in_clip_skip'] = clip_skip
+                # ETA
+                eta_ui = create_eta_ui()
+                inputs_map.update(eta_ui)
 
-            # Upscale
-            upscl_ui = create_upscl_ui()
-            inputs_map.update(upscl_ui)
+            with gr.Tab("Advanced Settings"):
 
-            # ControlNet
-            cnnet_ui = create_cnnet_ui()
-            inputs_map.update(cnnet_ui)
+                # VAE Tiling
+                vae_tiling_ui = create_vae_tiling_ui()
+                inputs_map.update(vae_tiling_ui)
 
-            # ETA
-            eta_ui = create_eta_ui()
-            inputs_map.update(eta_ui)
+                # EasyCache
+                easycache_ui = create_easycache_ui()
+                inputs_map.update(easycache_ui)
 
-            # VAE Tiling
-            vae_tiling_ui = create_vae_tiling_ui()
-            inputs_map.update(vae_tiling_ui)
+                # Extra Settings
+                extras_ui = create_extras_ui()
+                inputs_map.update(extras_ui)
 
-            # EasyCache
-            easycache_ui = create_easycache_ui()
-            inputs_map.update(easycache_ui)
-
-            # Extra Settings
-            extras_ui = create_extras_ui()
-            inputs_map.update(extras_ui)
-
-            # Environment Variables
-            env_ui = create_env_ui()
-            inputs_map.update(env_ui)
+                # Environment Variables
+                env_ui = create_env_ui()
+                inputs_map.update(env_ui)
 
             # Experimental
             # experimental_ui = create_experimental_ui()

@@ -79,67 +79,73 @@ with gr.Blocks() as txt2img_block:
     with gr.Row():
         with gr.Column(scale=1):
 
-            generation_settings_ui = create_generation_settings_ui()
-            inputs_map.update(generation_settings_ui)
+            with gr.Tab("Generation Settings"):
 
-            with gr.Row():
-                with gr.Group():
-                    seed = gr.Number(
-                        label="Seed",
-                        minimum=-1,
-                        maximum=10**16,
-                        value=-1,
-                        scale=5
-                    )
-                    random_seed_btn = gr.Button(
-                        value=RANDOM_SYMBOL, scale=1
-                    )
-                    inputs_map['in_seed'] = seed
+                generation_settings_ui = create_generation_settings_ui()
+                inputs_map.update(generation_settings_ui)
 
-            clip_skip = gr.Slider(
-                label="CLIP skip",
-                minimum=-1,
-                maximum=12,
-                value=-1,
-                step=1
-            )
-            inputs_map['in_clip_skip'] = clip_skip
+                with gr.Row():
+                    with gr.Group():
+                        seed = gr.Number(
+                            label="Seed",
+                            minimum=-1,
+                            maximum=10**16,
+                            value=-1,
+                            scale=5
+                        )
+                        random_seed_btn = gr.Button(
+                            value=RANDOM_SYMBOL, scale=1
+                        )
+                        inputs_map['in_seed'] = seed
 
-            # Upscale
-            upscl_ui = create_upscl_ui()
-            inputs_map.update(upscl_ui)
+                clip_skip = gr.Slider(
+                    label="CLIP skip",
+                    minimum=-1,
+                    maximum=12,
+                    value=-1,
+                    step=1
+                )
+                inputs_map['in_clip_skip'] = clip_skip
 
-            # ControlNet
-            cnnet_ui = create_cnnet_ui()
-            inputs_map.update(cnnet_ui)
+            with gr.Tab("Image Enhancement"):
 
-            # Chroma
-            chroma_ui = create_chroma_ui()
-            inputs_map.update(chroma_ui)
+                # Upscale
+                upscl_ui = create_upscl_ui()
+                inputs_map.update(upscl_ui)
 
-            # Timestep shift
-            timestep_shift_ui = create_timestep_shift_ui()
-            inputs_map.update(timestep_shift_ui)
+                # ControlNet
+                cnnet_ui = create_cnnet_ui()
+                inputs_map.update(cnnet_ui)
 
-            # ETA
-            eta_ui = create_eta_ui()
-            inputs_map.update(eta_ui)
+                # Chroma
+                chroma_ui = create_chroma_ui()
+                inputs_map.update(chroma_ui)
 
-            # VAE Tiling
-            vae_tiling_ui = create_vae_tiling_ui()
-            inputs_map.update(vae_tiling_ui)
+                # Timestep shift
+                timestep_shift_ui = create_timestep_shift_ui()
+                inputs_map.update(timestep_shift_ui)
 
-            # EasyCache
-            easycache_ui = create_easycache_ui()
-            inputs_map.update(easycache_ui)
+                # ETA
+                eta_ui = create_eta_ui()
+                inputs_map.update(eta_ui)
 
-            # Extra Settings
-            extras_ui = create_extras_ui()
-            inputs_map.update(extras_ui)
+            with gr.Tab("Advanced Settings"):
 
-            # Environment Variables
-            env_ui = create_env_ui()
-            inputs_map.update(env_ui)
+                # VAE Tiling
+                vae_tiling_ui = create_vae_tiling_ui()
+                inputs_map.update(vae_tiling_ui)
+
+                # EasyCache
+                easycache_ui = create_easycache_ui()
+                inputs_map.update(easycache_ui)
+
+                # Extra Settings
+                extras_ui = create_extras_ui()
+                inputs_map.update(extras_ui)
+
+                # Environment Variables
+                env_ui = create_env_ui()
+                inputs_map.update(env_ui)
 
             # Experimental
             # experimental_ui = create_experimental_ui()
