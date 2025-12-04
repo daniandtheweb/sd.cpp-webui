@@ -82,7 +82,7 @@ def create_ckpt_model_sel_ui():
 def create_unet_model_sel_ui():
     """Create the UNET model selection UI using a helper for clarity"""
     with gr.Row():
-        gr.Markdown("Supports: SD3, SD3.5, Flux-dev, Flux-schnell, FLUX.2-dev, Chroma, Qwen Image, Z-Image-Turbo")
+        gr.Markdown("Supports: SD3, SD3.5, FLUX.1-Krea-dev, FLUX.1-dev, FLUX.1-schnell, FLUX.2-dev, Chroma, Qwen Image, Z-Image-Turbo")
     with gr.Row():
         with gr.Column():
             unet_model = create_model_widget(
@@ -164,7 +164,7 @@ def create_img_model_sel_ui():
 def create_imgedit_model_sel_ui():
     """Create the image edit selection UI"""
     with gr.Row():
-        gr.Markdown("Supports: Flux Kontext, Qwen Image Edit")
+        gr.Markdown("Supports: FLUX.1-Kontext-dev, Qwen Image Edit, Qwen Image Edit 2509")
     with gr.Row():
         with gr.Column():
             unet_model = create_model_widget(

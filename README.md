@@ -15,8 +15,8 @@ This program acts primarily as a command generator for **stable-diffusion.cpp**,
 ## **stable-diffusion.cpp**'s supported models
 
 - SD1.x, SD2.x, SD-Turbo, SDXL, SDXL-Turbo, NitroFusion
-- SD3, SD3.5, Flux-dev, Flux-schnell, FLUX.2-dev, Chroma, Qwen Image, Z-Image-Turbo
-- Flux Kontext, Qwen Image Edit
+- SD3, SD3.5, FLUX.1-Krea-dev, FLUX.1-dev, FLUX.1-schnell, FLUX.2-dev, Chroma, Qwen Image, Z-Image-Turbo
+- FLUX.1-Kontext-dev, Qwen Image Edit, Qwen Image Edit 2509
 - Wan2.1, Wan2.2
 - TAESD
 - PhotoMaker
