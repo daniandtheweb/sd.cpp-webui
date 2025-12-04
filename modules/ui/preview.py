@@ -1,9 +1,12 @@
 """sd.cpp-webui - UI component for preview options"""
 
+from functools import partial
+
 import gradio as gr
 
 from modules.shared_instance import config
 from modules.ui.constants import PREVIEW
+from modules.utils.ui_handler import update_interactivity
 
 
 def create_preview_ui():
@@ -33,6 +36,17 @@ def create_preview_ui():
             label="Preview noisy",
             value=config.get('def_preview_noisy')
         )
+
+    preview_comp = [
+        preview_mode, preview_interval, preview_taesd,
+        preview_noisy
+    ]
+
+    preview_bool.change(
+        partial(update_interactivity, len(preview_comp)),
+        inputs=preview_bool,
+        outputs=preview_comp
+    )
 
     return{
         'in_preview_bool': preview_bool,
