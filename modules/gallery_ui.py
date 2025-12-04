@@ -60,18 +60,9 @@ with gr.Blocks() as gallery_block:
             value="upscale", variant="primary"
         )
 
-    with gr.Group():
-        with gr.Row():
-            pvw_btn = gr.Button(value="Previous")
-            nxt_btn = gr.Button(value="Next")
-
-    with gr.Group():
-        with gr.Row():
-            first_btn = gr.Button(value="First page")
-            last_btn = gr.Button(value="Last page")
-
-    with gr.Group():
-        with gr.Row():
+    with gr.Row():
+        first_btn = gr.Button(value="First page")
+        with gr.Group():
             page_num_select = gr.Number(
                 label="Page:",
                 value=1,
@@ -81,9 +72,14 @@ with gr.Blocks() as gallery_block:
             go_btn = gr.Button(
                 value="Go", scale=1
             )
+        last_btn = gr.Button(value="Last page")
 
     with gr.Row():
         with gr.Column():
+            with gr.Group():
+                with gr.Row():
+                    pvw_btn = gr.Button(value="Previous page")
+                    nxt_btn = gr.Button(value="Next page")
             # Gallery Display
             gallery = gr.Gallery(
                 label="txt2img",
@@ -91,8 +87,7 @@ with gr.Blocks() as gallery_block:
                 rows=[4],
                 object_fit="contain",
                 height="auto",
-                scale=2,
-                min_width=500
+                scale=2
             )
 
         with gr.Column():
