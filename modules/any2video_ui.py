@@ -44,13 +44,16 @@ with gr.Blocks() as any2video_block:
     # Title
     any2video_title = gr.Markdown("# Anything to Video")
 
-    # Model & VAE Selection
-    model_ui = create_video_model_sel_ui()
-    inputs_map.update(model_ui)
+    with gr.Accordion(
+        label="Models selection", open=False
+    ):
+        # Model & VAE Selection
+        model_ui = create_video_model_sel_ui()
+        inputs_map.update(model_ui)
 
-    # Model Type Selection
-    quant_ui = create_quant_ui()
-    inputs_map.update(quant_ui)
+        # Model Type Selection
+        quant_ui = create_quant_ui()
+        inputs_map.update(quant_ui)
 
     # Prompts
     prompts_ui = create_prompts_ui()

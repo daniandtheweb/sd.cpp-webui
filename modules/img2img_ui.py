@@ -43,13 +43,16 @@ with gr.Blocks()as img2img_block:
     # Title
     img2img_title = gr.Markdown("# Image to Image")
 
-    # Model & VAE Selection
-    model_ui = create_img_model_sel_ui()
-    inputs_map.update(model_ui['inputs'])
+    with gr.Accordion(
+        label="Models selection", open=False
+    ):
+        # Model & VAE Selection
+        model_ui = create_img_model_sel_ui()
+        inputs_map.update(model_ui['inputs'])
 
-    # Model Type Selection
-    quant_ui = create_quant_ui()
-    inputs_map.update(quant_ui)
+        # Model Type Selection
+        quant_ui = create_quant_ui()
+        inputs_map.update(quant_ui)
 
     # Prompts
     prompts_ui = create_prompts_ui()

@@ -36,14 +36,17 @@ with gr.Blocks() as imgedit_block:
     # Title
     imgedit_title = gr.Markdown("# Image Edit")
 
-    # Model & VAE Selection
-    model_ui = create_unet_model_sel_ui()
-    inputs_map.update(model_ui)
-    inputs_map['in_diffusion_mode'] = diffusion_mode
+    with gr.Accordion(
+        label="Models selection", open=False
+    ):
+        # Model & VAE Selection
+        model_ui = create_unet_model_sel_ui()
+        inputs_map.update(model_ui)
+        inputs_map['in_diffusion_mode'] = diffusion_mode
 
-    # Model Type Selection
-    quant_ui = create_quant_ui()
-    inputs_map.update(quant_ui)
+        # Model Type Selection
+        quant_ui = create_quant_ui()
+        inputs_map.update(quant_ui)
 
     # Prompts
     prompts_ui = create_prompts_ui(nprompt_support = False)
