@@ -26,6 +26,8 @@ from modules.ui.taesd import create_taesd_ui
 from modules.ui.vae_tiling import create_vae_tiling_ui
 from modules.ui.easycache import create_easycache_ui
 from modules.ui.advanced_settings import create_extras_ui
+from modules.ui.preview import create_preview_ui
+from modules.ui.performance import create_performance_ui
 from modules.ui.environment import create_env_ui
 # from modules.ui.experimental import create_experimental_ui
 
@@ -156,6 +158,14 @@ with gr.Blocks() as any2video_block:
                 extras_ui = create_extras_ui()
                 inputs_map.update(extras_ui)
 
+                # Preview Settings
+                preview_ui = create_preview_ui()
+                inputs_map.update(preview_ui)
+
+                # Performance Settings
+                performance_ui = create_performance_ui()
+                inputs_map.update(performance_ui)
+
                 # Environment Variables
                 env_ui = create_env_ui()
                 inputs_map.update(env_ui)
@@ -278,7 +288,7 @@ with gr.Blocks() as any2video_block:
         outputs=[
             generation_settings_ui['in_sampling'],
             generation_settings_ui['in_scheduler'],
-            extras_ui['in_preview_mode'], extras_ui['in_predict']
+            preview_ui['in_preview_mode'], extras_ui['in_predict']
         ]
     )
 
