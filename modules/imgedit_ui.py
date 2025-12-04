@@ -12,7 +12,8 @@ from modules.ui.constants import RANDOM_SYMBOL
 from modules.ui.models import create_unet_model_sel_ui
 from modules.ui.prompts import create_prompts_ui
 from modules.ui.generation_settings import (
-    create_quant_ui, create_generation_settings_ui
+    create_quant_ui, create_generation_settings_ui,
+    create_bottom_generation_settings_ui
 )
 from modules.ui.upscale import create_upscl_ui
 from modules.ui.controlnet import create_cnnet_ui
@@ -71,14 +72,8 @@ with gr.Blocks() as imgedit_block:
                         )
                         inputs_map['in_seed'] = seed
 
-                clip_skip = gr.Slider(
-                    label="CLIP skip",
-                    minimum=-1,
-                    maximum=12,
-                    value=-1,
-                    step=1
-                )
-                inputs_map['in_clip_skip'] = clip_skip
+                bottom_generation_settings_ui = create_bottom_generation_settings_ui()
+                inputs_map.update(bottom_generation_settings_ui)
 
             with gr.Tab("Image Enhancement"):
 
