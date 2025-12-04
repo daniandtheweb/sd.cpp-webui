@@ -7,15 +7,9 @@ from modules.utils.utility import random_seed
 from modules.utils.ui_handler import (
     ckpt_tab_switch, unet_tab_switch, refresh_all_options
 )
-from modules.shared_instance import (
-    config, subprocess_manager
-)
-from modules.loader import (
-    get_models, reload_models
-)
-from modules.ui.constants import RELOAD_SYMBOL, RANDOM_SYMBOL
+from modules.shared_instance import subprocess_manager
+from modules.ui.constants import RANDOM_SYMBOL
 from modules.ui.models import create_img_model_sel_ui
-from modules.ui.photomaker import create_photomaker_ui
 from modules.ui.prompts import create_prompts_ui
 from modules.ui.generation_settings import (
     create_quant_ui, create_generation_settings_ui
@@ -23,8 +17,10 @@ from modules.ui.generation_settings import (
 from modules.ui.upscale import create_upscl_ui
 from modules.ui.controlnet import create_cnnet_ui
 from modules.ui.chroma import create_chroma_ui
+from modules.ui.photomaker import create_photomaker_ui
 from modules.ui.timestep_shift import create_timestep_shift_ui
 from modules.ui.eta import create_eta_ui
+from modules.ui.taesd import create_taesd_ui
 from modules.ui.vae_tiling import create_vae_tiling_ui
 from modules.ui.easycache import create_easycache_ui
 from modules.ui.advanced_settings import create_extras_ui
@@ -35,8 +31,6 @@ txt2img_params = {}
 
 with gr.Blocks() as txt2img_block:
     inputs_map = {}
-    # Directory Textboxes
-    taesd_dir_txt = gr.Textbox(value=config.get('taesd_dir'), visible=False)
 
     # Title
     txt2img_title = gr.Markdown("# Text to Image")
@@ -48,28 +42,6 @@ with gr.Blocks() as txt2img_block:
     # Model Type Selection
     quant_ui = create_quant_ui()
     inputs_map.update(quant_ui)
-
-    # Extra Networks Selection
-    with gr.Accordion(label="Extra Networks", open=False):
-        with gr.Row():
-            with gr.Column():
-                with gr.Group():
-                    with gr.Row():
-                        taesd_model = gr.Dropdown(
-                            label="TAESD",
-                            choices=get_models(config.get('taesd_dir')),
-                            value=config.get('def_taesd'),
-                            allow_custom_value=True,
-                            interactive=True
-                        )
-                    with gr.Row():
-                        reload_taesd_btn = gr.Button(value=RELOAD_SYMBOL)
-                        gr.ClearButton(taesd_model)
-                    inputs_map['in_taesd'] = taesd_model
-
-        # PhotoMaker
-        photomaker_ui = create_photomaker_ui()
-        inputs_map.update(photomaker_ui)
 
     # Prompts
     prompts_ui = create_prompts_ui()
@@ -121,6 +93,10 @@ with gr.Blocks() as txt2img_block:
                 chroma_ui = create_chroma_ui()
                 inputs_map.update(chroma_ui)
 
+                # PhotoMaker
+                photomaker_ui = create_photomaker_ui()
+                inputs_map.update(photomaker_ui)
+
                 # Timestep shift
                 timestep_shift_ui = create_timestep_shift_ui()
                 inputs_map.update(timestep_shift_ui)
@@ -130,6 +106,10 @@ with gr.Blocks() as txt2img_block:
                 inputs_map.update(eta_ui)
 
             with gr.Tab("Advanced Settings"):
+
+                # TAESD
+                taesd_ui = create_taesd_ui()
+                inputs_map.update(taesd_ui)
 
                 # VAE Tiling
                 vae_tiling_ui = create_vae_tiling_ui()
@@ -289,9 +269,6 @@ with gr.Blocks() as txt2img_block:
             generation_settings_ui['in_flow_shift_bool'],
             generation_settings_ui['in_flow_shift']
         ]
-    )
-    reload_taesd_btn.click(
-        reload_models, inputs=[taesd_dir_txt], outputs=[taesd_model]
     )
     random_seed_btn.click(
         random_seed, inputs=[], outputs=[seed]

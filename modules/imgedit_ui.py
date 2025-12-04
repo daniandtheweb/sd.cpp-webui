@@ -8,19 +8,17 @@ from modules.utils.ui_handler import refresh_all_options
 from modules.shared_instance import (
     config, subprocess_manager
 )
-from modules.loader import (
-    get_models, reload_models
-)
-from modules.ui.constants import RELOAD_SYMBOL, RANDOM_SYMBOL
+from modules.ui.constants import RANDOM_SYMBOL
 from modules.ui.models import create_unet_model_sel_ui
-from modules.ui.photomaker import create_photomaker_ui
 from modules.ui.prompts import create_prompts_ui
 from modules.ui.generation_settings import (
     create_quant_ui, create_generation_settings_ui
 )
 from modules.ui.upscale import create_upscl_ui
 from modules.ui.controlnet import create_cnnet_ui
+from modules.ui.photomaker import create_photomaker_ui
 from modules.ui.eta import create_eta_ui
+from modules.ui.taesd import create_taesd_ui
 from modules.ui.vae_tiling import create_vae_tiling_ui
 from modules.ui.easycache import create_easycache_ui
 from modules.ui.advanced_settings import create_extras_ui
@@ -45,28 +43,6 @@ with gr.Blocks() as imgedit_block:
     # Model Type Selection
     quant_ui = create_quant_ui()
     inputs_map.update(quant_ui)
-
-    # Extra Networks Selection
-    with gr.Accordion(label="Extra Networks", open=False):
-        with gr.Row():
-            with gr.Column():
-                with gr.Group():
-                    with gr.Row():
-                        taesd_model = gr.Dropdown(
-                            label="TAESD",
-                            choices=get_models(config.get('taesd_dir')),
-                            value=config.get('def_taesd'),
-                            allow_custom_value=True,
-                            interactive=True
-                        )
-                    with gr.Row():
-                        reload_taesd_btn = gr.Button(value=RELOAD_SYMBOL)
-                        gr.ClearButton(taesd_model)
-                    inputs_map['in_taesd'] = taesd_model
-
-        # PhotoMaker
-        photomaker_ui = create_photomaker_ui()
-        inputs_map.update(photomaker_ui)
 
     # Prompts
     prompts_ui = create_prompts_ui(nprompt_support = False)
@@ -114,11 +90,19 @@ with gr.Blocks() as imgedit_block:
                 cnnet_ui = create_cnnet_ui()
                 inputs_map.update(cnnet_ui)
 
+                # PhotoMaker
+                photomaker_ui = create_photomaker_ui()
+                inputs_map.update(photomaker_ui)
+
                 # ETA
                 eta_ui = create_eta_ui()
                 inputs_map.update(eta_ui)
 
             with gr.Tab("Advanced Settings"):
+
+                # TAESD
+                taesd_ui = create_taesd_ui()
+                inputs_map.update(taesd_ui)
 
                 # VAE Tiling
                 vae_tiling_ui = create_vae_tiling_ui()
@@ -225,9 +209,6 @@ with gr.Blocks() as imgedit_block:
         subprocess_manager.kill_subprocess,
         inputs=[],
         outputs=[]
-    )
-    reload_taesd_btn.click(
-        reload_models, inputs=[taesd_dir_txt], outputs=[taesd_model]
     )
     random_seed_btn.click(
         random_seed, inputs=[], outputs=[seed]
