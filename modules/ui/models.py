@@ -1,5 +1,7 @@
 """sd.cpp-webui - UI component for the model selection"""
 
+import os
+
 import gradio as gr
 
 from modules.shared_instance import config
@@ -9,7 +11,8 @@ from modules.loader import (
 from .constants import RELOAD_SYMBOL
 
 def _create_model_dropdown_widget(
-        label, choices_dir_key, default_value_key, reload_input_component
+    label, choices_dir_key, default_value_key, reload_input_component,
+    **kwargs
 ):
     """
     Creates a standardized gr.Group containing a Dropdown, Reload button, and Clear button.
@@ -24,6 +27,13 @@ def _create_model_dropdown_widget(
     Returns:
         tuple: A tuple containing the created (gr.Dropdown, gr.Button)
     """
+    if 'info' not in kwargs:
+            full_path = config.get(choices_dir_key)
+            if full_path:
+                # normpath removes trailing slashes so basename works correctly
+                folder_name = os.path.basename(os.path.normpath(full_path)) 
+                kwargs['info'] = f"{folder_name} folder"
+
     with gr.Group():
         with gr.Row():
             dropdown = gr.Dropdown(
@@ -31,7 +41,8 @@ def _create_model_dropdown_widget(
                 choices=get_models(config.get(choices_dir_key)),
                 scale=7,
                 value=config.get(default_value_key),
-                interactive=True
+                interactive=True,
+                **kwargs
             )
         with gr.Row():
             reload_btn = gr.Button(
@@ -60,14 +71,14 @@ def create_ckpt_model_sel_ui():
                 label="Checkpoint Model",
                 choices_dir_key='ckpt_dir',
                 default_value_key='def_ckpt',
-                reload_input_component=ckpt_dir_txt
+                reload_input_component=ckpt_dir_txt,
             )
         with gr.Column():
             ckpt_vae = _create_model_dropdown_widget(
                 label="Checkpoint VAE",
                 choices_dir_key='vae_dir',
                 default_value_key='def_ckpt_vae',
-                reload_input_component=vae_dir_txt
+                reload_input_component=vae_dir_txt,
             )
     return {
         'in_ckpt_model': ckpt_model,
@@ -79,7 +90,7 @@ def create_unet_model_sel_ui():
     """Create the UNET model selection UI using a helper for clarity"""
     vae_dir_txt = gr.Textbox(value=config.get('vae_dir'), visible=False)
     unet_dir_txt = gr.Textbox(value=config.get('unet_dir'), visible=False)
-    clip_dir_txt = gr.Textbox(value=config.get('clip_dir'), visible=False)
+    txt_enc_dir_txt = gr.Textbox(value=config.get('txt_enc_dir'), visible=False)
 
     with gr.Row():
         with gr.Column():
@@ -87,50 +98,50 @@ def create_unet_model_sel_ui():
                 label="UNET Model",
                 choices_dir_key='unet_dir',
                 default_value_key='def_unet',
-                reload_input_component=unet_dir_txt
+                reload_input_component=unet_dir_txt,
             )
         with gr.Column():
             unet_vae = _create_model_dropdown_widget(
                 label="UNET VAE",
                 choices_dir_key='vae_dir',
                 default_value_key='def_unet_vae',
-                reload_input_component=vae_dir_txt
+                reload_input_component=vae_dir_txt,
             )
     with gr.Row():
         with gr.Column():
             clip_g = _create_model_dropdown_widget(
                 label="clip_g",
-                choices_dir_key='clip_dir',
+                choices_dir_key='txt_enc_dir',
                 default_value_key='def_clip_g',
-                reload_input_component=clip_dir_txt
+                reload_input_component=txt_enc_dir_txt,
             )
         with gr.Column():
             clip_l = _create_model_dropdown_widget(
                 label="clip_l",
-                choices_dir_key='clip_dir',
+                choices_dir_key='txt_enc_dir',
                 default_value_key='def_clip_l',
-                reload_input_component=clip_dir_txt
+                reload_input_component=txt_enc_dir_txt,
             )
         with gr.Column():
             t5xxl = _create_model_dropdown_widget(
                 label="t5xxl",
-                choices_dir_key='clip_dir',
+                choices_dir_key='txt_enc_dir',
                 default_value_key='def_t5xxl',
-                reload_input_component=clip_dir_txt
+                reload_input_component=txt_enc_dir_txt,
             )
         with gr.Column():
             llm = _create_model_dropdown_widget(
                 label="llm",
-                choices_dir_key='clip_dir',
+                choices_dir_key='txt_enc_dir',
                 default_value_key='def_llm',
-                reload_input_component=clip_dir_txt
+                reload_input_component=txt_enc_dir_txt,
             )
         with gr.Column():
             llm_vision = _create_model_dropdown_widget(
                 label="llm_vision",
-                choices_dir_key='clip_dir',
+                choices_dir_key='txt_enc_dir',
                 default_value_key='def_llm_vision',
-                reload_input_component=clip_dir_txt
+                reload_input_component=txt_enc_dir_txt,
             )
     return {
         'in_unet_model': unet_model,
@@ -170,7 +181,7 @@ def create_video_model_sel_ui():
     """Create the video model selection UI"""
     unet_dir_txt = gr.Textbox(value=config.get('unet_dir'), visible=False)
     vae_dir_txt = gr.Textbox(value=config.get('vae_dir'), visible=False)
-    clip_dir_txt = gr.Textbox(value=config.get('clip_dir'), visible=False)
+    txt_enc_dir_txt = gr.Textbox(value=config.get('txt_enc_dir'), visible=False)
 
     with gr.Row():
         with gr.Column():
@@ -178,29 +189,29 @@ def create_video_model_sel_ui():
                 label="UNET Model",
                 choices_dir_key='unet_dir',
                 default_value_key='def_unet',
-                reload_input_component=unet_dir_txt
+                reload_input_component=unet_dir_txt,
             )
         with gr.Column():
             unet_vae = _create_model_dropdown_widget(
                 label="UNET VAE",
                 choices_dir_key='vae_dir',
                 default_value_key='def_unet_vae',
-                reload_input_component=vae_dir_txt
+                reload_input_component=vae_dir_txt,
             )
     with gr.Row():
         with gr.Column():
             clip_vision_h = _create_model_dropdown_widget(
                 label="clip_vision_h",
-                choices_dir_key='clip_dir',
+                choices_dir_key='txt_enc_dir',
                 default_value_key='def_clip_vision_h',
-                reload_input_component=clip_dir_txt
+                reload_input_component=txt_enc_dir_txt,
             )
         with gr.Column():
             umt5_xxl = _create_model_dropdown_widget(
                 label="umt5_xxl",
-                choices_dir_key='clip_dir',
+                choices_dir_key='txt_enc_dir',
                 default_value_key='def_umt5_xxl',
-                reload_input_component=clip_dir_txt
+                reload_input_component=txt_enc_dir_txt,
             )
     with gr.Row():
         with gr.Accordion(
@@ -210,7 +221,7 @@ def create_video_model_sel_ui():
                 label="high_noise_model",
                 choices_dir_key='unet_dir',
                 default_value_key=None,
-                reload_input_component=unet_dir_txt
+                reload_input_component=unet_dir_txt,
             )
 
     # Return the dictionary with all UI components

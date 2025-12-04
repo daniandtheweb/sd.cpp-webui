@@ -18,7 +18,7 @@ with gr.Blocks() as convert_block:
     ckpt_dir_txt = gr.Textbox(value=config.get('ckpt_dir'), visible=False)
     vae_dir_txt = gr.Textbox(value=config.get('vae_dir'), visible=False)
     unet_dir_txt = gr.Textbox(value=config.get('unet_dir'), visible=False)
-    clip_dir_txt = gr.Textbox(value=config.get('clip_dir'), visible=False)
+    txt_enc_dir_txt = gr.Textbox(value=config.get('txt_enc_dir'), visible=False)
     emb_dir_txt = gr.Textbox(value=config.get('emb_dir'), visible=False)
     lora_dir_txt = gr.Textbox(value=config.get('lora_dir'), visible=False)
     taesd_dir_txt = gr.Textbox(value=config.get('taesd_dir'), visible=False)

@@ -8,7 +8,7 @@ FOLDER_CONFIG = {
     'ckpt_dir': "Checkpoint folder",
     'unet_dir': "UNET folder",
     'vae_dir': "VAE folder",
-    'clip_dir': "clip folder",
+    'txt_enc_dir': "Text encoders folder",
     'emb_dir': "Embeddings folder",
     'lora_dir': "Lora folder",
     'taesd_dir': "TAESD folder",

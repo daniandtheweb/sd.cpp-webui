@@ -94,7 +94,7 @@ class CommandRunner:
             'ckpt_dir': ['in_ckpt_model'],
             'vae_dir': ['in_ckpt_vae', 'in_unet_vae'],
             'unet_dir': ['in_unet_model', 'in_high_noise_model'],
-            'clip_dir': [
+            'txt_enc_dir': [
                 'in_clip_g', 'in_clip_l', 'in_t5xxl', 'in_llm',
                 'in_umt5_xxl', 'in_clip_vision_h'
             ],

@@ -121,7 +121,7 @@ with gr.Blocks() as options_block:
                 with gr.Row():
                     clip_g = gr.Dropdown(
                         label="clip_g",
-                        choices=get_models(config.get('clip_dir')),
+                        choices=get_models(config.get('txt_enc_dir')),
                         scale=7,
                         value=config.get('def_clip_g'),
                         interactive=True
@@ -140,7 +140,7 @@ with gr.Blocks() as options_block:
                 with gr.Row():
                     clip_l = gr.Dropdown(
                         label="clip_l",
-                        choices=get_models(config.get('clip_dir')),
+                        choices=get_models(config.get('txt_enc_dir')),
                         scale=7,
                         value=config.get('def_clip_l'),
                         interactive=True
@@ -159,7 +159,7 @@ with gr.Blocks() as options_block:
                 with gr.Row():
                     clip_vision_h = gr.Dropdown(
                         label="clip_vision_h",
-                        choices=get_models(config.get('clip_dir')),
+                        choices=get_models(config.get('txt_enc_dir')),
                         scale=7,
                         value=config.get('def_clip_vision_h'),
                         interactive=True
@@ -179,7 +179,7 @@ with gr.Blocks() as options_block:
                 with gr.Row():
                     t5xxl = gr.Dropdown(
                         label="t5xxl",
-                        choices=get_models(config.get('clip_dir')),
+                        choices=get_models(config.get('txt_enc_dir')),
                         scale=7,
                         value=config.get('def_t5xxl'),
                         interactive=True
@@ -198,7 +198,7 @@ with gr.Blocks() as options_block:
                 with gr.Row():
                     umt5_xxl = gr.Dropdown(
                         label="umt5_xxl",
-                        choices=get_models(config.get('clip_dir')),
+                        choices=get_models(config.get('txt_enc_dir')),
                         scale=7,
                         value=config.get('def_umt5_xxl'),
                         interactive=True
@@ -218,7 +218,7 @@ with gr.Blocks() as options_block:
                 with gr.Row():
                     llm = gr.Dropdown(
                         label="llm",
-                        choices=get_models(config.get('clip_dir')),
+                        choices=get_models(config.get('txt_enc_dir')),
                         scale=7,
                         value=config.get('def_llm'),
                         interactive=True
