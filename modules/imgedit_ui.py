@@ -9,7 +9,7 @@ from modules.shared_instance import (
     config, subprocess_manager
 )
 from modules.ui.constants import RANDOM_SYMBOL
-from modules.ui.models import create_unet_model_sel_ui
+from modules.ui.models import create_imgedit_model_sel_ui
 from modules.ui.prompts import create_prompts_ui
 from modules.ui.generation_settings import (
     create_quant_ui, create_generation_settings_ui,
@@ -42,7 +42,7 @@ with gr.Blocks() as imgedit_block:
         label="Models selection", open=False
     ):
         # Model & VAE Selection
-        model_ui = create_unet_model_sel_ui()
+        model_ui = create_imgedit_model_sel_ui()
         inputs_map.update(model_ui)
         inputs_map['in_diffusion_mode'] = diffusion_mode
 

@@ -59,6 +59,8 @@ def create_model_widget(
 def create_ckpt_model_sel_ui():
     """Create the checkpoint model selection UI using a helper for clarity"""
     with gr.Row():
+        gr.Markdown("Supports: SD1.x, SD2.x, SD-Turbo, SDXL, SDXL-Turbo, NitroFusion")
+    with gr.Row():
         with gr.Column():
             ckpt_model = create_model_widget(
                 label="Checkpoint Model",
@@ -79,6 +81,8 @@ def create_ckpt_model_sel_ui():
 
 def create_unet_model_sel_ui():
     """Create the UNET model selection UI using a helper for clarity"""
+    with gr.Row():
+        gr.Markdown("Supports: SD3, SD3.5, Flux-dev, Flux-schnell, FLUX.2-dev, Chroma, Qwen Image, Z-Image-Turbo")
     with gr.Row():
         with gr.Column():
             unet_model = create_model_widget(
@@ -157,8 +161,62 @@ def create_img_model_sel_ui():
     }
 
 
+def create_imgedit_model_sel_ui():
+    """Create the image edit selection UI"""
+    with gr.Row():
+        gr.Markdown("Supports: Flux Kontext, Qwen Image Edit")
+    with gr.Row():
+        with gr.Column():
+            unet_model = create_model_widget(
+                label="UNET Model",
+                dir_key='unet_dir',
+                option_key='def_unet',
+            )
+        with gr.Column():
+            unet_vae = create_model_widget(
+                label="UNET VAE",
+                dir_key='vae_dir',
+                option_key='def_unet_vae',
+            )
+    with gr.Row():
+        with gr.Column():
+            clip_l = create_model_widget(
+                label="clip_l",
+                dir_key='txt_enc_dir',
+                option_key='def_clip_l',
+            )
+        with gr.Column():
+            t5xxl = create_model_widget(
+                label="t5xxl",
+                dir_key='txt_enc_dir',
+                option_key='def_t5xxl',
+            )
+        with gr.Column():
+            llm = create_model_widget(
+                label="llm",
+                dir_key='txt_enc_dir',
+                option_key='def_llm',
+            )
+        with gr.Column():
+            llm_vision = create_model_widget(
+                label="llm_vision",
+                dir_key='txt_enc_dir',
+                option_key='def_llm_vision',
+            )
+    return {
+        'in_unet_model': unet_model,
+        'in_unet_vae': unet_vae,
+        'in_clip_l': clip_l,
+        'in_t5xxl': t5xxl,
+        'in_llm': llm,
+        'in_llm_vision': llm_vision
+    }
+
+
 def create_video_model_sel_ui():
     """Create the video model selection UI"""
+    with gr.Row():
+        gr.Markdown("Supports: Wan2.1, Wan2.2")
     with gr.Row():
         with gr.Column():
             unet_model = create_model_widget(
