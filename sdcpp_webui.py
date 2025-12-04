@@ -22,7 +22,8 @@ from modules.any2video_ui import (
 from modules.upscale_ui import upscale_block, img_inp_upscale
 from modules.gallery_ui import (
     gallery_block, cpy_2_txt2img_btn, cpy_2_img2img_btn, cpy_2_imgedit_btn,
-    cpy_2_any2video_btn, cpy_2_upscale_btn, info_params, path_info
+    cpy_2_any2video_btn, cpy_2_upscale_btn, info_params, path_info,
+    gallery, gallery_manager, def_page, txt2img_ctrl, page_num_select
 )
 from modules.convert_ui import convert_block
 from modules.options_ui import options_block
@@ -62,6 +63,16 @@ def create_copy_fn(tab_id: str, fields: list = None) -> callable:
     return copy_fn
 
 
+def lazy_load_gallery(is_loaded, page, ctrl):
+    if is_loaded:
+        # If already loaded, return existing values (do nothing)
+        return gr.skip(), gr.skip(), gr.skip(), gr.skip(), True
+    
+    results = gallery_manager.reload_gallery(page, ctrl)
+    
+    return *results, True
+
+
 def sdcpp_launch(
     listen: bool = False, autostart: bool = False, darkmode: bool = False
 ):
@@ -89,6 +100,10 @@ def sdcpp_launch(
         css="footer {visibility: hidden}", title="sd.cpp-webui",
         theme="default", js=dark_js
     ) as sdcpp:
+
+        gallery_loaded_state = gr.State(value=False)
+        common_inputs = [info_params[f] for f in FIELDS]
+
         gr.Markdown("# <center>sd.cpp-webui</center>")
         with gr.Tabs() as tabs:
             with gr.TabItem("txt2img", id="txt2img"):
@@ -99,7 +114,7 @@ def sdcpp_launch(
                 imgedit_block.render()
             with gr.TabItem("any2video", id="any2video"):
                 any2video_block.render()
-            with gr.TabItem("Gallery", id="gallery"):
+            with gr.TabItem("Gallery", id="gallery") as gallery_tab:
                 gallery_block.render()
             with gr.TabItem("Upscaler", id="upscale"):
                 upscale_block.render()
@@ -108,8 +123,11 @@ def sdcpp_launch(
             with gr.TabItem("Options", id="options"):
                 options_block.render()
 
-        common_inputs = [info_params[f] for f in FIELDS]
-
+        gallery_tab.select(
+            fn=lazy_load_gallery,
+            inputs=[gallery_loaded_state, def_page, txt2img_ctrl],
+            outputs=[gallery, page_num_select, gallery, gallery, gallery_loaded_state]
+        )
         # Copy data from gallery image to txt2img.
         cpy_2_txt2img_btn.click(
             create_copy_fn("txt2img", FIELDS),

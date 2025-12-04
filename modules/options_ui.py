@@ -9,6 +9,7 @@ from modules.loader import get_models
 from modules.ui.constants import (
     RELOAD_SYMBOL, SAMPLERS, SCHEDULERS, PREDICTION, PREVIEW
 )
+from modules.ui.models import create_model_widget
 from modules.ui.generation_settings import create_quant_ui
 from modules.ui.folder_settings import create_folders_opt_ui
 
@@ -39,197 +40,87 @@ with gr.Blocks() as options_block:
     # Title
     options_title = gr.Markdown("# Options")
 
-    with gr.Row():
-        with gr.Column():
-            with gr.Group():
-                with gr.Row():
-                    ckpt_model = gr.Dropdown(
-                        label="Checkpoint Model",
-                        choices=get_models(config.get('ckpt_dir')),
-                        scale=7,
-                        value=config.get('def_ckpt'),
-                        interactive=True
-                    )
-                with gr.Row():
-                    reload_ckpt_btn = gr.Button(
-                        value=RELOAD_SYMBOL, scale=1
-                    )
-                    gr.ClearButton(
-                        ckpt_model, scale=1
-                    )
+    with gr.Accordion(
+        label="Default models", open=False
+    ):
+        with gr.Row():
+            with gr.Column():
+                ckpt_model = create_model_widget(
+                    label="Checkpoint Model",
+                    dir_key='ckpt_dir',
+                    option_key='def_ckpt',
+                )
                 settings_map['def_ckpt'] = ckpt_model
-
-        with gr.Column():
-            with gr.Group():
-                with gr.Row():
-                    ckpt_vae = gr.Dropdown(
-                        label="Checkpoint VAE",
-                        choices=get_models(config.get('vae_dir')),
-                        scale=7, value=config.get('def_ckpt_vae'),
-                        interactive=True
-                    )
-                with gr.Row():
-                    reload_vae_btn = gr.Button(
-                        value=RELOAD_SYMBOL, scale=1
-                    )
-                    gr.ClearButton(
-                        ckpt_vae, scale=1
-                    )
+            with gr.Column():
+                ckpt_vae = create_model_widget(
+                    label="Checkpoint VAE",
+                    dir_key='vae_dir',
+                    option_key='def_ckpt_vae',
+                )
                 settings_map['def_ckpt_vae'] = ckpt_vae
 
-    with gr.Row():
-        with gr.Column():
-            with gr.Group():
-                with gr.Row():
-                    unet_model = gr.Dropdown(
-                        label="UNET Model",
-                        choices=get_models(config.get('unet_dir')),
-                        scale=7,
-                        value=config.get('def_unet'),
-                        interactive=True
-                    )
-                with gr.Row():
-                    reload_unet_btn = gr.Button(
-                        value=RELOAD_SYMBOL, scale=1
-                    )
-                    gr.ClearButton(
-                        unet_model, scale=1
-                    )
+        with gr.Row():
+            with gr.Column():
+                unet_model = create_model_widget(
+                    label="UNET Model",
+                    dir_key='unet_dir',
+                    option_key='def_unet',
+                )
                 settings_map['def_unet'] = unet_model
-
-        with gr.Column():
-            with gr.Group():
-                with gr.Row():
-                    unet_vae = gr.Dropdown(
-                        label="UNET VAE",
-                        choices=get_models(config.get('vae_dir')),
-                        scale=7, value=config.get('def_unet_vae'),
-                        interactive=True
-                    )
-                with gr.Row():
-                    reload_vae_btn = gr.Button(
-                        value=RELOAD_SYMBOL, scale=1
-                    )
-                    gr.ClearButton(
-                        unet_vae, scale=1
-                    )
+            with gr.Column():
+                unet_vae = create_model_widget(
+                    label="UNET VAE",
+                    dir_key='vae_dir',
+                    option_key='def_unet_vae',
+                )
                 settings_map['def_unet_vae'] = unet_vae
 
-    with gr.Row():
-        with gr.Column():
-            with gr.Group():
-                with gr.Row():
-                    clip_g = gr.Dropdown(
-                        label="clip_g",
-                        choices=get_models(config.get('clip_dir')),
-                        scale=7,
-                        value=config.get('def_clip_g'),
-                        interactive=True
-                    )
-                with gr.Row():
-                    reload_clip_g_btn = gr.Button(
-                        value=RELOAD_SYMBOL, scale=1
-                    )
-                    gr.ClearButton(
-                        clip_g, scale=1
-                    )
+        with gr.Row():
+            with gr.Column():
+                clip_g = create_model_widget(
+                    label="clip_g",
+                    dir_key='txt_enc_dir',
+                    option_key='def_clip_g',
+                )
                 settings_map['def_clip_g'] = clip_g
-
-        with gr.Column():
-            with gr.Group():
-                with gr.Row():
-                    clip_l = gr.Dropdown(
-                        label="clip_l",
-                        choices=get_models(config.get('clip_dir')),
-                        scale=7,
-                        value=config.get('def_clip_l'),
-                        interactive=True
-                    )
-                with gr.Row():
-                    reload_clip_l_btn = gr.Button(
-                        value=RELOAD_SYMBOL, scale=1
-                    )
-                    gr.ClearButton(
-                        clip_l, scale=1
-                    )
+            with gr.Column():
+                clip_l = create_model_widget(
+                    label="clip_l",
+                    dir_key='txt_enc_dir',
+                    option_key='def_clip_l',
+                )
                 settings_map['def_clip_l'] = clip_l
-
-        with gr.Column():
-            with gr.Group():
-                with gr.Row():
-                    clip_vision_h = gr.Dropdown(
-                        label="clip_vision_h",
-                        choices=get_models(config.get('clip_dir')),
-                        scale=7,
-                        value=config.get('def_clip_vision_h'),
-                        interactive=True
-                    )
-                with gr.Row():
-                    reload_clip_vision_h_btn = gr.Button(
-                        value=RELOAD_SYMBOL, scale=1
-                    )
-                    gr.ClearButton(
-                        clip_vision_h, scale=1
-                    )
+            with gr.Column():
+                clip_vision_h = create_model_widget(
+                    label="clip_vision_h",
+                    dir_key='txt_enc_dir',
+                    option_key='def_clip_vision_h',
+                )
                 settings_map['def_clip_vision_h'] = clip_vision_h
 
-    with gr.Row():
-        with gr.Column():
-            with gr.Group():
-                with gr.Row():
-                    t5xxl = gr.Dropdown(
-                        label="t5xxl",
-                        choices=get_models(config.get('clip_dir')),
-                        scale=7,
-                        value=config.get('def_t5xxl'),
-                        interactive=True
-                    )
-                with gr.Row():
-                    reload_t5xxl_btn = gr.Button(
-                        value=RELOAD_SYMBOL, scale=1
-                    )
-                    gr.ClearButton(
-                        t5xxl, scale=1
-                    )
+        with gr.Row():
+            with gr.Column():
+                t5xxl = create_model_widget(
+                    label="t5xxl",
+                    dir_key='txt_enc_dir',
+                    option_key='def_t5xxl',
+                )
                 settings_map['def_t5xxl'] = t5xxl
-
-        with gr.Column():
-            with gr.Group():
-                with gr.Row():
-                    umt5_xxl = gr.Dropdown(
-                        label="umt5_xxl",
-                        choices=get_models(config.get('clip_dir')),
-                        scale=7,
-                        value=config.get('def_umt5_xxl'),
-                        interactive=True
-                    )
-                with gr.Row():
-                    reload_umt5_xxl_btn = gr.Button(
-                        value=RELOAD_SYMBOL, scale=1
-                    )
-                    gr.ClearButton(
-                        umt5_xxl, scale=1
-                    )
+            with gr.Column():
+                umt5_xxl = create_model_widget(
+                    label="umt5_xxl",
+                    dir_key='txt_enc_dir',
+                    option_key='def_umt5_xxl',
+                )
                 settings_map['def_umt5_xxl'] = umt5_xxl
 
-    with gr.Row():
-        with gr.Column():
-            with gr.Group():
-                with gr.Row():
-                    llm = gr.Dropdown(
-                        label="llm",
-                        choices=get_models(config.get('clip_dir')),
-                        scale=7,
-                        value=config.get('def_llm'),
-                        interactive=True
-                    )
-                with gr.Row():
-                    reload_llm_btn = gr.Button(
-                        value=RELOAD_SYMBOL, scale=1
-                    )
-                    gr.ClearButton(
-                        llm, scale=1
-                    )
+        with gr.Row():
+            with gr.Column():
+                llm = create_model_widget(
+                    label="llm",
+                    dir_key='txt_enc_dir',
+                    option_key='def_llm',
+                )
                 settings_map['def_llm'] = llm
 
     # Model Type Selection
@@ -238,22 +129,12 @@ with gr.Blocks() as options_block:
 
     with gr.Row():
         with gr.Column():
-            with gr.Group():
-                with gr.Row():
-                    taesd = gr.Dropdown(
-                        label="TAESD",
-                        choices=get_models(config.get('taesd_dir')),
-                        value=config.get('def_taesd'),
-                        interactive=True
-                    )
-                with gr.Row():
-                    reload_taesd_btn = gr.Button(
-                        value=RELOAD_SYMBOL, scale=1
-                    )
-                    gr.ClearButton(
-                        taesd, scale=1
-                    )
-                settings_map['def_taesd'] = taesd
+            taesd = create_model_widget(
+                label="TAESD",
+                dir_key='taesd_dir',
+                option_key='def_taesd',
+            )
+            settings_map['def_taesd'] = taesd
 
 
     with gr.Row():

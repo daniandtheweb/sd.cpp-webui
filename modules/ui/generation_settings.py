@@ -12,26 +12,27 @@ from .constants import QUANTS, SAMPLERS, SCHEDULERS, SWITCH_V_SYMBOL
 
 def create_quant_ui():
     """Create the model type selection UI"""
-    with gr.Row():
-        with gr.Group():
-            with gr.Row():
-                model_type = gr.Dropdown(
-                    label="Quantization",
-                    choices=QUANTS,
-                    value=config.get('def_type'),
+    with gr.Accordion(
+        label="Quantization", open=False
+    ):
+        with gr.Row():
+            model_type = gr.Dropdown(
+                label="Quantization type",
+                choices=QUANTS,
+                value=config.get('def_type'),
+                interactive=True
+            )
+        with gr.Row():
+            with gr.Accordion(
+                label="Tensor type rules",
+                open=False
+            ):
+                tensor_type_rules = gr.Textbox(
+                    label="Weight type per tensor pattern",
+                    value="",
+                    placeholder="example: \"^vae\\.=f16,model\\.=q8_0\"",
                     interactive=True
                 )
-            with gr.Row():
-                with gr.Accordion(
-                    label="Tensor type rules",
-                    open=False
-                ):
-                    tensor_type_rules = gr.Textbox(
-                        label="Weight type per tensor pattern",
-                        value="",
-                        placeholder="example: \"^vae\\.=f16,model\\.=q8_0\"",
-                        interactive=True
-                    )
     return {
         'in_model_type': model_type,
         'in_tensor_type_rules': tensor_type_rules
@@ -41,28 +42,21 @@ def create_quant_ui():
 def create_generation_settings_ui(unet_mode: bool = False):
     """Create settings UI"""
     with gr.Row():
-        with gr.Column(scale=1):
+        with gr.Column():
             sampling = gr.Dropdown(
                 label="Sampling method",
                 choices=SAMPLERS,
                 value=config.get('def_sampling'),
                 interactive=True
             )
-        with gr.Column(scale=1):
-            steps = gr.Slider(
-                label="Steps",
-                minimum=1,
-                maximum=100,
-                value=config.get('def_steps'),
-                step=1
+        with gr.Column():
+            scheduler = gr.Dropdown(
+                label="Scheduler",
+                choices=SCHEDULERS,
+                value=config.get('def_scheduler'),
+                interactive=True
             )
-    with gr.Row():
-        scheduler = gr.Dropdown(
-            label="Scheduler",
-            choices=SCHEDULERS,
-            value=config.get('def_scheduler'),
-            interactive=True
-        )
+
     with gr.Row():
         with gr.Column():
             with gr.Group():
@@ -92,11 +86,11 @@ def create_generation_settings_ui(unet_mode: bool = False):
                 )
         with gr.Column():
             with gr.Row():
-                batch_count = gr.Slider(
-                    label="Batch count",
+                steps = gr.Slider(
+                    label="Steps",
                     minimum=1,
-                    maximum=99,
-                    value=1,
+                    maximum=100,
+                    value=config.get('def_steps'),
                     step=1
                 )
             with gr.Row():
@@ -108,28 +102,6 @@ def create_generation_settings_ui(unet_mode: bool = False):
                     step=0.1,
                     interactive=True
                 )
-    with gr.Row():
-        guidance_bool = gr.Checkbox(
-            label="Enable distilled guidance", value=False,
-            visible=unet_mode
-        )
-        guidance = gr.Slider(
-            label="Guidance",
-            minimum=0,
-            maximum=30,
-            value=3.5,
-            step=0.1,
-            interactive=False,
-            visible=unet_mode
-        )
-
-        guidance_comp = [guidance]
-
-        guidance_bool.change(
-            partial(update_interactivity, len(guidance_comp)),
-            inputs=guidance_bool,
-            outputs=guidance_comp
-        )
 
     with gr.Row():
         flow_shift_bool = gr.Checkbox(
@@ -154,6 +126,29 @@ def create_generation_settings_ui(unet_mode: bool = False):
             outputs=flow_shift_comp
         )
 
+    with gr.Row():
+        guidance_bool = gr.Checkbox(
+            label="Enable distilled guidance", value=False,
+            visible=unet_mode
+        )
+        guidance = gr.Slider(
+            label="Guidance",
+            minimum=0,
+            maximum=30,
+            value=3.5,
+            step=0.1,
+            interactive=False,
+            visible=unet_mode
+        )
+
+        guidance_comp = [guidance]
+
+        guidance_bool.change(
+            partial(update_interactivity, len(guidance_comp)),
+            inputs=guidance_bool,
+            outputs=guidance_comp
+        )
+
     # Return the dictionary with all UI components
     return {
         'in_sampling': sampling,
@@ -161,10 +156,34 @@ def create_generation_settings_ui(unet_mode: bool = False):
         'in_scheduler': scheduler,
         'in_width': width,
         'in_height': height,
-        'in_batch_count': batch_count,
         'in_cfg': cfg,
         'in_guidance_bool': guidance_bool,
         'in_guidance': guidance,
         'in_flow_shift_bool': flow_shift_bool,
         'in_flow_shift': flow_shift
+    }
+
+def create_bottom_generation_settings_ui():
+    """Create bottom settings UI"""
+    with gr.Row():
+        clip_skip = gr.Slider(
+            label="CLIP skip",
+            minimum=-1,
+            maximum=12,
+            value=-1,
+            step=1
+        )
+
+    with gr.Row():
+        batch_count = gr.Slider(
+            label="Batch count",
+            minimum=1,
+            maximum=99,
+            value=1,
+            step=1
+        )
+
+    return{
+        'in_clip_skip': clip_skip,
+        'in_batch_count': batch_count
     }

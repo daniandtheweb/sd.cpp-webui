@@ -94,7 +94,7 @@ class CommandRunner:
             'ckpt_dir': ['in_ckpt_model'],
             'vae_dir': ['in_ckpt_vae', 'in_unet_vae'],
             'unet_dir': ['in_unet_model', 'in_high_noise_model'],
-            'clip_dir': [
+            'txt_enc_dir': [
                 'in_clip_g', 'in_clip_l', 'in_t5xxl', 'in_llm',
                 'in_umt5_xxl', 'in_clip_vision_h'
             ],
@@ -572,7 +572,7 @@ def upscale(params: dict) -> Generator:
 
 def convert(
     in_orig_model: str, in_model_dir: str, in_quant_type: str, in_tensor_type_rules: str = None,
-    in_gguf_name: str = None, in_verbose: bool = False
+    in_gguf_name: str = None, in_color: bool = True, in_verbose: bool = False
 ) -> str:
     """Synchronously runs the model conversion command."""
     orig_model_path = os.path.join(in_model_dir, in_orig_model)
@@ -593,6 +593,8 @@ def convert(
     ]
     if in_tensor_type_rules:
         command.extend(['--tensor-type-rules', in_tensor_type_rules])
+    if in_color:
+        command.append('--color')
     if in_verbose:
         command.append('-v')
 

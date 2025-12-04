@@ -11,7 +11,7 @@ DEFAULT_SETTINGS = {
     'ckpt_dir': os.path.join(CURRENT_DIR, "models/checkpoints/"),
     'unet_dir': os.path.join(CURRENT_DIR, "models/unet/"),
     'vae_dir': os.path.join(CURRENT_DIR, "models/vae/"),
-    'clip_dir': os.path.join(CURRENT_DIR, "models/clip/"),
+    'txt_enc_dir': os.path.join(CURRENT_DIR, "models/text_encoders/"),
     'emb_dir': os.path.join(CURRENT_DIR, "models/embeddings/"),
     'lora_dir': os.path.join(CURRENT_DIR, "models/loras/"),
     'taesd_dir': os.path.join(CURRENT_DIR, "models/taesd/"),
