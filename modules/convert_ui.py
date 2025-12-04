@@ -42,8 +42,6 @@ with gr.Blocks() as convert_block:
                 outputs=[model_dir_txt]
             )
 
-    with gr.Row():
-        with gr.Column():
             with gr.Group():
                 model = gr.Dropdown(
                     label="Model",
@@ -59,35 +57,37 @@ with gr.Blocks() as convert_block:
                     inputs=[model_dir_txt],
                     outputs=[model]
                     )
+
             with gr.Row():
                 gguf_name = gr.Textbox(
                     label="Output Name (optional, must end with .gguf)",
                     value=""
                 )
-
-        with gr.Column():
             with gr.Row():
-                with gr.Column():
-                    quant_type = gr.Dropdown(
-                        label="Type",
-                        choices=QUANTS,
-                        value=QUANTS[0],
-                        interactive=True
-                    )
-                    with gr.Accordion(
-                        label="Weight type per tensor pattern",
-                        open=False
-                    ):
-                        tensor_type_rules = gr.Textbox(
-                            show_label=False,
-                            container=False,
-                            value="",
-                            placeholder="example: \"^vae\\.=f16,model\\.=q8_0\"",
-                            interactive=True
-                        )
+                quant_type = gr.Dropdown(
+                    label="Type",
+                    choices=QUANTS,
+                    value=QUANTS[0],
+                    interactive=True
+                )
+            with gr.Accordion(
+                label="Weight type per tensor pattern",
+                open=False
+            ):
+                tensor_type_rules = gr.Textbox(
+                    show_label=False,
+                    container=False,
+                    value="",
+                    placeholder="example: \"^vae\\.=f16,model\\.=q8_0\"",
+                    interactive=True
+                )
 
+            color = gr.Checkbox(
+                label="Color", value=True
+            )
             verbose = gr.Checkbox(label="Verbose")
 
+        with gr.Column():
             with gr.Row():
                 convert_btn = gr.Button(
                     value="Convert", variant="primary"
@@ -96,19 +96,19 @@ with gr.Blocks() as convert_block:
                     value="Stop", variant="stop"
                 )
 
-        # Output
-        with gr.Column(scale=1):
-            result = gr.Textbox(
-                interactive=False,
-                value="",
-                label="LOG"
-            )
+            # Output
+            with gr.Row():
+                result = gr.Textbox(
+                    interactive=False,
+                    value="",
+                    label="LOG"
+                )
 
     # Interactive Bindings
     convert_btn.click(
         convert,
         inputs=[model, model_dir_txt, quant_type, tensor_type_rules,
-                gguf_name, verbose],
+                gguf_name, color, verbose],
         outputs=[result]
     )
     kill_btn.click(

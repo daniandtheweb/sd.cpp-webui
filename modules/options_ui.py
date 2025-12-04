@@ -40,85 +40,88 @@ with gr.Blocks() as options_block:
     # Title
     options_title = gr.Markdown("# Options")
 
-    with gr.Row():
-        with gr.Column():
-            ckpt_model = create_model_widget(
-                label="Checkpoint Model",
-                dir_key='ckpt_dir',
-                option_key='def_ckpt',
-            )
-            settings_map['def_ckpt'] = ckpt_model
-        with gr.Column():
-            ckpt_vae = create_model_widget(
-                label="Checkpoint VAE",
-                dir_key='vae_dir',
-                option_key='def_ckpt_vae',
-            )
-            settings_map['def_ckpt_vae'] = ckpt_vae
+    with gr.Accordion(
+        label="Default models", open=False
+    ):
+        with gr.Row():
+            with gr.Column():
+                ckpt_model = create_model_widget(
+                    label="Checkpoint Model",
+                    dir_key='ckpt_dir',
+                    option_key='def_ckpt',
+                )
+                settings_map['def_ckpt'] = ckpt_model
+            with gr.Column():
+                ckpt_vae = create_model_widget(
+                    label="Checkpoint VAE",
+                    dir_key='vae_dir',
+                    option_key='def_ckpt_vae',
+                )
+                settings_map['def_ckpt_vae'] = ckpt_vae
 
-    with gr.Row():
-        with gr.Column():
-            unet_model = create_model_widget(
-                label="UNET Model",
-                dir_key='unet_dir',
-                option_key='def_unet',
-            )
-            settings_map['def_unet'] = unet_model
-        with gr.Column():
-            unet_vae = create_model_widget(
-                label="UNET VAE",
-                dir_key='vae_dir',
-                option_key='def_unet_vae',
-            )
-            settings_map['def_unet_vae'] = unet_vae
+        with gr.Row():
+            with gr.Column():
+                unet_model = create_model_widget(
+                    label="UNET Model",
+                    dir_key='unet_dir',
+                    option_key='def_unet',
+                )
+                settings_map['def_unet'] = unet_model
+            with gr.Column():
+                unet_vae = create_model_widget(
+                    label="UNET VAE",
+                    dir_key='vae_dir',
+                    option_key='def_unet_vae',
+                )
+                settings_map['def_unet_vae'] = unet_vae
 
-    with gr.Row():
-        with gr.Column():
-            clip_g = create_model_widget(
-                label="clip_g",
-                dir_key='txt_enc_dir',
-                option_key='def_clip_g',
-            )
-            settings_map['def_clip_g'] = clip_g
-        with gr.Column():
-            clip_l = create_model_widget(
-                label="clip_l",
-                dir_key='txt_enc_dir',
-                option_key='def_clip_l',
-            )
-            settings_map['def_clip_l'] = clip_l
-        with gr.Column():
-            clip_vision_h = create_model_widget(
-                label="clip_vision_h",
-                dir_key='txt_enc_dir',
-                option_key='def_clip_vision_h',
-            )
-            settings_map['def_clip_vision_h'] = clip_vision_h
+        with gr.Row():
+            with gr.Column():
+                clip_g = create_model_widget(
+                    label="clip_g",
+                    dir_key='txt_enc_dir',
+                    option_key='def_clip_g',
+                )
+                settings_map['def_clip_g'] = clip_g
+            with gr.Column():
+                clip_l = create_model_widget(
+                    label="clip_l",
+                    dir_key='txt_enc_dir',
+                    option_key='def_clip_l',
+                )
+                settings_map['def_clip_l'] = clip_l
+            with gr.Column():
+                clip_vision_h = create_model_widget(
+                    label="clip_vision_h",
+                    dir_key='txt_enc_dir',
+                    option_key='def_clip_vision_h',
+                )
+                settings_map['def_clip_vision_h'] = clip_vision_h
 
-    with gr.Row():
-        with gr.Column():
-            t5xxl = create_model_widget(
-                label="t5xxl",
-                dir_key='txt_enc_dir',
-                option_key='def_t5xxl',
-            )
-            settings_map['def_t5xxl'] = t5xxl
-        with gr.Column():
-            umt5_xxl = create_model_widget(
-                label="umt5_xxl",
-                dir_key='txt_enc_dir',
-                option_key='def_umt5_xxl',
-            )
-            settings_map['def_umt5_xxl'] = umt5_xxl
+        with gr.Row():
+            with gr.Column():
+                t5xxl = create_model_widget(
+                    label="t5xxl",
+                    dir_key='txt_enc_dir',
+                    option_key='def_t5xxl',
+                )
+                settings_map['def_t5xxl'] = t5xxl
+            with gr.Column():
+                umt5_xxl = create_model_widget(
+                    label="umt5_xxl",
+                    dir_key='txt_enc_dir',
+                    option_key='def_umt5_xxl',
+                )
+                settings_map['def_umt5_xxl'] = umt5_xxl
 
-    with gr.Row():
-        with gr.Column():
-            llm = create_model_widget(
-                label="llm",
-                dir_key='txt_enc_dir',
-                option_key='def_llm',
-            )
-            settings_map['def_llm'] = llm
+        with gr.Row():
+            with gr.Column():
+                llm = create_model_widget(
+                    label="llm",
+                    dir_key='txt_enc_dir',
+                    option_key='def_llm',
+                )
+                settings_map['def_llm'] = llm
 
     # Model Type Selection
     quant_ui = create_quant_ui()
