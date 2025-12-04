@@ -12,26 +12,27 @@ from .constants import QUANTS, SAMPLERS, SCHEDULERS, SWITCH_V_SYMBOL
 
 def create_quant_ui():
     """Create the model type selection UI"""
-    with gr.Row():
-        with gr.Group():
-            with gr.Row():
-                model_type = gr.Dropdown(
-                    label="Quantization",
-                    choices=QUANTS,
-                    value=config.get('def_type'),
+    with gr.Accordion(
+        label="Quantization", open=False
+    ):
+        with gr.Row():
+            model_type = gr.Dropdown(
+                label="Quantization type",
+                choices=QUANTS,
+                value=config.get('def_type'),
+                interactive=True
+            )
+        with gr.Row():
+            with gr.Accordion(
+                label="Tensor type rules",
+                open=False
+            ):
+                tensor_type_rules = gr.Textbox(
+                    label="Weight type per tensor pattern",
+                    value="",
+                    placeholder="example: \"^vae\\.=f16,model\\.=q8_0\"",
                     interactive=True
                 )
-            with gr.Row():
-                with gr.Accordion(
-                    label="Tensor type rules",
-                    open=False
-                ):
-                    tensor_type_rules = gr.Textbox(
-                        label="Weight type per tensor pattern",
-                        value="",
-                        placeholder="example: \"^vae\\.=f16,model\\.=q8_0\"",
-                        interactive=True
-                    )
     return {
         'in_model_type': model_type,
         'in_tensor_type_rules': tensor_type_rules
