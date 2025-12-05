@@ -2,10 +2,8 @@
 
 import os
 import re
+import sys
 import subprocess
-import pty
-import select
-import errno
 
 import gradio as gr
 
@@ -21,7 +19,6 @@ class SubprocessManager:
     def __init__(self):
         """Initializes the SubprocessManager with no active subprocess."""
         self.process = None
-        self.master_fd = None # Keep track of the PTY master
         self.STATS_REGEX = re.compile(r"completed, taking ([\d.]+)s")
         self.TOTAL_TIME_REGEX = re.compile(r"completed in ([\d.]+)s")
         self.ETA_REGEX = re.compile(r'(\d+)/(\d+)\s*-\s*([\d.]+)(s/it|it/s)')
@@ -103,98 +100,61 @@ class SubprocessManager:
 
     def run_subprocess(self, command, env=None):
         """
-        Runs a subprocess using a PTY (Pseudo-Terminal), captures its output, 
-        and yields UI updates.
+        Runs a subprocess, captures its output, and yields UI updates.
+        This main method is now much simpler and delegates parsing to helpers.
         """
         phase = "Initializing"
+        last_was_progress = False
         final_stats = {}
-        
-        # Open the pseudo-terminal pair
-        self.master_fd, slave_fd = pty.openpty()
 
         try:
-            self.process = subprocess.Popen(
+            with subprocess.Popen(
                 command,
-                stdout=slave_fd,
+                stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 universal_newlines=True,
                 bufsize=1,
                 encoding='utf-8',
                 env=env,
-                errors='replace',
-                close_fds=True
-            )
-            
-            os.close(slave_fd)
+                errors='replace'
+            ) as self.process:
 
-            text_buffer = ""
+                for output_line in self.process.stdout:
+                    output_line = output_line.rstrip()
 
-            while True:
-                reads, _, _ = select.select([self.master_fd], [], [], 0.1)
+                    self._parse_final_stats(output_line, final_stats)
 
-                if self.master_fd in reads:
-                    try:
-                        output_bytes = os.read(self.master_fd, 1024)
-                        if not output_bytes:
-                            break # EOF
-                    except OSError as e:
-                        if e.errno == errno.EIO:
-                            break # Linux PTY EOF
-                        raise
+                    if 'loading model' in output_line:
+                        phase = "Loading Model"
+                    elif 'sampling using' in output_line:
+                        phase = "Sampling"
+                    elif 'upscaling from' in output_line:
+                        phase = "Upscaling"
 
-                    # Decode and print to real terminal IMMEDIATELY
-                    chunk = output_bytes.decode('utf-8', errors='replace')
-                    print(chunk, end='', flush=True)
+                    if "|" in output_line and "/" in output_line:
+                        if phase in ["Sampling", "Upscaling"]:
+                            update_data = self._parse_progress_update(
+                                output_line,
+                                final_stats
+                            )
+                            if update_data:
+                                yield update_data
 
-                    # Add to buffer for parsing
-                    text_buffer += chunk
-
-                    # Process the buffer line by line (splitting on \n OR \r)
-                    while True:
-                        # Find the first newline or carriage return
-                        match = re.search(r'[\r\n]', text_buffer)
-                        if not match:
-                            break # No full line yet, wait for next chunk
-                        
-                        # Extract the line
-                        end_pos = match.end()
-                        line = text_buffer[:match.start()].strip()
-                        text_buffer = text_buffer[end_pos:] # Remove processed part
-
-                        if not line:
-                            continue
-
-                        self._parse_final_stats(line, final_stats)
-
-                        if 'loading model' in line:
-                            phase = "Loading Model"
-                        elif 'sampling using' in line:
-                            phase = "Sampling"
-                        elif 'upscaling from' in line:
-                            phase = "Upscaling"
-
-                        if "|" in line and "/" in line:
-                            if phase in ["Sampling", "Upscaling"]:
-                                update_data = self._parse_progress_update(
-                                    line,
-                                    final_stats
-                                )
-                                if update_data:
-                                    yield update_data
-                
-                if self.process.poll() is not None and not reads:
-                    break
+                        sys.stdout.write(f"\r{output_line}")
+                        sys.stdout.flush()
+                        last_was_progress = True
+                    else:
+                        if last_was_progress:
+                            print("\n")
+                            last_was_progress = False
+                        print(output_line)
 
         finally:
-            if self.master_fd:
-                try:
-                    os.close(self.master_fd)
-                except OSError:
-                    pass
-                self.master_fd = None
+            if last_was_progress:
+                print("\n")
 
             if self.process and self.process.returncode != 0:
-                print("\nSubprocess terminated.")
+                print("Subprocess terminated.")
 
             self.process = None
 
