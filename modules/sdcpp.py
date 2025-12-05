@@ -1,10 +1,9 @@
 """sd.cpp-webui - stable-diffusion.cpp command module"""
 
 import os
+import re
+import sys
 import time
-import pty
-import errno
-import select
 import datetime
 import subprocess
 from enum import IntEnum
@@ -618,70 +617,67 @@ def convert(params: dict):
     fcommand = ' '.join(command)
     print(f"\n\n{fcommand}\n\n")
 
-    process = None
-    master_fd, slave_fd = pty.openpty()
+    progress_regex = re.compile(r'(\d+)/(\d+)')
+
+    yield (
+        fcommand, 
+        gr.Slider(visible=True, value=0), 
+        gr.Textbox(visible=True, value="Initializing conversion..."), 
+    )
+
+    last_was_progress = False
 
     try:
-        process = subprocess.Popen(
+        with subprocess.Popen(
             command,
-            stdout=slave_fd,
+            stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             universal_newlines=True,
             bufsize=1,
             encoding='utf-8',
-            errors='replace',
-            close_fds=True
-        )
-        
-        os.close(slave_fd) 
-        
-        subprocess_manager.process = process
-
-        while True:
-            # specific to PTY: check if there is data to read
-            # wait up to 0.1 seconds for data
-            reads, _, _ = select.select([master_fd], [], [], 0.1)
+            errors='replace'
+        ) as process:
             
-            if master_fd in reads:
-                try:
-                    # Attempt to read from the terminal
-                    output_bytes = os.read(master_fd, 1024)
-                    
-                    # If we get empty bytes, it's a standard EOF
-                    if not output_bytes:
-                        break 
-                        
-                except OSError as e:
-                    # If the error is EIO (Errno 5), it means the subprocess closed the PTY.
-                    # We treat this as a successful "End of Process".
-                    if e.errno == errno.EIO:
-                        break
-                    # If it's any other error, actually raise it
-                    raise
-                
-                chunk = output_bytes.decode('utf-8', errors='replace')
-                print(chunk, end='', flush=True)
-                
-                yield (
-                    fcommand, 
-                    gr.Slider(visible=True), 
-                    gr.Textbox(
-                        visible=True, 
-                        value="Converting..."
-                    ), 
-                )
+            subprocess_manager.process = process
+
+            for output_line in process.stdout:
+                output_line = output_line.rstrip()
+
+                match = progress_regex.search(output_line)
+
+                if match:
+                    current, total = map(int, match.groups())
+                    percent = (current / total) * 100 if total > 0 else 0
+
+                    yield (
+                        fcommand, 
+                        gr.Slider(value=percent), 
+                        gr.Textbox(value="Converting..."), 
+                    )
+
+                    sys.stdout.write(f"\r{output_line}")
+                    sys.stdout.flush()
+                    last_was_progress = True
+                else:
+                    if last_was_progress:
+                        print("\n")
+                        last_was_progress = False
+                    print(output_line)
 
     except Exception as e:
-        error_msg = f"\nError: {e}"
-        print(error_msg)
+        print(f"\nError: {e}")
         yield (
             fcommand, 
             gr.Slider(visible=False), 
-            gr.Textbox(value="Error"), 
+            gr.Textbox(value=f"Error: {e}"), 
         )
 
     finally:
-        if process:
+        # cleanup
+        if last_was_progress:
+            print("\n")
+        
+        if subprocess_manager.process:
             subprocess_manager.process = None
 
     yield (
