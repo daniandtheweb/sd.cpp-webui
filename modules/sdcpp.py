@@ -2,7 +2,11 @@
 
 import os
 import time
+import pty
+import errno
+import select
 import datetime
+import subprocess
 from enum import IntEnum
 from typing import Dict, Any, Generator
 
@@ -564,20 +568,32 @@ def any2video(params: dict) -> Generator:
     runner.build_command()
     yield from runner.run()
 
+
 def upscale(params: dict) -> Generator:
     """Creates and runs an UpscaleRunner."""
     runner = UpscaleRunner(mode="upscale", params=params)
     runner.build_command()
     yield from runner.run()
 
-def convert(
-    in_orig_model: str, in_model_dir: str, in_quant_type: str, in_tensor_type_rules: str = None,
-    in_gguf_name: str = None, in_color: bool = True, in_verbose: bool = False
-) -> str:
-    """Synchronously runs the model conversion command."""
+
+def convert(params: dict):
+    """
+    Runs the model conversion command.
+    Outputs to terminal (raw) and UI log (cleaned of ANSI codes).
+    """
+    in_orig_model = params.get('in_orig_model')
+    in_model_dir = params.get('in_model_dir')
+    in_quant_type = params.get('in_quant_type')
+    in_tensor_type_rules = params.get('in_tensor_type_rules')
+    in_gguf_name = params.get('in_gguf_name')
+    in_color = params.get('in_color', True)
+    in_verbose = params.get('in_verbose', False)
+
     orig_model_path = os.path.join(in_model_dir, in_orig_model)
 
     if in_gguf_name:
+        if not in_gguf_name.endswith('.gguf'):
+            in_gguf_name += '.gguf'
         gguf_path = os.path.join(in_model_dir, in_gguf_name)
     else:
         model_name, _ = os.path.splitext(in_orig_model)
@@ -591,6 +607,7 @@ def convert(
         '-o', gguf_path,
         '--type', in_quant_type
     ]
+
     if in_tensor_type_rules:
         command.extend(['--tensor-type-rules', in_tensor_type_rules])
     if in_color:
@@ -601,9 +618,74 @@ def convert(
     fcommand = ' '.join(command)
     print(f"\n\n{fcommand}\n\n")
 
-    # This assumes run_subprocess can handle synchronous execution
-    # and will block until the process is complete.
-    for _ in subprocess_manager.run_subprocess(command):
-        pass  # Consume generator if it's async
+    process = None
+    master_fd, slave_fd = pty.openpty()
 
-    return "Process completed."
+    try:
+        process = subprocess.Popen(
+            command,
+            stdout=slave_fd,
+            stderr=subprocess.STDOUT,
+            universal_newlines=True,
+            bufsize=1,
+            encoding='utf-8',
+            errors='replace',
+            close_fds=True
+        )
+        
+        os.close(slave_fd) 
+        
+        subprocess_manager.process = process
+
+        while True:
+            # specific to PTY: check if there is data to read
+            # wait up to 0.1 seconds for data
+            reads, _, _ = select.select([master_fd], [], [], 0.1)
+            
+            if master_fd in reads:
+                try:
+                    # Attempt to read from the terminal
+                    output_bytes = os.read(master_fd, 1024)
+                    
+                    # If we get empty bytes, it's a standard EOF
+                    if not output_bytes:
+                        break 
+                        
+                except OSError as e:
+                    # If the error is EIO (Errno 5), it means the subprocess closed the PTY.
+                    # We treat this as a successful "End of Process".
+                    if e.errno == errno.EIO:
+                        break
+                    # If it's any other error, actually raise it
+                    raise
+                
+                chunk = output_bytes.decode('utf-8', errors='replace')
+                print(chunk, end='', flush=True)
+                
+                yield (
+                    fcommand, 
+                    gr.Slider(visible=True), 
+                    gr.Textbox(
+                        visible=True, 
+                        value="Converting..."
+                    ), 
+                )
+
+    except Exception as e:
+        error_msg = f"\nError: {e}"
+        print(error_msg)
+        yield (
+            fcommand, 
+            gr.Slider(visible=False), 
+            gr.Textbox(value="Error"), 
+        )
+
+    finally:
+        if process:
+            subprocess_manager.process = None
+
+    yield (
+        fcommand, 
+        gr.Slider(visible=False), 
+        gr.Textbox(value="Done."), 
+    )
