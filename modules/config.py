@@ -35,6 +35,11 @@ DEFAULT_SETTINGS = {
     'def_diffusion_conv_direct': False,
     'def_vae_conv_direct': False,
     'def_preview_interval': 1,
+    'def_vae_tiling': False,
+    'def_vae_tile_overlap': 0.5,
+    'def_vae_tile_size': 32,
+    'def_vae_relative_bool': False,
+    'def_vae_relative_tile_size': 0,
     'def_output_scheme': "Sequential",
 }
 

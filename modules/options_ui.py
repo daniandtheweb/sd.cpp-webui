@@ -12,6 +12,7 @@ from modules.ui.constants import (
 from modules.ui.models import create_model_widget
 from modules.ui.generation_settings import create_quant_ui
 from modules.ui.folder_settings import create_folders_opt_ui
+from modules.ui.vae_tiling import create_vae_tiling_ui
 
 
 OUTPUT_SCHEMES = ["Sequential", "Timestamp", "TimestampMS", "EpochTime"]
@@ -266,6 +267,15 @@ with gr.Blocks() as options_block:
             value=config.get('def_preview_noisy')
         )
         settings_map['def_preview_noisy'] = preview_noisy
+
+    vae_tiling_ui = create_vae_tiling_ui()
+    settings_map.update({
+        'def_vae_tiling': vae_tiling_ui['in_vae_tiling'],
+        'def_vae_tile_overlap': vae_tiling_ui['in_vae_tile_overlap'],
+        'def_vae_tile_size': vae_tiling_ui['in_vae_tile_size'],
+        'def_vae_relative_bool': vae_tiling_ui['in_vae_relative_bool'],
+        'def_vae_relative_tile_size': vae_tiling_ui['in_vae_relative_tile_size']
+    })
 
     with gr.Row():
         # Output options
