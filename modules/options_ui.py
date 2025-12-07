@@ -151,6 +151,7 @@ with gr.Blocks() as options_block:
 
     bottom_generation_settings_ui = create_bottom_generation_settings_ui()
     settings_map.update({
+        'def_seed': bottom_generation_settings_ui['in_seed'],
         'def_clip_skip': bottom_generation_settings_ui['in_clip_skip'],
         'def_batch_count': bottom_generation_settings_ui['in_batch_count']
     })

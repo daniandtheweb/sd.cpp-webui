@@ -5,7 +5,6 @@ from functools import partial
 import gradio as gr
 
 from modules.sdcpp import img2img
-from modules.utils.utility import random_seed
 from modules.utils.ui_handler import (
     ckpt_tab_switch, unet_tab_switch, update_interactivity,
     refresh_all_options
@@ -13,7 +12,6 @@ from modules.utils.ui_handler import (
 from modules.shared_instance import (
     config, subprocess_manager
 )
-from modules.ui.constants import RANDOM_SYMBOL
 from modules.ui.models import create_img_model_sel_ui
 from modules.ui.prompts import create_prompts_ui
 from modules.ui.generation_settings import (
@@ -95,20 +93,6 @@ with gr.Blocks()as img2img_block:
                         value=0.75
                     )
                     inputs_map['in_strength'] = strength
-
-                with gr.Row():
-                    with gr.Group():
-                        seed = gr.Number(
-                            label="Seed",
-                            minimum=-1,
-                            maximum=10**16,
-                            value=-1,
-                            scale=5
-                        )
-                        random_seed_btn = gr.Button(
-                            value=RANDOM_SYMBOL, scale=1
-                        )
-                        inputs_map['in_seed'] = seed
 
                 bottom_generation_settings_ui = create_bottom_generation_settings_ui()
                 inputs_map.update(bottom_generation_settings_ui)
@@ -314,9 +298,6 @@ with gr.Blocks()as img2img_block:
             generation_settings_ui['in_flow_shift_bool'],
             generation_settings_ui['in_flow_shift']
         ]
-    )
-    random_seed_btn.click(
-        random_seed, inputs=[], outputs=[seed]
     )
     refresh_opt.click(
         refresh_all_options,

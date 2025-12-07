@@ -4,10 +4,14 @@ from functools import partial
 
 import gradio as gr
 
+from modules.utils.utility import random_seed
 from modules.shared_instance import config
 from modules.utils.ui_handler import update_interactivity
 from modules.utils.image_utils import switch_sizes
-from .constants import QUANTS, SAMPLERS, SCHEDULERS, SWITCH_V_SYMBOL
+from .constants import (
+    QUANTS, SAMPLERS, SCHEDULERS,
+    SWITCH_V_SYMBOL, RANDOM_SYMBOL
+)
 
 
 def create_quant_ui():
@@ -166,6 +170,19 @@ def create_generation_settings_ui(unet_mode: bool = False):
 def create_bottom_generation_settings_ui():
     """Create bottom settings UI"""
     with gr.Row():
+        with gr.Group():
+            seed = gr.Number(
+                label="Seed",
+                minimum=-1,
+                maximum=10**16,
+                value=config.get('def_seed'),
+                scale=5
+            )
+            random_seed_btn = gr.Button(
+                value=RANDOM_SYMBOL, scale=1
+            )
+
+    with gr.Row():
         clip_skip = gr.Slider(
             label="CLIP skip",
             minimum=-1,
@@ -183,7 +200,12 @@ def create_bottom_generation_settings_ui():
             step=1
         )
 
+    random_seed_btn.click(
+        random_seed, inputs=[], outputs=[seed]
+    )
+
     return{
+        'in_seed': seed,
         'in_clip_skip': clip_skip,
         'in_batch_count': batch_count
     }
