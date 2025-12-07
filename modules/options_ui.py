@@ -6,11 +6,12 @@ from modules.shared_instance import (
     config, sd_options
 )
 from modules.ui.constants import (
-    SAMPLERS, SCHEDULERS, PREDICTION, PREVIEW
+    SAMPLERS, SCHEDULERS, PREDICTION
 )
 from modules.ui.models import create_model_widget
 from modules.ui.generation_settings import create_quant_ui
 from modules.ui.folder_settings import create_folders_opt_ui
+from modules.ui.performance import create_performance_ui
 from modules.ui.vae_tiling import create_vae_tiling_ui
 from modules.ui.preview import create_preview_ui
 
@@ -213,26 +214,6 @@ with gr.Blocks() as options_block:
         )
         settings_map['predict'] = predict
 
-    with gr.Row():
-        # Boolean options
-        flash_attn = gr.Checkbox(
-            label="Flash Attention",
-            value=config.get('def_flash_attn')
-        )
-        settings_map['def_flash_attn'] = flash_attn
-
-        diffusion_conv_direct = gr.Checkbox(
-            label="Conv2D Direct for diffusion",
-            value=config.get('def_diffusion_conv_direct')
-        )
-        settings_map['def_diffusion_conv_direct'] = diffusion_conv_direct
-
-        vae_conv_direct = gr.Checkbox(
-            label="Conv2D Direct for VAE",
-            value=config.get('def_vae_conv_direct')
-        )
-        settings_map['def_vae_conv_direct'] = vae_conv_direct
-
     vae_tiling_ui = create_vae_tiling_ui()
     settings_map.update({
         'def_vae_tiling': vae_tiling_ui['in_vae_tiling'],
@@ -249,6 +230,18 @@ with gr.Blocks() as options_block:
         'def_preview_interval': preview_ui['in_preview_interval'],
         'def_preview_taesd': preview_ui['in_preview_taesd'],
         'def_preview_noisy': preview_ui['in_preview_noisy']
+    })
+
+    performance_ui = create_performance_ui()
+    settings_map.update({
+        'def_threads': performance_ui['in_threads'],
+        'def_offload_to_cpu': performance_ui['in_offload_to_cpu'],
+        'def_vae_cpu': performance_ui['in_vae_cpu'],
+        'def_clip_cpu': performance_ui['in_clip_cpu'],
+        'def_flash_attn': performance_ui['in_flash_attn'],
+        'def_diffusion_conv_direct': performance_ui['in_diffusion_conv_direct'],
+        'def_vae_conv_direct': performance_ui['in_vae_conv_direct'],
+        'def_force_sdxl_vae_conv_scale': performance_ui['in_force_sdxl_vae_conv_scale']
     })
 
     with gr.Row():
