@@ -20,13 +20,22 @@ def create_performance_ui():
         )
         with gr.Group():
             offload_to_cpu = gr.Checkbox(
-                label="Offload to CPU")
-            vae_cpu = gr.Checkbox(label="VAE on CPU")
-            clip_cpu = gr.Checkbox(label="CLIP on CPU")
+                label="Offload to CPU",
+                value=config.get('def_offload_to_cpu')
+            )
+            vae_cpu = gr.Checkbox(
+                label="VAE on CPU",
+                value=config.get('def_vae_cpu')
+            )
+            clip_cpu = gr.Checkbox(
+                label="CLIP on CPU",
+                value=config.get('def_clip_cpu')
+            )
 
         with gr.Group():
             flash_attn = gr.Checkbox(
-                label="Flash Attention", value=config.get('def_flash_attn')
+                label="Flash Attention",
+                value=config.get('def_flash_attn')
             )
             diffusion_conv_direct = gr.Checkbox(
                 label="Conv2D Direct for diffusion",
@@ -38,7 +47,7 @@ def create_performance_ui():
             )
             force_sdxl_vae_conv_scale = gr.Checkbox(
                 label="Force conv scale on SDXL VAE",
-                value=False
+                value=config.get('def_force_sdxl_vae_conv_scale')
             )
 
     return{

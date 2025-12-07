@@ -5,13 +5,22 @@ import gradio as gr
 from modules.shared_instance import (
     config, sd_options
 )
-from modules.loader import get_models
 from modules.ui.constants import (
-    RELOAD_SYMBOL, SAMPLERS, SCHEDULERS, PREDICTION, PREVIEW
+    PREDICTION
 )
 from modules.ui.models import create_model_widget
-from modules.ui.generation_settings import create_quant_ui
+from modules.ui.generation_settings import (
+    create_quant_ui, create_generation_settings_ui,
+    create_bottom_generation_settings_ui
+)
 from modules.ui.folder_settings import create_folders_opt_ui
+from modules.ui.performance import create_performance_ui
+from modules.ui.taesd import create_taesd_ui
+from modules.ui.vae_tiling import create_vae_tiling_ui
+from modules.ui.easycache import create_easycache_ui
+from modules.ui.extra import create_extras_ui
+from modules.ui.preview import create_preview_ui
+from modules.ui.environment import create_env_ui
 
 
 OUTPUT_SCHEMES = ["Sequential", "Timestamp", "TimestampMS", "EpochTime"]
@@ -127,80 +136,26 @@ with gr.Blocks() as options_block:
     quant_ui = create_quant_ui()
     settings_map.update(quant_ui)
 
-    with gr.Row():
-        with gr.Column():
-            taesd = create_model_widget(
-                label="TAESD",
-                dir_key='taesd_dir',
-                option_key='def_taesd',
-            )
-            settings_map['def_taesd'] = taesd
+    generation_settings_ui = create_generation_settings_ui(True)
+    settings_map.update({
+        'def_sampling': generation_settings_ui['in_sampling'],
+        'def_steps': generation_settings_ui['in_steps'],
+        'def_scheduler': generation_settings_ui['in_scheduler'],
+        'def_width': generation_settings_ui['in_width'],
+        'def_height': generation_settings_ui['in_height'],
+        'def_cfg': generation_settings_ui['in_cfg'],
+        'def_guidance_bool': generation_settings_ui['in_guidance_bool'],
+        'def_guidance': generation_settings_ui['in_guidance'],
+        'def_flow_shift_bool': generation_settings_ui['in_flow_shift_bool'],
+        'def_flow_shift': generation_settings_ui['in_flow_shift']
+    })
 
-
-    with gr.Row():
-        with gr.Column():
-            # Sampling Method Dropdown
-            sampling = gr.Dropdown(
-                label="Sampling method",
-                choices=SAMPLERS,
-                value=config.get('def_sampling'),
-                interactive=True
-            )
-            settings_map['def_sampling'] = sampling
-
-        with gr.Column():
-            # Steps Slider
-            steps = gr.Slider(
-                label="Steps",
-                minimum=1,
-                maximum=99,
-                value=config.get('def_steps'),
-                step=1
-            )
-            settings_map['def_steps'] = steps
-
-    with gr.Row():
-        with gr.Column():
-            # Scheduler Dropdown
-            scheduler = gr.Dropdown(
-                label="Scheduler",
-                choices=SCHEDULERS,
-                value=config.get('def_scheduler'),
-                interactive=True
-            )
-            settings_map['def_scheduler'] = scheduler
-
-        with gr.Column():
-            # CFG Slider
-            cfg = gr.Slider(
-                label="CFG Scale",
-                minimum=1,
-                maximum=30,
-                value=config.get('def_cfg'),
-                step=0.1,
-                interactive=True
-            )
-            settings_map['def_cfg'] = cfg
-
-    with gr.Column():
-        # Size Sliders
-        width = gr.Slider(
-            label="Width",
-            minimum=64,
-            maximum=2048,
-            value=config.get('def_width'),
-            step=8
-        )
-        settings_map['def_height'] = width
-
-        height = gr.Slider(
-            label="Height",
-            minimum=64,
-            maximum=2048,
-            value=config.get('def_height'),
-            step=8
-        )
-        settings_map['def_width'] = height
+    bottom_generation_settings_ui = create_bottom_generation_settings_ui()
+    settings_map.update({
+        'def_seed': bottom_generation_settings_ui['in_seed'],
+        'def_clip_skip': bottom_generation_settings_ui['in_clip_skip'],
+        'def_batch_count': bottom_generation_settings_ui['in_batch_count']
+    })
 
     with gr.Row():
         # Prediction mode
@@ -212,60 +167,69 @@ with gr.Blocks() as options_block:
         )
         settings_map['predict'] = predict
 
-    with gr.Row():
-        # Boolean options
-        flash_attn = gr.Checkbox(
-            label="Flash Attention",
-            value=config.get('def_flash_attn')
-        )
-        settings_map['def_flash_attn'] = flash_attn
+    taesd_ui = create_taesd_ui()
+    settings_map.update({
+        'def_taesd': taesd_ui['in_taesd']
+    })
 
-        diffusion_conv_direct = gr.Checkbox(
-            label="Conv2D Direct for diffusion",
-            value=config.get('def_diffusion_conv_direct')
-        )
-        settings_map['def_diffusion_conv_direct'] = diffusion_conv_direct
+    vae_tiling_ui = create_vae_tiling_ui()
+    settings_map.update({
+        'def_vae_tiling': vae_tiling_ui['in_vae_tiling'],
+        'def_vae_tile_overlap': vae_tiling_ui['in_vae_tile_overlap'],
+        'def_vae_tile_size': vae_tiling_ui['in_vae_tile_size'],
+        'def_vae_relative_bool': vae_tiling_ui['in_vae_relative_bool'],
+        'def_vae_relative_tile_size': vae_tiling_ui['in_vae_relative_tile_size']
+    })
 
-        vae_conv_direct = gr.Checkbox(
-            label="Conv2D Direct for VAE",
-            value=config.get('def_vae_conv_direct')
-        )
-        settings_map['def_vae_conv_direct'] = vae_conv_direct
+    easycache_ui = create_easycache_ui()
+    settings_map.update({
+        'def_easycache_bool': easycache_ui['in_easycache_bool'],
+        'def_ec_threshold': easycache_ui['in_ec_threshold'],
+        'def_ec_start': easycache_ui['in_ec_start'],
+        'def_ec_end': easycache_ui['in_ec_end']
+    })
 
-    with gr.Row():
-        # Preview options
-        preview_bool = gr.Checkbox(
-            label="Enable Preview",
-            value=config.get('def_preview_bool')
-        )
-        settings_map['def_preview_bool'] = preview_bool
+    extras_ui = create_extras_ui()
+    settings_map.update({
+        'def_rng': extras_ui['in_rng'],
+        'def_sampler_rng': extras_ui['in_sampler_rng'],
+        'def_predict': extras_ui['in_predict'],
+        'def_lora_apply': extras_ui['in_lora_apply'],
+        'def_output': extras_ui['in_output'],
+        'def_color': extras_ui['in_color'],
+        'def_verbose': extras_ui['in_verbose']
+    })
 
-        preview_mode = gr.Dropdown(
-            label="Preview mode",
-            choices=PREVIEW,
-            value=config.get('def_preview_mode')
-        )
-        settings_map['def_preview_mode'] = preview_mode
+    preview_ui = create_preview_ui()
+    settings_map.update({
+        'def_preview_bool': preview_ui['in_preview_bool'],
+        'def_preview_mode': preview_ui['in_preview_mode'],
+        'def_preview_interval': preview_ui['in_preview_interval'],
+        'def_preview_taesd': preview_ui['in_preview_taesd'],
+        'def_preview_noisy': preview_ui['in_preview_noisy']
+    })
 
-        preview_interval = gr.Number(
-            label="Preview interval",
-            value=config.get('def_preview_interval'),
-            minimum=1,
-            interactive=True
-        )
-        settings_map['def_preview_interval'] = preview_interval
+    performance_ui = create_performance_ui()
+    settings_map.update({
+        'def_threads': performance_ui['in_threads'],
+        'def_offload_to_cpu': performance_ui['in_offload_to_cpu'],
+        'def_vae_cpu': performance_ui['in_vae_cpu'],
+        'def_clip_cpu': performance_ui['in_clip_cpu'],
+        'def_flash_attn': performance_ui['in_flash_attn'],
+        'def_diffusion_conv_direct': performance_ui['in_diffusion_conv_direct'],
+        'def_vae_conv_direct': performance_ui['in_vae_conv_direct'],
+        'def_force_sdxl_vae_conv_scale': performance_ui['in_force_sdxl_vae_conv_scale']
+    })
 
-        preview_taesd = gr.Checkbox(
-            label="TAESD for preview only",
-            value=config.get('def_preview_taesd')
-        )
-        settings_map['def_preview_taesd'] = preview_taesd
-
-        preview_noisy = gr.Checkbox(
-            label="Preview noisy",
-            value=config.get('def_preview_noisy')
-        )
-        settings_map['def_preview_noisy'] = preview_noisy
+    env_ui = create_env_ui()
+    settings_map.update({
+        'def_env_vk_visible_override': env_ui['env_vk_visible_override'],
+        'def_env_GGML_VK_VISIBLE_DEVICES': env_ui['env_GGML_VK_VISIBLE_DEVICES'],
+        'def_env_cuda_visible_override': env_ui['env_cuda_visible_override'],
+        'def_env_CUDA_VISIBLE_DEVICES': env_ui['env_CUDA_VISIBLE_DEVICES'],
+        'def_env_GGML_VK_DISABLE_COOPMAT': env_ui['env_GGML_VK_DISABLE_COOPMAT'],
+        'def_env_GGML_VK_DISABLE_INTEGER_DOT_PRODUCT': env_ui['env_GGML_VK_DISABLE_INTEGER_DOT_PRODUCT']
+    })
 
     with gr.Row():
         # Output options
@@ -279,7 +243,21 @@ with gr.Blocks() as options_block:
 
     # Folders options
     folders_ui = create_folders_opt_ui()
-    settings_map.update(folders_ui)
+    settings_map.update({
+        'ckpt_dir': folders_ui['ckpt_dir_txt'],
+        'unet_dir': folders_ui['unet_dir_txt'],
+        'vae_dir': folders_ui['vae_dir_txt'],
+        'txt_enc_dir': folders_ui['txt_enc_dir_txt'],
+        'emb_dir': folders_ui['emb_dir_txt'],
+        'lora_dir': folders_ui['lora_dir_txt'],
+        'taesd_dir': folders_ui['taesd_dir_txt'],
+        'phtmkr_dir': folders_ui['phtmkr_dir_txt'],
+        'upscl_dir': folders_ui['upscl_dir_txt'],
+        'cnnet_dir': folders_ui['cnnet_dir_txt'],
+        'txt2img_dir': folders_ui['txt2img_dir_txt'],
+        'img2img_dir': folders_ui['img2img_dir_txt'],
+        'any2video_dir': folders_ui['any2video_dir_txt']
+    })
 
     with gr.Row():
         refresh_opt = gr.Button(
@@ -316,5 +294,9 @@ with gr.Blocks() as options_block:
     refresh_opt.click(
         refresh_all_options,
         inputs=[],
-        outputs=[sampling, scheduler, predict]
+        outputs=[
+            generation_settings_ui['in_sampling'],
+            generation_settings_ui['in_scheduler'],
+            predict
+        ]
     )

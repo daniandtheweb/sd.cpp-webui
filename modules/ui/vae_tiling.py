@@ -5,6 +5,7 @@ from functools import partial
 import gradio as gr
 
 from modules.utils.ui_handler import update_interactivity
+from modules.shared_instance import config
 
 
 def create_vae_tiling_ui():
@@ -14,14 +15,14 @@ def create_vae_tiling_ui():
     ):
         vae_tiling = gr.Checkbox(
             label="VAE Tiling",
-            value=False
+            value=config.get('def_vae_tiling')
         )
         vae_tile_overlap = gr.Slider(
             label="VAE Tile overlap",
             minimum=0,
             maximum=1,
             step=0.01,
-            value=0.5,
+            value=config.get('def_vae_tile_overlap'),
             interactive=False
         )
         vae_tile_size = gr.Number(
@@ -29,12 +30,12 @@ def create_vae_tiling_ui():
             minimum=1,
             maximum=1024,
             step=1,
-            value=32,
+            value=config.get('def_vae_tile_size'),
             interactive=False
         )
         vae_relative_bool = gr.Checkbox(
             label="Enable VAE relative tile size",
-            value=False,
+            value=config.get('def_vae_relative_bool'),
             interactive=False
         )
         vae_relative_tile_size = gr.Number(
@@ -42,7 +43,7 @@ def create_vae_tiling_ui():
             minimum=0,
             maximum=1024,
             step=0.01,
-            value=0,
+            value=config.get('def_vae_relative_tile_size'),
             interactive=False
         )
 

@@ -4,10 +4,14 @@ from functools import partial
 
 import gradio as gr
 
+from modules.utils.utility import random_seed
 from modules.shared_instance import config
 from modules.utils.ui_handler import update_interactivity
 from modules.utils.image_utils import switch_sizes
-from .constants import QUANTS, SAMPLERS, SCHEDULERS, SWITCH_V_SYMBOL
+from .constants import (
+    QUANTS, SAMPLERS, SCHEDULERS,
+    SWITCH_V_SYMBOL, RANDOM_SYMBOL
+)
 
 
 def create_quant_ui():
@@ -112,7 +116,7 @@ def create_generation_settings_ui(unet_mode: bool = False):
             label="Flow Shift",
             minimum=1.0,
             maximum=12.0,
-            value=3.0,
+            value=config.get('def_flow_shift'),
             interactive=False,
             step=0.1,
             visible=unet_mode
@@ -135,7 +139,7 @@ def create_generation_settings_ui(unet_mode: bool = False):
             label="Guidance",
             minimum=0,
             maximum=30,
-            value=3.5,
+            value=config.get('def_guidance'),
             step=0.1,
             interactive=False,
             visible=unet_mode
@@ -157,20 +161,33 @@ def create_generation_settings_ui(unet_mode: bool = False):
         'in_width': width,
         'in_height': height,
         'in_cfg': cfg,
-        'in_guidance_bool': guidance_bool,
-        'in_guidance': guidance,
         'in_flow_shift_bool': flow_shift_bool,
-        'in_flow_shift': flow_shift
+        'in_flow_shift': flow_shift,
+        'in_guidance_bool': guidance_bool,
+        'in_guidance': guidance
     }
 
 def create_bottom_generation_settings_ui():
     """Create bottom settings UI"""
     with gr.Row():
+        with gr.Group():
+            seed = gr.Number(
+                label="Seed",
+                minimum=-1,
+                maximum=10**16,
+                value=config.get('def_seed'),
+                scale=5
+            )
+            random_seed_btn = gr.Button(
+                value=RANDOM_SYMBOL, scale=1
+            )
+
+    with gr.Row():
         clip_skip = gr.Slider(
             label="CLIP skip",
             minimum=-1,
             maximum=12,
-            value=-1,
+            value=config.get('def_clip_skip'),
             step=1
         )
 
@@ -179,11 +196,16 @@ def create_bottom_generation_settings_ui():
             label="Batch count",
             minimum=1,
             maximum=99,
-            value=1,
+            value=config.get('def_batch_count'),
             step=1
         )
 
+    random_seed_btn.click(
+        random_seed, inputs=[], outputs=[seed]
+    )
+
     return{
+        'in_seed': seed,
         'in_clip_skip': clip_skip,
         'in_batch_count': batch_count
     }
