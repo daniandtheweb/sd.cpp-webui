@@ -9,7 +9,9 @@ from modules.ui.constants import (
     SAMPLERS, SCHEDULERS, PREDICTION
 )
 from modules.ui.models import create_model_widget
-from modules.ui.generation_settings import create_quant_ui
+from modules.ui.generation_settings import (
+    create_quant_ui, create_generation_settings_ui
+)
 from modules.ui.folder_settings import create_folders_opt_ui
 from modules.ui.performance import create_performance_ui
 from modules.ui.vae_tiling import create_vae_tiling_ui
@@ -138,71 +140,19 @@ with gr.Blocks() as options_block:
             )
             settings_map['def_taesd'] = taesd
 
-
-    with gr.Row():
-        with gr.Column():
-            # Sampling Method Dropdown
-            sampling = gr.Dropdown(
-                label="Sampling method",
-                choices=SAMPLERS,
-                value=config.get('def_sampling'),
-                interactive=True
-            )
-            settings_map['def_sampling'] = sampling
-
-        with gr.Column():
-            # Steps Slider
-            steps = gr.Slider(
-                label="Steps",
-                minimum=1,
-                maximum=99,
-                value=config.get('def_steps'),
-                step=1
-            )
-            settings_map['def_steps'] = steps
-
-    with gr.Row():
-        with gr.Column():
-            # Scheduler Dropdown
-            scheduler = gr.Dropdown(
-                label="Scheduler",
-                choices=SCHEDULERS,
-                value=config.get('def_scheduler'),
-                interactive=True
-            )
-            settings_map['def_scheduler'] = scheduler
-
-        with gr.Column():
-            # CFG Slider
-            cfg = gr.Slider(
-                label="CFG Scale",
-                minimum=1,
-                maximum=30,
-                value=config.get('def_cfg'),
-                step=0.1,
-                interactive=True
-            )
-            settings_map['def_cfg'] = cfg
-
-    with gr.Column():
-        # Size Sliders
-        width = gr.Slider(
-            label="Width",
-            minimum=64,
-            maximum=2048,
-            value=config.get('def_width'),
-            step=8
-        )
-        settings_map['def_height'] = width
-
-        height = gr.Slider(
-            label="Height",
-            minimum=64,
-            maximum=2048,
-            value=config.get('def_height'),
-            step=8
-        )
-        settings_map['def_width'] = height
+    generation_settings_ui = create_generation_settings_ui()
+    settings_map.update({
+        'def_sampling': generation_settings_ui['in_sampling'],
+        'def_steps': generation_settings_ui['in_steps'],
+        'def_scheduler': generation_settings_ui['in_scheduler'],
+        'def_width': generation_settings_ui['in_width'],
+        'def_height': generation_settings_ui['in_height'],
+        'def_cfg': generation_settings_ui['in_cfg'],
+        'def_guidance_bool': generation_settings_ui['in_guidance_bool'],
+        'def_guidance': generation_settings_ui['in_guidance'],
+        'def_flow_shift_bool': generation_settings_ui['in_flow_shift_bool'],
+        'def_flow_shift': generation_settings_ui['in_flow_shift']
+    })
 
     with gr.Row():
         # Prediction mode
@@ -293,5 +243,9 @@ with gr.Blocks() as options_block:
     refresh_opt.click(
         refresh_all_options,
         inputs=[],
-        outputs=[sampling, scheduler, predict]
+        outputs=[
+            generation_settings_ui['in_sampling'],
+            generation_settings_ui['in_scheduler'],
+            predict
+        ]
     )
