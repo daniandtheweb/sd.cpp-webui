@@ -112,7 +112,7 @@ def create_generation_settings_ui(unet_mode: bool = False):
             label="Flow Shift",
             minimum=1.0,
             maximum=12.0,
-            value=3.0,
+            value=config.get('def_flow_shift'),
             interactive=False,
             step=0.1,
             visible=unet_mode
@@ -135,7 +135,7 @@ def create_generation_settings_ui(unet_mode: bool = False):
             label="Guidance",
             minimum=0,
             maximum=30,
-            value=3.5,
+            value=config.get('def_guidance'),
             step=0.1,
             interactive=False,
             visible=unet_mode
@@ -157,10 +157,10 @@ def create_generation_settings_ui(unet_mode: bool = False):
         'in_width': width,
         'in_height': height,
         'in_cfg': cfg,
-        'in_guidance_bool': guidance_bool,
-        'in_guidance': guidance,
         'in_flow_shift_bool': flow_shift_bool,
-        'in_flow_shift': flow_shift
+        'in_flow_shift': flow_shift,
+        'in_guidance_bool': guidance_bool,
+        'in_guidance': guidance
     }
 
 def create_bottom_generation_settings_ui():

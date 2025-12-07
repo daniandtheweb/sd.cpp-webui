@@ -6,7 +6,7 @@ from modules.shared_instance import (
     config, sd_options
 )
 from modules.ui.constants import (
-    SAMPLERS, SCHEDULERS, PREDICTION
+    PREDICTION
 )
 from modules.ui.models import create_model_widget
 from modules.ui.generation_settings import (
@@ -140,7 +140,7 @@ with gr.Blocks() as options_block:
             )
             settings_map['def_taesd'] = taesd
 
-    generation_settings_ui = create_generation_settings_ui()
+    generation_settings_ui = create_generation_settings_ui(True)
     settings_map.update({
         'def_sampling': generation_settings_ui['in_sampling'],
         'def_steps': generation_settings_ui['in_steps'],
@@ -175,7 +175,7 @@ with gr.Blocks() as options_block:
 
     preview_ui = create_preview_ui()
     settings_map.update({
-        'def_previre_bool': preview_ui['in_preview_bool'],
+        'def_preview_bool': preview_ui['in_preview_bool'],
         'def_preview_mode': preview_ui['in_preview_mode'],
         'def_preview_interval': preview_ui['in_preview_interval'],
         'def_preview_taesd': preview_ui['in_preview_taesd'],
