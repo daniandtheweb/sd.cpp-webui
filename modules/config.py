@@ -49,6 +49,12 @@ DEFAULT_SETTINGS = {
     'def_diffusion_conv_direct': False,
     'def_vae_conv_direct': False,
     'def_force_sdxl_vae_conv_scale': False,
+    'def_env_vk_visible_override': False,
+    'def_env_GGML_VK_VISIBLE_DEVICES': 0,
+    'def_env_cuda_visible_override': False,
+    'def_env_CUDA_VISIBLE_DEVICES': 0,
+    'def_env_GGML_VK_DISABLE_COOPMAT': False,
+    'def_env_GGML_VK_DISABLE_INTEGER_DOT_PRODUCT': False,
     'def_output_scheme': "Sequential",
 }
 

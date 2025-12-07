@@ -16,6 +16,7 @@ from modules.ui.folder_settings import create_folders_opt_ui
 from modules.ui.performance import create_performance_ui
 from modules.ui.vae_tiling import create_vae_tiling_ui
 from modules.ui.preview import create_preview_ui
+from modules.ui.environment import create_env_ui
 
 
 OUTPUT_SCHEMES = ["Sequential", "Timestamp", "TimestampMS", "EpochTime"]
@@ -192,6 +193,16 @@ with gr.Blocks() as options_block:
         'def_diffusion_conv_direct': performance_ui['in_diffusion_conv_direct'],
         'def_vae_conv_direct': performance_ui['in_vae_conv_direct'],
         'def_force_sdxl_vae_conv_scale': performance_ui['in_force_sdxl_vae_conv_scale']
+    })
+
+    env_ui = create_env_ui()
+    settings_map.update({
+        'def_env_vk_visible_override': env_ui['env_vk_visible_override'],
+        'def_env_GGML_VK_VISIBLE_DEVICES': env_ui['env_GGML_VK_VISIBLE_DEVICES'],
+        'def_env_cuda_visible_override': env_ui['env_cuda_visible_override'],
+        'def_env_CUDA_VISIBLE_DEVICES': env_ui['env_CUDA_VISIBLE_DEVICES'],
+        'def_env_GGML_VK_DISABLE_COOPMAT': env_ui['env_GGML_VK_DISABLE_COOPMAT'],
+        'def_env_GGML_VK_DISABLE_INTEGER_DOT_PRODUCT': env_ui['env_GGML_VK_DISABLE_INTEGER_DOT_PRODUCT']
     })
 
     with gr.Row():
