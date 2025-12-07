@@ -14,6 +14,7 @@ from modules.ui.generation_settings import (
 )
 from modules.ui.folder_settings import create_folders_opt_ui
 from modules.ui.performance import create_performance_ui
+from modules.ui.taesd import create_taesd_ui
 from modules.ui.vae_tiling import create_vae_tiling_ui
 from modules.ui.preview import create_preview_ui
 from modules.ui.environment import create_env_ui
@@ -132,15 +133,6 @@ with gr.Blocks() as options_block:
     quant_ui = create_quant_ui()
     settings_map.update(quant_ui)
 
-    with gr.Row():
-        with gr.Column():
-            taesd = create_model_widget(
-                label="TAESD",
-                dir_key='taesd_dir',
-                option_key='def_taesd',
-            )
-            settings_map['def_taesd'] = taesd
-
     generation_settings_ui = create_generation_settings_ui(True)
     settings_map.update({
         'def_sampling': generation_settings_ui['in_sampling'],
@@ -164,6 +156,11 @@ with gr.Blocks() as options_block:
             interactive=True
         )
         settings_map['predict'] = predict
+
+    taesd_ui = create_taesd_ui()
+    settings_map.update({
+        'def_taesd': taesd_ui['in_taesd']
+    })
 
     vae_tiling_ui = create_vae_tiling_ui()
     settings_map.update({
@@ -217,7 +214,21 @@ with gr.Blocks() as options_block:
 
     # Folders options
     folders_ui = create_folders_opt_ui()
-    settings_map.update(folders_ui)
+    settings_map.update({
+        'ckpt_dir': folders_ui['ckpt_dir_txt'],
+        'unet_dir': folders_ui['unet_dir_txt'],
+        'vae_dir': folders_ui['vae_dir_txt'],
+        'txt_enc_dir': folders_ui['txt_enc_dir_txt'],
+        'emb_dir': folders_ui['emb_dir_txt'],
+        'lora_dir': folders_ui['lora_dir_txt'],
+        'taesd_dir': folders_ui['taesd_dir_txt'],
+        'phtmkr_dir': folders_ui['phtmkr_dir_txt'],
+        'upscl_dir': folders_ui['upscl_dir_txt'],
+        'cnnet_dir': folders_ui['cnnet_dir_txt'],
+        'txt2img_dir': folders_ui['txt2img_dir_txt'],
+        'img2img_dir': folders_ui['img2img_dir_txt'],
+        'any2video_dir': folders_ui['any2video_dir_txt']
+    })
 
     with gr.Row():
         refresh_opt = gr.Button(
