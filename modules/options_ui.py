@@ -10,7 +10,8 @@ from modules.ui.constants import (
 )
 from modules.ui.models import create_model_widget
 from modules.ui.generation_settings import (
-    create_quant_ui, create_generation_settings_ui
+    create_quant_ui, create_generation_settings_ui,
+    create_bottom_generation_settings_ui
 )
 from modules.ui.folder_settings import create_folders_opt_ui
 from modules.ui.performance import create_performance_ui
@@ -146,6 +147,12 @@ with gr.Blocks() as options_block:
         'def_guidance': generation_settings_ui['in_guidance'],
         'def_flow_shift_bool': generation_settings_ui['in_flow_shift_bool'],
         'def_flow_shift': generation_settings_ui['in_flow_shift']
+    })
+
+    bottom_generation_settings_ui = create_bottom_generation_settings_ui()
+    settings_map.update({
+        'def_clip_skip': bottom_generation_settings_ui['in_clip_skip'],
+        'def_batch_count': bottom_generation_settings_ui['in_batch_count']
     })
 
     with gr.Row():

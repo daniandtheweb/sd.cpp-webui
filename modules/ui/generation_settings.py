@@ -170,7 +170,7 @@ def create_bottom_generation_settings_ui():
             label="CLIP skip",
             minimum=-1,
             maximum=12,
-            value=-1,
+            value=config.get('def_clip_skip'),
             step=1
         )
 
@@ -179,7 +179,7 @@ def create_bottom_generation_settings_ui():
             label="Batch count",
             minimum=1,
             maximum=99,
-            value=1,
+            value=config.get('def_batch_count'),
             step=1
         )
 

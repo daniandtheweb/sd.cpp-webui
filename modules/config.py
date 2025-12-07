@@ -34,6 +34,8 @@ DEFAULT_SETTINGS = {
     'def_flow_shift': 3.0,
     'def_guidance_bool': False,
     'def_guidance': 3.5,
+    'def_clip_skip': -1,
+    'def_batch_count': 1,
     'def_predict': "Default",
     'def_preview_interval': 1,
     'def_vae_tiling': False,
