@@ -5,14 +5,14 @@ import gradio as gr
 from modules.shared_instance import (
     config, sd_options
 )
-from modules.loader import get_models
 from modules.ui.constants import (
-    RELOAD_SYMBOL, SAMPLERS, SCHEDULERS, PREDICTION, PREVIEW
+    SAMPLERS, SCHEDULERS, PREDICTION, PREVIEW
 )
 from modules.ui.models import create_model_widget
 from modules.ui.generation_settings import create_quant_ui
 from modules.ui.folder_settings import create_folders_opt_ui
 from modules.ui.vae_tiling import create_vae_tiling_ui
+from modules.ui.preview import create_preview_ui
 
 
 OUTPUT_SCHEMES = ["Sequential", "Timestamp", "TimestampMS", "EpochTime"]
@@ -233,41 +233,6 @@ with gr.Blocks() as options_block:
         )
         settings_map['def_vae_conv_direct'] = vae_conv_direct
 
-    with gr.Row():
-        # Preview options
-        preview_bool = gr.Checkbox(
-            label="Enable Preview",
-            value=config.get('def_preview_bool')
-        )
-        settings_map['def_preview_bool'] = preview_bool
-
-        preview_mode = gr.Dropdown(
-            label="Preview mode",
-            choices=PREVIEW,
-            value=config.get('def_preview_mode')
-        )
-        settings_map['def_preview_mode'] = preview_mode
-
-        preview_interval = gr.Number(
-            label="Preview interval",
-            value=config.get('def_preview_interval'),
-            minimum=1,
-            interactive=True
-        )
-        settings_map['def_preview_interval'] = preview_interval
-
-        preview_taesd = gr.Checkbox(
-            label="TAESD for preview only",
-            value=config.get('def_preview_taesd')
-        )
-        settings_map['def_preview_taesd'] = preview_taesd
-
-        preview_noisy = gr.Checkbox(
-            label="Preview noisy",
-            value=config.get('def_preview_noisy')
-        )
-        settings_map['def_preview_noisy'] = preview_noisy
-
     vae_tiling_ui = create_vae_tiling_ui()
     settings_map.update({
         'def_vae_tiling': vae_tiling_ui['in_vae_tiling'],
@@ -275,6 +240,15 @@ with gr.Blocks() as options_block:
         'def_vae_tile_size': vae_tiling_ui['in_vae_tile_size'],
         'def_vae_relative_bool': vae_tiling_ui['in_vae_relative_bool'],
         'def_vae_relative_tile_size': vae_tiling_ui['in_vae_relative_tile_size']
+    })
+
+    preview_ui = create_preview_ui()
+    settings_map.update({
+        'def_previre_bool': preview_ui['in_preview_bool'],
+        'def_preview_mode': preview_ui['in_preview_mode'],
+        'def_preview_interval': preview_ui['in_preview_interval'],
+        'def_preview_taesd': preview_ui['in_preview_taesd'],
+        'def_preview_noisy': preview_ui['in_preview_noisy']
     })
 
     with gr.Row():
