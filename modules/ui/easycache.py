@@ -2,6 +2,8 @@
 
 import gradio as gr
 
+from modules.shared_instance import config
+
 
 def create_easycache_ui():
     """Create EasyCache specific UI"""
@@ -10,11 +12,11 @@ def create_easycache_ui():
     ):
         easycache_bool = gr.Checkbox(
             label="Enable EasyCache",
-            value=False
+            value=config.get('def_easycache_bool')
         )
         ec_threshold = gr.Number(
             label="Threshold",
-            value=0.2,
+            value=config.get('def_ec_threshold'),
             minimum=0,
             maximum=1,
             step=0.001,
@@ -22,7 +24,7 @@ def create_easycache_ui():
         )
         ec_start = gr.Number(
             label="Start percent",
-            value=0.15,
+            value=config.get('def_ec_start'),
             minimum=0,
             maximum=1,
             step=0.01,
@@ -30,7 +32,7 @@ def create_easycache_ui():
         )
         ec_end = gr.Number(
             label="End percent",
-            value=0.95,
+            value=config.get('def_ec_end'),
             minimum=0,
             maximum=1,
             step=0.01,
