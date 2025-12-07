@@ -17,12 +17,12 @@ def create_extras_ui():
         rng = gr.Dropdown(
             label="RNG",
             choices=RNG,
-            value="cuda"
+            value=config.get('def_rng')
         )
         sampler_rng = gr.Dropdown(
             label="Sampler RNG",
             choices=SAMPLER_RNG,
-            value="cuda"
+            value=config.get('def_sampler_rng')
         )
         predict = gr.Dropdown(
             label="Prediction",
@@ -32,16 +32,21 @@ def create_extras_ui():
         lora_apply = gr.Dropdown(
             label="Lora apply mode",
             choices=["auto", "immediately", "at_runtime"],
-            value="auto"
+            value=config.get('def_lora_apply')
         )
         output = gr.Textbox(
-            label="Output Name (optional)", value=""
+            label="Output Name (optional)",
+            value=config.get('def_output')
         )
 
         color = gr.Checkbox(
-            label="Color", value=True
+            label="Color",
+            value=config.get('def_color')
         )
-        verbose = gr.Checkbox(label="Verbose")
+        verbose = gr.Checkbox(
+            label="Verbose",
+            value=config.get('def_verbose')
+        )
 
     # Return the dictionary with all UI components
     return {

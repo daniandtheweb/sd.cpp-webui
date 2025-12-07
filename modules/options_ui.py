@@ -18,6 +18,7 @@ from modules.ui.performance import create_performance_ui
 from modules.ui.taesd import create_taesd_ui
 from modules.ui.vae_tiling import create_vae_tiling_ui
 from modules.ui.easycache import create_easycache_ui
+from modules.ui.extra import create_extras_ui
 from modules.ui.preview import create_preview_ui
 from modules.ui.environment import create_env_ui
 
@@ -186,6 +187,17 @@ with gr.Blocks() as options_block:
         'def_ec_threshold': easycache_ui['in_ec_threshold'],
         'def_ec_start': easycache_ui['in_ec_start'],
         'def_ec_end': easycache_ui['in_ec_end']
+    })
+
+    extras_ui = create_extras_ui()
+    settings_map.update({
+        'def_rng': extras_ui['in_rng'],
+        'def_sampler_rng': extras_ui['in_sampler_rng'],
+        'def_predict': extras_ui['in_predict'],
+        'def_lora_apply': extras_ui['in_lora_apply'],
+        'def_output': extras_ui['in_output'],
+        'def_color': extras_ui['in_color'],
+        'def_verbose': extras_ui['in_verbose']
     })
 
     preview_ui = create_preview_ui()
