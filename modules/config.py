@@ -45,7 +45,7 @@ DEFAULT_SETTINGS = {
     'def_color': True,
     'def_verbose': False,
     'def_preview_bool': False,
-    'def_preview_mode': "",
+    'def_preview_mode': "none",
     'def_preview_interval': 1,
     'def_preview_taesd': False,
     'def_preview_noisy': False,
