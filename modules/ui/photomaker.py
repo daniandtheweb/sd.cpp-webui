@@ -11,6 +11,7 @@ from modules.shared_instance import config
 from modules.utils.ui_handler import update_interactivity
 from .constants import RELOAD_SYMBOL
 
+
 def create_photomaker_ui():
     """Create Photomaker specific UI"""
     # Directory Textbox
@@ -74,6 +75,7 @@ def create_photomaker_ui():
         inputs=[phtmkr_dir_txt],
         outputs=[phtmkr]
     )
+
     phtmkr_bool.change(
         partial(update_interactivity, len(phtmkr_comp)),
         inputs=phtmkr_bool,

@@ -33,6 +33,7 @@ from modules.ui.performance import create_performance_ui
 from modules.ui.environment import create_env_ui
 # from modules.ui.experimental import create_experimental_ui
 
+
 img2img_params = {}
 
 with gr.Blocks()as img2img_block:

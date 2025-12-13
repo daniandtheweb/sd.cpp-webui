@@ -4,6 +4,7 @@ import os
 import json
 from typing import Dict, Any, List
 
+
 CURRENT_DIR = os.getcwd()
 DEFAULT_CONFIG_PATH = 'config.json'
 DEFAULT_PROMPTS_PATH = 'prompts.json'

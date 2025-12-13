@@ -4,6 +4,7 @@ import gradio as gr
 
 from modules.shared_instance import config
 
+
 FOLDER_CONFIG = {
     'ckpt_dir': "Checkpoint folder",
     'unet_dir': "UNET folder",

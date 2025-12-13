@@ -6,6 +6,7 @@ import gradio as gr
 
 from modules.utils.ui_handler import update_interactivity
 
+
 def create_timestep_shift_ui():
     """Create timeshift step UI, for NitroFusion models"""
     with gr.Accordion(
@@ -30,6 +31,7 @@ def create_timestep_shift_ui():
         inputs=timestep_shift_bool,
         outputs=timestep_shift
     )
+
     return {
         'in_timestep_shift_bool': timestep_shift_bool,
         'in_timestep_shift': timestep_shift

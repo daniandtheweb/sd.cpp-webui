@@ -209,4 +209,5 @@ class SDOptionsCache:
                 f"Unknown option '{option}'. "
                 f"Valid options are: {list(option_map.keys())}"
             )
+
         return self._parse_help_option(option_map[option])

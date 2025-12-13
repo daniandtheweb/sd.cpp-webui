@@ -21,6 +21,7 @@ def get_session_value(option_key):
     """
     if option_key and option_key in _SESSION_CACHE:
         return _SESSION_CACHE[option_key]
+
     return config.get(option_key)
 
 
@@ -77,6 +78,7 @@ def create_model_widget(
                 dropdown,
                 scale=1
             )
+
     return dropdown
 
 
@@ -97,6 +99,7 @@ def create_ckpt_model_sel_ui():
                 dir_key='vae_dir',
                 option_key='def_ckpt_vae',
             )
+
     return {
         'in_ckpt_model': ckpt_model,
         'in_ckpt_vae': ckpt_vae,

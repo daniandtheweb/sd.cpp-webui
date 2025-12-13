@@ -6,6 +6,7 @@ import gradio as gr
 
 from modules.utils.ui_handler import update_interactivity
 
+
 def create_eta_ui():
     """Create ETA UI, for DDIM and TCD"""
     with gr.Accordion(
@@ -30,6 +31,7 @@ def create_eta_ui():
         inputs=eta_bool,
         outputs=eta
     )
+
     return {
         'in_eta_bool': eta_bool,
         'in_eta': eta

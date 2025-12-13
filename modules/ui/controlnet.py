@@ -11,6 +11,7 @@ from modules.loader import (
 from modules.utils.ui_handler import update_interactivity
 from .constants import RELOAD_SYMBOL
 
+
 def create_cnnet_ui():
     """Create the ControlNet UI"""
     cnnet_dir_txt = gr.Textbox(value=config.get('cnnet_dir'), visible=False)
@@ -74,7 +75,6 @@ def create_cnnet_ui():
         outputs=cnnet_comp
     )
 
-    # Return the dictionary with all UI components
     return {
         'in_cnnet_bool': cnnet_bool,
         'in_cnnet': cnnet,

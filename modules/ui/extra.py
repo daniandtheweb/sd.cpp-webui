@@ -44,7 +44,6 @@ def create_extras_ui():
             label="Output Name (optional)",
             value=config.get('def_output')
         )
-
         color = gr.Checkbox(
             label="Color",
             value=config.get('def_color')
@@ -54,7 +53,6 @@ def create_extras_ui():
             value=config.get('def_verbose')
         )
 
-    # Return the dictionary with all UI components
     return {
         'in_sigmas': sigmas,
         'in_rng': rng,

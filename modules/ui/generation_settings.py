@@ -37,6 +37,7 @@ def create_quant_ui():
                     placeholder="example: \"^vae\\.=f16,model\\.=q8_0\"",
                     interactive=True
                 )
+
     return {
         'in_model_type': model_type,
         'in_tensor_type_rules': tensor_type_rules
@@ -153,7 +154,6 @@ def create_generation_settings_ui(unet_mode: bool = False):
             outputs=guidance_comp
         )
 
-    # Return the dictionary with all UI components
     return {
         'in_sampling': sampling,
         'in_steps': steps,
@@ -166,6 +166,7 @@ def create_generation_settings_ui(unet_mode: bool = False):
         'in_guidance_bool': guidance_bool,
         'in_guidance': guidance
     }
+
 
 def create_bottom_generation_settings_ui():
     """Create bottom settings UI"""

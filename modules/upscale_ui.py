@@ -208,7 +208,6 @@ with gr.Blocks() as upscale_block:
 
 
     # Interactive Bindings
-
     img_inp_upscale.change(
         size_updater,
         inputs=img_inp_upscale,
@@ -226,6 +225,7 @@ with gr.Blocks() as upscale_block:
         inputs=ordered_components,
         outputs=[command, progress_slider, progress_textbox, stats, img_final]
     )
+
     kill_btn.click(
         subprocess_manager.kill_subprocess,
         inputs=[],

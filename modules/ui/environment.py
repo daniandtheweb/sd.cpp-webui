@@ -39,6 +39,7 @@ def create_env_ui():
                 label="Disable Vulkan integer dot product",
                 value=config.get('def_env_GGML_VK_DISABLE_INTEGER_DOT_PRODUCT')
             )
+
     return {
         'env_vk_visible_override': vk_visible_override,
         'env_GGML_VK_VISIBLE_DEVICES': vk_visible_dev,

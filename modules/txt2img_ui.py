@@ -28,6 +28,7 @@ from modules.ui.performance import create_performance_ui
 from modules.ui.environment import create_env_ui
 #from modules.ui.experimental import create_experimental_ui
 
+
 txt2img_params = {}
 
 with gr.Blocks() as txt2img_block:
@@ -199,6 +200,7 @@ with gr.Blocks() as txt2img_block:
         inputs=ordered_components,
         outputs=[command, progress_slider, progress_textbox, stats, img_final]
     )
+
     kill_btn.click(
         subprocess_manager.kill_subprocess,
         inputs=[],
@@ -236,6 +238,7 @@ with gr.Blocks() as txt2img_block:
             generation_settings_ui['in_flow_shift']
         ]
     )
+
     model_ui['components']['unet_tab'].select(
         unet_tab_switch,
         inputs=[
@@ -262,6 +265,7 @@ with gr.Blocks() as txt2img_block:
             generation_settings_ui['in_flow_shift']
         ]
     )
+
     refresh_opt.click(
         refresh_all_options,
         inputs=[],

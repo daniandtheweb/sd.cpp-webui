@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 """sd.cpp-webui - Main module"""
 
 import os
@@ -32,7 +31,6 @@ from modules.ui.constants import FIELDS, SAMPLERS, SCHEDULERS
 
 
 os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
-
 config = ConfigManager()
 
 

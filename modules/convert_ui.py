@@ -140,6 +140,7 @@ with gr.Blocks() as convert_block:
     ordered_keys = sorted(inputs_map.keys())
     ordered_components = [inputs_map[key] for key in ordered_keys]
 
+
     def convert_wrapper(*args):
         """
         Accepts all UI inputs, zips them with keys, and calls the
@@ -148,12 +149,14 @@ with gr.Blocks() as convert_block:
         params = dict(zip(ordered_keys, args))
         yield from convert(params)
 
+
     # Interactive Bindings
     convert_btn.click(
         convert_wrapper,
         inputs=ordered_components,
         outputs=[command, progress_slider, status_textbox]
     )
+
     kill_btn.click(
         subprocess_manager.kill_subprocess,
         inputs=[],

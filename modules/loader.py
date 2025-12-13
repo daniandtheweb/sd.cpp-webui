@@ -9,8 +9,6 @@ from modules.shared_instance import config
 
 
 SUPPORTED_EXTENSIONS = (".gguf", ".safetensors", ".sft", ".pth", ".ckpt")
-
-# Dictionary to map model types to their corresponding directories
 MODEL_DIR_MAP = {
     "Checkpoint": config.get('ckpt_dir'),
     "UNET": config.get('unet_dir'),

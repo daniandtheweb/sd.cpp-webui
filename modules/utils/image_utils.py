@@ -15,6 +15,7 @@ def size_extractor(image):
             width, height = img.size
     except Exception:
         width, height = None, None
+
     return (
         width, height
     )

@@ -29,6 +29,7 @@ from modules.ui.performance import create_performance_ui
 from modules.ui.environment import create_env_ui
 # from modules.ui.experimental import create_experimental_ui
 
+
 any2video_params = {}
 
 with gr.Blocks() as any2video_block:
@@ -240,6 +241,7 @@ with gr.Blocks() as any2video_block:
     ordered_keys = sorted(inputs_map.keys())
     ordered_components = [inputs_map[key] for key in ordered_keys]
 
+
     def any2video_wrapper(*args):
         """
         Accepts all UI inputs, zips them with keys, and calls the
@@ -248,6 +250,7 @@ with gr.Blocks() as any2video_block:
         # This line programmatically creates the dictionary.
         params = dict(zip(ordered_keys, args))
         yield from any2video(params)
+
 
     # Generate
     gen_btn.click(

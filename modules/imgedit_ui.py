@@ -182,6 +182,7 @@ with gr.Blocks() as imgedit_block:
     ordered_keys = sorted(inputs_map.keys())
     ordered_components = [inputs_map[key] for key in ordered_keys]
 
+
     def imgedit_wrapper(*args):
         """
         Accepts all UI inputs, zips them with keys, and calls the
@@ -191,17 +192,20 @@ with gr.Blocks() as imgedit_block:
         params = dict(zip(ordered_keys, args))
         yield from imgedit(params)
 
+
     # Generate
     gen_btn.click(
         imgedit_wrapper,
         inputs=ordered_components,
         outputs=[command, progress_slider, progress_textbox, stats, img_final]
     )
+
     kill_btn.click(
         subprocess_manager.kill_subprocess,
         inputs=[],
         outputs=[]
     )
+
     refresh_opt.click(
         refresh_all_options,
         inputs=[],

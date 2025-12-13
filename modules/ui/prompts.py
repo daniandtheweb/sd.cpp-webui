@@ -77,23 +77,25 @@ def create_prompts_ui(nprompt_support = True):
         inputs=[new_prompt, pprompt, nprompt],
         outputs=[saved_prompts]
     )
+
     del_prompt_btn.click(
         delete_and_refresh_prompts,
         inputs=[saved_prompts],
         outputs=[saved_prompts]
     )
+
     reload_prompts_btn.click(
         refresh_prompt_list,
         inputs=[],
         outputs=[saved_prompts]
     )
+
     load_prompt_btn.click(
         config.get_prompt,
         inputs=[saved_prompts],
         outputs=[pprompt, nprompt]
     )
 
-    # Return the dictionary with all UI components
     return {
         'saved_prompts': saved_prompts,
         'in_pprompt': pprompt,

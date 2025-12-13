@@ -15,8 +15,8 @@ gallery_manager = GalleryManager(
     config.get('any2video_dir'),
     config.get('upscale_dir')
 )
-
 info_params = {}
+
 
 with gr.Blocks() as gallery_block:
     # Controls
@@ -205,67 +205,80 @@ with gr.Blocks() as gallery_block:
                 value="Delete", variant="stop")
 
     param_ctrls = [info_params[f] for f in FIELDS]
+
     # Interactive bindings
     gallery.select(
         gallery_manager.get_img_info,
         inputs=[],
         outputs=param_ctrls + [path_info, img_info_txt]
     )
+
     txt2img_btn.click(
         gallery_manager.reload_gallery,
         inputs=[def_page, txt2img_ctrl],
         outputs=[gallery, page_num_select, gallery, gallery]
     )
+
     img2img_btn.click(
         gallery_manager.reload_gallery,
         inputs=[def_page, img2img_ctrl],
         outputs=[gallery, page_num_select, gallery, gallery]
     )
+
     imgedit_btn.click(
         gallery_manager.reload_gallery,
         inputs=[def_page, imgedit_ctrl],
         outputs=[gallery, page_num_select, gallery, gallery]
     )
+
     any2video_btn.click(
         gallery_manager.reload_gallery,
         inputs=[def_page, any2video_ctrl],
         outputs=[gallery, page_num_select, gallery, gallery]
     )
+
     upscl_btn.click(
         gallery_manager.reload_gallery,
         inputs=[def_page, upscl_ctrl],
         outputs=[gallery, page_num_select, gallery, gallery]
     )
+
     pvw_btn.click(
         gallery_manager.prev_page,
         inputs=[],
         outputs=[gallery, page_num_select, gallery, gallery]
     )
+
     nxt_btn.click(
         gallery_manager.next_page,
         inputs=[],
         outputs=[gallery, page_num_select, gallery, gallery]
     )
+
     first_btn.click(
         gallery_manager.reload_gallery,
         inputs=[],
         outputs=[gallery, page_num_select, gallery, gallery]
     )
+
     last_btn.click(
         gallery_manager.last_page,
         inputs=[],
         outputs=[gallery, page_num_select, gallery, gallery]
     )
+
     go_btn.click(
         gallery_manager.reload_gallery,
         inputs=[page_num_select],
         outputs=[gallery, page_num_select, gallery, gallery]
     )
+
     page_num_select.submit(
         gallery_manager.reload_gallery,
         inputs=[page_num_select],
         outputs=[gallery, page_num_select, gallery, gallery]
     )
+
     del_img.click(
         gallery_manager.delete_img,
         inputs=[],
