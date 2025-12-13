@@ -196,10 +196,15 @@ with gr.Blocks() as upscale_block:
         yield from upscale(params)
 
     def size_updater(img_inp):
-        width, height = size_extractor(img_inp)
-        return (
-            gr.update(value=int(width)), gr.update(value=int(height))
-        )
+        if img_inp is None:
+            return (
+                gr.update(), gr.update()
+            )
+        else:
+            width, height = size_extractor(img_inp)
+            return (
+                gr.update(value=int(width)), gr.update(value=int(height))
+            )
 
 
     # Interactive Bindings
