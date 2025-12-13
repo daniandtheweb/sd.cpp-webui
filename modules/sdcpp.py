@@ -124,7 +124,6 @@ class CommandRunner:
         self.command.extend([
             '--sampling-method', str(self._get_param('in_sampling')),
             '--steps', str(self._get_param('in_steps')),
-            '--scheduler', str(self._get_param('in_scheduler')),
             '-W', str(self._get_param('in_width')),
             '-H', str(self._get_param('in_height')),
             '-b', str(self._get_param('in_batch_count')),
@@ -289,6 +288,13 @@ class ImageGenerationRunner(CommandRunner):
             '--tensor-type-rules': (self._get_param('in_tensor_type_rules')
                                     if self._get_param('in_tensor_type_rules') != ""
                                     else None),
+            # Scheduler
+            '--scheduler': (self._get_param('in_scheduler')
+                            if not self._get_param('in_sigmas')
+                            else None),
+            '--sigmas': (self._get_param('in_sigmas')
+                         if self._get_param('in_sigmas') != ""
+                         else None),
             # TAESD
             '--taesd': self._get_param('f_taesd'),
             # PhotoMaker

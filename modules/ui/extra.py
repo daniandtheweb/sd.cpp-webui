@@ -14,6 +14,12 @@ def create_extras_ui():
     with gr.Accordion(
         label="Extra", open=False
     ):
+        sigmas = gr.Textbox(
+            label="Sigmas",
+            value="",
+            placeholder="Overrides scheduler",
+            interactive=True
+        )
         rng = gr.Dropdown(
             label="RNG",
             choices=RNG,
@@ -50,6 +56,7 @@ def create_extras_ui():
 
     # Return the dictionary with all UI components
     return {
+        'in_sigmas': sigmas,
         'in_rng': rng,
         'in_sampler_rng': sampler_rng,
         'in_predict': predict,
