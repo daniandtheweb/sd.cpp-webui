@@ -10,17 +10,25 @@ from modules.loader import (
 )
 from .constants import RELOAD_SYMBOL
 
+
+_SESSION_CACHE = {}
+
+
+def get_session_value(option_key):
+    """
+    Helper to get the current model value. 
+    Prioritizes the live cache; falls back to config.
+    """
+    if option_key and option_key in _SESSION_CACHE:
+        return _SESSION_CACHE[option_key]
+    return config.get(option_key)
+
+
 def create_model_widget(
     label, dir_key, option_key, **kwargs
 ):
     """
-    Universal widget that creates a Dropdown + Reload + Clear setup.
-    
-    Args:
-        label (str): Visual label.
-        dir_key (str): Config key for the folder path (e.g. 'ckpt_dir').
-        option_key (str): Config key for the default value (e.g. 'def_ckpt').
-        **kwargs: Extra arguments for the gr.Dropdown (e.g. scale, interactive).
+    Universal widget with auto-save to session cache.
     """
     full_path = config.get(dir_key)
 
@@ -28,18 +36,33 @@ def create_model_widget(
         folder_name = os.path.basename(os.path.normpath(full_path)) 
         kwargs['info'] = f"{folder_name} folder"
 
+    current_value = get_session_value(option_key)
+    
+    choices = list(get_models(full_path)) if full_path else []
+
     with gr.Group():
         path_component_txt = gr.Textbox(value=full_path, visible=False)
 
         with gr.Row():
             dropdown = gr.Dropdown(
                 label=label,
-                choices=get_models(full_path),
+                choices=choices,
                 scale=kwargs.pop('scale', 7),
-                value=config.get(option_key),
+                value=current_value,
                 interactive=True,
                 **kwargs
             )
+
+            if option_key:
+                def update_cache(value):
+                    _SESSION_CACHE[option_key] = value
+
+                dropdown.change(
+                    fn=update_cache,
+                    inputs=[dropdown],
+                    outputs=[]
+                )
+
         with gr.Row():
             reload_btn = gr.Button(
                 value=RELOAD_SYMBOL,
@@ -55,6 +78,7 @@ def create_model_widget(
                 scale=1
             )
     return dropdown
+
 
 def create_ckpt_model_sel_ui():
     """Create the checkpoint model selection UI using a helper for clarity"""
@@ -127,6 +151,7 @@ def create_unet_model_sel_ui():
                 dir_key='txt_enc_dir',
                 option_key='def_llm_vision',
             )
+
     return {
         'in_unet_model': unet_model,
         'in_unet_vae': unet_vae,
@@ -203,6 +228,7 @@ def create_imgedit_model_sel_ui():
                 dir_key='txt_enc_dir',
                 option_key='def_llm_vision',
             )
+
     return {
         'in_unet_model': unet_model,
         'in_unet_vae': unet_vae,
@@ -253,7 +279,6 @@ def create_video_model_sel_ui():
                 option_key=None,
             )
 
-    # Return the dictionary with all UI components
     return {
         'in_unet_model': unet_model,
         'in_unet_vae': unet_vae,

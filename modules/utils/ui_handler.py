@@ -2,9 +2,8 @@
 
 import gradio as gr
 
-from modules.shared_instance import (
-    config, sd_options
-)
+from modules.shared_instance import sd_options
+from modules.ui.models import get_session_value
 
 
 class ModelState:
@@ -22,18 +21,21 @@ class ModelState:
     """
 
     def __init__(self):
-        """Initializes the ModelState with default values from the
-        configuration."""
-        self.bak_ckpt_model = config.get('def_ckpt')
-        self.bak_unet_model = config.get('def_unet')
-        self.bak_ckpt_vae = config.get('def_ckpt_vae')
-        self.bak_unet_vae = config.get('def_unet_vae')
-        self.bak_clip_g = config.get('def_clip_g')
-        self.bak_clip_l = config.get('def_clip_l')
-        self.bak_t5xxl = config.get('def_t5xxl')
-        self.bak_llm = config.get('def_llm')
+        """Initializes using the LIVE session values."""
+        self.refresh_state()
         self.bak_guidance_bool = False
         self.bak_flow_shift_bool = False
+
+    def refresh_state(self):
+        """Pulls the latest values from the session cache."""
+        self.bak_ckpt_model = get_session_value('def_ckpt')
+        self.bak_unet_model = get_session_value('def_unet')
+        self.bak_ckpt_vae = get_session_value('def_ckpt_vae')
+        self.bak_unet_vae = get_session_value('def_unet_vae')
+        self.bak_clip_g = get_session_value('def_clip_g')
+        self.bak_clip_l = get_session_value('def_clip_l')
+        self.bak_t5xxl = get_session_value('def_t5xxl')
+        self.bak_llm = get_session_value('def_llm')
 
     def update(self, **kwargs):
         """Generic method to update state variables.
@@ -49,26 +51,22 @@ class ModelState:
                     f"{key} is not a valid attribute of ModelState."
                 )
 
-    def bak_ckpt_tab(self, ckpt_model, ckpt_vae):
-        """Updates the state with values from the checkpoint tab."""
-        self.update(
-            bak_ckpt_model=ckpt_model,
-            bak_ckpt_vae=ckpt_vae,
-        )
+    def bak_ckpt_tab(self, *args):
+        """Updates state from the live cache (ignoring args)."""
+        self.bak_ckpt_model = get_session_value('def_ckpt')
+        self.bak_ckpt_vae = get_session_value('def_ckpt_vae')
 
-    def bak_unet_tab(self, unet_model, unet_vae, clip_g, clip_l, t5xxl,
-                     llm, guidance_bool, flow_shift_bool):
-        """Updates the state with values from the UNET tab."""
-        self.update(
-            bak_unet_model=unet_model,
-            bak_unet_vae=unet_vae,
-            bak_clip_g=clip_g,
-            bak_clip_l=clip_l,
-            bak_t5xxl=t5xxl,
-            bak_llm=llm,
-            bak_guidance_bool=guidance_bool,
-            bak_flow_shift_bool=flow_shift_bool,
-        )
+    def bak_unet_tab(self, *args):
+        """Updates state from the live cache (ignoring args)."""
+        self.bak_unet_model = get_session_value('def_unet')
+        self.bak_unet_vae = get_session_value('def_unet_vae')
+        self.bak_clip_g = get_session_value('def_clip_g')
+        self.bak_clip_l = get_session_value('def_clip_l')
+        self.bak_t5xxl = get_session_value('def_t5xxl')
+        self.bak_llm = get_session_value('def_llm')
+        if len(args) >= 2:
+            self.bak_guidance_bool = args[-2]
+            self.bak_flow_shift_bool = args[-1]
 
 
 model_state = ModelState()
@@ -77,7 +75,7 @@ model_state = ModelState()
 def unet_tab_switch(ckpt_model, ckpt_vae, guidance_bool, guidance,
                     flow_shift_bool, flow_shift):
     """Switches to the UNET tab"""
-    model_state.bak_ckpt_tab(ckpt_model, ckpt_vae)
+    model_state.bak_ckpt_tab()
 
     return (
         gr.update(value=1),                                                # + UNET Tab
@@ -100,8 +98,8 @@ def ckpt_tab_switch(unet_model, unet_vae, clip_g, clip_l, t5xxl,
                     llm, guidance_bool, guidance,
                     flow_shift_bool, flow_shift):
     """Switches to the checkpoint tab"""
-    model_state.bak_unet_tab(unet_model, unet_vae, clip_g, clip_l, t5xxl,
-                             llm, guidance_bool, flow_shift_bool)
+    model_state.bak_unet_tab(None, None, None, None, None, None,
+                             guidance_bool, flow_shift_bool)
 
     return (
         gr.update(value=0),                             # + Checkpoint Tab
