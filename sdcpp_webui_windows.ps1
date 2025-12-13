@@ -51,9 +51,10 @@ if ($Help) {
 }
 
 # --- sd.exe Check ---
-if (-not (Test-Path -Path ".\sd.exe") -and -not (Get-Command sd -ErrorAction SilentlyContinue)) {
-    Write-Warning "'sd.exe' executable not found in this directory or your PATH."
-    Write-Warning "Please place the stable-diffusion.cpp executable (renamed to 'sd.exe') in this folder."
+if (-not (Test-Path -Path ".\sd-cli.exe") -and -not (Get-Command sd-cli -ErrorAction SilentlyContinue) -and `
+    -not (Test-Path -Path ".\sd.exe") -and -not (Get-Command sd -ErrorAction SilentlyContinue)) {
+    Write-Warning "Neither 'sd-cli.exe' nor 'sd.exe' executables were found in this directory or your PATH."
+    Write-Warning "Please place the stable-diffusion.cpp executable (renamed to 'sd-cli.exe' or 'sd.exe') in this folder."
     exit 1
 }
 

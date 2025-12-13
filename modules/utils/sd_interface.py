@@ -9,11 +9,30 @@ import subprocess
 
 
 def exe_name():
-    """Returns the stable-diffusion executable name"""
+    """
+    Returns the stable-diffusion executable name.
+    Prioritizes 'sd-cli' over 'sd', and checks both PATH and current directory.
+    """
     if os.name == "nt":
-        return "sd.exe"
+        candidates = ["sd-cli.exe", "sd.exe"]
     else:
-        return "./sd"
+        candidates = ["sd-cli", "sd"]
+
+    for cand in candidates:
+        if shutil.which(cand):
+            return cand
+        
+        local_path = os.path.join(os.getcwd(), cand)
+        if os.path.isfile(local_path) and os.access(local_path, os.X_OK):
+            if os.name == "nt":
+                return cand
+            else:
+                return f"./{cand}"
+
+    if os.name == "nt":
+        return "sd-cli.exe"
+    else:
+        return "./sd-cli"
 
 
 class SDOptionsCache:

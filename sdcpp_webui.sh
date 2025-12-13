@@ -33,9 +33,10 @@ for arg in "$@"; do
   esac
 done
 
-if [ ! -x "sd" ] && ! command -v "sd" > /dev/null; then
-  echo "Warning: 'sd' executable not found in this directory or your PATH."
-  echo "Please place the stable-diffusion.cpp executable (renamed to 'sd') in this folder."
+if [ ! -x "sd-cli" ] && ! command -v "sd-cli" > /dev/null && \
+   [ ! -x "sd" ] && ! command -v "sd" > /dev/null; then
+  echo "Warning: Neither 'sd-cli' nor 'sd' executables were found in this directory or your PATH."
+  echo "Please place the stable-diffusion.cpp executable (renamed to 'sd-cli' or 'sd') in this folder."
   exit 1
 fi
 
