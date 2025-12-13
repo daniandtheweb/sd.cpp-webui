@@ -4,6 +4,7 @@ import gradio as gr
 
 from modules.sdcpp import imgedit
 from modules.utils.ui_handler import refresh_all_options
+import modules.utils.queue as queue_manager
 from modules.shared_instance import (
     config, subprocess_manager
 )
@@ -139,6 +140,11 @@ with gr.Blocks() as imgedit_block:
                         variant="stop"
                     )
                 with gr.Row():
+                    queue_tracker = gr.Textbox(
+                        show_label=False,
+                        visible=False
+                    )
+                with gr.Row():
                     progress_slider = gr.Slider(
                         minimum=0,
                         maximum=100,
@@ -183,21 +189,57 @@ with gr.Blocks() as imgedit_block:
     ordered_components = [inputs_map[key] for key in ordered_keys]
 
 
-    def imgedit_wrapper(*args):
-        """
-        Accepts all UI inputs, zips them with keys, and calls the
-        main imgedit function.
-        """
-        # This line programmatically creates the dictionary.
+    def submit_job(*args):
         params = dict(zip(ordered_keys, args))
-        yield from imgedit(params)
+        
+        queue_manager.add_job(imgedit, params)
+        
+        q_len = queue_manager.get_queue_size()
+
+        print(f"Job submitted! Position in queue: {q_len}"), 
+        
+        return (
+            gr.Timer(value=0.01, active=True)
+        )
 
 
-    # Generate
+    def poll_status():
+        state = queue_manager.get_status()
+        q_len = queue_manager.get_queue_size()
+        
+        if state["is_running"] or q_len > 0:
+            timer_update = gr.Timer(value=0.01, active=True)
+        else:
+            timer_update = gr.Timer(active=False)
+
+        if q_len > 0:
+            queue_update = gr.update(value=f"⏳ Jobs in queue: {q_len}", visible=True)
+        else:
+            queue_update = gr.update(visible=False)
+
+        return (
+            state["command"],
+            state["progress"],
+            state["status"],
+            state["stats"],
+            state["images"],
+            timer_update,
+            queue_update
+        )
+
+
+    timer = gr.Timer(value=0.01, active=False)
+
     gen_btn.click(
-        imgedit_wrapper,
+        submit_job,
         inputs=ordered_components,
-        outputs=[command, progress_slider, progress_textbox, stats, img_final]
+        outputs=[timer]
+    )
+
+    timer.tick(
+        poll_status,
+        inputs=[],
+        outputs=[command, progress_slider, progress_textbox, stats, img_final, timer, queue_tracker]
     )
 
     kill_btn.click(
