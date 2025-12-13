@@ -528,8 +528,8 @@ class UpscaleRunner(CommandRunner):
         options = {
             '--init-img': init_img,
             '--upscale-model': self._get_param('f_upscl'),
-            '-W': str(self._get_param('in_init_width')),
-            '-H': str(self._get_param('in_init_height')),
+            '-W': self._get_param('in_init_width'),
+            '-H': self._get_param('in_init_height'),
             '--upscale-repeats': self._get_param('in_upscl_rep'),
             '-o': self.output_path,
         }
