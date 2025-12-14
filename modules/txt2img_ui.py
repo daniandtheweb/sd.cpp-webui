@@ -199,7 +199,7 @@ with gr.Blocks() as txt2img_block:
         
         q_len = queue_manager.get_queue_size()
 
-        print(f"Job submitted! Position in queue: {q_len}"), 
+        print(f"\n\nJob submitted! Position in queue: {q_len}.\n"), 
         
         return (
             gr.Timer(value=0.01, active=True)
