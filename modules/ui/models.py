@@ -58,7 +58,7 @@ def create_model_widget(
                 def update_cache(value):
                     _SESSION_CACHE[option_key] = value
 
-                dropdown.change(
+                dropdown.input(
                     fn=update_cache,
                     inputs=[dropdown],
                     outputs=[]
@@ -74,10 +74,19 @@ def create_model_widget(
                 inputs=[path_component_txt],
                 outputs=[dropdown]
             )
-            gr.ClearButton(
+            clear_btn = gr.ClearButton(
                 dropdown,
                 scale=1
             )
+            if option_key:
+                def clear_cache():
+                    _SESSION_CACHE[option_key] = None
+                    
+                clear_btn.click(
+                    fn=clear_cache,
+                    inputs=[],
+                    outputs=[]
+                )
 
     return dropdown
 
