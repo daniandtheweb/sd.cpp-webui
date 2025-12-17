@@ -254,18 +254,7 @@ with gr.Blocks() as txt2img_block:
     # Interactive Bindings
     model_ui['components']['ckpt_tab'].select(
         ckpt_tab_switch,
-        inputs=[
-            model_ui['inputs']['in_unet_model'],
-            model_ui['inputs']['in_unet_vae'],
-            model_ui['inputs']['in_clip_g'],
-            model_ui['inputs']['in_clip_l'],
-            model_ui['inputs']['in_t5xxl'],
-            model_ui['inputs']['in_llm'],
-            generation_settings_ui['in_guidance_bool'],
-            generation_settings_ui['in_guidance'],
-            generation_settings_ui['in_flow_shift_bool'],
-            generation_settings_ui['in_flow_shift']
-        ],
+        inputs=[],
         outputs=[
             model_ui['inputs']['in_diffusion_mode'],
             model_ui['inputs']['in_ckpt_model'],
@@ -285,14 +274,7 @@ with gr.Blocks() as txt2img_block:
 
     model_ui['components']['unet_tab'].select(
         unet_tab_switch,
-        inputs=[
-            model_ui['inputs']['in_ckpt_model'],
-            model_ui['inputs']['in_ckpt_vae'],
-            generation_settings_ui['in_guidance_bool'],
-            generation_settings_ui['in_guidance'],
-            generation_settings_ui['in_flow_shift_bool'],
-            generation_settings_ui['in_flow_shift']
-        ],
+        inputs=[],
         outputs=[
             model_ui['inputs']['in_diffusion_mode'],
             model_ui['inputs']['in_ckpt_model'],

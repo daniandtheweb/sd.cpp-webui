@@ -8,21 +8,8 @@ from modules.shared_instance import config
 from modules.loader import (
     get_models, reload_models
 )
+from modules.utils.ui_handler import get_session_value, update_session_cache
 from .constants import RELOAD_SYMBOL
-
-
-_SESSION_CACHE = {}
-
-
-def get_session_value(option_key):
-    """
-    Helper to get the current model value. 
-    Prioritizes the live cache; falls back to config.
-    """
-    if option_key and option_key in _SESSION_CACHE:
-        return _SESSION_CACHE[option_key]
-
-    return config.get(option_key)
 
 
 def create_model_widget(
@@ -55,11 +42,8 @@ def create_model_widget(
             )
 
             if option_key:
-                def update_cache(value):
-                    _SESSION_CACHE[option_key] = value
-
                 dropdown.input(
-                    fn=update_cache,
+                    fn=lambda x: update_session_cache(option_key, x),
                     inputs=[dropdown],
                     outputs=[]
                 )
@@ -79,11 +63,8 @@ def create_model_widget(
                 scale=1
             )
             if option_key:
-                def clear_cache():
-                    _SESSION_CACHE[option_key] = None
-                    
                 clear_btn.click(
-                    fn=clear_cache,
+                    fn=lambda: update_session_cache(option_key, None),
                     inputs=[],
                     outputs=[]
                 )

@@ -2,8 +2,31 @@
 
 import gradio as gr
 
-from modules.shared_instance import sd_options
-from modules.ui.models import get_session_value
+from modules.shared_instance import (
+    config, sd_options
+)
+
+
+_SESSION_CACHE = {}
+
+
+def get_session_value(option_key):
+    """
+    Helper to get the current model value. 
+    Prioritizes the live cache; falls back to config.
+    """
+    if option_key and option_key in _SESSION_CACHE:
+        return _SESSION_CACHE[option_key]
+
+    return config.get(option_key)
+
+
+def update_session_cache(key, value):
+    """
+    Public helper to allow other UI components (like checkboxes) 
+    to write to the global session cache.
+    """
+    _SESSION_CACHE[key] = value
 
 
 class ModelState:
@@ -19,12 +42,6 @@ class ModelState:
         bak_t5xxl: The backup T5-XXL model.
         bak_llm: The backup LLM model.
     """
-
-    def __init__(self):
-        """Initializes using the LIVE session values."""
-        self.bak_guidance_bool = False
-        self.bak_flow_shift_bool = False
-
     @property
     def bak_ckpt_model(self): return get_session_value('def_ckpt')
 
@@ -49,41 +66,20 @@ class ModelState:
     @property
     def bak_llm(self): return get_session_value('def_llm')
 
-    def update(self, **kwargs):
-        """Generic method to update state variables (mostly for booleans now)."""
-        for key, value in kwargs.items():
-            if hasattr(self, key):
-                setattr(self, key, value)
+    @property
+    def bak_guidance_bool(self):
+        return get_session_value('def_guidance_bool') is True
 
-    def bak_ckpt_tab(self, *args, **kwargs):
-        """
-        Updates state from the checkpoint tab.
-        Since models are now live properties, this does nothing 
-        unless you add non-model settings to the Checkpoint tab later.
-        """
-        pass
-
-    def bak_unet_tab(self, unet_model, unet_vae, clip_g, clip_l, t5xxl,
-                     llm, guidance_bool, flow_shift_bool):
-        """
-        Updates state from the UNET tab.
-        We ignore the model arguments (unet_model, etc.) because we read 
-        those from the live cache. We only need to save the booleans.
-        """
-        self.update(
-            bak_guidance_bool=guidance_bool,
-            bak_flow_shift_bool=flow_shift_bool,
-        )
+    @property
+    def bak_flow_shift_bool(self):
+        return get_session_value('def_flow_shift_bool') is True
 
 
 model_state = ModelState()
 
 
-def unet_tab_switch(ckpt_model, ckpt_vae, guidance_bool, guidance,
-                    flow_shift_bool, flow_shift):
+def unet_tab_switch(*args):
     """Switches to the UNET tab"""
-    model_state.bak_ckpt_tab(ckpt_model, ckpt_vae)
-
     return (
         gr.update(value=1),                                                # + UNET Tab
         gr.update(value=None),                                             # - Checkpoint Model
@@ -101,13 +97,8 @@ def unet_tab_switch(ckpt_model, ckpt_vae, guidance_bool, guidance,
     )
 
 
-def ckpt_tab_switch(unet_model, unet_vae, clip_g, clip_l, t5xxl,
-                    llm, guidance_bool, guidance,
-                    flow_shift_bool, flow_shift):
+def ckpt_tab_switch(*args):
     """Switches to the checkpoint tab"""
-    model_state.bak_unet_tab(unet_model, unet_vae, clip_g, clip_l, t5xxl,
-                             llm, guidance_bool, flow_shift_bool)
-
     return (
         gr.update(value=0),                             # + Checkpoint Tab
         gr.update(value=model_state.bak_ckpt_model),    # + Checkpoint Model

@@ -6,7 +6,9 @@ import gradio as gr
 
 from modules.utils.utility import random_seed
 from modules.shared_instance import config
-from modules.utils.ui_handler import update_interactivity
+from modules.utils.ui_handler import (
+    update_session_cache, update_interactivity
+)
 from modules.utils.image_utils import switch_sizes
 from .constants import (
     QUANTS, SAMPLERS, SCHEDULERS,
@@ -131,6 +133,12 @@ def create_generation_settings_ui(unet_mode: bool = False):
             outputs=flow_shift_comp
         )
 
+        flow_shift_bool.input(
+            fn=lambda x: update_session_cache('def_flow_shift_bool', x),
+            inputs=[flow_shift_bool],
+            outputs=[]
+        )
+
     with gr.Row():
         guidance_bool = gr.Checkbox(
             label="Enable distilled guidance", value=False,
@@ -152,6 +160,12 @@ def create_generation_settings_ui(unet_mode: bool = False):
             partial(update_interactivity, len(guidance_comp)),
             inputs=guidance_bool,
             outputs=guidance_comp
+        )
+
+        guidance_bool.input(
+            fn=lambda x: update_session_cache('def_guidance_bool', x),
+            inputs=[guidance_bool],
+            outputs=[]
         )
 
     return {
