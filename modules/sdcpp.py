@@ -354,9 +354,11 @@ class ImageGenerationRunner(CommandRunner):
                 '--cache-preset': (self._get_param('in_cache_dit_preset')
                                    if self._get_param('in_cache_dit_preset') != "none"
                                    else None),
-                '--cache-option': (self._get_param('in_cache_option')
-                                   if self._get_param('in_cache_option') != ""
-                                   else None),
+                '--cache-option': (
+                    val.strip('"') 
+                    if (val := self._get_param('in_cache_option')) and str(val).strip('"') != "" 
+                    else None
+                ),
                 '--scm-mask': (self._get_param('in_scm_mask')
                                if self._get_param('in_scm_mask') != ""
                                else None),
