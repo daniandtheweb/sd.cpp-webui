@@ -49,6 +49,7 @@ def create_cache_ui():
                     "Examples: \"threshold=0.25\" or\n"
                     '"threshold=1.5,reset=0"'
                 ),
+                lines=7,
             )
 
             scm_mask = gr.Textbox(
@@ -57,6 +58,7 @@ def create_cache_ui():
                     "SCM steps mask for cache-dit:\n"
                     "comma-separated 0/1 (e.g., \"1,1,1,0,0,1,0,0,1,0\") - 1=compute, 0=can cache"
                 ),
+                lines=2,
             )
 
             scm_policy = gr.Dropdown(
