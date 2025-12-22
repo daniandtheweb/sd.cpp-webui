@@ -348,12 +348,22 @@ class ImageGenerationRunner(CommandRunner):
                                              )
                                              else None),
             } if self._get_param('in_vae_tiling') else {}),
-            # EasyCache
+            # Cache
             **({
-                '--easycache': f"{self._get_param('in_ec_threshold')},"
-                               f"{self._get_param('in_ec_start')},"
-                               f"{self._get_param('in_ec_end')}"
-            } if self._get_param('in_easycache_bool') else {}),
+                '--cache-mode': self._get_param('in_cache_mode'),
+                '--cache-preset': (self._get_param('in_cache_dit_preset')
+                                   if self._get_param('in_cache_dit_preset') != "none"
+                                   else None),
+                '--cache-option': (self._get_param('in_cache_option')
+                                   if self._get_param('in_cache_option') != ""
+                                   else None),
+                '--scm-mask': (self._get_param('in_scm_mask')
+                               if self._get_param('in_scm_mask') != ""
+                               else None),
+                '--scm-policy': (self._get_param('in_scm_policy')
+                                if self._get_param('in_scm_policy') != "none"
+                                else None)
+            } if self._get_param('in_cache_bool') else {}),
             # Prediction type override
             '--prediction': (self._get_param('in_predict')
                              if self._get_param('in_predict') != "Default"

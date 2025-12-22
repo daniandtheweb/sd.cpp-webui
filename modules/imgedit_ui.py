@@ -20,7 +20,7 @@ from modules.ui.photomaker import create_photomaker_ui
 from modules.ui.eta import create_eta_ui
 from modules.ui.taesd import create_taesd_ui
 from modules.ui.vae_tiling import create_vae_tiling_ui
-from modules.ui.easycache import create_easycache_ui
+from modules.ui.cache import create_cache_ui
 from modules.ui.extra import create_extras_ui
 from modules.ui.preview import create_preview_ui
 from modules.ui.performance import create_performance_ui
@@ -93,9 +93,9 @@ with gr.Blocks() as imgedit_block:
                 vae_tiling_ui = create_vae_tiling_ui()
                 inputs_map.update(vae_tiling_ui)
 
-                # EasyCache
-                easycache_ui = create_easycache_ui()
-                inputs_map.update(easycache_ui)
+                # Cache
+                cache_ui = create_cache_ui()
+                inputs_map.update(cache_ui)
 
                 # Extra Settings
                 extras_ui = create_extras_ui()

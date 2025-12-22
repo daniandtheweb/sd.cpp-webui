@@ -17,7 +17,7 @@ from modules.ui.folder_settings import create_folders_opt_ui
 from modules.ui.performance import create_performance_ui
 from modules.ui.taesd import create_taesd_ui
 from modules.ui.vae_tiling import create_vae_tiling_ui
-from modules.ui.easycache import create_easycache_ui
+from modules.ui.cache import create_cache_ui
 from modules.ui.extra import create_extras_ui
 from modules.ui.preview import create_preview_ui
 from modules.ui.environment import create_env_ui
@@ -181,12 +181,11 @@ with gr.Blocks() as options_block:
         'def_vae_relative_tile_size': vae_tiling_ui['in_vae_relative_tile_size']
     })
 
-    easycache_ui = create_easycache_ui()
+    cache_ui = create_cache_ui()
     settings_map.update({
-        'def_easycache_bool': easycache_ui['in_easycache_bool'],
-        'def_ec_threshold': easycache_ui['in_ec_threshold'],
-        'def_ec_start': easycache_ui['in_ec_start'],
-        'def_ec_end': easycache_ui['in_ec_end']
+        'def_cache_bool': cache_ui['in_cache_bool'],
+        'def_cache_mode': cache_ui['in_cache_mode'],
+        'def_cache_dit_preset': cache_ui['in_cache_dit_preset']
     })
 
     extras_ui = create_extras_ui()
