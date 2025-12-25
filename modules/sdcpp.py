@@ -16,6 +16,7 @@ from modules.gallery import get_next_img
 from modules.shared_instance import (
     config, subprocess_manager, SD
 )
+from modules.ui.constants import CIRCULAR_PADDING
 
 
 class DiffusionMode(IntEnum):
@@ -391,6 +392,9 @@ class ImageGenerationRunner(CommandRunner):
             ),
             '--chroma-enable-t5-mask': self._get_param('in_enable_t5_mask'),
             '--qwen-image-zero-cond-t': self._get_param('in_enable_zero_cond_t'),
+            '--circular': self._get_param('in_circular_padding') == CIRCULAR_PADDING[1],
+            '--circularx': self._get_param('in_circular_padding') == CIRCULAR_PADDING[2],
+            '--circulary': self._get_param('in_circular_padding') == CIRCULAR_PADDING[3],
             '--diffusion-fa': self._get_param('in_flash_attn'),
             '--diffusion-conv-direct': (
                 self._get_param('in_diffusion_conv_direct')

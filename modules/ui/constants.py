@@ -17,6 +17,7 @@ MODELS = [
     "Checkpoint", "UNET", "VAE", "clip_g", "clip_l", "t5xxl", "llm",
     "TAESD", "Lora", "Embeddings", "Upscaler", "ControlNet"
 ]
+CIRCULAR_PADDING= ["None", "Circular", "Circular X", "Circular Y"]
 RNG = sd_options.get_opt("rng")
 SAMPLER_RNG = sd_options.get_opt("sampler_rng")
 PREVIEW = sd_options.get_opt("previews")

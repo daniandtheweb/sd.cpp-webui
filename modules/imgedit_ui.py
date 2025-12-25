@@ -17,6 +17,7 @@ from modules.ui.generation_settings import (
 from modules.ui.upscale import create_upscl_ui
 from modules.ui.controlnet import create_cnnet_ui
 from modules.ui.qwen import create_qwen_ui
+from modules.ui.circular import create_circular_ui
 from modules.ui.photomaker import create_photomaker_ui
 from modules.ui.eta import create_eta_ui
 from modules.ui.taesd import create_taesd_ui
@@ -79,6 +80,10 @@ with gr.Blocks() as imgedit_block:
                 # Qwen
                 qwen_ui = create_qwen_ui()
                 inputs_map.update(qwen_ui)
+
+                # Circular padding
+                circular_ui = create_circular_ui()
+                inputs_map.update(circular_ui)
 
                 # PhotoMaker
                 photomaker_ui = create_photomaker_ui()
