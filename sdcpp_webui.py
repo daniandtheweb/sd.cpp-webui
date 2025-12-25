@@ -2,6 +2,7 @@
 """sd.cpp-webui - Main module"""
 
 import os
+import sys
 import argparse
 
 import gradio as gr
@@ -233,4 +234,7 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        sys.exit(0)
