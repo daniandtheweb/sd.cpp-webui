@@ -101,53 +101,70 @@ class SubprocessManager:
     def run_subprocess(self, command, env=None):
         """
         Runs a subprocess, captures its output, and yields UI updates.
-        This main method is now much simpler and delegates parsing to helpers.
         """
         phase = "Initializing"
-        last_was_progress = False
         final_stats = {}
+        last_was_progress = False
+        
+        # Regex to strip ANSI color codes ONLY for the internal parser.
+        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
 
         try:
             with subprocess.Popen(
                 command,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
-                universal_newlines=True,
-                bufsize=1,
-                encoding='utf-8',
+                bufsize=0, 
                 env=env,
-                errors='replace'
             ) as self.process:
+                
+                buffer = bytearray()
+                
+                while True:
+                    byte = self.process.stdout.read(1)
+                    
+                    if not byte and self.process.poll() is not None:
+                        break
+                    if not byte:
+                        continue
 
-                for output_line in self.process.stdout:
-                    output_line = output_line.rstrip()
+                    if byte == b'\r' or byte == b'\n':
+                        try:
+                            output_line = buffer.decode('utf-8', errors='replace')
+                            clean_line = ansi_escape.sub('', output_line)
+                            self._parse_final_stats(clean_line, final_stats)
 
-                    self._parse_final_stats(output_line, final_stats)
+                            if 'loading model' in clean_line:
+                                phase = "Loading Model"
+                            elif 'sampling using' in clean_line:
+                                phase = "Sampling"
+                            elif 'upscaling from' in clean_line:
+                                phase = "Upscaling"
 
-                    if 'loading model' in output_line:
-                        phase = "Loading Model"
-                    elif 'sampling using' in output_line:
-                        phase = "Sampling"
-                    elif 'upscaling from' in output_line:
-                        phase = "Upscaling"
+                            if "|" in clean_line and "/" in clean_line:
+                                if phase in ["Sampling", "Upscaling"]:
+                                    update_data = self._parse_progress_update(
+                                        clean_line,
+                                        final_stats
+                                    )
+                                    if update_data:
+                                        yield update_data
 
-                    if "|" in output_line and "/" in output_line:
-                        if phase in ["Sampling", "Upscaling"]:
-                            update_data = self._parse_progress_update(
-                                output_line,
-                                final_stats
-                            )
-                            if update_data:
-                                yield update_data
+                                sys.stdout.write(f"\r{output_line}")
+                                sys.stdout.flush()
+                                last_was_progress = True
+                            else:
+                                if last_was_progress:
+                                    print("\n")
+                                    last_was_progress = False
+                                print(output_line)
 
-                        sys.stdout.write(f"\r{output_line}")
-                        sys.stdout.flush()
-                        last_was_progress = True
+                        except Exception:
+                            pass 
+                        
+                        buffer = bytearray()
                     else:
-                        if last_was_progress:
-                            print("\n")
-                            last_was_progress = False
-                        print(output_line)
+                        buffer.extend(byte)
 
         finally:
             if last_was_progress:
