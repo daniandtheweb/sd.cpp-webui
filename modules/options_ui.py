@@ -6,7 +6,7 @@ from modules.shared_instance import (
     config, sd_options
 )
 from modules.ui.constants import (
-    PREDICTION
+    PREDICTION, SORT_OPTIONS
 )
 from modules.ui.models import create_model_widget
 from modules.ui.generation_settings import (
@@ -239,6 +239,16 @@ with gr.Blocks() as options_block:
             interactive=True
         )
         settings_map['def_output_scheme'] = output_scheme
+
+    with gr.Row():
+        # Gallery options
+        sort_order = gr.Radio(
+            label="Sort By",
+            choices=SORT_OPTIONS,
+            value=config.get('def_gallery_sorting'),
+            interactive=True
+        )
+        settings_map['def_gallery_sorting'] = sort_order
 
     # Folders options
     folders_ui = create_folders_opt_ui()

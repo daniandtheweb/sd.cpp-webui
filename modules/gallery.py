@@ -26,6 +26,9 @@ class GalleryManager:
         ]
         self.page_num: int = 1
         self.ctrl: int = 0
+
+        self.sort_order: str = config.get('def_gallery_sorting')
+
         self.selected_img_index_on_page: Optional[int] = None
         self.selected_img_global_index: Optional[int] = None
         self.current_img_path: Optional[str] = None
@@ -48,7 +51,16 @@ class GalleryManager:
                 for f in os.listdir(img_dir)
                 if f.lower().endswith(('.png', '.jpg', '.jpeg', '.avi'))
             )
-            return sorted(files, key=os.path.getctime)
+            if self.sort_order == "Date (Newest First)":
+                return sorted(files, key=os.path.getctime, reverse=True)
+            elif self.sort_order == "Name (A-Z)":
+                return sorted(files, key=lambda x: os.path.basename(x).lower())
+            elif self.sort_order == "Name (Z-A)":
+                return sorted(files, key=lambda x: os.path.basename(x).lower(), reverse=True)
+            else: 
+                # Default: Date (Oldest First)
+                return sorted(files, key=os.path.getctime)
+
         except (FileNotFoundError, OSError):
             return []
 
@@ -223,9 +235,17 @@ class GalleryManager:
         return {**default_params, **a1111_params}
 
     def reload_gallery(
-        self, page_num: int = 1, ctrl_inp: Optional[int] = None
+        self, page_num: int = 1, ctrl_inp: Optional[int] = None,
+        sort_inp: Optional[str] = None
     ) -> Tuple[List[Image.Image], int, gr.Gallery]:
         """Reloads the gallery block to a specific page."""
+
+        if sort_inp is not None:
+            self.sort_order = sort_inp
+
+        if ctrl_inp is not None:
+            self.ctrl = int(ctrl_inp)
+
         files = self._get_sorted_files()
         total_imgs = len(files)
         total_pages = (total_imgs + 15) // 16 or 1
@@ -240,11 +260,7 @@ class GalleryManager:
         elif page_num < 1:
             page_num = 1
 
-        if ctrl_inp is not None:
-            self.ctrl = int(ctrl_inp)
-
         self.page_num = int(page_num)
-        files = self._get_sorted_files()
 
         start_index = (self.page_num - 1) * 16
         end_index = start_index + 16
@@ -260,7 +276,7 @@ class GalleryManager:
             3: 'any2video',
             4: 'upscale'
         }
-        current_label = dir_map.get(self.ctrl, 'Gallery')
+        current_label = f"{dir_map.get(self.ctrl, 'Gallery')} - {self.sort_order}"
 
         # Reset selections when reloading
         self.selected_img_index_on_page = None

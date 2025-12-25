@@ -27,3 +27,9 @@ SCM_POLICY = ["none", "dynamic", "static"]
 RELOAD_SYMBOL = '\U0001F504'
 RANDOM_SYMBOL = '\U0001F3B2'
 SWITCH_V_SYMBOL = '\u2195'
+SORT_OPTIONS = [
+    "Date (Oldest First)",
+    "Date (Newest First)",
+    "Name (A-Z)",
+    "Name (Z-A)"
+]

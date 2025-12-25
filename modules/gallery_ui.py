@@ -5,7 +5,9 @@ import gradio as gr
 from modules.gallery import GalleryManager
 
 from modules.shared_instance import config
-from modules.ui.constants import FIELDS
+from modules.ui.constants import (
+    FIELDS, SORT_OPTIONS
+)
 
 
 gallery_manager = GalleryManager(
@@ -89,6 +91,13 @@ with gr.Blocks() as gallery_block:
                 height="auto",
                 scale=2
             )
+            with gr.Row():
+                sort_order = gr.Radio(
+                    label="Sort By",
+                    choices=SORT_OPTIONS,
+                    value=config.get('def_gallery_sorting'),
+                    interactive=True,
+                )
 
         with gr.Column():
             # Positive prompts
@@ -215,31 +224,31 @@ with gr.Blocks() as gallery_block:
 
     txt2img_btn.click(
         gallery_manager.reload_gallery,
-        inputs=[def_page, txt2img_ctrl],
+        inputs=[def_page, txt2img_ctrl, sort_order],
         outputs=[gallery, page_num_select, gallery, gallery]
     )
 
     img2img_btn.click(
         gallery_manager.reload_gallery,
-        inputs=[def_page, img2img_ctrl],
+        inputs=[def_page, img2img_ctrl, sort_order],
         outputs=[gallery, page_num_select, gallery, gallery]
     )
 
     imgedit_btn.click(
         gallery_manager.reload_gallery,
-        inputs=[def_page, imgedit_ctrl],
+        inputs=[def_page, imgedit_ctrl, sort_order],
         outputs=[gallery, page_num_select, gallery, gallery]
     )
 
     any2video_btn.click(
         gallery_manager.reload_gallery,
-        inputs=[def_page, any2video_ctrl],
+        inputs=[def_page, any2video_ctrl, sort_order],
         outputs=[gallery, page_num_select, gallery, gallery]
     )
 
     upscl_btn.click(
         gallery_manager.reload_gallery,
-        inputs=[def_page, upscl_ctrl],
+        inputs=[def_page, upscl_ctrl, sort_order],
         outputs=[gallery, page_num_select, gallery, gallery]
     )
 
@@ -276,6 +285,12 @@ with gr.Blocks() as gallery_block:
     page_num_select.submit(
         gallery_manager.reload_gallery,
         inputs=[page_num_select],
+        outputs=[gallery, page_num_select, gallery, gallery]
+    )
+
+    sort_order.change(
+        gallery_manager.reload_gallery,
+        inputs=[page_num_select, gr.State(None), sort_order], 
         outputs=[gallery, page_num_select, gallery, gallery]
     )
 

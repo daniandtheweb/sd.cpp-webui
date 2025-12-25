@@ -74,6 +74,7 @@ DEFAULT_SETTINGS = {
     'def_env_GGML_VK_DISABLE_COOPMAT': False,
     'def_env_GGML_VK_DISABLE_INTEGER_DOT_PRODUCT': False,
     'def_output_scheme': "Sequential",
+    'def_gallery_sorting': "Date (Oldest First)"
 }
 
 
