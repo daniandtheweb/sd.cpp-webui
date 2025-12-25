@@ -390,6 +390,7 @@ class ImageGenerationRunner(CommandRunner):
                 self._get_param('in_disable_dit_mask')
             ),
             '--chroma-enable-t5-mask': self._get_param('in_enable_t5_mask'),
+            '--qwen-image-zero-cond-t': self._get_param('in_enable_zero_cond_t'),
             '--diffusion-fa': self._get_param('in_flash_attn'),
             '--diffusion-conv-direct': (
                 self._get_param('in_diffusion_conv_direct')

@@ -17,6 +17,7 @@ from modules.ui.generation_settings import (
 from modules.ui.upscale import create_upscl_ui
 from modules.ui.controlnet import create_cnnet_ui
 from modules.ui.chroma import create_chroma_ui
+from modules.ui.qwen import create_qwen_ui
 from modules.ui.photomaker import create_photomaker_ui
 from modules.ui.timestep_shift import create_timestep_shift_ui
 from modules.ui.eta import create_eta_ui
@@ -78,6 +79,10 @@ with gr.Blocks() as txt2img_block:
                 # Chroma
                 chroma_ui = create_chroma_ui()
                 inputs_map.update(chroma_ui)
+
+                # Qwen
+                qwen_ui = create_qwen_ui()
+                inputs_map.update(qwen_ui)
 
                 # PhotoMaker
                 photomaker_ui = create_photomaker_ui()
