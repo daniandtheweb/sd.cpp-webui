@@ -356,8 +356,8 @@ class ImageGenerationRunner(CommandRunner):
                                    if self._get_param('in_cache_dit_preset') != "none"
                                    else None),
                 '--cache-option': (
-                    val.strip('"') 
-                    if (val := self._get_param('in_cache_option')) and str(val).strip('"') != "" 
+                    val.strip('"')
+                    if (val := self._get_param('in_cache_option')) and str(val).strip('"') != ""
                     else None
                 ),
                 '--scm-mask': (self._get_param('in_scm_mask')
@@ -643,9 +643,9 @@ def convert(params: dict):
     progress_regex = re.compile(r'(\d+)/(\d+)')
 
     yield (
-        fcommand, 
-        gr.Slider(visible=True, value=0), 
-        gr.Textbox(visible=True, value="Initializing conversion..."), 
+        fcommand,
+        gr.Slider(visible=True, value=0),
+        gr.Textbox(visible=True, value="Initializing conversion..."),
     )
 
     last_was_progress = False
@@ -660,7 +660,7 @@ def convert(params: dict):
             encoding='utf-8',
             errors='replace'
         ) as process:
-            
+
             subprocess_manager.process = process
 
             for output_line in process.stdout:
@@ -673,9 +673,9 @@ def convert(params: dict):
                     percent = (current / total) * 100 if total > 0 else 0
 
                     yield (
-                        fcommand, 
-                        gr.Slider(value=percent), 
-                        gr.Textbox(value="Converting..."), 
+                        fcommand,
+                        gr.Slider(value=percent),
+                        gr.Textbox(value="Converting..."),
                     )
 
                     sys.stdout.write(f"\r{output_line}")
@@ -690,21 +690,21 @@ def convert(params: dict):
     except Exception as e:
         print(f"\nError: {e}")
         yield (
-            fcommand, 
-            gr.Slider(visible=False), 
-            gr.Textbox(value=f"Error: {e}"), 
+            fcommand,
+            gr.Slider(visible=False),
+            gr.Textbox(value=f"Error: {e}"),
         )
 
     finally:
         # cleanup
         if last_was_progress:
             print("\n")
-        
+
         if subprocess_manager.process:
             subprocess_manager.process = None
 
     yield (
-        fcommand, 
-        gr.Slider(visible=False), 
-        gr.Textbox(value="Done."), 
+        fcommand,
+        gr.Slider(visible=False),
+        gr.Textbox(value="Done."),
     )

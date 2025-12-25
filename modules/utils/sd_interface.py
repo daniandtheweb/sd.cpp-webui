@@ -21,7 +21,7 @@ def exe_name():
     for cand in candidates:
         if shutil.which(cand):
             return cand
-        
+
         local_path = os.path.join(os.getcwd(), cand)
         if os.path.isfile(local_path) and os.access(local_path, os.X_OK):
             if os.name == "nt":

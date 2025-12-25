@@ -241,13 +241,13 @@ with gr.Blocks()as img2img_block:
 
     def submit_job(*args):
         params = dict(zip(ordered_keys, args))
-        
+
         queue_manager.add_job(img2img, params)
-        
+
         q_len = queue_manager.get_queue_size()
 
-        print(f"Job submitted! Position in queue: {q_len}"), 
-        
+        print(f"Job submitted! Position in queue: {q_len}"),
+
         return (
             gr.Timer(value=0.01, active=True)
         )
@@ -256,7 +256,7 @@ with gr.Blocks()as img2img_block:
     def poll_status():
         state = queue_manager.get_status()
         q_len = queue_manager.get_queue_size()
-        
+
         if state["is_running"] or q_len > 0:
             timer_update = gr.Timer(value=0.01, active=True)
         else:

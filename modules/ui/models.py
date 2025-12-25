@@ -21,11 +21,11 @@ def create_model_widget(
     full_path = config.get(dir_key)
 
     if 'info' not in kwargs and full_path:
-        folder_name = os.path.basename(os.path.normpath(full_path)) 
+        folder_name = os.path.basename(os.path.normpath(full_path))
         kwargs['info'] = f"{folder_name} folder"
 
     current_value = get_session_value(option_key)
-    
+
     choices = list(get_models(full_path)) if full_path else []
 
     with gr.Group():

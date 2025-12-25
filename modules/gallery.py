@@ -57,7 +57,7 @@ class GalleryManager:
                 return sorted(files, key=lambda x: os.path.basename(x).lower())
             elif self.sort_order == "Name (Z-A)":
                 return sorted(files, key=lambda x: os.path.basename(x).lower(), reverse=True)
-            else: 
+            else:
                 # Default: Date (Oldest First)
                 return sorted(files, key=os.path.getctime)
 

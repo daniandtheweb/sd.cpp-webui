@@ -290,7 +290,7 @@ with gr.Blocks() as gallery_block:
 
     sort_order.change(
         gallery_manager.reload_gallery,
-        inputs=[page_num_select, gr.State(None), sort_order], 
+        inputs=[page_num_select, gr.State(None), sort_order],
         outputs=[gallery, page_num_select, gallery, gallery]
     )
 

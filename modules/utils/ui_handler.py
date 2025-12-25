@@ -12,7 +12,7 @@ _SESSION_CACHE = {}
 
 def get_session_value(option_key):
     """
-    Helper to get the current model value. 
+    Helper to get the current model value.
     Prioritizes the live cache; falls back to config.
     """
     if option_key and option_key in _SESSION_CACHE:
@@ -23,7 +23,7 @@ def get_session_value(option_key):
 
 def update_session_cache(key, value):
     """
-    Public helper to allow other UI components (like checkboxes) 
+    Public helper to allow other UI components (like checkboxes)
     to write to the global session cache.
     """
     _SESSION_CACHE[key] = value

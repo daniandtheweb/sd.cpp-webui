@@ -57,7 +57,7 @@ def create_upscl_ui():
         inputs=upscl_bool,
         outputs=upscl_comp
     )
-    
+
     return {
         'in_upscl_bool': upscl_bool,
         'in_upscl': upscl,

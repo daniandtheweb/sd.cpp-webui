@@ -23,12 +23,12 @@ def _background_worker():
     """
     while True:
         job = _job_queue.get()
-        
+
         func = job['func']
         params = job['params']
-        
+
         current_job_state["is_running"] = True
-        
+
         try:
             for result in func(params):
                 current_job_state["command"] = result[0]
@@ -36,11 +36,11 @@ def _background_worker():
                 current_job_state["status"] = result[2]
                 current_job_state["stats"] = result[3]
                 current_job_state["images"] = result[4]
-                
+
         except Exception as e:
             current_job_state["status"] = f"Error: {str(e)}"
             print(f"Worker Error: {e}")
-            
+
         finally:
             current_job_state["is_running"] = False
             _job_queue.task_done()

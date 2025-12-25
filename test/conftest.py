@@ -15,7 +15,7 @@ def app_root(tmp_path_factory):
     txt2img_dir.mkdir()
     img2img_dir = tmp_path / "img2img"
     img2img_dir.mkdir()
-    
+
     # Initialize default config files
     config = ConfigManager(config_path, prompts_path)
     config.update_settings({
