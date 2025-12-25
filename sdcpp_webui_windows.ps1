@@ -3,6 +3,7 @@ $parsedArgs = @{
     Listen = $false
     Autostart = $false
     Darkmode = $false
+    AllowInsecureDir = $false
 }
 
 foreach ($arg in $args) {
@@ -14,7 +15,12 @@ foreach ($arg in $args) {
         '^-Autostart$'          { $parsedArgs.Autostart = $true }
         '^--darkmode$'          { $parsedArgs.Darkmode = $true }
         '^-Darkmode$'           { $parsedArgs.Darkmode = $true }
-        default                 { }
+        '^--allow-insecure-dir$'{ $parsedArgs.AllowInsecureDir = $true }
+        '^-Allow-Insecure-Dir$' { $parsedArgs.AllowInsecureDir = $true }
+        default {
+            Write-Host "Error: Unknown command parameter: $arg" -ForegroundColor Red
+            Show-Help
+        }
     }
 }
 
@@ -23,6 +29,7 @@ $Help = $parsedArgs.Help
 $Listen = $parsedArgs.Listen
 $Autostart = $parsedArgs.Autostart
 $Darkmode = $parsedArgs.Darkmode
+$AllowInsecureDir = $parsedArgs.AllowInsecureDir
 
 $ErrorActionPreference = 'Stop'
 
@@ -37,10 +44,11 @@ function Show-Help {
 Usage: .\sdcpp_webui.ps1 [options]
 
 Options:
-    -h, --help          Show this help message
-    -Listen, --listen   Share sd.cpp-webui on your local network
-    -Autostart, --autostart  Open the UI automatically
-    -Darkmode, --darkmode    Forces the UI to launch in dark mode
+    -h, --help                                   Show this help message
+    -Listen, --listen                            Share sd.cpp-webui on your local network
+    -Autostart, --autostart                      Open the UI automatically
+    -Darkmode, --darkmode                        Forces the UI to launch in dark mode
+    -Allow-Insecure-Dir, --allow-insecure-dir    Allows the usage of external or linked directories based on config.json
 
 "@
     exit 0
@@ -83,6 +91,12 @@ $pythonArgs = @()
 if ($Listen) { $pythonArgs += "--listen" }
 if ($Autostart) { $pythonArgs += "--autostart" }
 if ($Darkmode) { $pythonArgs += "--darkmode" }
+if ($AllowInsecureDir) { $pythonArgs += "--allow-insecure-dir" }
 
-Write-Host "Starting the WebUI with arguments: $pythonArgs"
-python .\sdcpp_webui.py @pythonArgs
+if ($pythonArgs.Count -eq 0) {
+    Write-Host "Starting the WebUI...`n"
+}
+else {
+    Write-Host "Starting the WebUI with arguments: $pythonArgs`n"
+}
+python .\sdcpp_webui.py $pythonArgs

@@ -72,7 +72,8 @@ def lazy_load_gallery(is_loaded, page, ctrl):
 
 
 def sdcpp_launch(
-    listen: bool = False, autostart: bool = False, darkmode: bool = False
+    listen: bool = False, autostart: bool = False, darkmode: bool = False,
+    insecure_dir: bool = False
 ):
     """Logic for launching sdcpp based on arguments"""
     launch_args = {}
@@ -93,6 +94,49 @@ def sdcpp_launch(
         }
     }
     """ if darkmode else None
+
+    if insecure_dir:
+        allowed_paths = []
+
+        base_path = os.path.abspath(os.getcwd())
+        
+        dirs = [
+            val for key, val in config.data.items() 
+            if key.endswith('_dir') and isinstance(val, str) and val
+        ]
+
+        for path in dirs:
+            # Expand user tildes
+            expanded_path = os.path.expanduser(path)
+            
+            abs_path = os.path.abspath(expanded_path)
+            
+            # Check if it's a symlink (STRIP TRAILING SLASHES)
+            # os.path.islink() returns False if the path ends with a separator
+            is_link = os.path.islink(abs_path.rstrip(os.sep))
+            
+            # Check if it is physically outside the base path
+            real_path = os.path.realpath(abs_path)
+            is_external = not real_path.startswith(base_path)
+
+            if is_link or is_external:
+                if is_link:
+                    allowed_paths.append(real_path)
+                if abs_path != real_path:
+                    allowed_paths.append(abs_path)
+                elif not is_link:
+                    allowed_paths.append(abs_path)
+
+        # Remove duplicates
+        allowed_paths = list(set(allowed_paths))
+
+        if allowed_paths:
+            print("Allowing external/linked directories:")
+            for path in allowed_paths:
+                print(f" - {path}")
+            print()
+
+        launch_args["allowed_paths"] = allowed_paths
 
     with gr.Blocks(
         css="footer {visibility: hidden}", title="sd.cpp-webui",
@@ -178,9 +222,14 @@ def main():
         action='store_true',
         help='Enable dark mode for the web interface'
     )
+    parser.add_argument(
+        '--allow-insecure-dir',
+        action='store_true',
+        help='Allows the usage of external or linked directories based on config.json'
+    )
     args = parser.parse_args()
 
-    sdcpp_launch(args.listen, args.autostart, args.darkmode)
+    sdcpp_launch(args.listen, args.autostart, args.darkmode, args.allow_insecure_dir)
 
 
 if __name__ == "__main__":

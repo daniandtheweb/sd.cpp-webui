@@ -14,6 +14,7 @@ Options:
     --listen:                Share sd.cpp-webui on your local network
     --autostart:             Open the UI automatically
     --darkmode:              Forces the UI to launch in dark mode
+    --allow-insecure-dir:    Allows the usage of external or linked directories based on config.json
 
 EOF
 exit 0
@@ -24,10 +25,10 @@ for arg in "$@"; do
     -h|--help)
       print_help
       ;;
-    --listen|--autostart|--darkmode)
+    --listen|--autostart|--darkmode|--allow-insecure-dir)
       ;;
     *)
-      echo "Error: Unknown command parameter: $arg"
+      printf "Error: Unknown command parameter: %s\n" "$arg" >&2
       print_help
       ;;
   esac
@@ -56,5 +57,9 @@ else
     echo "Requirements installed."
 fi
 
-echo "Starting the WebUI..."
+if [ $# -eq 0 ]; then
+    printf "Starting the WebUI...\n\n"
+else
+    printf "Starting the WebUI with arguments: %s\n\n" "$*"
+fi
 python3 sdcpp_webui.py "$@"
