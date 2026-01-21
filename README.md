@@ -11,6 +11,7 @@ This program acts primarily as a command generator for **stable-diffusion.cpp**,
 - Live preview using **stable-diffusion.cpp**'s preview option
 - Built-in image gallery
 - Metadata reader
+- Protected login with credentials
 
 ## **stable-diffusion.cpp**'s supported models
 
