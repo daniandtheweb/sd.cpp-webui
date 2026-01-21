@@ -45,6 +45,28 @@ class SubprocessManager:
             if match:
                 final_stats['total_time'] = f"{match.group(1)}s"
 
+    def _determine_phase(self, line):
+        """
+        Determines the current phase of the subprocess based on the output line.
+        """
+        if 'loading model' in line:
+            return "Loading Model"
+        elif 'sampling using' in line:
+            return "Sampling"
+        elif 'upscaling from' in line:
+            return "Upscaling"
+        return None
+
+    def _is_progress_line(self, line, phase):
+        """
+        Checks if a line is a progress bar line.
+        """
+        return (
+            phase in ["Loading Model", "Sampling", "Upscaling"] and
+            "|" in line and
+            "/" in line
+        )
+
     def _parse_progress_update(self, line, final_stats):
         """Parses a progress bar line and returns a dictionary for the UI."""
         eta_match = self.ETA_REGEX.search(line)
@@ -132,23 +154,20 @@ class SubprocessManager:
                         try:
                             output_line = buffer.decode('utf-8', errors='replace')
                             clean_line = ansi_escape.sub('', output_line)
+
+                            new_phase = self._determine_phase(clean_line)
+                            if new_phase:
+                                phase = new_phase
+
                             self._parse_final_stats(clean_line, final_stats)
 
-                            if 'loading model' in clean_line:
-                                phase = "Loading Model"
-                            elif 'sampling using' in clean_line:
-                                phase = "Sampling"
-                            elif 'upscaling from' in clean_line:
-                                phase = "Upscaling"
-
-                            if "|" in clean_line and "/" in clean_line:
-                                if phase in ["Sampling", "Upscaling"]:
-                                    update_data = self._parse_progress_update(
-                                        clean_line,
-                                        final_stats
-                                    )
-                                    if update_data:
-                                        yield update_data
+                            if self._is_progress_line(clean_line, phase):
+                                update_data = self._parse_progress_update(
+                                    clean_line,
+                                    final_stats
+                                )
+                                if update_data:
+                                    yield update_data
 
                                 sys.stdout.write(f"\r{output_line}")
                                 sys.stdout.flush()
