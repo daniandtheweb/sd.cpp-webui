@@ -282,7 +282,10 @@ class GalleryManager:
         self.selected_img_index_on_page = None
         self.current_img_path = None
 
-        return imgs, self.page_num, gr.Gallery(selected_index=None), gr.update(label=current_label)
+        return (
+            imgs, self.page_num, gr.Gallery(selected_index=None),
+            gr.update(label=current_label)
+        )
 
     def _navigate_page(
         self, direction: int

@@ -78,7 +78,7 @@ with gr.Blocks() as upscale_block:
                     value=SWITCH_V_SYMBOL, scale=1,
                     interactive=False
                 )
-                rescale_comp=[init_width, init_height, switch_size_btn]
+                rescale_comp = [init_width, init_height, switch_size_btn]
             switch_size_btn.click(
                 switch_sizes,
                 inputs=[init_height,
@@ -185,7 +185,6 @@ with gr.Blocks() as upscale_block:
     ordered_keys = sorted(inputs_map.keys())
     ordered_components = [inputs_map[key] for key in ordered_keys]
 
-
     def upscale_wrapper(*args):
         """
         Accepts all UI inputs, zips them with keys, and calls the
@@ -205,7 +204,6 @@ with gr.Blocks() as upscale_block:
             return (
                 gr.update(value=int(width)), gr.update(value=int(height))
             )
-
 
     # Interactive Bindings
     img_inp_upscale.change(

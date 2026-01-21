@@ -105,7 +105,7 @@ class SubprocessManager:
         phase = "Initializing"
         final_stats = {}
         last_was_progress = False
-        
+
         # Regex to strip ANSI color codes ONLY for the internal parser.
         ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
 
@@ -114,15 +114,15 @@ class SubprocessManager:
                 command,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
-                bufsize=0, 
+                bufsize=0,
                 env=env,
             ) as self.process:
-                
+
                 buffer = bytearray()
-                
+
                 while True:
                     byte = self.process.stdout.read(1)
-                    
+
                     if not byte and self.process.poll() is not None:
                         break
                     if not byte:
@@ -160,8 +160,8 @@ class SubprocessManager:
                                 print(output_line)
 
                         except Exception:
-                            pass 
-                        
+                            pass
+
                         buffer = bytearray()
                     else:
                         buffer.extend(byte)

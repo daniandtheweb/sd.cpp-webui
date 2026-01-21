@@ -38,7 +38,7 @@ config = ConfigManager()
 
 def create_copy_fn(tab_id: str, fields: list = None) -> callable:
     """
-    Creates a function that that switches to a specific tab
+    Creates a function that switches to a specific tab
     and passes through its arguments.
 
     Args:
@@ -129,22 +129,22 @@ def sdcpp_launch(
         allowed_paths = []
 
         base_path = os.path.abspath(os.getcwd())
-        
+
         dirs = [
-            val for key, val in config.data.items() 
+            val for key, val in config.data.items()
             if key.endswith('_dir') and isinstance(val, str) and val
         ]
 
         for path in dirs:
             # Expand user tildes
             expanded_path = os.path.expanduser(path)
-            
+
             abs_path = os.path.abspath(expanded_path)
-            
+
             # Check if it's a symlink (STRIP TRAILING SLASHES)
             # os.path.islink() returns False if the path ends with a separator
             is_link = os.path.islink(abs_path.rstrip(os.sep))
-            
+
             # Check if it is physically outside the base path
             real_path = os.path.realpath(abs_path)
             is_external = not real_path.startswith(base_path)
@@ -264,7 +264,10 @@ def main():
     )
     args = parser.parse_args()
 
-    sdcpp_launch(args.listen, args.autostart, args.darkmode, args.credentials, args.allow_insecure_dir)
+    sdcpp_launch(
+        args.listen, args.autostart, args.darkmode,
+        args.credentials, args.allow_insecure_dir
+    )
 
 
 if __name__ == "__main__":

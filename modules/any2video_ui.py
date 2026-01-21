@@ -247,7 +247,6 @@ with gr.Blocks() as any2video_block:
     ordered_keys = sorted(inputs_map.keys())
     ordered_components = [inputs_map[key] for key in ordered_keys]
 
-
     def submit_job(*args):
         params = dict(zip(ordered_keys, args))
 
@@ -260,7 +259,6 @@ with gr.Blocks() as any2video_block:
         return (
             gr.Timer(value=0.01, active=True)
         )
-
 
     def poll_status():
         state = queue_manager.get_status()
@@ -286,7 +284,6 @@ with gr.Blocks() as any2video_block:
             queue_update
         )
 
-
     timer = gr.Timer(value=0.01, active=False)
 
     gen_btn.click(
@@ -298,7 +295,10 @@ with gr.Blocks() as any2video_block:
     timer.tick(
         poll_status,
         inputs=[],
-        outputs=[command, progress_slider, progress_textbox, stats, video_final, timer, queue_tracker]
+        outputs=[
+            command, progress_slider, progress_textbox,
+            stats, video_final, timer, queue_tracker
+        ]
     )
 
     kill_btn.click(

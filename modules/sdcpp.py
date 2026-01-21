@@ -263,7 +263,6 @@ class ImageGenerationRunner(CommandRunner):
         # Filter out any keys that have a None value before returning
         return {k: v for k, v in options.items() if v is not None}
 
-
     def build_command(self, output_dir_key: str, subctrl_id: int):
         """Builds the common command for image generation."""
         self._resolve_paths()
@@ -364,8 +363,8 @@ class ImageGenerationRunner(CommandRunner):
                                if self._get_param('in_scm_mask') != ""
                                else None),
                 '--scm-policy': (self._get_param('in_scm_policy')
-                                if self._get_param('in_scm_policy') != "none"
-                                else None)
+                                 if self._get_param('in_scm_policy') != "none"
+                                 else None)
             } if self._get_param('in_cache_bool') else {}),
             # Prediction type override
             '--prediction': (self._get_param('in_predict')
@@ -415,6 +414,7 @@ class ImageGenerationRunner(CommandRunner):
 
 class Txt2ImgRunner(ImageGenerationRunner):
     """Builds the txt2img command."""
+
     def build_command(self):
         super().build_command(
             output_dir_key='txt2img_dir', subctrl_id=0
@@ -423,6 +423,7 @@ class Txt2ImgRunner(ImageGenerationRunner):
 
 class Img2ImgRunner(ImageGenerationRunner):
     """Builds the img2img command."""
+
     def build_command(self):
         super().build_command(
             output_dir_key='img2img_dir', subctrl_id=1
@@ -445,6 +446,7 @@ class Img2ImgRunner(ImageGenerationRunner):
 
 class ImgEditRunner(ImageGenerationRunner):
     """Builds the image editing (instruct) command."""
+
     def build_command(self):
         super().build_command(
             output_dir_key='imgedit_dir', subctrl_id=2
@@ -454,6 +456,7 @@ class ImgEditRunner(ImageGenerationRunner):
 
 class Any2VideoRunner(CommandRunner):
     """Builds the any2video command."""
+
     def _add_base_args(self):
         # Override to add video-specific base arguments
         super()._add_base_args()
@@ -536,6 +539,7 @@ class Any2VideoRunner(CommandRunner):
 
 class UpscaleRunner(CommandRunner):
     """Builds the upscale command."""
+
     def build_command(self):
         self._resolve_paths()
         self._set_output_path('upscale_dir', 4, 'png')

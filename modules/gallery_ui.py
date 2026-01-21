@@ -297,6 +297,6 @@ with gr.Blocks() as gallery_block:
     del_img.click(
         gallery_manager.delete_img,
         inputs=[],
-        outputs=[gallery, page_num_select, gallery] + param_ctrls
-                + [path_info, img_info_txt]
+        outputs=[gallery, page_num_select, gallery] + param_ctrls + [
+                 path_info, img_info_txt]
     )
