@@ -3,6 +3,7 @@
 
 import os
 import sys
+import json
 import argparse
 
 import gradio as gr
@@ -72,9 +73,29 @@ def lazy_load_gallery(is_loaded, page, ctrl):
     return *results, True
 
 
+def load_credentials(filepath: str = "credentials.json"):
+    """
+    Loads usernames and passwords from a JSON file.
+    Expected format: {"username1": "password1", "username2": "password2"}
+    """
+    try:
+        if os.path.exists(filepath):
+            with open(filepath, 'r') as file:
+                data = json.load(file)
+
+            # Gradio expects auth to be a list of tuples: [("user", "pass"), ...]
+            return list(data.items())
+        else:
+            print(f"Credentials file '{filepath}' not found. Skipping password protection.")
+            return None
+    except Exception as e:
+        print(f"Error reading credentials: {e}. Skipping password protection.")
+        return None
+
+
 def sdcpp_launch(
     listen: bool = False, autostart: bool = False, darkmode: bool = False,
-    insecure_dir: bool = False
+    credentials: bool = False, insecure_dir: bool = False
 ):
     """Logic for launching sdcpp based on arguments"""
     launch_args = {}
@@ -95,6 +116,14 @@ def sdcpp_launch(
         }
     }
     """ if darkmode else None
+
+    if credentials:
+        auth_data = load_credentials()
+        if auth_data:
+            print(f"Secure mode enabled with {len(auth_data)} users.")
+            launch_args["auth"] = auth_data
+        else:
+            print("Secure mode requested but failed to load credentials. Launching without auth.")
 
     if insecure_dir:
         allowed_paths = []
@@ -224,13 +253,18 @@ def main():
         help='Enable dark mode for the web interface'
     )
     parser.add_argument(
+        '--credentials',
+        action='store_true',
+        help='Enable password protection using credentials.json'
+    )
+    parser.add_argument(
         '--allow-insecure-dir',
         action='store_true',
         help='Allows the usage of external or linked directories based on config.json'
     )
     args = parser.parse_args()
 
-    sdcpp_launch(args.listen, args.autostart, args.darkmode, args.allow_insecure_dir)
+    sdcpp_launch(args.listen, args.autostart, args.darkmode, args.credentials, args.allow_insecure_dir)
 
 
 if __name__ == "__main__":

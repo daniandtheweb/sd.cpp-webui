@@ -3,6 +3,7 @@ $parsedArgs = @{
     Listen = $false
     Autostart = $false
     Darkmode = $false
+    Credentials = $false
     AllowInsecureDir = $false
 }
 
@@ -15,6 +16,8 @@ foreach ($arg in $args) {
         '^-Autostart$'          { $parsedArgs.Autostart = $true }
         '^--darkmode$'          { $parsedArgs.Darkmode = $true }
         '^-Darkmode$'           { $parsedArgs.Darkmode = $true }
+        '^--credentials$'       { $parsedArgs.Credentials = $true }
+        '^-Credentials$'        { $parsedArgs.Credentials = $true }
         '^--allow-insecure-dir$'{ $parsedArgs.AllowInsecureDir = $true }
         '^-Allow-Insecure-Dir$' { $parsedArgs.AllowInsecureDir = $true }
         default {
@@ -29,6 +32,7 @@ $Help = $parsedArgs.Help
 $Listen = $parsedArgs.Listen
 $Autostart = $parsedArgs.Autostart
 $Darkmode = $parsedArgs.Darkmode
+$Credentials = $parsedArgs.Credentials
 $AllowInsecureDir = $parsedArgs.AllowInsecureDir
 
 $ErrorActionPreference = 'Stop'
@@ -48,6 +52,8 @@ Options:
     -Listen, --listen                            Share sd.cpp-webui on your local network
     -Autostart, --autostart                      Open the UI automatically
     -Darkmode, --darkmode                        Forces the UI to launch in dark mode
+    -Credentials, --credentials                  Enable password protection using credentials.json.
+                                                 Expected format: {"username1": "password1", "username2": "password2"}
     -Allow-Insecure-Dir, --allow-insecure-dir    Allows the usage of external or linked directories based on config.json
 
 "@
@@ -91,6 +97,7 @@ $pythonArgs = @()
 if ($Listen) { $pythonArgs += "--listen" }
 if ($Autostart) { $pythonArgs += "--autostart" }
 if ($Darkmode) { $pythonArgs += "--darkmode" }
+if ($Credentials) { $pythonArgs += "--credentials" }
 if ($AllowInsecureDir) { $pythonArgs += "--allow-insecure-dir" }
 
 if ($pythonArgs.Count -eq 0) {
