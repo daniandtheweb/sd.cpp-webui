@@ -49,7 +49,7 @@ class SubprocessManager:
         """
         Determines the current phase of the subprocess based on the output line.
         """
-        if 'loading model' in line:
+        if 'loading model' or 'loading diffusion model' in line:
             return "Loading Model"
         elif 'sampling using' in line:
             return "Sampling"
