@@ -9,7 +9,8 @@ import gradio as gr
 
 
 class SubprocessManager:
-    """Class to manage subprocess execution and control.
+    """
+    Class to manage subprocess execution and control.
 
     Attributes:
         process: The currently running subprocess,
@@ -47,9 +48,10 @@ class SubprocessManager:
 
     def _determine_phase(self, line):
         """
-        Determines the current phase of the subprocess based on the output line.
+        Determines the current phase of
+        the subprocess based on the output line.
         """
-        if 'loading model' or 'loading diffusion model' in line:
+        if 'loading model' in line or 'loading diffusion model' in line:
             return "Loading Model"
         elif 'sampling using' in line:
             return "Sampling"
@@ -120,84 +122,109 @@ class SubprocessManager:
             }
         return {}
 
+    def _process_line(self, raw_line, clean_line, phase,
+                      final_stats, last_was_progress):
+        """
+        Processes output with visual padding around progress bars.
+        """
+        self._parse_final_stats(clean_line, final_stats)
+
+        display_line = raw_line.rstrip()
+        if not display_line:
+            return None, last_was_progress
+
+        is_progress = self._is_progress_line(clean_line, phase)
+
+        if is_progress:
+            if not last_was_progress:
+                sys.stdout.write("\n")
+
+            update_data = self._parse_progress_update(clean_line, final_stats)
+            if update_data:
+                sys.stdout.write(f"\r{display_line}")
+                sys.stdout.flush()
+                return update_data, True
+        else:
+            if last_was_progress:
+                sys.stdout.write("\n\n")
+
+            print(display_line)
+            return None, False
+
+        return None, last_was_progress
+
+    def _stream_output(self):
+        """
+        Generates raw strings from the subprocess stdout,
+        breaking at line endings or progress updates."""
+        buffer = bytearray()
+        for byte in iter(lambda: self.process.stdout.read(1), b''):
+            buffer.extend(byte)
+
+            is_line_end = byte in (b'\r', b'\n')
+            is_progress_end = (
+                    len(buffer) > 4 and
+                    byte in (b's', b't') and
+                    (buffer.endswith(b'it/s') or buffer.endswith(b's/it'))
+            )
+
+            if is_line_end or is_progress_end:
+                yield buffer.decode('utf-8', errors='replace')
+                buffer.clear()
+
+        if buffer:
+            yield buffer.decode('utf-8', errors='replace')
+
     def run_subprocess(self, command, env=None):
         """
-        Runs a subprocess, captures its output, and yields UI updates.
+        Runs a subprocess and yields UI updates with reduced complexity.
         """
         phase = "Initializing"
         final_stats = {}
         last_was_progress = False
-
-        # Regex to strip ANSI color codes ONLY for the internal parser.
+        last_processed_content = ""
         ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
 
         try:
             with subprocess.Popen(
-                command,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                bufsize=0,
-                env=env,
+                command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                bufsize=0, env=env
             ) as self.process:
 
-                buffer = bytearray()
+                for raw_line in self._stream_output():
+                    clean_line = ansi_escape.sub('', raw_line)
 
-                while True:
-                    byte = self.process.stdout.read(1)
-
-                    if not byte and self.process.poll() is not None:
-                        break
-                    if not byte:
+                    if (
+                        clean_line == last_processed_content or
+                        not clean_line.strip()
+                    ):
                         continue
 
-                    if byte == b'\r' or byte == b'\n':
-                        try:
-                            output_line = buffer.decode('utf-8', errors='replace')
-                            clean_line = ansi_escape.sub('', output_line)
+                    new_phase = self._determine_phase(clean_line)
+                    if new_phase:
+                        phase = new_phase
 
-                            new_phase = self._determine_phase(clean_line)
-                            if new_phase:
-                                phase = new_phase
+                    update_data, last_was_progress = self._process_line(
+                        raw_line, clean_line, phase,
+                        final_stats, last_was_progress
+                    )
+                    last_processed_content = clean_line
 
-                            self._parse_final_stats(clean_line, final_stats)
-
-                            if self._is_progress_line(clean_line, phase):
-                                update_data = self._parse_progress_update(
-                                    clean_line,
-                                    final_stats
-                                )
-                                if update_data:
-                                    yield update_data
-
-                                sys.stdout.write(f"\r{output_line}")
-                                sys.stdout.flush()
-                                last_was_progress = True
-                            else:
-                                if last_was_progress:
-                                    print("\n")
-                                    last_was_progress = False
-                                print(output_line)
-
-                        except Exception:
-                            pass
-
-                        buffer = bytearray()
-                    else:
-                        buffer.extend(byte)
+                    if update_data:
+                        yield update_data
 
         finally:
             if last_was_progress:
                 print("\n")
-
             if self.process and self.process.returncode != 0:
                 print("Subprocess terminated.")
-
             self.process = None
 
         yield {"final_stats": final_stats}
 
     def kill_subprocess(self):
-        """Terminates the currently running subprocess, if any.
+        """
+        Terminates the currently running subprocess, if any.
 
         This method sets the subprocess attribute to None after termination
         and prints a message indicating whether a subprocess was running.
