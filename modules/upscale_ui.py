@@ -62,7 +62,6 @@ with gr.Blocks() as upscale_block:
                         maximum=4096,
                         value=config.get('def_width'),
                         step=1,
-                        show_reset_button=False,
                         interactive=False
                     )
                     init_height = gr.Slider(
@@ -71,7 +70,6 @@ with gr.Blocks() as upscale_block:
                         maximum=4096,
                         value=config.get('def_height'),
                         step=1,
-                        show_reset_button=False,
                         interactive=False
                     )
                 switch_size_btn = gr.Button(
@@ -165,7 +163,7 @@ with gr.Blocks() as upscale_block:
                         show_label=True,
                         value="",
                         interactive=False,
-                        show_copy_button=True,
+                        buttons=['copy'],
                     )
 
     inputs_map = {

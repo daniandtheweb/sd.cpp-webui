@@ -232,7 +232,7 @@ with gr.Blocks()as img2img_block:
                         show_label=True,
                         value="",
                         interactive=False,
-                        show_copy_button=True,
+                        buttons=['copy'],
                     )
 
     ordered_keys = sorted(inputs_map.keys())

@@ -67,9 +67,9 @@ def lazy_load_gallery(is_loaded, page, ctrl):
     if is_loaded:
         # If already loaded, return existing values (do nothing)
         return gr.skip(), gr.skip(), gr.skip(), gr.skip(), True
-    
+
     results = gallery_manager.reload_gallery(page, ctrl)
-    
+
     return *results, True
 
 
@@ -169,8 +169,7 @@ def sdcpp_launch(
         launch_args["allowed_paths"] = allowed_paths
 
     with gr.Blocks(
-        css="footer {visibility: hidden}", title="sd.cpp-webui",
-        theme="default", js=dark_js
+        title="sd.cpp-webui",
     ) as sdcpp:
 
         gallery_loaded_state = gr.State(value=False)
@@ -231,7 +230,7 @@ def sdcpp_launch(
         )
 
     # Pass the arguments to sdcpp.launch with argument unpacking
-    sdcpp.launch(**launch_args)
+    sdcpp.launch(css="footer {visibility: hidden}", theme="default", js=dark_js, **launch_args)
 
 
 def main():

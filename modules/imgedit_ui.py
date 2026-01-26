@@ -162,7 +162,6 @@ with gr.Blocks() as imgedit_block:
                         interactive=False,
                         visible=False,
                         label="Progress",
-                        show_reset_button=False
                     )
                 with gr.Row():
                     progress_textbox = gr.Textbox(
@@ -192,7 +191,7 @@ with gr.Blocks() as imgedit_block:
                         show_label=True,
                         value="",
                         interactive=False,
-                        show_copy_button=True,
+                        buttons=['copy'],
                     )
 
     ordered_keys = sorted(inputs_map.keys())
