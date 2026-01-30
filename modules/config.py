@@ -9,6 +9,7 @@ CURRENT_DIR = os.getcwd()
 DEFAULT_CONFIG_PATH = 'config.json'
 DEFAULT_PROMPTS_PATH = 'prompts.json'
 DEFAULT_SETTINGS = {
+    'def_theme': "base",
     'ckpt_dir': os.path.join(CURRENT_DIR, "models/checkpoints/"),
     'unet_dir': os.path.join(CURRENT_DIR, "models/unet/"),
     'vae_dir': os.path.join(CURRENT_DIR, "models/vae/"),

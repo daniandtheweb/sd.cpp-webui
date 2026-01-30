@@ -17,13 +17,13 @@ MODELS = [
     "Checkpoint", "UNET", "VAE", "clip_g", "clip_l", "t5xxl", "llm",
     "TAESD", "Lora", "Embeddings", "Upscaler", "ControlNet"
 ]
-CIRCULAR_PADDING= ["None", "Circular", "Circular X", "Circular Y"]
+CIRCULAR_PADDING = ["None", "Circular", "Circular X", "Circular Y"]
 RNG = sd_options.get_opt("rng")
 SAMPLER_RNG = sd_options.get_opt("sampler_rng")
 PREVIEW = sd_options.get_opt("previews")
 PREDICTION = ['Default'] + sd_options.get_opt("prediction")
 CACHE_MODE = ["easycache", "ucache", "dbcache", "taylorseer", "cache-dit"]
-CACHE_DIT_PRESET = ["none","slow", "medium", "fast", "ultra"]
+CACHE_DIT_PRESET = ["none", "slow", "medium", "fast", "ultra"]
 SCM_POLICY = ["none", "dynamic", "static"]
 RELOAD_SYMBOL = '\U0001F504'
 RANDOM_SYMBOL = '\U0001F3B2'
@@ -33,4 +33,8 @@ SORT_OPTIONS = [
     "Date (Newest First)",
     "Name (A-Z)",
     "Name (Z-A)"
+]
+THEMES = [
+    "base", "default", "origin", "citrus",
+    "monochrome", "soft", "glass", "ocean"
 ]

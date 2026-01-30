@@ -6,7 +6,7 @@ from modules.shared_instance import (
     config, sd_options
 )
 from modules.ui.constants import (
-    PREDICTION, SORT_OPTIONS
+    PREDICTION, SORT_OPTIONS, THEMES
 )
 from modules.ui.models import create_model_widget
 from modules.ui.generation_settings import (
@@ -249,6 +249,16 @@ with gr.Blocks() as options_block:
             interactive=True
         )
         settings_map['def_gallery_sorting'] = sort_order
+
+    with gr.Row():
+        # Theme options
+        theme = gr.Dropdown(
+                label="Theme:",
+                choices=THEMES,
+                value=config.get('def_theme'),
+                interactive=True
+        )
+        settings_map['def_theme'] = theme
 
     # Folders options
     folders_ui = create_folders_opt_ui()

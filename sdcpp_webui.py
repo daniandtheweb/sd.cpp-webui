@@ -35,6 +35,8 @@ from modules.ui.constants import FIELDS, SAMPLERS, SCHEDULERS
 os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
 config = ConfigManager()
 
+theme = config.get('def_theme')
+
 
 def create_copy_fn(tab_id: str, fields: list = None) -> callable:
     """
@@ -67,9 +69,9 @@ def lazy_load_gallery(is_loaded, page, ctrl):
     if is_loaded:
         # If already loaded, return existing values (do nothing)
         return gr.skip(), gr.skip(), gr.skip(), gr.skip(), True
-    
+
     results = gallery_manager.reload_gallery(page, ctrl)
-    
+
     return *results, True
 
 
@@ -170,7 +172,7 @@ def sdcpp_launch(
 
     with gr.Blocks(
         css="footer {visibility: hidden}", title="sd.cpp-webui",
-        theme="default", js=dark_js
+        theme=theme, js=dark_js
     ) as sdcpp:
 
         gallery_loaded_state = gr.State(value=False)
@@ -198,7 +200,10 @@ def sdcpp_launch(
         gallery_tab.select(
             fn=lazy_load_gallery,
             inputs=[gallery_loaded_state, def_page, txt2img_ctrl],
-            outputs=[gallery, page_num_select, gallery, gallery, gallery_loaded_state]
+            outputs=[
+                gallery, page_num_select, gallery,
+                gallery, gallery_loaded_state
+            ]
         )
         # Copy data from gallery image to txt2img.
         cpy_2_txt2img_btn.click(
