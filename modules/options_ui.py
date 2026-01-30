@@ -294,6 +294,10 @@ with gr.Blocks() as options_block:
             restore_btn = gr.Button(
                 value="Restore Defaults", variant="stop"
             )
+        with gr.Row():
+            restart_btn = gr.Button(
+                value="Restart server", variant="stop"
+            )
 
     ordered_keys = sorted(settings_map.keys())
     ordered_components = [settings_map[key] for key in ordered_keys]

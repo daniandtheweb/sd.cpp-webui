@@ -27,7 +27,9 @@ from modules.gallery_ui import (
     gallery, gallery_manager, def_page, txt2img_ctrl, page_num_select
 )
 from modules.convert_ui import convert_block
-from modules.options_ui import options_block
+from modules.options_ui import (
+    options_block, restart_btn
+)
 from modules.config import ConfigManager
 from modules.ui.constants import FIELDS, SAMPLERS, SCHEDULERS
 
@@ -93,6 +95,17 @@ def load_credentials(filepath: str = "credentials.json"):
     except Exception as e:
         print(f"Error reading credentials: {e}. Skipping password protection.")
         return None
+
+
+def restart_server():
+    """
+    Restarts the sdcpp-webui.
+    """
+    print("\nRestarting server...")
+    os.environ['SDCPP_IS_RESTART'] = 'true'
+    python = sys.executable
+    new_args = [arg for arg in sys.argv if arg != '--autostart']
+    os.execv(python, [python] + new_args)
 
 
 def sdcpp_launch(
@@ -235,12 +248,26 @@ def sdcpp_launch(
             outputs=[tabs, img_inp_upscale]
         )
 
+        restart_btn.click(
+            fn=restart_server,
+            inputs=[],
+            outputs=[]
+        )
+
     # Pass the arguments to sdcpp.launch with argument unpacking
     sdcpp.launch(**launch_args)
 
 
 def main():
     """Main"""
+    if os.environ.get('SDCPP_IS_RESTART') == 'true':
+        print("\n" + "="*60)
+        print(" SERVER RESTARTED SUCCESSFULLY")
+        print(" Please refresh your web browser to apply the changes.")
+        print("="*60 + "\n")
+
+        del os.environ['SDCPP_IS_RESTART']
+
     parser = argparse.ArgumentParser(description='Process optional arguments')
     parser.add_argument(
         '--listen',
