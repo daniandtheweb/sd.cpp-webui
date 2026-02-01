@@ -65,6 +65,7 @@ DEFAULT_SETTINGS = {
     'def_vae_cpu': False,
     'def_clip_cpu': False,
     'def_flash_attn': False,
+    'def_diffusion_fa': False,
     'def_diffusion_conv_direct': False,
     'def_vae_conv_direct': False,
     'def_force_sdxl_vae_conv_scale': False,

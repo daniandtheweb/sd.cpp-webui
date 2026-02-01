@@ -394,7 +394,8 @@ class ImageGenerationRunner(CommandRunner):
             '--circular': self._get_param('in_circular_padding') == CIRCULAR_PADDING[1],
             '--circularx': self._get_param('in_circular_padding') == CIRCULAR_PADDING[2],
             '--circulary': self._get_param('in_circular_padding') == CIRCULAR_PADDING[3],
-            '--diffusion-fa': self._get_param('in_flash_attn'),
+            '--fa': self._get_param('in_flash_attn'),
+            '--diffusion-fa': self._get_param('in_diffusion_fa'),
             '--diffusion-conv-direct': (
                 self._get_param('in_diffusion_conv_direct')
             ),
