@@ -49,9 +49,7 @@ with gr.Blocks() as options_block:
     # Title
     options_title = gr.Markdown("# Options")
 
-    with gr.Accordion(
-        label="Default models", open=False
-    ):
+    with gr.Tab(label="Default models"):
         with gr.Row():
             with gr.Column():
                 ckpt_model = create_model_widget(
@@ -132,151 +130,159 @@ with gr.Blocks() as options_block:
                 )
                 settings_map['def_llm'] = llm
 
-    # Model Type Selection
-    quant_ui = create_quant_ui()
-    settings_map.update(quant_ui)
+        # Model Type Selection
+        quant_ui = create_quant_ui()
+        settings_map.update(quant_ui)
 
-    generation_settings_ui = create_generation_settings_ui(True)
-    settings_map.update({
-        'def_sampling': generation_settings_ui['in_sampling'],
-        'def_steps': generation_settings_ui['in_steps'],
-        'def_scheduler': generation_settings_ui['in_scheduler'],
-        'def_width': generation_settings_ui['in_width'],
-        'def_height': generation_settings_ui['in_height'],
-        'def_cfg': generation_settings_ui['in_cfg'],
-        'def_guidance_bool': generation_settings_ui['in_guidance_bool'],
-        'def_guidance': generation_settings_ui['in_guidance'],
-        'def_flow_shift_bool': generation_settings_ui['in_flow_shift_bool'],
-        'def_flow_shift': generation_settings_ui['in_flow_shift']
-    })
+    with gr.Tab(label="Generation settings"):
 
-    bottom_generation_settings_ui = create_bottom_generation_settings_ui()
-    settings_map.update({
-        'def_seed': bottom_generation_settings_ui['in_seed'],
-        'def_clip_skip': bottom_generation_settings_ui['in_clip_skip'],
-        'def_batch_count': bottom_generation_settings_ui['in_batch_count']
-    })
+        generation_settings_ui = create_generation_settings_ui(True)
+        settings_map.update({
+            'def_sampling': generation_settings_ui['in_sampling'],
+            'def_steps': generation_settings_ui['in_steps'],
+            'def_scheduler': generation_settings_ui['in_scheduler'],
+            'def_width': generation_settings_ui['in_width'],
+            'def_height': generation_settings_ui['in_height'],
+            'def_cfg': generation_settings_ui['in_cfg'],
+            'def_guidance_bool': generation_settings_ui['in_guidance_bool'],
+            'def_guidance': generation_settings_ui['in_guidance'],
+            'def_flow_shift_bool': generation_settings_ui['in_flow_shift_bool'],
+            'def_flow_shift': generation_settings_ui['in_flow_shift']
+        })
 
-    with gr.Row():
-        # Prediction mode
-        predict = gr.Dropdown(
-            label="Prediction",
-            choices=PREDICTION,
-            value=config.get('def_predict'),
-            interactive=True
-        )
-        settings_map['predict'] = predict
+        bottom_generation_settings_ui = create_bottom_generation_settings_ui()
+        settings_map.update({
+            'def_seed': bottom_generation_settings_ui['in_seed'],
+            'def_clip_skip': bottom_generation_settings_ui['in_clip_skip'],
+            'def_batch_count': bottom_generation_settings_ui['in_batch_count']
+        })
 
-    taesd_ui = create_taesd_ui()
-    settings_map.update({
-        'def_taesd': taesd_ui['in_taesd']
-    })
+    with gr.Tab(label="Advanced settings"):
 
-    vae_tiling_ui = create_vae_tiling_ui()
-    settings_map.update({
-        'def_vae_tiling': vae_tiling_ui['in_vae_tiling'],
-        'def_vae_tile_overlap': vae_tiling_ui['in_vae_tile_overlap'],
-        'def_vae_tile_size': vae_tiling_ui['in_vae_tile_size'],
-        'def_vae_relative_bool': vae_tiling_ui['in_vae_relative_bool'],
-        'def_vae_relative_tile_size': vae_tiling_ui['in_vae_relative_tile_size']
-    })
-
-    cache_ui = create_cache_ui()
-    settings_map.update({
-        'def_cache_bool': cache_ui['in_cache_bool'],
-        'def_cache_mode': cache_ui['in_cache_mode'],
-        'def_cache_dit_preset': cache_ui['in_cache_dit_preset']
-    })
-
-    extras_ui = create_extras_ui()
-    settings_map.update({
-        'def_rng': extras_ui['in_rng'],
-        'def_sampler_rng': extras_ui['in_sampler_rng'],
-        'def_predict': extras_ui['in_predict'],
-        'def_lora_apply': extras_ui['in_lora_apply'],
-        'def_output': extras_ui['in_output'],
-        'def_color': extras_ui['in_color'],
-        'def_verbose': extras_ui['in_verbose']
-    })
-
-    preview_ui = create_preview_ui()
-    settings_map.update({
-        'def_preview_bool': preview_ui['in_preview_bool'],
-        'def_preview_mode': preview_ui['in_preview_mode'],
-        'def_preview_interval': preview_ui['in_preview_interval'],
-        'def_preview_taesd': preview_ui['in_preview_taesd'],
-        'def_preview_noisy': preview_ui['in_preview_noisy']
-    })
-
-    performance_ui = create_performance_ui()
-    settings_map.update({
-        'def_threads': performance_ui['in_threads'],
-        'def_offload_to_cpu': performance_ui['in_offload_to_cpu'],
-        'def_vae_cpu': performance_ui['in_vae_cpu'],
-        'def_clip_cpu': performance_ui['in_clip_cpu'],
-        'def_flash_attn': performance_ui['in_flash_attn'],
-        'def_diffusion_conv_direct': performance_ui['in_diffusion_conv_direct'],
-        'def_vae_conv_direct': performance_ui['in_vae_conv_direct'],
-        'def_force_sdxl_vae_conv_scale': performance_ui['in_force_sdxl_vae_conv_scale']
-    })
-
-    env_ui = create_env_ui()
-    settings_map.update({
-        'def_env_vk_visible_override': env_ui['env_vk_visible_override'],
-        'def_env_GGML_VK_VISIBLE_DEVICES': env_ui['env_GGML_VK_VISIBLE_DEVICES'],
-        'def_env_cuda_visible_override': env_ui['env_cuda_visible_override'],
-        'def_env_CUDA_VISIBLE_DEVICES': env_ui['env_CUDA_VISIBLE_DEVICES'],
-        'def_env_GGML_VK_DISABLE_COOPMAT': env_ui['env_GGML_VK_DISABLE_COOPMAT'],
-        'def_env_GGML_VK_DISABLE_INTEGER_DOT_PRODUCT': env_ui['env_GGML_VK_DISABLE_INTEGER_DOT_PRODUCT']
-    })
-
-    with gr.Row():
-        # Output options
-        output_scheme = gr.Dropdown(
-            label="Output Scheme",
-            choices=OUTPUT_SCHEMES,
-            value=config.get('def_output_scheme'),
-            interactive=True
-        )
-        settings_map['def_output_scheme'] = output_scheme
-
-    with gr.Row():
-        # Gallery options
-        sort_order = gr.Radio(
-            label="Sort By",
-            choices=SORT_OPTIONS,
-            value=config.get('def_gallery_sorting'),
-            interactive=True
-        )
-        settings_map['def_gallery_sorting'] = sort_order
-
-    with gr.Row():
-        # Theme options
-        theme = gr.Dropdown(
-                label="Theme:",
-                choices=THEMES,
-                value=config.get('def_theme'),
+        with gr.Row():
+            # Prediction mode
+            predict = gr.Dropdown(
+                label="Prediction",
+                choices=PREDICTION,
+                value=config.get('def_predict'),
                 interactive=True
-        )
-        settings_map['def_theme'] = theme
+            )
+            settings_map['predict'] = predict
 
-    # Folders options
-    folders_ui = create_folders_opt_ui()
-    settings_map.update({
-        'ckpt_dir': folders_ui['ckpt_dir_txt'],
-        'unet_dir': folders_ui['unet_dir_txt'],
-        'vae_dir': folders_ui['vae_dir_txt'],
-        'txt_enc_dir': folders_ui['txt_enc_dir_txt'],
-        'emb_dir': folders_ui['emb_dir_txt'],
-        'lora_dir': folders_ui['lora_dir_txt'],
-        'taesd_dir': folders_ui['taesd_dir_txt'],
-        'phtmkr_dir': folders_ui['phtmkr_dir_txt'],
-        'upscl_dir': folders_ui['upscl_dir_txt'],
-        'cnnet_dir': folders_ui['cnnet_dir_txt'],
-        'txt2img_dir': folders_ui['txt2img_dir_txt'],
-        'img2img_dir': folders_ui['img2img_dir_txt'],
-        'any2video_dir': folders_ui['any2video_dir_txt']
-    })
+        taesd_ui = create_taesd_ui()
+        settings_map.update({
+            'def_taesd': taesd_ui['in_taesd']
+        })
+
+        vae_tiling_ui = create_vae_tiling_ui()
+        settings_map.update({
+            'def_vae_tiling': vae_tiling_ui['in_vae_tiling'],
+            'def_vae_tile_overlap': vae_tiling_ui['in_vae_tile_overlap'],
+            'def_vae_tile_size': vae_tiling_ui['in_vae_tile_size'],
+            'def_vae_relative_bool': vae_tiling_ui['in_vae_relative_bool'],
+            'def_vae_relative_tile_size': vae_tiling_ui['in_vae_relative_tile_size']
+        })
+
+        cache_ui = create_cache_ui()
+        settings_map.update({
+            'def_cache_bool': cache_ui['in_cache_bool'],
+            'def_cache_mode': cache_ui['in_cache_mode'],
+            'def_cache_dit_preset': cache_ui['in_cache_dit_preset']
+        })
+
+        extras_ui = create_extras_ui()
+        settings_map.update({
+            'def_rng': extras_ui['in_rng'],
+            'def_sampler_rng': extras_ui['in_sampler_rng'],
+            'def_predict': extras_ui['in_predict'],
+            'def_lora_apply': extras_ui['in_lora_apply'],
+            'def_output': extras_ui['in_output'],
+            'def_color': extras_ui['in_color'],
+            'def_verbose': extras_ui['in_verbose']
+        })
+
+        preview_ui = create_preview_ui()
+        settings_map.update({
+            'def_preview_bool': preview_ui['in_preview_bool'],
+            'def_preview_mode': preview_ui['in_preview_mode'],
+            'def_preview_interval': preview_ui['in_preview_interval'],
+            'def_preview_taesd': preview_ui['in_preview_taesd'],
+            'def_preview_noisy': preview_ui['in_preview_noisy']
+        })
+
+        performance_ui = create_performance_ui()
+        settings_map.update({
+            'def_threads': performance_ui['in_threads'],
+            'def_offload_to_cpu': performance_ui['in_offload_to_cpu'],
+            'def_vae_cpu': performance_ui['in_vae_cpu'],
+            'def_clip_cpu': performance_ui['in_clip_cpu'],
+            'def_flash_attn': performance_ui['in_flash_attn'],
+            'def_diffusion_conv_direct': performance_ui['in_diffusion_conv_direct'],
+            'def_vae_conv_direct': performance_ui['in_vae_conv_direct'],
+            'def_force_sdxl_vae_conv_scale': performance_ui['in_force_sdxl_vae_conv_scale']
+        })
+
+        env_ui = create_env_ui()
+        settings_map.update({
+            'def_env_vk_visible_override': env_ui['env_vk_visible_override'],
+            'def_env_GGML_VK_VISIBLE_DEVICES': env_ui['env_GGML_VK_VISIBLE_DEVICES'],
+            'def_env_cuda_visible_override': env_ui['env_cuda_visible_override'],
+            'def_env_CUDA_VISIBLE_DEVICES': env_ui['env_CUDA_VISIBLE_DEVICES'],
+            'def_env_GGML_VK_DISABLE_COOPMAT': env_ui['env_GGML_VK_DISABLE_COOPMAT'],
+            'def_env_GGML_VK_DISABLE_INTEGER_DOT_PRODUCT': env_ui['env_GGML_VK_DISABLE_INTEGER_DOT_PRODUCT']
+        })
+
+        with gr.Row():
+            # Output options
+            output_scheme = gr.Dropdown(
+                label="Output Scheme",
+                choices=OUTPUT_SCHEMES,
+                value=config.get('def_output_scheme'),
+                interactive=True
+            )
+            settings_map['def_output_scheme'] = output_scheme
+
+    with gr.Tab(label="Directories"):
+
+        # Folders options
+        folders_ui = create_folders_opt_ui()
+        settings_map.update({
+            'ckpt_dir': folders_ui['ckpt_dir_txt'],
+            'unet_dir': folders_ui['unet_dir_txt'],
+            'vae_dir': folders_ui['vae_dir_txt'],
+            'txt_enc_dir': folders_ui['txt_enc_dir_txt'],
+            'emb_dir': folders_ui['emb_dir_txt'],
+            'lora_dir': folders_ui['lora_dir_txt'],
+            'taesd_dir': folders_ui['taesd_dir_txt'],
+            'phtmkr_dir': folders_ui['phtmkr_dir_txt'],
+            'upscl_dir': folders_ui['upscl_dir_txt'],
+            'cnnet_dir': folders_ui['cnnet_dir_txt'],
+            'txt2img_dir': folders_ui['txt2img_dir_txt'],
+            'img2img_dir': folders_ui['img2img_dir_txt'],
+            'any2video_dir': folders_ui['any2video_dir_txt']
+        })
+
+    with gr.Tab(label="sd.cpp-webui settings"):
+
+        with gr.Row():
+            # Gallery options
+            sort_order = gr.Radio(
+                label="Sort By",
+                choices=SORT_OPTIONS,
+                value=config.get('def_gallery_sorting'),
+                interactive=True
+            )
+            settings_map['def_gallery_sorting'] = sort_order
+
+        with gr.Row():
+            # Theme options
+            theme = gr.Dropdown(
+                    label="Theme:",
+                    choices=THEMES,
+                    value=config.get('def_theme'),
+                    interactive=True
+            )
+            settings_map['def_theme'] = theme
 
     with gr.Row():
         refresh_opt = gr.Button(
