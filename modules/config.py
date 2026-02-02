@@ -76,6 +76,8 @@ DEFAULT_SETTINGS = {
     'def_env_GGML_VK_DISABLE_COOPMAT': False,
     'def_env_GGML_VK_DISABLE_INTEGER_DOT_PRODUCT': False,
     'def_output_scheme': "Sequential",
+    'def_output_steps': False,
+    'def_output_quant': False,
     'def_gallery_sorting': "Date (Oldest First)"
 }
 
@@ -92,7 +94,6 @@ class ConfigManager:
         'def_ckpt_vae': 'vae_dir',
         'def_unet_vae': 'vae_dir',
         'def_taesd': 'taesd_dir',
-        'def_lora_apply': 'lora_dir',
         'def_phtmkr': 'phtmkr_dir',
         'def_cnnet': 'cnnet_dir',
         'def_t5xxl': 'txt_enc_dir',
@@ -155,12 +156,13 @@ class ConfigManager:
         """
         Gets a configuration value.
         - If key is a directory (ends in _dir), checks if folder exists.
-        - If key is a file (in PATH_MAP), checks if file exists in the mapped dir.
+        - If key is a file (in PATH_MAP), checks if file exists in the
+          mapped dir.
         Returns None if the path/file is missing.
         """
         value = self.data.get(key, default)
 
-        if value is None or not isinstance(value, str):
+        if not isinstance(value, str) or not value:
             return value
 
         if key.endswith('_dir'):
@@ -176,8 +178,10 @@ class ConfigManager:
                 return None
 
             full_path = os.path.join(dir_path, value)
+
             if not os.path.exists(full_path):
                 return None
+            return value
 
         return value
 

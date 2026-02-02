@@ -66,31 +66,54 @@ class CommandRunner:
     def _set_output_path(self, dir_key: str, subctrl_id: int, extension: str):
         """Determines and sets the output path for the command."""
         output_dir = config.get(dir_key)
-        filename = self._get_param('in_output')
+        filename_override = self._get_param('in_output')
         output_scheme = config.get('def_output_scheme')
 
-        if filename:
-            self.output_path = os.path.join(output_dir, f"{filename}.{extension}")
+        if filename_override and str(filename_override).strip():
+            self.output_path = os.path.join(output_dir, f"{filename_override}.{extension}")
+            return
+
+        name_parts = []
+
+        if config.get('def_output_steps'):
+            steps_val = self._get_param('in_steps')
+            if steps_val:
+                name_parts.append(f"{steps_val}_steps")
+
+        if config.get('def_output_quant'):
+            quant_val = self._get_param('in_model_type')
+            if quant_val and quant_val != "Default":
+                name_parts.append(str(quant_val))
+
+        prefix_str = ""
+
+        match output_scheme:
+            case "Sequential":
+                next_img = get_next_img(subctrl=subctrl_id)
+                prefix_str, _ = os.path.splitext(next_img) if "." in next_img else (next_img, "")
+
+            case "Timestamp":
+                prefix_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+
+            case "TimestampMS":
+                prefix_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+
+            case "EpochTime":
+                prefix_str = str(int(time.time()))
+
+            case _:
+                # Default fallback
+                next_img = get_next_img(subctrl=subctrl_id)
+                prefix_str, _ = os.path.splitext(next_img) if "." in next_img else (next_img, "")
+
+        suffix_str = "_".join(name_parts)
+
+        if prefix_str:
+            final_filename = f"{prefix_str}_{suffix_str}"
         else:
-            match output_scheme:
-                case "Sequential":
-                    # Default
-                    self.output_path = os.path.join(output_dir, get_next_img(subctrl=subctrl_id))
-                case "Timestamp":
-                    # By-second timestamp
-                    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-                    self.output_path = os.path.join(output_dir, f"{timestamp}.{extension}")
-                case "TimestampMS":
-                    # By-microsecond timestamp
-                    timestamp_ms = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-                    self.output_path = os.path.join(output_dir, f"{timestamp_ms}.{extension}")
-                case "EpochTime":
-                    # Unix/Epoch time in seconds
-                    epoch_time = int(time.time())
-                    self.output_path = os.path.join(output_dir, f"{epoch_time}.{extension}")
-                case _:
-                    # Default fallback
-                    self.output_path = os.path.join(output_dir, get_next_img(subctrl=subctrl_id))
+            final_filename = suffix_str
+
+        self.output_path = os.path.join(output_dir, f"{final_filename}.{extension}")
 
     def _resolve_paths(self):
         """Resolves all model and directory paths from the config."""

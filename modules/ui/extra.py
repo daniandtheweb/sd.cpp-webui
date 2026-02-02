@@ -4,7 +4,7 @@ import gradio as gr
 
 from modules.shared_instance import config
 
-from modules.ui.constants import(
+from modules.ui.constants import (
     RNG, SAMPLER_RNG, PREDICTION
 )
 

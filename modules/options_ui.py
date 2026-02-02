@@ -232,16 +232,6 @@ with gr.Blocks() as options_block:
             'def_env_GGML_VK_DISABLE_INTEGER_DOT_PRODUCT': env_ui['env_GGML_VK_DISABLE_INTEGER_DOT_PRODUCT']
         })
 
-        with gr.Row():
-            # Output options
-            output_scheme = gr.Dropdown(
-                label="Output Scheme",
-                choices=OUTPUT_SCHEMES,
-                value=config.get('def_output_scheme'),
-                interactive=True
-            )
-            settings_map['def_output_scheme'] = output_scheme
-
     with gr.Tab(label="Directories"):
 
         # Folders options
@@ -263,6 +253,30 @@ with gr.Blocks() as options_block:
         })
 
     with gr.Tab(label="sd.cpp-webui settings"):
+
+        with gr.Row():
+            # Output options
+            output_scheme = gr.Dropdown(
+                label="Output Scheme",
+                choices=OUTPUT_SCHEMES,
+                value=config.get('def_output_scheme'),
+                interactive=True
+            )
+            settings_map['def_output_scheme'] = output_scheme
+
+            output_steps = gr.Checkbox(
+                label="Add steps count to the output name",
+                value=config.get('def_output_steps'),
+                interactive=True
+            )
+            settings_map['def_output_steps'] = output_steps
+
+            output_quant = gr.Checkbox(
+                label="Add quantization type to the output name",
+                value=config.get('def_output_quant'),
+                interactive=True
+            )
+            settings_map['def_output_quant'] = output_quant
 
         with gr.Row():
             # Gallery options
