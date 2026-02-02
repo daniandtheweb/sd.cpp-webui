@@ -85,6 +85,23 @@ class ConfigManager:
     Handles loading, managing and saving the application configuration.
     """
 
+    PATH_MAP = {
+        'def_ckpt': 'ckpt_dir',
+        'def_unet': 'unet_dir',
+        'def_vae': 'vae_dir',
+        'def_ckpt_vae': 'vae_dir',
+        'def_unet_vae': 'vae_dir',
+        'def_taesd': 'taesd_dir',
+        'def_lora_apply': 'lora_dir',
+        'def_phtmkr': 'phtmkr_dir',
+        'def_cnnet': 'cnnet_dir',
+        'def_t5xxl': 'txt_enc_dir',
+        'def_clip_l': 'txt_enc_dir',
+        'def_clip_g': 'txt_enc_dir',
+        'def_clip_vision_h': 'txt_enc_dir',
+        'def_llm': 'txt_enc_dir',
+    }
+
     def __init__(self, config_path: str = None, prompts_path: str = None):
         self.config_path = os.getenv(
             'SD_WEBUI_CONFIG_PATH', config_path or DEFAULT_CONFIG_PATH
@@ -135,8 +152,34 @@ class ConfigManager:
             print("Created empty prompts file")
 
     def get(self, key: str, default: Any = None) -> Any:
-        """Gets a configuration value."""
-        return self.data.get(key, default)
+        """
+        Gets a configuration value.
+        - If key is a directory (ends in _dir), checks if folder exists.
+        - If key is a file (in PATH_MAP), checks if file exists in the mapped dir.
+        Returns None if the path/file is missing.
+        """
+        value = self.data.get(key, default)
+
+        if value is None or not isinstance(value, str):
+            return value
+
+        if key.endswith('_dir'):
+            if not os.path.exists(value):
+                return None
+            return value
+
+        if key in self.PATH_MAP:
+            dir_key = self.PATH_MAP[key]
+            dir_path = self.data.get(dir_key)
+
+            if not dir_path or not isinstance(dir_path, str):
+                return None
+
+            full_path = os.path.join(dir_path, value)
+            if not os.path.exists(full_path):
+                return None
+
+        return value
 
     def save_config(self):
         """Saves the current configuration."""
