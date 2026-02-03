@@ -3,8 +3,6 @@
 import os
 import re
 import sys
-import time
-import datetime
 import subprocess
 from enum import IntEnum
 from typing import Dict, Any, Generator
@@ -12,8 +10,9 @@ from typing import Dict, Any, Generator
 import gradio as gr
 
 from modules.utils.utility import get_path
-from modules.utils.sdcpp_utils import extract_env_vars
-from modules.gallery import get_next_img
+from modules.utils.sdcpp_utils import (
+    extract_env_vars, generate_output_filename
+)
 from modules.shared_instance import (
     config, subprocess_manager, SD
 )
@@ -45,7 +44,8 @@ class CommandRunner:
         output_scheme = config.get('def_output_scheme')
 
         if filename_override and str(filename_override).strip():
-            self.output_path = os.path.join(output_dir, f"{filename_override}.{extension}")
+            filename = f"{filename_override}.{extension}"
+            self.output_path = os.path.join(output_dir, filename)
             return
 
         name_parts = []
@@ -60,35 +60,10 @@ class CommandRunner:
             if quant_val and quant_val != "Default":
                 name_parts.append(str(quant_val))
 
-        prefix_str = ""
-
-        match output_scheme:
-            case "Sequential":
-                next_img = get_next_img(subctrl=subctrl_id)
-                prefix_str, _ = os.path.splitext(next_img) if "." in next_img else (next_img, "")
-
-            case "Timestamp":
-                prefix_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-
-            case "TimestampMS":
-                prefix_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-
-            case "EpochTime":
-                prefix_str = str(int(time.time()))
-
-            case _:
-                # Default fallback
-                next_img = get_next_img(subctrl=subctrl_id)
-                prefix_str, _ = os.path.splitext(next_img) if "." in next_img else (next_img, "")
-
-        suffix_str = "_".join(name_parts)
-
-        if prefix_str:
-            final_filename = f"{prefix_str}_{suffix_str}"
-        else:
-            final_filename = suffix_str
-
-        self.output_path = os.path.join(output_dir, f"{final_filename}.{extension}")
+        self.output_path = generate_output_filename(
+            output_dir, output_scheme, extension,
+            name_parts, subctrl_id
+        )
 
     def _resolve_paths(self):
         """Resolves all model and directory paths from the config."""
@@ -283,9 +258,11 @@ class ImageGenerationRunner(CommandRunner):
             '--type': (self._get_param('in_model_type')
                        if self._get_param('in_model_type') != "Default"
                        else None),
-            '--tensor-type-rules': (self._get_param('in_tensor_type_rules')
-                                    if self._get_param('in_tensor_type_rules') != ""
-                                    else None),
+            '--tensor-type-rules': (
+                self._get_param('in_tensor_type_rules')
+                if self._get_param('in_tensor_type_rules') != ""
+                else None
+            ),
             # Scheduler
             '--scheduler': (self._get_param('in_scheduler')
                             if not self._get_param('in_sigmas')
@@ -336,22 +313,28 @@ class ImageGenerationRunner(CommandRunner):
             # VAE Tiling
             **({
                 '--vae-tile-overlap': self._get_param('in_vae_tile_overlap'),
-                '--vae-tile-size': (f"{size}x{size}"
-                                    if (size := self._get_param('in_vae_tile_size'))
-                                    else None),
-                '--vae-relative-tile-size': (f"{size}x{size}"
-                                             if (
-                                             self._get_param('in_vae_relative_bool') and
-                                             (size := self._get_param('in_vae_relative_tile_size'))
-                                             )
-                                             else None),
+                '--vae-tile-size': (
+                    f"{size}x{size}"
+                    if (size := self._get_param('in_vae_tile_size'))
+                    else None
+                ),
+                '--vae-relative-tile-size': (
+                    f"{size}x{size}"
+                    if (
+                        self._get_param('in_vae_relative_bool') and
+                        (size := self._get_param('in_vae_relative_tile_size'))
+                    )
+                    else None
+                ),
             } if self._get_param('in_vae_tiling') else {}),
             # Cache
             **({
                 '--cache-mode': self._get_param('in_cache_mode'),
-                '--cache-preset': (self._get_param('in_cache_dit_preset')
-                                   if self._get_param('in_cache_dit_preset') != "none"
-                                   else None),
+                '--cache-preset': (
+                    self._get_param('in_cache_dit_preset')
+                    if self._get_param('in_cache_dit_preset') != "none"
+                    else None
+                ),
                 '--cache-option': (
                     val.strip('"')
                     if (val := self._get_param('in_cache_option')) and str(val).strip('"') != ""
@@ -388,17 +371,27 @@ class ImageGenerationRunner(CommandRunner):
                 self._get_param('in_disable_dit_mask')
             ),
             '--chroma-enable-t5-mask': self._get_param('in_enable_t5_mask'),
-            '--qwen-image-zero-cond-t': self._get_param('in_enable_zero_cond_t'),
-            '--circular': self._get_param('in_circular_padding') == CIRCULAR_PADDING[1],
-            '--circularx': self._get_param('in_circular_padding') == CIRCULAR_PADDING[2],
-            '--circulary': self._get_param('in_circular_padding') == CIRCULAR_PADDING[3],
+            '--qwen-image-zero-cond-t': (
+                self._get_param('in_enable_zero_cond_t')
+            ),
+            '--circular': (
+                self._get_param('in_circular_padding') == CIRCULAR_PADDING[1]
+            ),
+            '--circularx': (
+                self._get_param('in_circular_padding') == CIRCULAR_PADDING[2]
+            ),
+            '--circulary': (
+                self._get_param('in_circular_padding') == CIRCULAR_PADDING[3]
+            ),
             '--fa': self._get_param('in_flash_attn'),
             '--diffusion-fa': self._get_param('in_diffusion_fa'),
             '--diffusion-conv-direct': (
                 self._get_param('in_diffusion_conv_direct')
             ),
             '--vae-conv-direct': self._get_param('in_vae_conv_direct'),
-            '--force-sdxl-vae-conv-scale': self._get_param('in_force_sdxl_vae_conv_scale'),
+            '--force-sdxl-vae-conv-scale': (
+                self._get_param('in_force_sdxl_vae_conv_scale')
+            ),
             '--taesd-preview-only': (self._get_param('in_preview_taesd')
                                      if self._get_param('in_preview_bool')
                                      else False),
@@ -450,7 +443,9 @@ class ImgEditRunner(ImageGenerationRunner):
         super().build_command(
             output_dir_key='imgedit_dir', subctrl_id=2
         )
-        self.command.extend(['--ref-image', str(self._get_param('in_ref_img'))])
+        self.command.extend(
+            ['--ref-image', str(self._get_param('in_ref_img'))]
+        )
 
 
 class Any2VideoRunner(CommandRunner):

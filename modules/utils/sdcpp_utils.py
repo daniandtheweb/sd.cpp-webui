@@ -1,6 +1,11 @@
 """sd.cpp-webui - sdcpp.py utility module"""
 
+import os
+import time
+import datetime
 from typing import Dict, Any
+
+from modules.gallery import get_next_img
 
 
 def extract_env_vars(params: Dict[str, Any]) -> Dict[str, str]:
@@ -28,3 +33,48 @@ def extract_env_vars(params: Dict[str, Any]) -> Dict[str, str]:
         env_vars['CUDA_VISIBLE_DEVICES'] = cuda_device_id
 
     return env_vars
+
+
+def generate_output_filename(
+    directory: str, scheme: str, extension: str,
+    name_parts: list, subctrl_id: int = 0
+) -> str:
+    """
+    Generates a full output path based
+    on the selected naming scheme.
+    """
+
+    prefix_str = ""
+
+    match scheme:
+        case "Sequential":
+            next_img = get_next_img(subctrl=subctrl_id)
+            if "." in next_img:
+                prefix_str, _ = os.path.splitext(next_img)
+            else:
+                prefix_str, _ = next_img, ""
+        case "Timestamp":
+            prefix_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        case "TimestampMS":
+            prefix_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        case "EpochTime":
+            prefix_str = str(int(time.time()))
+        case _:
+            # Default fallback
+            next_img = get_next_img(subctrl=subctrl_id)
+            if "." in next_img:
+                prefix_str, _ = os.path.splitext(next_img)
+            else:
+                prefix_str, _ = next_img, ""
+
+    if name_parts:
+        suffix_str = "_".join(name_parts)
+    else:
+        suffix_str = None
+
+    if suffix_str:
+        final_filename = f"{prefix_str}_{suffix_str}"
+    else:
+        final_filename = prefix_str
+
+    return os.path.join(directory, f"{final_filename}.{extension}")
