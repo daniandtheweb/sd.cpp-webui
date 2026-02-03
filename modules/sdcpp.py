@@ -12,6 +12,7 @@ from typing import Dict, Any, Generator
 import gradio as gr
 
 from modules.utils.utility import get_path
+from modules.utils.sdcpp_utils import extract_env_vars
 from modules.gallery import get_next_img
 from modules.shared_instance import (
     config, subprocess_manager, SD
@@ -30,38 +31,12 @@ class CommandRunner:
     def __init__(self, mode: str, params: Dict[str, Any]):
         self.mode = mode
         self.params = params
-        self.env_vars = self._extract_env_vars()
+        self.env_vars = extract_env_vars(self.params)
         self.command = [SD, '-M', self.mode]
         self.fcommand = ""
         self.outputs = []
         self.output_path = ""
         self.preview_path = None
-
-    def _extract_env_vars(self) -> Dict[str, Any]:
-        """
-        Parses the params dictionary to find and extract environment
-        variables, applying conditional logic as needed.
-        """
-        env_vars = {}
-
-        is_vk_override_true = self.params.pop('env_vk_visible_override', False)
-        vk_device_id = self.params.pop('env_GGML_VK_VISIBLE_DEVICES', None)
-        is_cuda_override_true = self.params.pop('env_cuda_visible_override', False)
-        cuda_device_id = self.params.pop('env_CUDA_VISIBLE_DEVICES', None)
-
-        for key in list(self.params.keys()):
-            if key.startswith("env_"):
-                env_key = key[4:]
-                value = self.params.pop(key)
-                if env_key not in env_vars:
-                    env_vars[env_key] = value
-
-        if is_vk_override_true and vk_device_id is not None:
-            env_vars['GGML_VK_VISIBLE_DEVICES'] = vk_device_id
-        if is_cuda_override_true and cuda_device_id is not None:
-            env_vars['CUDA_VISIBLE_DEVICES'] = cuda_device_id
-
-        return env_vars
 
     def _set_output_path(self, dir_key: str, subctrl_id: int, extension: str):
         """Determines and sets the output path for the command."""
