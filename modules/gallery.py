@@ -459,11 +459,16 @@ def get_next_img(subctrl: int) -> str:
         os.makedirs(img_out_dir, exist_ok=True)
 
     try:
-        numbers = [
-            int(f[:-4])
-            for f in os.listdir(img_out_dir)
-            if f.endswith('.png') and f[:-4].isdigit()
-        ]
+        numbers = []
+        for f in os.listdir(img_out_dir):
+            if f.endswith('.png'):
+                name_without_ext = f[:-4]
+
+                base_num_str = name_without_ext.split('_')[0]
+
+                if base_num_str.isdigit():
+                    numbers.append(int(base_num_str))
+
         next_number = max(numbers) + 1 if numbers else 1
     except (ValueError, FileNotFoundError):
         next_number = 1
