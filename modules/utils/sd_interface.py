@@ -12,27 +12,55 @@ def exe_name():
     """
     Returns the stable-diffusion executable name.
     Prioritizes 'sd-cli' over 'sd', and checks both PATH and current directory.
+    Verifies the binary can be executed by running <binary> --version.
+    Accumulates errors for failed candidates, only exits if all fail.
     """
     if os.name == "nt":
         candidates = ["sd-cli.exe", "sd.exe"]
     else:
         candidates = ["sd-cli", "sd"]
 
+    failed_candidates = []
+
     for cand in candidates:
+        executable_path = None
+
+        # Check if executable exists in PATH
         if shutil.which(cand):
-            return cand
+            executable_path = shutil.which(cand)
 
-        local_path = os.path.join(os.getcwd(), cand)
-        if os.path.isfile(local_path) and os.access(local_path, os.X_OK):
-            if os.name == "nt":
-                return cand
-            else:
-                return f"./{cand}"
+        # Check if executable exists in current directory
+        if not executable_path:
+            local_path = os.path.join(os.getcwd(), cand)
+            if os.path.isfile(local_path) and os.access(local_path, os.X_OK):
+                executable_path = local_path
 
+        if executable_path:
+            try:
+                result = subprocess.run([executable_path, "--version"],
+                                     capture_output=True, text=True, check=True)
+                version = result.stdout.strip()
+                if os.name == "nt":
+                    return cand
+                else:
+                    return f"./{cand}"
+            except subprocess.CalledProcessError as e:
+                failed_candidates.append(f"{executable_path} cannot be executed. Stdout: {e.stdout.strip()}. Stderr: {e.stderr.strip()}")
+            except Exception as e:
+                failed_candidates.append(f"{executable_path} cannot be executed. Exception: {str(e)}")
+
+    # If we get here, no candidate worked
+    if failed_candidates:
+        # If any candidates were found but failed execution, warn about them
+        for error in failed_candidates:
+            print(f"Warning: {error}")
+
+    # If no candidates were found or all failed, exit with error
     if os.name == "nt":
-        return "sd-cli.exe"
+        print(f"Error: Neither sd-cli.exe nor sd.exe found in PATH or current directory")
     else:
-        return "./sd-cli"
+        print(f"Error: Neither sd-cli nor sd found in PATH or current directory")
+    exit(1)
 
 
 class SDOptionsCache:
@@ -137,7 +165,7 @@ class SDOptionsCache:
                         "options": self._help_cache
                     }, f, indent=2
                 )
-        except (IOError, json.JSONEncodeError) as e:
+        except (IOError, TypeError, ValueError) as e:
             print(f"Failed to write to cache file: {e}")
 
     def _load_help_text_sync(self, force_refresh=False):
