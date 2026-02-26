@@ -8,17 +8,20 @@ import hashlib
 import subprocess
 
 
-def exe_name():
+def exe_name(mode="cli"):
     """
     Returns the stable-diffusion executable name.
     Prioritizes 'sd-cli' over 'sd', and checks both PATH and current directory.
     Verifies the binary can be executed by running <binary> --version.
     Accumulates errors for failed candidates, only exits if all fail.
     """
-    if os.name == "nt":
-        candidates = ["sd-cli.exe", "sd.exe"]
-    else:
+    if mode == "server":
+        candidates = ["sd-server"]
+    elif mode == "cli":
         candidates = ["sd-cli", "sd"]
+
+    if os.name == "nt":
+        candidates = [f"{c}.exe" for c in candidates]
 
     failed_candidates = []
 
@@ -56,10 +59,7 @@ def exe_name():
             print(f"Warning: {error}")
 
     # If no candidates were found or all failed, exit with error
-    if os.name == "nt":
-        print(f"Error: Neither sd-cli.exe nor sd.exe found in PATH or current directory")
-    else:
-        print(f"Error: Neither sd-cli nor sd found in PATH or current directory")
+    print(f"Error: Could not find valid executable for mode '{mode}' (tried: {', '.join(candidates)}) in PATH or current directory")
     exit(1)
 
 

@@ -8,26 +8,43 @@ import argparse
 
 import gradio as gr
 
-from modules.txt2img_ui import (
+from modules.interfaces.cli.txt2img_tab import (
     txt2img_block, txt2img_params
 )
-from modules.img2img_ui import (
+from modules.interfaces.server.txt2img_tab import (
+    txt2img_server_block
+)
+from modules.interfaces.cli.img2img_tab import (
     img2img_block, img2img_params, img_inp_img2img
 )
-from modules.imgedit_ui import (
+from modules.interfaces.server.img2img_tab import (
+    img2img_server_block
+)
+from modules.interfaces.cli.imgedit_tab import (
     imgedit_block, width_imgedit, height_imgedit, ref_img_imgedit
 )
-from modules.any2video_ui import (
+from modules.interfaces.server.imgedit_tab import (
+    imgedit_server_block
+)
+from modules.interfaces.cli.any2video_tab import (
     any2video_block, any2video_params
 )
-from modules.upscale_ui import upscale_block, img_inp_upscale
-from modules.gallery_ui import (
+from modules.interfaces.server.any2video_tab import (
+    any2video_server_block
+)
+from modules.interfaces.cli.upscale_tab import (
+    upscale_block, img_inp_upscale
+)
+from modules.interfaces.server.upscale_tab import (
+    upscale_server_block
+)
+from modules.interfaces.common.gallery_tab import (
     gallery_block, cpy_2_txt2img_btn, cpy_2_img2img_btn, cpy_2_imgedit_btn,
     cpy_2_any2video_btn, cpy_2_upscale_btn, info_params, path_info,
     gallery, gallery_manager, def_page, txt2img_ctrl, page_num_select
 )
-from modules.convert_ui import convert_block
-from modules.options_ui import (
+from modules.interfaces.cli.convert_tab import convert_block
+from modules.interfaces.common.options_tab import (
     options_block, restart_btn
 )
 from modules.config import ConfigManager
@@ -109,7 +126,8 @@ def restart_server():
 
 
 def sdcpp_launch(
-    listen: bool = False, autostart: bool = False, darkmode: bool = False,
+    server: bool = False, listen: bool = False,
+    autostart: bool = False, darkmode: bool = False,
     credentials: bool = False, insecure_dir: bool = False
 ):
     """Logic for launching sdcpp based on arguments"""
@@ -191,22 +209,41 @@ def sdcpp_launch(
         gallery_loaded_state = gr.State(value=False)
         common_inputs = [info_params[f] for f in FIELDS]
 
-        gr.Markdown("# <center>sd.cpp-webui</center>")
+        if server:
+            gr.Markdown("# <center>sd.cpp-webui - server</center>")
+        else:
+            gr.Markdown("# <center>sd.cpp-webui - cli</center>")
         with gr.Tabs() as tabs:
             with gr.TabItem("txt2img", id="txt2img"):
-                txt2img_block.render()
+                if server:
+                    txt2img_server_block.render()
+                else:
+                    txt2img_block.render()
             with gr.TabItem("img2img", id="img2img"):
-                img2img_block.render()
+                if server:
+                    img2img_server_block.render()
+                else:
+                    img2img_block.render()
             with gr.TabItem("imgedit", id="imgedit"):
-                imgedit_block.render()
+                if server:
+                    imgedit_server_block.render()
+                else:
+                    imgedit_block.render()
             with gr.TabItem("any2video", id="any2video"):
-                any2video_block.render()
+                if server:
+                    any2video_server_block.render()
+                else:
+                    any2video_block.render()
             with gr.TabItem("Gallery", id="gallery") as gallery_tab:
                 gallery_block.render()
             with gr.TabItem("Upscaler", id="upscale"):
-                upscale_block.render()
-            with gr.TabItem("Checkpoint Converter", id="convert"):
-                convert_block.render()
+                if server:
+                    upscale_server_block.render()
+                else:
+                    upscale_block.render()
+            if not server:
+                with gr.TabItem("Checkpoint Converter", id="convert"):
+                    convert_block.render()
             with gr.TabItem("Options", id="options"):
                 options_block.render()
 
@@ -270,6 +307,11 @@ def main():
 
     parser = argparse.ArgumentParser(description='Process optional arguments')
     parser.add_argument(
+        '--server',
+        action='store_true',
+        help='Run stable-diffusion.cpp\'s server mode'
+    )
+    parser.add_argument(
         '--listen',
         action='store_true',
         help='Listen on 0.0.0.0'
@@ -297,7 +339,7 @@ def main():
     args = parser.parse_args()
 
     sdcpp_launch(
-        args.listen, args.autostart, args.darkmode,
+        args.server, args.listen, args.autostart, args.darkmode,
         args.credentials, args.allow_insecure_dir
     )
 

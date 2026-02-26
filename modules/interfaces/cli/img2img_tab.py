@@ -1,13 +1,18 @@
-"""sd.cpp-webui - Text to image UI"""
+"""sd.cpp-webui - Image to image UI"""
+
+from functools import partial
 
 import gradio as gr
 
-from modules.sdcpp import txt2img
+from modules.core.cli.sdcpp_cli import img2img
 from modules.utils.ui_handler import (
-    ckpt_tab_switch, unet_tab_switch, refresh_all_options
+    ckpt_tab_switch, unet_tab_switch, update_interactivity,
+    refresh_all_options
 )
 import modules.utils.queue as queue_manager
-from modules.shared_instance import subprocess_manager
+from modules.shared_instance import (
+    config, subprocess_manager
+)
 from modules.ui.models import create_img_model_sel_ui
 from modules.ui.prompts import create_prompts_ui
 from modules.ui.generation_settings import (
@@ -32,13 +37,15 @@ from modules.ui.environment import create_env_ui
 # from modules.ui.experimental import create_experimental_ui
 
 
-txt2img_params = {}
+img2img_params = {}
 
-with gr.Blocks() as txt2img_block:
+with gr.Blocks()as img2img_block:
     inputs_map = {}
+    # Directory Textboxes
+    taesd_dir_txt = gr.Textbox(value=config.get('taesd_dir'), visible=False)
 
     # Title
-    txt2img_title = gr.Markdown("# Text to Image")
+    img2img_title = gr.Markdown("# Image to Image")
 
     with gr.Accordion(
         label="Models selection", open=False
@@ -63,6 +70,33 @@ with gr.Blocks() as txt2img_block:
 
                 generation_settings_ui = create_generation_settings_ui()
                 inputs_map.update(generation_settings_ui)
+
+                with gr.Row():
+                    img_cfg_bool = gr.Checkbox(
+                        label="Enable Image CFG",
+                        value=False
+                    )
+                    img_cfg = gr.Slider(
+                        label="Image CFG (inpaint or instruct-pix2pix models)",
+                        minimum=1,
+                        maximum=30,
+                        value=7.0,
+                        step=0.1,
+                        interactive=False
+                    )
+                    inputs_map['in_img_cfg'] = img_cfg
+
+                    cfg_comp = [img_cfg]
+
+                with gr.Row():
+                    strength = gr.Slider(
+                        label="Noise strength",
+                        minimum=0,
+                        maximum=1,
+                        step=0.01,
+                        value=0.75
+                    )
+                    inputs_map['in_strength'] = strength
 
                 bottom_generation_settings_ui = create_bottom_generation_settings_ui()
                 inputs_map.update(bottom_generation_settings_ui)
@@ -90,8 +124,8 @@ with gr.Blocks() as txt2img_block:
                 inputs_map.update(circular_ui)
 
                 # PhotoMaker
-                photomaker_ui = create_photomaker_ui()
-                inputs_map.update(photomaker_ui)
+                phtmkr_ui = create_photomaker_ui()
+                inputs_map.update(phtmkr_ui)
 
                 # Timestep shift
                 timestep_shift_ui = create_timestep_shift_ui()
@@ -102,7 +136,6 @@ with gr.Blocks() as txt2img_block:
                 inputs_map.update(eta_ui)
 
             with gr.Tab("Advanced Settings"):
-
                 # TAESD
                 taesd_ui = create_taesd_ui()
                 inputs_map.update(taesd_ui)
@@ -142,6 +175,11 @@ with gr.Blocks() as txt2img_block:
 
         # Output
         with gr.Column(scale=1):
+            with gr.Row():
+                img_inp_img2img = gr.Image(
+                    sources="upload", type="filepath"
+                )
+                inputs_map['in_img_inp'] = img_inp_img2img
             with gr.Group():
                 with gr.Row():
                     gen_btn = gr.Button(
@@ -164,12 +202,11 @@ with gr.Blocks() as txt2img_block:
                         value=0,
                         interactive=False,
                         visible=False,
-                        label="Progress",
-                        show_reset_button=False
+                        label="Progress"
                     )
                 with gr.Row():
                     progress_textbox = gr.Textbox(
-                        label="Status:",
+                        label="Progress:",
                         visible=False,
                         interactive=False
                     )
@@ -204,11 +241,11 @@ with gr.Blocks() as txt2img_block:
     def submit_job(*args):
         params = dict(zip(ordered_keys, args))
 
-        queue_manager.add_job(txt2img, params)
+        queue_manager.add_job(img2img, params)
 
         q_len = queue_manager.get_queue_size()
 
-        print(f"\n\nJob submitted! Position in queue: {q_len}.\n"),
+        print(f"Job submitted! Position in queue: {q_len}"),
 
         return (
             gr.Timer(value=0.01, active=True)
@@ -281,7 +318,6 @@ with gr.Blocks() as txt2img_block:
             generation_settings_ui['in_flow_shift']
         ]
     )
-
     model_ui['components']['unet_tab'].select(
         unet_tab_switch,
         inputs=[],
@@ -301,7 +337,6 @@ with gr.Blocks() as txt2img_block:
             generation_settings_ui['in_flow_shift']
         ]
     )
-
     refresh_opt.click(
         refresh_all_options,
         inputs=[],
@@ -312,12 +347,18 @@ with gr.Blocks() as txt2img_block:
         ]
     )
 
-    txt2img_params['pprompt'] = prompts_ui['in_pprompt']
-    txt2img_params['nprompt'] = prompts_ui['in_nprompt']
-    txt2img_params['width'] = generation_settings_ui['in_width']
-    txt2img_params['height'] = generation_settings_ui['in_height']
-    txt2img_params['steps'] = generation_settings_ui['in_steps']
-    txt2img_params['sampling'] = generation_settings_ui['in_sampling']
-    txt2img_params['scheduler'] = generation_settings_ui['in_scheduler']
-    txt2img_params['cfg'] = generation_settings_ui['in_cfg']
-    txt2img_params['seed'] = inputs_map['in_seed']
+    img_cfg_bool.change(
+        partial(update_interactivity, len(cfg_comp)),
+        inputs=img_cfg_bool,
+        outputs=cfg_comp
+    )
+
+    img2img_params['pprompt'] = prompts_ui['in_pprompt']
+    img2img_params['nprompt'] = prompts_ui['in_nprompt']
+    img2img_params['width'] = generation_settings_ui['in_width']
+    img2img_params['height'] = generation_settings_ui['in_height']
+    img2img_params['steps'] = generation_settings_ui['in_steps']
+    img2img_params['sampling'] = generation_settings_ui['in_sampling']
+    img2img_params['scheduler'] = generation_settings_ui['in_scheduler']
+    img2img_params['cfg'] = generation_settings_ui['in_cfg']
+    img2img_params['seed'] = inputs_map['in_seed']

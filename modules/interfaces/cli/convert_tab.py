@@ -2,7 +2,7 @@
 
 import gradio as gr
 
-from modules.sdcpp import convert
+from modules.core.cli.sdcpp_cli import convert
 from modules.shared_instance import (
     config, subprocess_manager
 )

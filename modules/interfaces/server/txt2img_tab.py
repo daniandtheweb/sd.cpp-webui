@@ -1,18 +1,14 @@
-"""sd.cpp-webui - Image to image UI"""
-
-from functools import partial
+"""sd.cpp-webui - Text to image UI"""
 
 import gradio as gr
 
-from modules.sdcpp import img2img
+from modules.core.server.sdcpp_server import (
+    start_server, stop_server, api_generation_task
+)
 from modules.utils.ui_handler import (
-    ckpt_tab_switch, unet_tab_switch, update_interactivity,
-    refresh_all_options
+    ckpt_tab_switch, unet_tab_switch, refresh_all_options
 )
 import modules.utils.queue as queue_manager
-from modules.shared_instance import (
-    config, subprocess_manager
-)
 from modules.ui.models import create_img_model_sel_ui
 from modules.ui.prompts import create_prompts_ui
 from modules.ui.generation_settings import (
@@ -37,26 +33,95 @@ from modules.ui.environment import create_env_ui
 # from modules.ui.experimental import create_experimental_ui
 
 
-img2img_params = {}
+txt2img_params = {}
+server_process = None
 
-with gr.Blocks()as img2img_block:
+
+with gr.Blocks() as txt2img_server_block:
     inputs_map = {}
-    # Directory Textboxes
-    taesd_dir_txt = gr.Textbox(value=config.get('taesd_dir'), visible=False)
 
     # Title
-    img2img_title = gr.Markdown("# Image to Image")
+    txt2img_title = gr.Markdown("# Text to Image")
 
     with gr.Accordion(
-        label="Models selection", open=False
+        label="Server configuration", open=False
     ):
-        # Model & VAE Selection
-        model_ui = create_img_model_sel_ui()
-        inputs_map.update(model_ui['inputs'])
+        with gr.Accordion(
+            label="Models selection", open=False
+        ):
+            # Model & VAE Selection
+            model_ui = create_img_model_sel_ui()
+            inputs_map.update(model_ui['inputs'])
 
-        # Model Type Selection
-        quant_ui = create_quant_ui()
-        inputs_map.update(quant_ui)
+            # Model Type Selection
+            quant_ui = create_quant_ui()
+            inputs_map.update(quant_ui)
+
+        with gr.Accordion(
+            label="Advanced Settings", open=False
+        ):
+
+            # TAESD
+            taesd_ui = create_taesd_ui()
+            inputs_map.update(taesd_ui)
+
+            # VAE Tiling
+            vae_tiling_ui = create_vae_tiling_ui()
+            inputs_map.update(vae_tiling_ui)
+
+            # Cache
+            cache_ui = create_cache_ui()
+            inputs_map.update(cache_ui)
+
+            # Extra Settings
+            extras_ui = create_extras_ui()
+            inputs_map.update(extras_ui)
+
+            # Preview Settings
+            preview_ui = create_preview_ui()
+            inputs_map.update(preview_ui)
+
+            # Performance Settings
+            performance_ui = create_performance_ui()
+            inputs_map.update(performance_ui)
+
+            # Environment Variables
+            env_ui = create_env_ui()
+            inputs_map.update(env_ui)
+
+        listen_ip = gr.Textbox(
+            label="Listen IP",
+            show_label=True,
+            value="127.0.0.1",
+            interactive=True
+        )
+        inputs_map['ip'] = listen_ip
+
+        port = gr.Number(
+            label="Port",
+            minimum=0,
+            maximum=65535,
+            value=1234,
+            interactive=True,
+            step=1
+        )
+        inputs_map['port'] = port
+
+    with gr.Group():
+        with gr.Row():
+            server_start = gr.Button(
+                value="Start server", variant="primary"
+            )
+            server_stop = gr.Button(
+                value="Stop server", variant="stop"
+            )
+        with gr.Row():
+            server_status = gr.Textbox(
+                label="Server status:",
+                show_label=True,
+                value="Stopped",
+                interactive=False
+            )
 
     # Prompts
     prompts_ui = create_prompts_ui()
@@ -70,33 +135,6 @@ with gr.Blocks()as img2img_block:
 
                 generation_settings_ui = create_generation_settings_ui()
                 inputs_map.update(generation_settings_ui)
-
-                with gr.Row():
-                    img_cfg_bool = gr.Checkbox(
-                        label="Enable Image CFG",
-                        value=False
-                    )
-                    img_cfg = gr.Slider(
-                        label="Image CFG (inpaint or instruct-pix2pix models)",
-                        minimum=1,
-                        maximum=30,
-                        value=7.0,
-                        step=0.1,
-                        interactive=False
-                    )
-                    inputs_map['in_img_cfg'] = img_cfg
-
-                    cfg_comp = [img_cfg]
-
-                with gr.Row():
-                    strength = gr.Slider(
-                        label="Noise strength",
-                        minimum=0,
-                        maximum=1,
-                        step=0.01,
-                        value=0.75
-                    )
-                    inputs_map['in_strength'] = strength
 
                 bottom_generation_settings_ui = create_bottom_generation_settings_ui()
                 inputs_map.update(bottom_generation_settings_ui)
@@ -124,8 +162,8 @@ with gr.Blocks()as img2img_block:
                 inputs_map.update(circular_ui)
 
                 # PhotoMaker
-                phtmkr_ui = create_photomaker_ui()
-                inputs_map.update(phtmkr_ui)
+                photomaker_ui = create_photomaker_ui()
+                inputs_map.update(photomaker_ui)
 
                 # Timestep shift
                 timestep_shift_ui = create_timestep_shift_ui()
@@ -134,35 +172,6 @@ with gr.Blocks()as img2img_block:
                 # ETA
                 eta_ui = create_eta_ui()
                 inputs_map.update(eta_ui)
-
-            with gr.Tab("Advanced Settings"):
-                # TAESD
-                taesd_ui = create_taesd_ui()
-                inputs_map.update(taesd_ui)
-
-                # VAE Tiling
-                vae_tiling_ui = create_vae_tiling_ui()
-                inputs_map.update(vae_tiling_ui)
-
-                # Cache
-                cache_ui = create_cache_ui()
-                inputs_map.update(cache_ui)
-
-                # Extra Settings
-                extras_ui = create_extras_ui()
-                inputs_map.update(extras_ui)
-
-                # Preview Settings
-                preview_ui = create_preview_ui()
-                inputs_map.update(preview_ui)
-
-                # Performance Settings
-                performance_ui = create_performance_ui()
-                inputs_map.update(performance_ui)
-
-                # Environment Variables
-                env_ui = create_env_ui()
-                inputs_map.update(env_ui)
 
             # Experimental
             # experimental_ui = create_experimental_ui()
@@ -175,20 +184,11 @@ with gr.Blocks()as img2img_block:
 
         # Output
         with gr.Column(scale=1):
-            with gr.Row():
-                img_inp_img2img = gr.Image(
-                    sources="upload", type="filepath"
-                )
-                inputs_map['in_img_inp'] = img_inp_img2img
             with gr.Group():
                 with gr.Row():
                     gen_btn = gr.Button(
                         value="Generate", size="lg",
                         variant="primary"
-                    )
-                    kill_btn = gr.Button(
-                        value="Stop", size="lg",
-                        variant="stop"
                     )
                 with gr.Row():
                     queue_tracker = gr.Textbox(
@@ -202,11 +202,12 @@ with gr.Blocks()as img2img_block:
                         value=0,
                         interactive=False,
                         visible=False,
-                        label="Progress"
+                        label="Progress",
+                        show_reset_button=False
                     )
                 with gr.Row():
                     progress_textbox = gr.Textbox(
-                        label="Progress:",
+                        label="Status:",
                         visible=False,
                         interactive=False
                     )
@@ -238,28 +239,55 @@ with gr.Blocks()as img2img_block:
     ordered_keys = sorted(inputs_map.keys())
     ordered_components = [inputs_map[key] for key in ordered_keys]
 
-    def submit_job(*args):
+    def start_server_wrapper(*args):
+        # Reconstruct the dictionary {key: value}
         params = dict(zip(ordered_keys, args))
+        # Pass the dictionary to the original server function
+        return start_server(params)
 
-        queue_manager.add_job(img2img, params)
+    server_start.click(
+        fn=start_server_wrapper,
+        inputs=ordered_components,
+        outputs=[server_status, gen_btn]
+    )
 
-        q_len = queue_manager.get_queue_size()
+    server_stop.click(
+        fn=stop_server,
+        inputs=[],
+        outputs=[server_status, gen_btn]
+    )
 
-        print(f"Job submitted! Position in queue: {q_len}"),
+    def submit_job(ip_addr, port_num, prompt_text, w, h):
+        """
+        Pack parameters and add to queue.
+        """
+        params = {
+            'ip': ip_addr,
+            'port': port_num,
+            'prompt': prompt_text,
+            'width': w,
+            'height': h
+        }
 
-        return (
-            gr.Timer(value=0.01, active=True)
-        )
+        # Add the API task to the queue
+        queue_manager.add_job(api_generation_task, params)
+
+        return gr.Timer(value=0.5, active=True)
 
     def poll_status():
+        """
+        Check queue status and update UI elements.
+        """
         state = queue_manager.get_status()
         q_len = queue_manager.get_queue_size()
 
+        # Decide if timer should keep running
         if state["is_running"] or q_len > 0:
-            timer_update = gr.Timer(value=0.01, active=True)
+            timer_update = gr.Timer(value=0.5, active=True)
         else:
             timer_update = gr.Timer(active=False)
 
+        # Update queue text
         if q_len > 0:
             queue_update = gr.update(value=f"⏳ Jobs in queue: {q_len}", visible=True)
         else:
@@ -267,10 +295,10 @@ with gr.Blocks()as img2img_block:
 
         return (
             state["command"],
-            state["progress"],
-            state["status"],
-            state["stats"],
-            state["images"],
+            state["progress"],   # slider value
+            state["status"],     # status text
+            state["stats"],      # stats text
+            state["images"],     # gallery
             timer_update,
             queue_update
         )
@@ -278,9 +306,15 @@ with gr.Blocks()as img2img_block:
     timer = gr.Timer(value=0.01, active=False)
 
     gen_btn.click(
-        submit_job,
-        inputs=ordered_components,
-        outputs=[timer]
+        fn=submit_job,
+        inputs=[
+            listen_ip,
+            port,
+            prompts_ui['in_pprompt'],            # System Prompt
+            generation_settings_ui['in_width'],  # Width
+            generation_settings_ui['in_height']  # Height
+        ],
+        outputs=[timer]                      # Existing Gallery Component
     )
 
     timer.tick(
@@ -290,12 +324,6 @@ with gr.Blocks()as img2img_block:
             command, progress_slider, progress_textbox,
             stats, img_final, timer, queue_tracker
         ]
-    )
-
-    kill_btn.click(
-        subprocess_manager.kill_subprocess,
-        inputs=[],
-        outputs=[]
     )
 
     # Interactive Bindings
@@ -318,6 +346,7 @@ with gr.Blocks()as img2img_block:
             generation_settings_ui['in_flow_shift']
         ]
     )
+
     model_ui['components']['unet_tab'].select(
         unet_tab_switch,
         inputs=[],
@@ -337,6 +366,7 @@ with gr.Blocks()as img2img_block:
             generation_settings_ui['in_flow_shift']
         ]
     )
+
     refresh_opt.click(
         refresh_all_options,
         inputs=[],
@@ -347,18 +377,12 @@ with gr.Blocks()as img2img_block:
         ]
     )
 
-    img_cfg_bool.change(
-        partial(update_interactivity, len(cfg_comp)),
-        inputs=img_cfg_bool,
-        outputs=cfg_comp
-    )
-
-    img2img_params['pprompt'] = prompts_ui['in_pprompt']
-    img2img_params['nprompt'] = prompts_ui['in_nprompt']
-    img2img_params['width'] = generation_settings_ui['in_width']
-    img2img_params['height'] = generation_settings_ui['in_height']
-    img2img_params['steps'] = generation_settings_ui['in_steps']
-    img2img_params['sampling'] = generation_settings_ui['in_sampling']
-    img2img_params['scheduler'] = generation_settings_ui['in_scheduler']
-    img2img_params['cfg'] = generation_settings_ui['in_cfg']
-    img2img_params['seed'] = inputs_map['in_seed']
+    txt2img_params['pprompt'] = prompts_ui['in_pprompt']
+    txt2img_params['nprompt'] = prompts_ui['in_nprompt']
+    txt2img_params['width'] = generation_settings_ui['in_width']
+    txt2img_params['height'] = generation_settings_ui['in_height']
+    txt2img_params['steps'] = generation_settings_ui['in_steps']
+    txt2img_params['sampling'] = generation_settings_ui['in_sampling']
+    txt2img_params['scheduler'] = generation_settings_ui['in_scheduler']
+    txt2img_params['cfg'] = generation_settings_ui['in_cfg']
+    txt2img_params['seed'] = inputs_map['in_seed']

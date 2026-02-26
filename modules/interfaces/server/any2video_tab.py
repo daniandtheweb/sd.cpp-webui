@@ -4,7 +4,6 @@ from functools import partial
 
 import gradio as gr
 
-from modules.sdcpp import any2video
 from modules.utils.ui_handler import (
     update_interactivity, refresh_all_options
 )
@@ -33,7 +32,7 @@ from modules.ui.environment import create_env_ui
 
 any2video_params = {}
 
-with gr.Blocks() as any2video_block:
+with gr.Blocks() as any2video_server_block:
     inputs_map = {}
     # Directory Textboxes
     emb_dir_txt = gr.Textbox(value=config.get('emb_dir'), visible=False)

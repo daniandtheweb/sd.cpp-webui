@@ -8,7 +8,9 @@ from modules.utils.utility import SubprocessManager
 import modules.utils.queue as queue_manager
 
 
-SD = exe_name()
+SD_CLI = exe_name("cli")
+
+SD_SERVER = exe_name("server")
 
 config = ConfigManager()
 

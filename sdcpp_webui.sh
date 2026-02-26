@@ -11,6 +11,7 @@ Usage: ./sdcpp_webui.sh [options]
 
 Options:
     -h or --help:            Show this help
+    --server                 Enable stable-diffusion.cpp's server mode
     --listen:                Share sd.cpp-webui on your local network
     --autostart:             Open the UI automatically
     --darkmode:              Forces the UI to launch in dark mode
@@ -27,7 +28,7 @@ for arg in "$@"; do
     -h|--help)
       print_help
       ;;
-    --listen|--autostart|--darkmode|--credentials|--allow-insecure-dir)
+    --server|--listen|--autostart|--darkmode|--credentials|--allow-insecure-dir)
       ;;
     *)
       printf "Error: Unknown command parameter: %s\n" "$arg" >&2

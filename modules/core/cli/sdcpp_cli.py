@@ -1,4 +1,4 @@
-"""sd.cpp-webui - stable-diffusion.cpp command module"""
+"""sd.cpp-webui - core - stable-diffusion.cpp cli"""
 
 import os
 import re
@@ -14,7 +14,7 @@ from modules.utils.sdcpp_utils import (
     extract_env_vars, generate_output_filename
 )
 from modules.shared_instance import (
-    config, subprocess_manager, SD
+    config, subprocess_manager, SD_CLI
 )
 from modules.ui.constants import CIRCULAR_PADDING
 
@@ -31,7 +31,7 @@ class CommandRunner:
         self.mode = mode
         self.params = params
         self.env_vars = extract_env_vars(self.params)
-        self.command = [SD, '-M', self.mode]
+        self.command = [SD_CLI, '-M', self.mode]
         self.fcommand = ""
         self.outputs = []
         self.output_path = ""
@@ -622,7 +622,7 @@ def convert(params: dict):
         )
 
     command = [
-        SD, '-M', 'convert',
+        SD_CLI, '-M', 'convert',
         '--model', orig_model_path,
         '-o', gguf_path,
         '--type', in_quant_type

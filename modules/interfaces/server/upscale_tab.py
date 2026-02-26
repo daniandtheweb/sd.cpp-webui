@@ -4,7 +4,6 @@ from functools import partial
 
 import gradio as gr
 
-from modules.sdcpp import upscale
 from modules.utils.ui_handler import (
     update_interactivity
 )
@@ -21,7 +20,7 @@ from modules.ui.environment import create_env_ui
 from modules.ui.constants import RELOAD_SYMBOL, SWITCH_V_SYMBOL
 
 
-with gr.Blocks() as upscale_block:
+with gr.Blocks() as upscale_server_block:
     # Directory Textboxes
     upscl_dir_txt = gr.Textbox(value=config.get('upscl_dir'), visible=False)
 
