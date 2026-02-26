@@ -3,7 +3,7 @@
 import gradio as gr
 
 from modules.core.server.sdcpp_server import (
-    start_server, stop_server, get_server_status, api_generation_task
+    start_server, stop_server, get_server_status, txt2img_api
 )
 from modules.utils.ui_handler import (
     ckpt_tab_switch, unet_tab_switch, refresh_all_options
@@ -60,52 +60,53 @@ with gr.Blocks() as txt2img_server_block:
         with gr.Accordion(
             label="Advanced Settings", open=False
         ):
+            with gr.Tab("Advanced Settings"):
 
-            # TAESD
-            taesd_ui = create_taesd_ui()
-            inputs_map.update(taesd_ui)
+                # TAESD
+                taesd_ui = create_taesd_ui()
+                inputs_map.update(taesd_ui)
 
-            # VAE Tiling
-            vae_tiling_ui = create_vae_tiling_ui()
-            inputs_map.update(vae_tiling_ui)
+                # VAE Tiling
+                vae_tiling_ui = create_vae_tiling_ui()
+                inputs_map.update(vae_tiling_ui)
 
-            # Cache
-            cache_ui = create_cache_ui()
-            inputs_map.update(cache_ui)
+                # Cache
+                cache_ui = create_cache_ui()
+                inputs_map.update(cache_ui)
 
-            # Extra Settings
-            extras_ui = create_extras_ui()
-            inputs_map.update(extras_ui)
+                # Extra Settings
+                extras_ui = create_extras_ui()
+                inputs_map.update(extras_ui)
 
-            # Preview Settings
-            preview_ui = create_preview_ui()
-            inputs_map.update(preview_ui)
+                # Preview Settings
+                preview_ui = create_preview_ui()
+                inputs_map.update(preview_ui)
 
-            # Performance Settings
-            performance_ui = create_performance_ui()
-            inputs_map.update(performance_ui)
+                # Performance Settings
+                performance_ui = create_performance_ui()
+                inputs_map.update(performance_ui)
 
-            # Environment Variables
-            env_ui = create_env_ui()
-            inputs_map.update(env_ui)
+                # Environment Variables
+                env_ui = create_env_ui()
+                inputs_map.update(env_ui)
 
-        listen_ip = gr.Textbox(
-            label="Listen IP",
-            show_label=True,
-            value="127.0.0.1",
-            interactive=True
-        )
-        inputs_map['in_ip'] = listen_ip
+            listen_ip = gr.Textbox(
+                label="Listen IP",
+                show_label=True,
+                value="127.0.0.1",
+                interactive=True
+            )
+            inputs_map['in_ip'] = listen_ip
 
-        port = gr.Number(
-            label="Port",
-            minimum=0,
-            maximum=65535,
-            value=1234,
-            interactive=True,
-            step=1
-        )
-        inputs_map['in_port'] = port
+            port = gr.Number(
+                label="Port",
+                minimum=0,
+                maximum=65535,
+                value=1234,
+                interactive=True,
+                step=1
+            )
+            inputs_map['in_port'] = port
 
     with gr.Group():
         with gr.Row():
@@ -246,10 +247,6 @@ with gr.Blocks() as txt2img_server_block:
         # Pass the dictionary to the original server function
         return start_server(params)
 
-    def api_generation_task_wrapper(*args):
-        params = dict(zip(ordered_keys, args))
-        return api_generation_task(params)
-
     server_start.click(
         fn=start_server_wrapper,
         inputs=ordered_components,
@@ -275,7 +272,7 @@ with gr.Blocks() as txt2img_server_block:
         params = dict(zip(ordered_keys, args))
 
         # Add the API task to the queue
-        queue_manager.add_job(api_generation_task, params)
+        queue_manager.add_job(txt2img_api, params)
 
         return gr.Timer(value=0.5, active=True)
 

@@ -246,7 +246,6 @@ def stop_server():
 def get_server_status():
     """
     Check if the server is actually running.
-    Bind this to a gr.Timer or poll it to update the UI if the server crashes.
     """
     global server_running
     if server_running:
@@ -255,7 +254,9 @@ def get_server_status():
 
 
 class ApiTaskRunner:
-    """Builds and manages API requests to the sd.cpp server, mirroring CLI logic."""
+    """
+    Builds and manages API requests to the sd.cpp server.
+    """
 
     def __init__(self, params: Dict[str, Any]):
         self.params = params
@@ -333,18 +334,24 @@ class ApiTaskRunner:
             "response_format": "b64_json"
         }
 
-        # Extra args mapping
+        # Format: 'ui_key': ('api_key', type, 'bool_condition_key' or None)
         mapping = {
-            'in_seed':      ('seed', int),
-            'in_steps':     ('steps', int),
-            'in_cfg':       ('cfg_scale', float),
-            'in_sampling':  ('sample_method', str),
-            'in_scheduler': ('scheduler', str),
-            'in_nprompt':   ('negative_prompt', str),
+            'in_nprompt':   ('negative_prompt', str, None),
+            'in_sampling':  ('sample_method', str, None),
+            'in_scheduler': ('scheduler', str, None),
+            'in_steps':     ('steps', int, None),
+            'in_cfg':       ('cfg_scale', float, None),
+            'in_flow_shift': ('flow_shift', float, 'in_flow_shift_bool'),
+            'in_guidance': ('guidance', float, 'in_guidance_bool'),
+            'in_seed':      ('seed', int, None),
+            'in_clip_skip': ('clip_skip', int, None),
         }
 
         extra_args = {}
-        for p_key, (a_key, cast_type) in mapping.items():
+        for p_key, (a_key, cast_type, cond_key) in mapping.items():
+            if cond_key and not self._get_param(cond_key, False):
+                continue
+
             val = self._get_param(p_key)
 
             if val is not None and str(val).strip() != "":
@@ -372,7 +379,6 @@ class ApiTaskRunner:
     def run(self) -> Generator:
         """Generator yielding updates identical to CLI runners."""
         self._resolve_paths()
-        self._set_output_path('txt2img_dir', 0, 'png')
 
         payload = self._build_payload()
 
@@ -395,10 +401,13 @@ class ApiTaskRunner:
             yield (self.fcommand, gr.update(value=0), "Connection Failed", str(e), None)
 
 
-def api_generation_task(params):
-    """
-    Generator function compatible with queue.py.
-    Yields: [command, progress, status, stats, images]
-    """
-    runner = ApiTaskRunner(params)
+class Txt2ImgApiRunner(ApiTaskRunner):
+    def prepare(self):
+        self._set_output_path(dir_key='txt2img_dir', subctrl_id=0, extension='png')
+
+
+def txt2img_api(params: dict) -> Generator:
+    """Creates and runs a Txt2ImgApiRunner."""
+    runner = Txt2ImgApiRunner(params)
+    runner.prepare()
     yield from runner.run()
