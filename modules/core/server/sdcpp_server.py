@@ -8,7 +8,7 @@ import requests
 import threading
 from PIL import Image
 from enum import IntEnum
-from typing import Dict, Any
+from typing import Dict, Any, Generator
 
 import gradio as gr
 
@@ -17,6 +17,7 @@ from modules.utils.sdcpp_utils import (
     extract_env_vars, generate_output_filename
 )
 from modules.shared_instance import config, subprocess_manager, SD_SERVER
+from modules.ui.constants import CIRCULAR_PADDING
 
 server_running = False
 
@@ -119,9 +120,39 @@ class ServerRunner:
 
         # Boolean Flags
         flags = {
-            '--fa': True,  # Defaulting to True based on original code, or make param
-            '--vae-conv-direct': True,
-            '-v': self._get_param('in_verbose', False)
+            '--offload-to-cpu': self._get_param('in_offload_to_cpu'),
+            '--vae-tiling': self._get_param('in_vae_tiling'),
+            '--vae-on-cpu': self._get_param('in_vae_cpu'),
+            '--clip-on-cpu': self._get_param('in_clip_cpu'),
+            '--control-net-cpu': self._get_param('in_cnnet_cpu'),
+            '--canny': self._get_param('in_canny'),
+            '--chroma-disable-dit-mask': (
+                self._get_param('in_disable_dit_mask')
+            ),
+            '--chroma-enable-t5-mask': self._get_param('in_enable_t5_mask'),
+            '--qwen-image-zero-cond-t': (
+                self._get_param('in_enable_zero_cond_t')
+            ),
+            '--circular': (
+                self._get_param('in_circular_padding') == CIRCULAR_PADDING[1]
+            ),
+            '--circularx': (
+                self._get_param('in_circular_padding') == CIRCULAR_PADDING[2]
+            ),
+            '--circulary': (
+                self._get_param('in_circular_padding') == CIRCULAR_PADDING[3]
+            ),
+            '--fa': self._get_param('in_flash_attn'),
+            '--diffusion-fa': self._get_param('in_diffusion_fa'),
+            '--diffusion-conv-direct': (
+                self._get_param('in_diffusion_conv_direct')
+            ),
+            '--vae-conv-direct': self._get_param('in_vae_conv_direct'),
+            '--force-sdxl-vae-conv-scale': (
+                self._get_param('in_force_sdxl_vae_conv_scale')
+            ),
+            '--color': self._get_param('in_color'),
+            '-v': self._get_param('in_verbose')
         }
         self._add_flags(flags)
 
@@ -168,7 +199,7 @@ class ServerRunner:
         thread.start()
 
         server_running = True
-        return "Running", gr.update(interactive=True)
+        return "Running", gr.update(interactive=True), gr.update(active=True)
 
 
 def start_server(params):
@@ -176,7 +207,7 @@ def start_server(params):
     global server_running
 
     if server_running:
-        return "Running", gr.update(interactive=False)
+        return "Running", gr.update(), gr.update()
 
     try:
         # Extract necessary params for path validation checks if needed here,
@@ -191,7 +222,7 @@ def start_server(params):
         return runner.start()
 
     except Exception as e:
-        return f"Error: {e}", gr.update(interactive=False)
+        return f"Error: {e}", gr.update(interactive=False), gr.update()
 
 
 def stop_server():
@@ -199,17 +230,17 @@ def stop_server():
     global server_running
 
     if not server_running:
-        return "Stopped", gr.update(interactive=False)
+        return "Stopped", gr.update(interactive=False), gr.update()
 
     try:
         # Use the manager to kill the process
         subprocess_manager.kill_subprocess()
         server_running = False
 
-        return "Stopped", gr.update(interactive=False)
+        return "Stopped", gr.update(interactive=False), gr.update(active=False)
 
     except Exception:
-        return "Error", gr.update(interactive=False)
+        return "Error", gr.update(interactive=False), gr.update(active=False)
 
 
 def get_server_status():
@@ -223,56 +254,151 @@ def get_server_status():
     return "Stopped", gr.update(interactive=False)
 
 
+class ApiTaskRunner:
+    """Builds and manages API requests to the sd.cpp server, mirroring CLI logic."""
+
+    def __init__(self, params: Dict[str, Any]):
+        self.params = params
+        self.ip = str(self._get_param('in_ip'))
+        self.port = str(self._get_param('in_port'))
+        self.url = f"http://{self.ip}:{self.port}/v1/images/generations"
+
+        self.output_path = ""
+        self.outputs = []
+        self.fcommand = f"POST {self.url}"
+
+    def _set_output_path(self, dir_key: str, subctrl_id: int, extension: str):
+        """Determines and sets the output path for the command."""
+        output_dir = config.get(dir_key)
+        filename_override = self._get_param('in_output')
+        output_scheme = config.get('def_output_scheme')
+
+        if filename_override and str(filename_override).strip():
+            filename = f"{filename_override}.{extension}"
+            self.output_path = os.path.join(output_dir, filename)
+            return
+
+        name_parts = []
+
+        if config.get('def_output_steps'):
+            steps_val = self._get_param('in_steps')
+            if steps_val:
+                name_parts.append(f"{steps_val}_steps")
+
+        if config.get('def_output_quant'):
+            quant_val = self._get_param('in_model_type')
+            if quant_val and quant_val != "Default":
+                name_parts.append(str(quant_val))
+
+        self.output_path = generate_output_filename(
+            output_dir, output_scheme, extension,
+            name_parts, subctrl_id
+        )
+
+    def _resolve_paths(self):
+        """Resolves all model and directory paths from the config."""
+        path_mappings = {
+            'ckpt_dir': ['in_ckpt_model'],
+            'vae_dir': ['in_ckpt_vae', 'in_unet_vae'],
+            'unet_dir': ['in_unet_model', 'in_high_noise_model'],
+            'txt_enc_dir': [
+                'in_clip_g', 'in_clip_l', 'in_t5xxl', 'in_llm',
+                'in_umt5_xxl', 'in_clip_vision_h'
+            ],
+            'taesd_dir': ['in_taesd'],
+            'phtmkr_dir': ['in_phtmkr'],
+            'upscl_dir': ['in_upscl'],
+            'cnnet_dir': ['in_cnnet']
+        }
+        for dir_key, param_keys in path_mappings.items():
+            for param_key in param_keys:
+                if param_key in self.params:
+                    # Create a new key for the full path, e.g., 'f_ckpt_model'
+                    full_path_key = f"f_{param_key.replace('in_', '')}"
+                    self.params[full_path_key] = get_path(
+                        config.get(dir_key), self.params.get(param_key)
+                    )
+
+    def _get_param(self, key: str, default: Any = None) -> Any:
+        """Helper to get a parameter from the params dictionary."""
+        return self.params.get(key, default)
+
+    def _build_payload(self) -> dict:
+        """Constructs the JSON payload from UI parameters."""
+        payload = {
+            "model": "default",
+            "prompt": self._get_param('in_pprompt', ''),
+            "n": self._get_param('in_batch_count', 1),
+            "size": f"{self._get_param('in_width')}x{self._get_param('in_height')}",
+            "response_format": "b64_json"
+        }
+
+        # Extra args mapping
+        mapping = {
+            'in_seed':      ('seed', int),
+            'in_steps':     ('steps', int),
+            'in_cfg':       ('cfg_scale', float),
+            'in_sampling':  ('sample_method', str),
+            'in_scheduler': ('scheduler', str),
+            'in_nprompt':   ('negative_prompt', str),
+        }
+
+        extra_args = {}
+        for p_key, (a_key, cast_type) in mapping.items():
+            val = self._get_param(p_key)
+
+            if val is not None and str(val).strip() != "":
+                try:
+                    extra_args[a_key] = cast_type(val)
+                except (ValueError, TypeError):
+                    continue
+
+        if extra_args:
+            payload["prompt"] += f"<sd_cpp_extra_args>{json.dumps(extra_args)}</sd_cpp_extra_args>"
+
+        return payload
+
+    def _process_response(self, data: dict):
+        """Decodes and saves images, populating self.outputs."""
+        base, ext = os.path.splitext(self.output_path)
+
+        for i, item in enumerate(data.get("data", [])):
+            if b64_data := item.get("b64_json"):
+                image = Image.open(io.BytesIO(base64.b64decode(b64_data)))
+                target_path = self.output_path if i == 0 else f"{base}_{i + 1}{ext}"
+                image.save(target_path)
+                self.outputs.append(target_path)
+
+    def run(self) -> Generator:
+        """Generator yielding updates identical to CLI runners."""
+        self._resolve_paths()
+        self._set_output_path('txt2img_dir', 0, 'png')
+
+        payload = self._build_payload()
+
+        yield (self.fcommand, gr.update(visible=True, value=10),
+               "Connecting...", "Sending Request", None)
+
+        try:
+            response = requests.post(self.url, json=payload, timeout=None)
+
+            if response.status_code == 200:
+                yield (self.fcommand, gr.update(value=80), "Decoding...", "Processing Response", None)
+                self._process_response(response.json())
+
+                yield (self.fcommand, gr.update(visible=False, value=100),
+                       "Done", f"Saved to {os.path.dirname(self.output_path)}", self.outputs)
+            else:
+                yield (self.fcommand, gr.update(value=0), "Error", f"Status {response.status_code}", None)
+
+        except Exception as e:
+            yield (self.fcommand, gr.update(value=0), "Connection Failed", str(e), None)
+
+
 def api_generation_task(params):
     """
     Generator function compatible with queue.py.
     Yields: [command, progress, status, stats, images]
     """
-    ip = params.get('ip', '127.0.0.1')
-    port = params.get('port', 1234)
-    prompt = params.get('prompt', '')
-    width = params.get('width', 512)
-    height = params.get('height', 512)
-
-    url = f"http://{ip}:{int(port)}/v1/images/generations"
-    headers = {"Content-Type": "application/json"}
-
-    yield (f"POST {url}", 0, "Connecting to server...", "Waiting...", None)
-
-    payload = {
-        "model": "default",
-        "prompt": prompt,
-        "n": 1,
-        "size": f"{width}x{height}",
-        "response_format": "b64_json"
-    }
-
-    try:
-        # 2. Yield Sending State
-        yield (f"POST {url}", 20, "Sending request...", "Processing...", None)
-
-        # Blocking call to the server
-        response = requests.post(
-            url,
-            headers=headers,
-            data=json.dumps(payload),
-            timeout=None
-        )
-
-        if response.status_code == 200:
-            data = response.json()
-            images = []
-
-            for item in data.get('data', []):
-                b64_data = item['b64_json']
-                image = Image.open(io.BytesIO(base64.b64decode(b64_data)))
-                images.append(image)
-
-            yield (f"Success: {url}", 100, "Done", f"Generated {len(images)} image(s)", images)
-
-        else:
-            error_msg = f"Server Error {response.status_code}: {response.text}"
-            yield (f"Failed: {url}", 0, "Error", error_msg, None)
-
-    except Exception as e:
-        yield ("Connection Failed", 0, "Error", str(e), None)
+    runner = ApiTaskRunner(params)
+    yield from runner.run()

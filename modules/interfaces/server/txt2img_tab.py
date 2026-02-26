@@ -3,7 +3,7 @@
 import gradio as gr
 
 from modules.core.server.sdcpp_server import (
-    start_server, stop_server, api_generation_task
+    start_server, stop_server, get_server_status, api_generation_task
 )
 from modules.utils.ui_handler import (
     ckpt_tab_switch, unet_tab_switch, refresh_all_options
@@ -95,7 +95,7 @@ with gr.Blocks() as txt2img_server_block:
             value="127.0.0.1",
             interactive=True
         )
-        inputs_map['ip'] = listen_ip
+        inputs_map['in_ip'] = listen_ip
 
         port = gr.Number(
             label="Port",
@@ -105,22 +105,23 @@ with gr.Blocks() as txt2img_server_block:
             interactive=True,
             step=1
         )
-        inputs_map['port'] = port
+        inputs_map['in_port'] = port
 
     with gr.Group():
-        with gr.Row():
-            server_start = gr.Button(
-                value="Start server", variant="primary"
-            )
-            server_stop = gr.Button(
-                value="Stop server", variant="stop"
-            )
         with gr.Row():
             server_status = gr.Textbox(
                 label="Server status:",
                 show_label=True,
                 value="Stopped",
                 interactive=False
+            )
+            server_status_timer = gr.Timer(value=0.1, active=False)
+        with gr.Row():
+            server_start = gr.Button(
+                value="Start server", variant="primary"
+            )
+            server_stop = gr.Button(
+                value="Stop server", variant="stop"
             )
 
     # Prompts
@@ -245,29 +246,33 @@ with gr.Blocks() as txt2img_server_block:
         # Pass the dictionary to the original server function
         return start_server(params)
 
+    def api_generation_task_wrapper(*args):
+        params = dict(zip(ordered_keys, args))
+        return api_generation_task(params)
+
     server_start.click(
         fn=start_server_wrapper,
         inputs=ordered_components,
-        outputs=[server_status, gen_btn]
+        outputs=[server_status, gen_btn, server_status_timer]
     )
 
     server_stop.click(
         fn=stop_server,
         inputs=[],
+        outputs=[server_status, gen_btn, server_status_timer]
+    )
+
+    server_status_timer.tick(
+        fn=get_server_status,
+        inputs=[],
         outputs=[server_status, gen_btn]
     )
 
-    def submit_job(ip_addr, port_num, prompt_text, w, h):
+    def submit_job(*args):
         """
         Pack parameters and add to queue.
         """
-        params = {
-            'ip': ip_addr,
-            'port': port_num,
-            'prompt': prompt_text,
-            'width': w,
-            'height': h
-        }
+        params = dict(zip(ordered_keys, args))
 
         # Add the API task to the queue
         queue_manager.add_job(api_generation_task, params)
@@ -307,13 +312,7 @@ with gr.Blocks() as txt2img_server_block:
 
     gen_btn.click(
         fn=submit_job,
-        inputs=[
-            listen_ip,
-            port,
-            prompts_ui['in_pprompt'],            # System Prompt
-            generation_settings_ui['in_width'],  # Width
-            generation_settings_ui['in_height']  # Height
-        ],
+        inputs=ordered_components,
         outputs=[timer]                      # Existing Gallery Component
     )
 
