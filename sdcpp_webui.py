@@ -12,19 +12,22 @@ from modules.interfaces.cli.txt2img_tab import (
     txt2img_block, txt2img_params
 )
 from modules.interfaces.server.txt2img_tab import (
-    txt2img_server_block
+    txt2img_server_block, txt2img_server_params
 )
 from modules.interfaces.cli.img2img_tab import (
     img2img_block, img2img_params, img_inp_img2img
 )
 from modules.interfaces.server.img2img_tab import (
-    img2img_server_block
+    img2img_server_block, img2img_server_params,
+    img_inp_img2img_server
 )
 from modules.interfaces.cli.imgedit_tab import (
-    imgedit_block, width_imgedit, height_imgedit, ref_img_imgedit
+    imgedit_block, width_imgedit, height_imgedit,
+    ref_img_imgedit
 )
 from modules.interfaces.server.imgedit_tab import (
-    imgedit_server_block
+    imgedit_server_block, width_imgedit_server,
+    height_imgedit_server, ref_img_imgedit_server
 )
 from modules.interfaces.cli.any2video_tab import (
     any2video_block, any2video_params
@@ -98,7 +101,8 @@ def load_credentials(filepath: str = "credentials.json"):
             with open(filepath, 'r') as file:
                 data = json.load(file)
 
-            # Gradio expects auth to be a list of tuples: [("user", "pass"), ...]
+            # Gradio expects auth to be a list of tuples:
+            # [("user", "pass"), ...]
             return list(data.items())
         else:
             print(f"Credentials file '{filepath}' not found. Skipping password protection.")
@@ -213,6 +217,8 @@ def sdcpp_launch(
                 with gr.TabItem("imgedit", id="imgedit"):
                     imgedit_server_block.render()
                 with gr.TabItem("Gallery", id="gallery") as gallery_tab:
+                    cpy_2_any2video_btn.visible = False
+                    cpy_2_upscale_btn.visible = False
                     gallery_block.render()
                 with gr.TabItem("Options", id="options"):
                     options_block.render()
@@ -244,35 +250,44 @@ def sdcpp_launch(
                 gallery, gallery_loaded_state
             ]
         )
+
+        t2i_params = txt2img_server_params if server else txt2img_params
+        i2i_params = img2img_server_params if server else img2img_params
+        i2i_inp = img_inp_img2img_server if server else img_inp_img2img
+        ie_width = width_imgedit_server if server else width_imgedit
+        ie_height = height_imgedit_server if server else height_imgedit
+        ie_ref = ref_img_imgedit_server if server else ref_img_imgedit
+
         # Copy data from gallery image to txt2img.
         cpy_2_txt2img_btn.click(
             create_copy_fn("txt2img", FIELDS),
             inputs=common_inputs,
-            outputs=[tabs] + [txt2img_params[f] for f in FIELDS]
+            outputs=[tabs] + [t2i_params[f] for f in FIELDS]
         )
         # Copy data from gallery image to img2img.
         cpy_2_img2img_btn.click(
             create_copy_fn("img2img", FIELDS + ['input_image']),
             inputs=common_inputs + [path_info],
-            outputs=[tabs] + [img2img_params[f] for f in FIELDS] + [img_inp_img2img]
+            outputs=[tabs] + [i2i_params[f] for f in FIELDS] + [i2i_inp]
         )
         # Copy data from gallery image to imgedit
         cpy_2_imgedit_btn.click(
             create_copy_fn("imgedit"),
             inputs=[info_params['width'], info_params['height'], path_info],
-            outputs=[tabs, width_imgedit, height_imgedit, ref_img_imgedit]
+            outputs=[tabs, ie_width, ie_height, ie_ref]
         )
-        # Copy data from gallery image to any2video.
-        cpy_2_any2video_btn.click(
-            create_copy_fn("any2video", FIELDS),
-            inputs=common_inputs + [path_info],
-            outputs=[tabs] + [any2video_params[f] for f in FIELDS]
-        )
-        cpy_2_upscale_btn.click(
-            create_copy_fn("upscale"),
-            inputs=[path_info],
-            outputs=[tabs, img_inp_upscale]
-        )
+        if not server:
+            # Copy data from gallery image to any2video.
+            cpy_2_any2video_btn.click(
+                create_copy_fn("any2video", FIELDS),
+                inputs=common_inputs + [path_info],
+                outputs=[tabs] + [any2video_params[f] for f in FIELDS]
+            )
+            cpy_2_upscale_btn.click(
+                create_copy_fn("upscale"),
+                inputs=[path_info],
+                outputs=[tabs, img_inp_upscale]
+            )
 
         restart_btn.click(
             fn=restart_server,

@@ -1,5 +1,7 @@
 """sd.cpp-webui - Shared Instance Helper"""
 
+import sys
+
 from modules.config import ConfigManager
 from modules.utils.sd_interface import (
     SDOptionsCache, exe_name
@@ -23,7 +25,9 @@ class ServerState:
 
 config = ConfigManager()
 
-sd_options = SDOptionsCache()
+current_mode = "server" if "--server" in sys.argv else "cli"
+
+sd_options = SDOptionsCache(mode=current_mode)
 
 subprocess_manager = SubprocessManager()
 

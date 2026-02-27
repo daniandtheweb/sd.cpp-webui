@@ -35,7 +35,7 @@ from modules.ui.environment import create_env_ui
 # from modules.ui.experimental import create_experimental_ui
 
 
-txt2img_params = {}
+txt2img_server_params = {}
 server_process = None
 
 
@@ -336,12 +336,12 @@ with gr.Blocks() as txt2img_server_block:
         ]
     )
 
-    txt2img_params['pprompt'] = prompts_ui['in_pprompt']
-    txt2img_params['nprompt'] = prompts_ui['in_nprompt']
-    txt2img_params['width'] = generation_settings_ui['in_width']
-    txt2img_params['height'] = generation_settings_ui['in_height']
-    txt2img_params['steps'] = generation_settings_ui['in_steps']
-    txt2img_params['sampling'] = generation_settings_ui['in_sampling']
-    txt2img_params['scheduler'] = generation_settings_ui['in_scheduler']
-    txt2img_params['cfg'] = generation_settings_ui['in_cfg']
-    txt2img_params['seed'] = inputs_map['in_seed']
+    txt2img_server_params['pprompt'] = prompts_ui['in_pprompt']
+    txt2img_server_params['nprompt'] = prompts_ui['in_nprompt']
+    txt2img_server_params['width'] = generation_settings_ui['in_width']
+    txt2img_server_params['height'] = generation_settings_ui['in_height']
+    txt2img_server_params['steps'] = generation_settings_ui['in_steps']
+    txt2img_server_params['sampling'] = generation_settings_ui['in_sampling']
+    txt2img_server_params['scheduler'] = generation_settings_ui['in_scheduler']
+    txt2img_server_params['cfg'] = generation_settings_ui['in_cfg']
+    txt2img_server_params['seed'] = inputs_map['in_seed']

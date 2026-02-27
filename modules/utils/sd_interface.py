@@ -82,11 +82,11 @@ class SDOptionsCache:
         _help_cache: Dictionary holding cached option values.
     """
 
-    def __init__(self, first_run=False):
+    def __init__(self, mode="cli", first_run=False):
         """
         Initializes the SDOptionsCache and prepares the cache.
         """
-        self.SD = exe_name()
+        self.SD = exe_name(mode=mode)
         self.SD_PATH = self._resolve_sd_path()
         self.SCRIPT_PATH = os.path.abspath(__file__)
 

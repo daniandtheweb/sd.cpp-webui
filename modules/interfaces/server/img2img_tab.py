@@ -38,7 +38,7 @@ from modules.ui.environment import create_env_ui
 # from modules.ui.experimental import create_experimental_ui
 
 
-img2img_params = {}
+img2img_server_params = {}
 server_process = None
 
 with gr.Blocks()as img2img_server_block:
@@ -222,10 +222,10 @@ with gr.Blocks()as img2img_server_block:
         # Output
         with gr.Column(scale=1):
             with gr.Row():
-                img_inp_img2img = gr.Image(
+                img_inp_img2img_server = gr.Image(
                     sources="upload", type="filepath"
                 )
-                inputs_map['in_img_inp'] = img_inp_img2img
+                inputs_map['in_img_inp'] = img_inp_img2img_server
             with gr.Group():
                 with gr.Row():
                     gen_btn = gr.Button(
@@ -375,12 +375,12 @@ with gr.Blocks()as img2img_server_block:
         outputs=cfg_comp
     )
 
-    img2img_params['pprompt'] = prompts_ui['in_pprompt']
-    img2img_params['nprompt'] = prompts_ui['in_nprompt']
-    img2img_params['width'] = generation_settings_ui['in_width']
-    img2img_params['height'] = generation_settings_ui['in_height']
-    img2img_params['steps'] = generation_settings_ui['in_steps']
-    img2img_params['sampling'] = generation_settings_ui['in_sampling']
-    img2img_params['scheduler'] = generation_settings_ui['in_scheduler']
-    img2img_params['cfg'] = generation_settings_ui['in_cfg']
-    img2img_params['seed'] = inputs_map['in_seed']
+    img2img_server_params['pprompt'] = prompts_ui['in_pprompt']
+    img2img_server_params['nprompt'] = prompts_ui['in_nprompt']
+    img2img_server_params['width'] = generation_settings_ui['in_width']
+    img2img_server_params['height'] = generation_settings_ui['in_height']
+    img2img_server_params['steps'] = generation_settings_ui['in_steps']
+    img2img_server_params['sampling'] = generation_settings_ui['in_sampling']
+    img2img_server_params['scheduler'] = generation_settings_ui['in_scheduler']
+    img2img_server_params['cfg'] = generation_settings_ui['in_cfg']
+    img2img_server_params['seed'] = inputs_map['in_seed']

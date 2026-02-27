@@ -11,9 +11,7 @@ from modules.utils.ui_handler import (
     get_ordered_inputs, bind_generation_pipeline,
     refresh_all_options
 )
-from modules.shared_instance import (
-    config, subprocess_manager
-)
+from modules.shared_instance import config
 from modules.ui.models import create_imgedit_model_sel_ui
 from modules.ui.prompts import create_prompts_ui
 from modules.ui.generation_settings import (
@@ -183,10 +181,10 @@ with gr.Blocks() as imgedit_server_block:
         # Output
         with gr.Column(scale=1):
             with gr.Row():
-                ref_img_imgedit = gr.Image(
+                ref_img_imgedit_server = gr.Image(
                     sources="upload", type="filepath"
                 )
-                inputs_map['in_ref_img'] = ref_img_imgedit
+                inputs_map['in_ref_img'] = ref_img_imgedit_server
             with gr.Group():
                 with gr.Row():
                     gen_btn = gr.Button(
@@ -292,5 +290,5 @@ with gr.Blocks() as imgedit_server_block:
         ]
     )
 
-    width_imgedit = generation_settings_ui['in_width']
-    height_imgedit = generation_settings_ui['in_height']
+    width_imgedit_server = generation_settings_ui['in_width']
+    height_imgedit_server = generation_settings_ui['in_height']
