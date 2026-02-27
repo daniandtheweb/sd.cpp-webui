@@ -40,7 +40,7 @@ for arg in "$@"; do
   esac
 done
 
-if [ "$SERVER_MODE" -eq 1 ]; then
+if [ "$SERVER_MODE" = 1 ]; then
   if [ ! -x "sd-server" ] && ! command -v "sd-server" > /dev/null; then
     echo "Error: '--server' flag was used, but the 'sd-server' executable was not found or is not executable."
     echo "Please place the 'sd-server' executable in this folder or ensure it is in your PATH."
