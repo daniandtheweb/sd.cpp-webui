@@ -2,6 +2,7 @@
 
 import gradio as gr
 
+import modules.utils.queue as queue_manager
 from modules.shared_instance import (
     config, sd_options
 )
@@ -27,6 +28,72 @@ def update_session_cache(key, value):
     to write to the global session cache.
     """
     _SESSION_CACHE[key] = value
+
+
+def get_ordered_inputs(inputs_map):
+    """Utility to ensure keys and components always match up."""
+    ordered_keys = sorted(inputs_map.keys())
+    ordered_components = [inputs_map[k] for k in ordered_keys]
+    return ordered_keys, ordered_components
+
+
+def bind_generation_pipeline(api_func, ordered_keys, ordered_components, outputs_map):
+    """Connects the UI components to the generation queue."""
+
+    def submit_job(*args):
+        params = dict(zip(ordered_keys, args))
+
+        queue_manager.add_job(api_func, params)
+
+        q_len = queue_manager.get_queue_size()
+
+        print(f"\n\nJob submitted! Position in queue: {q_len}.\n"),
+
+        return (
+            gr.Timer(value=0.1, active=True)
+        )
+
+    def poll_status():
+        state = queue_manager.get_status()
+        q_len = queue_manager.get_queue_size()
+
+        is_active = state["is_running"] or q_len > 0
+        timer_update = gr.Timer(value=0.1, active=is_active)
+
+        queue_display = gr.update(
+            value=f"⏳ Jobs in queue: {q_len}" if q_len > 0 else "",
+            visible=(q_len > 0)
+        )
+
+        return (
+            state["command"],
+            state["progress"],
+            state["status"],
+            state["stats"],
+            state["images"],
+            timer_update,
+            queue_display
+        )
+
+    outputs_map['gen_btn'].click(
+        fn=submit_job,
+        inputs=ordered_components,
+        outputs=[outputs_map['timer']]
+    )
+
+    outputs_map['timer'].tick(
+        poll_status,
+        inputs=[],
+        outputs=[
+            outputs_map['command'],
+            outputs_map['progress_slider'],
+            outputs_map['progress_textbox'],
+            outputs_map['stats'],
+            outputs_map['img_final'],
+            outputs_map['timer'],
+            outputs_map['queue_tracker']
+        ]
+    )
 
 
 class ModelState:

@@ -2,13 +2,16 @@
 
 import gradio as gr
 
-from modules.core.server.sdcpp_server import (
-    start_server, stop_server, get_server_status, txt2img_api
+from modules.core.server.sdcpp_server import txt2img_api
+from modules.core.server.manager import (
+    start_server, stop_server
 )
+from modules.core.server.status_monitor import server_status_monitor_wrapper
 from modules.utils.ui_handler import (
-    ckpt_tab_switch, unet_tab_switch, refresh_all_options
+    ckpt_tab_switch, unet_tab_switch,
+    get_ordered_inputs, bind_generation_pipeline,
+    refresh_all_options
 )
-import modules.utils.queue as queue_manager
 from modules.ui.models import create_img_model_sel_ui
 from modules.ui.prompts import create_prompts_ui
 from modules.ui.generation_settings import (
@@ -27,7 +30,6 @@ from modules.ui.taesd import create_taesd_ui
 from modules.ui.vae_tiling import create_vae_tiling_ui
 from modules.ui.cache import create_cache_ui
 from modules.ui.extra import create_extras_ui
-from modules.ui.preview import create_preview_ui
 from modules.ui.performance import create_performance_ui
 from modules.ui.environment import create_env_ui
 # from modules.ui.experimental import create_experimental_ui
@@ -58,8 +60,34 @@ with gr.Blocks() as txt2img_server_block:
             inputs_map.update(quant_ui)
 
         with gr.Accordion(
-            label="Advanced Settings", open=False
+            label="Server Settings", open=False
         ):
+            with gr.Tab("Image Enhancement"):
+
+                # Upscale
+                upscl_ui = create_upscl_ui()
+                inputs_map.update(upscl_ui)
+
+                # ControlNet
+                cnnet_ui = create_cnnet_ui()
+                inputs_map.update(cnnet_ui)
+
+                # Chroma
+                chroma_ui = create_chroma_ui()
+                inputs_map.update(chroma_ui)
+
+                # Qwen
+                qwen_ui = create_qwen_ui()
+                inputs_map.update(qwen_ui)
+
+                # Circular padding
+                circular_ui = create_circular_ui()
+                inputs_map.update(circular_ui)
+
+                # PhotoMaker
+                photomaker_ui = create_photomaker_ui()
+                inputs_map.update(photomaker_ui)
+
             with gr.Tab("Advanced Settings"):
 
                 # TAESD
@@ -77,10 +105,6 @@ with gr.Blocks() as txt2img_server_block:
                 # Extra Settings
                 extras_ui = create_extras_ui()
                 inputs_map.update(extras_ui)
-
-                # Preview Settings
-                preview_ui = create_preview_ui()
-                inputs_map.update(preview_ui)
 
                 # Performance Settings
                 performance_ui = create_performance_ui()
@@ -110,20 +134,24 @@ with gr.Blocks() as txt2img_server_block:
 
     with gr.Group():
         with gr.Row():
-            server_status = gr.Textbox(
-                label="Server status:",
-                show_label=True,
-                value="Stopped",
-                interactive=False
-            )
-            server_status_timer = gr.Timer(value=0.1, active=False)
-        with gr.Row():
-            server_start = gr.Button(
-                value="Start server", variant="primary"
-            )
-            server_stop = gr.Button(
-                value="Stop server", variant="stop"
-            )
+            with gr.Column(scale=1):
+                with gr.Row():
+                    server_start = gr.Button(
+                        value="Start server", variant="primary"
+                    )
+                with gr.Row():
+                    server_stop = gr.Button(
+                        value="Stop server", variant="stop"
+                    )
+            with gr.Column(scale=1):
+                with gr.Row():
+                    server_status = gr.Textbox(
+                        label="Server & Model status:",
+                        show_label=True,
+                        value="Stopped (No Model Loaded)",
+                        interactive=False
+                    )
+                    server_status_timer = gr.Timer(value=0.1, active=False)
 
     # Prompts
     prompts_ui = create_prompts_ui()
@@ -142,30 +170,6 @@ with gr.Blocks() as txt2img_server_block:
                 inputs_map.update(bottom_generation_settings_ui)
 
             with gr.Tab("Image Enhancement"):
-
-                # Upscale
-                upscl_ui = create_upscl_ui()
-                inputs_map.update(upscl_ui)
-
-                # ControlNet
-                cnnet_ui = create_cnnet_ui()
-                inputs_map.update(cnnet_ui)
-
-                # Chroma
-                chroma_ui = create_chroma_ui()
-                inputs_map.update(chroma_ui)
-
-                # Qwen
-                qwen_ui = create_qwen_ui()
-                inputs_map.update(qwen_ui)
-
-                # Circular padding
-                circular_ui = create_circular_ui()
-                inputs_map.update(circular_ui)
-
-                # PhotoMaker
-                photomaker_ui = create_photomaker_ui()
-                inputs_map.update(photomaker_ui)
 
                 # Timestep shift
                 timestep_shift_ui = create_timestep_shift_ui()
@@ -238,8 +242,7 @@ with gr.Blocks() as txt2img_server_block:
                         show_copy_button=True,
                     )
 
-    ordered_keys = sorted(inputs_map.keys())
-    ordered_components = [inputs_map[key] for key in ordered_keys]
+    ordered_keys, ordered_components = get_ordered_inputs(inputs_map)
 
     def start_server_wrapper(*args):
         # Reconstruct the dictionary {key: value}
@@ -260,66 +263,26 @@ with gr.Blocks() as txt2img_server_block:
     )
 
     server_status_timer.tick(
-        fn=get_server_status,
-        inputs=[],
+        fn=server_status_monitor_wrapper,
+        inputs=[listen_ip, port],
         outputs=[server_status, gen_btn]
     )
 
-    def submit_job(*args):
-        """
-        Pack parameters and add to queue.
-        """
-        params = dict(zip(ordered_keys, args))
-
-        # Add the API task to the queue
-        queue_manager.add_job(txt2img_api, params)
-
-        return gr.Timer(value=0.5, active=True)
-
-    def poll_status():
-        """
-        Check queue status and update UI elements.
-        """
-        state = queue_manager.get_status()
-        q_len = queue_manager.get_queue_size()
-
-        # Decide if timer should keep running
-        if state["is_running"] or q_len > 0:
-            timer_update = gr.Timer(value=0.5, active=True)
-        else:
-            timer_update = gr.Timer(active=False)
-
-        # Update queue text
-        if q_len > 0:
-            queue_update = gr.update(value=f"⏳ Jobs in queue: {q_len}", visible=True)
-        else:
-            queue_update = gr.update(visible=False)
-
-        return (
-            state["command"],
-            state["progress"],   # slider value
-            state["status"],     # status text
-            state["stats"],      # stats text
-            state["images"],     # gallery
-            timer_update,
-            queue_update
-        )
-
     timer = gr.Timer(value=0.01, active=False)
 
-    gen_btn.click(
-        fn=submit_job,
-        inputs=ordered_components,
-        outputs=[timer]                      # Existing Gallery Component
-    )
+    ui_outputs = {
+        'gen_btn': gen_btn,
+        'timer': timer,
+        'command': command,
+        'progress_slider': progress_slider,
+        'progress_textbox': progress_textbox,
+        'stats': stats,
+        'img_final': img_final,
+        'queue_tracker': queue_tracker
+    }
 
-    timer.tick(
-        poll_status,
-        inputs=[],
-        outputs=[
-            command, progress_slider, progress_textbox,
-            stats, img_final, timer, queue_tracker
-        ]
+    bind_generation_pipeline(
+        txt2img_api, ordered_keys, ordered_components, ui_outputs
     )
 
     # Interactive Bindings
@@ -369,7 +332,7 @@ with gr.Blocks() as txt2img_server_block:
         outputs=[
             generation_settings_ui['in_sampling'],
             generation_settings_ui['in_scheduler'],
-            preview_ui['in_preview_mode'], extras_ui['in_predict']
+            extras_ui['in_predict']
         ]
     )
 

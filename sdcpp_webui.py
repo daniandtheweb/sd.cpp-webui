@@ -29,14 +29,8 @@ from modules.interfaces.server.imgedit_tab import (
 from modules.interfaces.cli.any2video_tab import (
     any2video_block, any2video_params
 )
-from modules.interfaces.server.any2video_tab import (
-    any2video_server_block
-)
 from modules.interfaces.cli.upscale_tab import (
     upscale_block, img_inp_upscale
-)
-from modules.interfaces.server.upscale_tab import (
-    upscale_server_block
 )
 from modules.interfaces.common.gallery_tab import (
     gallery_block, cpy_2_txt2img_btn, cpy_2_img2img_btn, cpy_2_imgedit_btn,
@@ -229,17 +223,13 @@ def sdcpp_launch(
                     imgedit_server_block.render()
                 else:
                     imgedit_block.render()
-            with gr.TabItem("any2video", id="any2video"):
-                if server:
-                    any2video_server_block.render()
-                else:
+            if not server:
+                with gr.TabItem("any2video", id="any2video"):
                     any2video_block.render()
             with gr.TabItem("Gallery", id="gallery") as gallery_tab:
                 gallery_block.render()
-            with gr.TabItem("Upscaler", id="upscale"):
-                if server:
-                    upscale_server_block.render()
-                else:
+            if not server:
+                with gr.TabItem("Upscaler", id="upscale"):
                     upscale_block.render()
             if not server:
                 with gr.TabItem("Checkpoint Converter", id="convert"):

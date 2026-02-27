@@ -4,9 +4,10 @@ import gradio as gr
 
 from modules.core.cli.sdcpp_cli import txt2img
 from modules.utils.ui_handler import (
-    ckpt_tab_switch, unet_tab_switch, refresh_all_options
+    ckpt_tab_switch, unet_tab_switch,
+    get_ordered_inputs, bind_generation_pipeline,
+    refresh_all_options
 )
-import modules.utils.queue as queue_manager
 from modules.shared_instance import subprocess_manager
 from modules.ui.models import create_img_model_sel_ui
 from modules.ui.prompts import create_prompts_ui
@@ -198,61 +199,23 @@ with gr.Blocks() as txt2img_block:
                         show_copy_button=True,
                     )
 
-    ordered_keys = sorted(inputs_map.keys())
-    ordered_components = [inputs_map[key] for key in ordered_keys]
-
-    def submit_job(*args):
-        params = dict(zip(ordered_keys, args))
-
-        queue_manager.add_job(txt2img, params)
-
-        q_len = queue_manager.get_queue_size()
-
-        print(f"\n\nJob submitted! Position in queue: {q_len}.\n"),
-
-        return (
-            gr.Timer(value=0.01, active=True)
-        )
-
-    def poll_status():
-        state = queue_manager.get_status()
-        q_len = queue_manager.get_queue_size()
-
-        if state["is_running"] or q_len > 0:
-            timer_update = gr.Timer(value=0.01, active=True)
-        else:
-            timer_update = gr.Timer(active=False)
-
-        if q_len > 0:
-            queue_update = gr.update(value=f"⏳ Jobs in queue: {q_len}", visible=True)
-        else:
-            queue_update = gr.update(visible=False)
-
-        return (
-            state["command"],
-            state["progress"],
-            state["status"],
-            state["stats"],
-            state["images"],
-            timer_update,
-            queue_update
-        )
+    ordered_keys, ordered_components = get_ordered_inputs(inputs_map)
 
     timer = gr.Timer(value=0.01, active=False)
 
-    gen_btn.click(
-        submit_job,
-        inputs=ordered_components,
-        outputs=[timer]
-    )
+    ui_outputs = {
+        'gen_btn': gen_btn,
+        'timer': timer,
+        'command': command,
+        'progress_slider': progress_slider,
+        'progress_textbox': progress_textbox,
+        'stats': stats,
+        'img_final': img_final,
+        'queue_tracker': queue_tracker
+    }
 
-    timer.tick(
-        poll_status,
-        inputs=[],
-        outputs=[
-            command, progress_slider, progress_textbox,
-            stats, img_final, timer, queue_tracker
-        ]
+    bind_generation_pipeline(
+        txt2img, ordered_keys, ordered_components, ui_outputs
     )
 
     kill_btn.click(

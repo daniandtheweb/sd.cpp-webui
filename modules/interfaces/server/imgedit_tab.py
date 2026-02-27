@@ -2,8 +2,15 @@
 
 import gradio as gr
 
-from modules.utils.ui_handler import refresh_all_options
-import modules.utils.queue as queue_manager
+from modules.core.server.sdcpp_server import imgedit_api
+from modules.core.server.manager import (
+    start_server, stop_server
+)
+from modules.core.server.status_monitor import server_status_monitor_wrapper
+from modules.utils.ui_handler import (
+    get_ordered_inputs, bind_generation_pipeline,
+    refresh_all_options
+)
 from modules.shared_instance import (
     config, subprocess_manager
 )
@@ -23,7 +30,6 @@ from modules.ui.taesd import create_taesd_ui
 from modules.ui.vae_tiling import create_vae_tiling_ui
 from modules.ui.cache import create_cache_ui
 from modules.ui.extra import create_extras_ui
-from modules.ui.preview import create_preview_ui
 from modules.ui.performance import create_performance_ui
 from modules.ui.environment import create_env_ui
 # from modules.ui.experimental import create_experimental_ui
@@ -39,33 +45,23 @@ with gr.Blocks() as imgedit_server_block:
     imgedit_title = gr.Markdown("# Image Edit")
 
     with gr.Accordion(
-        label="Models selection", open=False
+        label="Server configuration", open=False
     ):
-        # Model & VAE Selection
-        model_ui = create_imgedit_model_sel_ui()
-        inputs_map.update(model_ui)
-        inputs_map['in_diffusion_mode'] = diffusion_mode
+        with gr.Accordion(
+            label="Models selection", open=False
+        ):
+            # Model & VAE Selection
+            model_ui = create_imgedit_model_sel_ui()
+            inputs_map.update(model_ui)
+            inputs_map['in_diffusion_mode'] = diffusion_mode
 
-        # Model Type Selection
-        quant_ui = create_quant_ui()
-        inputs_map.update(quant_ui)
+            # Model Type Selection
+            quant_ui = create_quant_ui()
+            inputs_map.update(quant_ui)
 
-    # Prompts
-    prompts_ui = create_prompts_ui(nprompt_support=False)
-    inputs_map.update(prompts_ui)
-
-    # Settings
-    with gr.Row():
-        with gr.Column(scale=1):
-
-            with gr.Tab("Generation Settings"):
-
-                generation_settings_ui = create_generation_settings_ui(unet_mode=True)
-                inputs_map.update(generation_settings_ui)
-
-                bottom_generation_settings_ui = create_bottom_generation_settings_ui()
-                inputs_map.update(bottom_generation_settings_ui)
-
+        with gr.Accordion(
+            label="Server Settings", open=False
+        ):
             with gr.Tab("Image Enhancement"):
 
                 # Upscale
@@ -88,10 +84,6 @@ with gr.Blocks() as imgedit_server_block:
                 photomaker_ui = create_photomaker_ui()
                 inputs_map.update(photomaker_ui)
 
-                # ETA
-                eta_ui = create_eta_ui()
-                inputs_map.update(eta_ui)
-
             with gr.Tab("Advanced Settings"):
 
                 # TAESD
@@ -110,10 +102,6 @@ with gr.Blocks() as imgedit_server_block:
                 extras_ui = create_extras_ui()
                 inputs_map.update(extras_ui)
 
-                # Preview Settings
-                preview_ui = create_preview_ui()
-                inputs_map.update(preview_ui)
-
                 # Performance Settings
                 performance_ui = create_performance_ui()
                 inputs_map.update(performance_ui)
@@ -121,6 +109,67 @@ with gr.Blocks() as imgedit_server_block:
                 # Environment Variables
                 env_ui = create_env_ui()
                 inputs_map.update(env_ui)
+
+            listen_ip = gr.Textbox(
+                label="Listen IP",
+                show_label=True,
+                value="127.0.0.1",
+                interactive=True
+            )
+            inputs_map['in_ip'] = listen_ip
+
+            port = gr.Number(
+                label="Port",
+                minimum=0,
+                maximum=65535,
+                value=1234,
+                interactive=True,
+                step=1
+            )
+            inputs_map['in_port'] = port
+
+    with gr.Group():
+        with gr.Row():
+            with gr.Column(scale=1):
+                with gr.Row():
+                    server_start = gr.Button(
+                        value="Start server", variant="primary"
+                    )
+                with gr.Row():
+                    server_stop = gr.Button(
+                        value="Stop server", variant="stop"
+                    )
+            with gr.Column(scale=1):
+                with gr.Row():
+                    server_status = gr.Textbox(
+                        label="Server & Model status:",
+                        show_label=True,
+                        value="Stopped (No Model Loaded)",
+                        interactive=False
+                    )
+                    server_status_timer = gr.Timer(value=0.1, active=False)
+
+    # Prompts
+    prompts_ui = create_prompts_ui(nprompt_support=False)
+    inputs_map.update(prompts_ui)
+
+    # Settings
+    with gr.Row():
+        with gr.Column(scale=1):
+
+            with gr.Tab("Generation Settings"):
+
+                generation_settings_ui = create_generation_settings_ui(unet_mode=True)
+                inputs_map.update(generation_settings_ui)
+
+                bottom_generation_settings_ui = create_bottom_generation_settings_ui()
+                inputs_map.update(bottom_generation_settings_ui)
+
+            with gr.Tab("Image Enhancement"):
+
+                # ETA
+                eta_ui = create_eta_ui()
+                inputs_map.update(eta_ui)
 
             # Experimental
             # experimental_ui = create_experimental_ui()
@@ -194,61 +243,47 @@ with gr.Blocks() as imgedit_server_block:
                         show_copy_button=True,
                     )
 
-    ordered_keys = sorted(inputs_map.keys())
-    ordered_components = [inputs_map[key] for key in ordered_keys]
+    ordered_keys, ordered_components = get_ordered_inputs(inputs_map)
 
-    def submit_job(*args):
+    def start_server_wrapper(*args):
+        # Reconstruct the dictionary {key: value}
         params = dict(zip(ordered_keys, args))
+        # Pass the dictionary to the original server function
+        return start_server(params)
 
-        queue_manager.add_job(imgedit, params)
+    server_start.click(
+        fn=start_server_wrapper,
+        inputs=ordered_components,
+        outputs=[server_status, gen_btn, server_status_timer]
+    )
 
-        q_len = queue_manager.get_queue_size()
+    server_stop.click(
+        fn=stop_server,
+        inputs=[],
+        outputs=[server_status, gen_btn, server_status_timer]
+    )
 
-        print(f"Job submitted! Position in queue: {q_len}"),
-
-        return (
-            gr.Timer(value=0.01, active=True)
-        )
-
-    def poll_status():
-        state = queue_manager.get_status()
-        q_len = queue_manager.get_queue_size()
-
-        if state["is_running"] or q_len > 0:
-            timer_update = gr.Timer(value=0.01, active=True)
-        else:
-            timer_update = gr.Timer(active=False)
-
-        if q_len > 0:
-            queue_update = gr.update(value=f"⏳ Jobs in queue: {q_len}", visible=True)
-        else:
-            queue_update = gr.update(visible=False)
-
-        return (
-            state["command"],
-            state["progress"],
-            state["status"],
-            state["stats"],
-            state["images"],
-            timer_update,
-            queue_update
-        )
+    server_status_timer.tick(
+        fn=server_status_monitor_wrapper,
+        inputs=[listen_ip, port],
+        outputs=[server_status, gen_btn]
+    )
 
     timer = gr.Timer(value=0.01, active=False)
 
-    gen_btn.click(
-        submit_job,
-        inputs=ordered_components,
-        outputs=[timer]
-    )
+    ui_outputs = {
+        'gen_btn': gen_btn,
+        'timer': timer,
+        'command': command,
+        'progress_slider': progress_slider,
+        'progress_textbox': progress_textbox,
+        'stats': stats,
+        'img_final': img_final,
+        'queue_tracker': queue_tracker
+    }
 
-    timer.tick(
-        poll_status,
-        inputs=[],
-        outputs=[
-            command, progress_slider, progress_textbox,
-            stats, img_final, timer, queue_tracker
-        ]
+    bind_generation_pipeline(
+        imgedit_api, ordered_keys, ordered_components, ui_outputs
     )
 
     kill_btn.click(
@@ -263,7 +298,7 @@ with gr.Blocks() as imgedit_server_block:
         outputs=[
             generation_settings_ui['in_sampling'],
             generation_settings_ui['in_scheduler'],
-            preview_ui['in_preview_mode'], extras_ui['in_predict']
+            extras_ui['in_predict']
         ]
     )
 

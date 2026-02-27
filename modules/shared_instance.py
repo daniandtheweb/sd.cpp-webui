@@ -12,6 +12,12 @@ SD_CLI = exe_name("cli")
 
 SD_SERVER = exe_name("server")
 
+
+class ServerState:
+    def __init__(self):
+        self.running = False
+
+
 config = ConfigManager()
 
 sd_options = SDOptionsCache()
@@ -19,3 +25,5 @@ sd_options = SDOptionsCache()
 subprocess_manager = SubprocessManager()
 
 queue_manager.start_worker()
+
+server_state = ServerState()

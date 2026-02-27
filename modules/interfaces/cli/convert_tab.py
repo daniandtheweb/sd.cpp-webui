@@ -3,6 +3,7 @@
 import gradio as gr
 
 from modules.core.cli.sdcpp_cli import convert
+from modules.utils.ui_handler import get_ordered_inputs
 from modules.shared_instance import (
     config, subprocess_manager
 )
@@ -137,8 +138,7 @@ with gr.Blocks() as convert_block:
                         show_copy_button=True,
                     )
 
-    ordered_keys = sorted(inputs_map.keys())
-    ordered_components = [inputs_map[key] for key in ordered_keys]
+    ordered_keys, ordered_components = get_ordered_inputs(inputs_map)
 
     def convert_wrapper(*args):
         """
