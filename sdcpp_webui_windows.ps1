@@ -119,6 +119,6 @@ if ($pythonArgs.Count -eq 0) {
     Write-Host "Starting the WebUI...`n"
 }
 else {
-    Write-Host "Starting the WebUI with arguments: $pythonArgs`n"
+    Write-Host "Starting the WebUI with arguments: $($pythonArgs -join ' ')`n"
 }
 python .\sdcpp_webui.py $pythonArgs
