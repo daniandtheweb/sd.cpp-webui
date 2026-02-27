@@ -232,7 +232,7 @@ with gr.Blocks() as imgedit_server_block:
                     )
                 with gr.Row():
                     command = gr.Textbox(
-                        label="stable-diffusion.cpp command:",
+                        label="images/edits payload:",
                         show_label=True,
                         value="",
                         interactive=False,

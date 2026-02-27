@@ -18,6 +18,7 @@ class ServerState:
         self.running = False
         self.latest_update = {}
         self.last_generation_stats = ""
+        self.seed = ""
 
 
 config = ConfigManager()

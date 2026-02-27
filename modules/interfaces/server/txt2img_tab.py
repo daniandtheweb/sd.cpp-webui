@@ -235,7 +235,7 @@ with gr.Blocks() as txt2img_server_block:
                     )
                 with gr.Row():
                     command = gr.Textbox(
-                        label="stable-diffusion.cpp command:",
+                        label="sdapi payload:",
                         show_label=True,
                         value="",
                         interactive=False,

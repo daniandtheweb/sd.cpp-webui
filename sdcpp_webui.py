@@ -205,37 +205,36 @@ def sdcpp_launch(
 
         if server:
             gr.Markdown("# <center>sd.cpp-webui - server</center>")
+            with gr.Tabs() as tabs:
+                with gr.TabItem("txt2img", id="txt2img"):
+                    txt2img_server_block.render()
+                with gr.TabItem("img2img", id="img2img"):
+                    img2img_server_block.render()
+                with gr.TabItem("imgedit", id="imgedit"):
+                    imgedit_server_block.render()
+                with gr.TabItem("Gallery", id="gallery") as gallery_tab:
+                    gallery_block.render()
+                with gr.TabItem("Options", id="options"):
+                    options_block.render()
         else:
             gr.Markdown("# <center>sd.cpp-webui - cli</center>")
-        with gr.Tabs() as tabs:
-            with gr.TabItem("txt2img", id="txt2img"):
-                if server:
-                    txt2img_server_block.render()
-                else:
+            with gr.Tabs() as tabs:
+                with gr.TabItem("txt2img", id="txt2img"):
                     txt2img_block.render()
-            with gr.TabItem("img2img", id="img2img"):
-                if server:
-                    img2img_server_block.render()
-                else:
+                with gr.TabItem("img2img", id="img2img"):
                     img2img_block.render()
-            with gr.TabItem("imgedit", id="imgedit"):
-                if server:
-                    imgedit_server_block.render()
-                else:
+                with gr.TabItem("imgedit", id="imgedit"):
                     imgedit_block.render()
-            if not server:
                 with gr.TabItem("any2video", id="any2video"):
                     any2video_block.render()
-            with gr.TabItem("Gallery", id="gallery") as gallery_tab:
-                gallery_block.render()
-            if not server:
+                with gr.TabItem("Gallery", id="gallery") as gallery_tab:
+                    gallery_block.render()
                 with gr.TabItem("Upscaler", id="upscale"):
                     upscale_block.render()
-            if not server:
                 with gr.TabItem("Checkpoint Converter", id="convert"):
                     convert_block.render()
-            with gr.TabItem("Options", id="options"):
-                options_block.render()
+                with gr.TabItem("Options", id="options"):
+                    options_block.render()
 
         gallery_tab.select(
             fn=lazy_load_gallery,

@@ -24,6 +24,7 @@ class SubprocessManager:
         self.TOTAL_TIME_REGEX = re.compile(r"completed in ([\d.]+)s")
         self.ETA_REGEX = re.compile(r'(\d+)/(\d+)\s*-\s*([\d.]+)(s/it|it/s)')
         self.SIMPLE_REGEX = re.compile(r'(\d+)/(\d+)')
+        self.SEED_REGEX = re.compile(r"generating image:.*?seed\s+(\d+)")
 
     def _parse_final_stats(self, line, final_stats):
         """
@@ -45,6 +46,12 @@ class SubprocessManager:
             match = self.TOTAL_TIME_REGEX.search(line)
             if match:
                 final_stats['total_time'] = f"{match.group(1)}s"
+
+        elif 'seed' in line and 'generating image:' in line:
+            match = self.SEED_REGEX.search(line)
+            if match:
+                from modules.shared_instance import server_state
+                server_state.seed = int(match.group(1))
 
     def _determine_phase(self, line):
         """
