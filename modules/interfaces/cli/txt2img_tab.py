@@ -1,14 +1,15 @@
-"""sd.cpp-webui - Image edit UI"""
+"""sd.cpp-webui - Text to image UI"""
 
 import gradio as gr
 
-from modules.sdcpp import imgedit
-from modules.utils.ui_handler import refresh_all_options
-import modules.utils.queue as queue_manager
-from modules.shared_instance import (
-    config, subprocess_manager
+from modules.core.cli.sdcpp_cli import txt2img
+from modules.utils.ui_handler import (
+    ckpt_tab_switch, unet_tab_switch,
+    get_ordered_inputs, bind_generation_pipeline,
+    refresh_all_options
 )
-from modules.ui.models import create_imgedit_model_sel_ui
+from modules.shared_instance import subprocess_manager
+from modules.ui.models import create_img_model_sel_ui
 from modules.ui.prompts import create_prompts_ui
 from modules.ui.generation_settings import (
     create_quant_ui, create_generation_settings_ui,
@@ -16,9 +17,11 @@ from modules.ui.generation_settings import (
 )
 from modules.ui.upscale import create_upscl_ui
 from modules.ui.controlnet import create_cnnet_ui
+from modules.ui.chroma import create_chroma_ui
 from modules.ui.qwen import create_qwen_ui
 from modules.ui.circular import create_circular_ui
 from modules.ui.photomaker import create_photomaker_ui
+from modules.ui.timestep_shift import create_timestep_shift_ui
 from modules.ui.eta import create_eta_ui
 from modules.ui.taesd import create_taesd_ui
 from modules.ui.vae_tiling import create_vae_tiling_ui
@@ -30,29 +33,27 @@ from modules.ui.environment import create_env_ui
 # from modules.ui.experimental import create_experimental_ui
 
 
-with gr.Blocks() as imgedit_block:
+txt2img_params = {}
+
+with gr.Blocks() as txt2img_block:
     inputs_map = {}
-    diffusion_mode = gr.Number(value=1, visible=False)
-    # Directory Textboxes
-    taesd_dir_txt = gr.Textbox(value=config.get('taesd_dir'), visible=False)
 
     # Title
-    imgedit_title = gr.Markdown("# Image Edit")
+    txt2img_title = gr.Markdown("# Text to Image")
 
     with gr.Accordion(
         label="Models selection", open=False
     ):
         # Model & VAE Selection
-        model_ui = create_imgedit_model_sel_ui()
-        inputs_map.update(model_ui)
-        inputs_map['in_diffusion_mode'] = diffusion_mode
+        model_ui = create_img_model_sel_ui()
+        inputs_map.update(model_ui['inputs'])
 
         # Model Type Selection
         quant_ui = create_quant_ui()
         inputs_map.update(quant_ui)
 
     # Prompts
-    prompts_ui = create_prompts_ui(nprompt_support=False)
+    prompts_ui = create_prompts_ui()
     inputs_map.update(prompts_ui)
 
     # Settings
@@ -61,7 +62,7 @@ with gr.Blocks() as imgedit_block:
 
             with gr.Tab("Generation Settings"):
 
-                generation_settings_ui = create_generation_settings_ui(unet_mode=True)
+                generation_settings_ui = create_generation_settings_ui()
                 inputs_map.update(generation_settings_ui)
 
                 bottom_generation_settings_ui = create_bottom_generation_settings_ui()
@@ -77,6 +78,10 @@ with gr.Blocks() as imgedit_block:
                 cnnet_ui = create_cnnet_ui()
                 inputs_map.update(cnnet_ui)
 
+                # Chroma
+                chroma_ui = create_chroma_ui()
+                inputs_map.update(chroma_ui)
+
                 # Qwen
                 qwen_ui = create_qwen_ui()
                 inputs_map.update(qwen_ui)
@@ -88,6 +93,10 @@ with gr.Blocks() as imgedit_block:
                 # PhotoMaker
                 photomaker_ui = create_photomaker_ui()
                 inputs_map.update(photomaker_ui)
+
+                # Timestep shift
+                timestep_shift_ui = create_timestep_shift_ui()
+                inputs_map.update(timestep_shift_ui)
 
                 # ETA
                 eta_ui = create_eta_ui()
@@ -134,11 +143,6 @@ with gr.Blocks() as imgedit_block:
 
         # Output
         with gr.Column(scale=1):
-            with gr.Row():
-                ref_img_imgedit = gr.Image(
-                    sources="upload", type="filepath"
-                )
-                inputs_map['in_ref_img'] = ref_img_imgedit
             with gr.Group():
                 with gr.Row():
                     gen_btn = gr.Button(
@@ -195,67 +199,70 @@ with gr.Blocks() as imgedit_block:
                         show_copy_button=True,
                     )
 
-    ordered_keys = sorted(inputs_map.keys())
-    ordered_components = [inputs_map[key] for key in ordered_keys]
-
-    def submit_job(*args):
-        params = dict(zip(ordered_keys, args))
-
-        queue_manager.add_job(imgedit, params)
-
-        q_len = queue_manager.get_queue_size()
-
-        print(f"Job submitted! Position in queue: {q_len}"),
-
-        return (
-            gr.Timer(value=0.01, active=True)
-        )
-
-    def poll_status():
-        state = queue_manager.get_status()
-        q_len = queue_manager.get_queue_size()
-
-        if state["is_running"] or q_len > 0:
-            timer_update = gr.Timer(value=0.01, active=True)
-        else:
-            timer_update = gr.Timer(active=False)
-
-        if q_len > 0:
-            queue_update = gr.update(value=f"⏳ Jobs in queue: {q_len}", visible=True)
-        else:
-            queue_update = gr.update(visible=False)
-
-        return (
-            state["command"],
-            state["progress"],
-            state["status"],
-            state["stats"],
-            state["images"],
-            timer_update,
-            queue_update
-        )
+    ordered_keys, ordered_components = get_ordered_inputs(inputs_map)
 
     timer = gr.Timer(value=0.01, active=False)
 
-    gen_btn.click(
-        submit_job,
-        inputs=ordered_components,
-        outputs=[timer]
-    )
+    ui_outputs = {
+        'gen_btn': gen_btn,
+        'timer': timer,
+        'command': command,
+        'progress_slider': progress_slider,
+        'progress_textbox': progress_textbox,
+        'stats': stats,
+        'img_final': img_final,
+        'queue_tracker': queue_tracker
+    }
 
-    timer.tick(
-        poll_status,
-        inputs=[],
-        outputs=[
-            command, progress_slider, progress_textbox,
-            stats, img_final, timer, queue_tracker
-        ]
+    bind_generation_pipeline(
+        txt2img, ordered_keys, ordered_components, ui_outputs
     )
 
     kill_btn.click(
         subprocess_manager.kill_subprocess,
         inputs=[],
         outputs=[]
+    )
+
+    # Interactive Bindings
+    model_ui['components']['ckpt_tab'].select(
+        ckpt_tab_switch,
+        inputs=[],
+        outputs=[
+            model_ui['inputs']['in_diffusion_mode'],
+            model_ui['inputs']['in_ckpt_model'],
+            model_ui['inputs']['in_unet_model'],
+            model_ui['inputs']['in_ckpt_vae'],
+            model_ui['inputs']['in_unet_vae'],
+            model_ui['inputs']['in_clip_g'],
+            model_ui['inputs']['in_clip_l'],
+            model_ui['inputs']['in_t5xxl'],
+            model_ui['inputs']['in_llm'],
+            generation_settings_ui['in_guidance_bool'],
+            generation_settings_ui['in_guidance'],
+            generation_settings_ui['in_flow_shift_bool'],
+            generation_settings_ui['in_flow_shift']
+        ]
+    )
+
+    model_ui['components']['unet_tab'].select(
+        unet_tab_switch,
+        inputs=[],
+        outputs=[
+            model_ui['inputs']['in_diffusion_mode'],
+            model_ui['inputs']['in_ckpt_model'],
+            model_ui['inputs']['in_unet_model'],
+            model_ui['inputs']['in_ckpt_vae'],
+            model_ui['inputs']['in_unet_vae'],
+            model_ui['inputs']['in_clip_g'],
+            model_ui['inputs']['in_clip_l'],
+            model_ui['inputs']['in_t5xxl'],
+            model_ui['inputs']['in_llm'],
+            generation_settings_ui['in_guidance_bool'],
+            generation_settings_ui['in_guidance'],
+            generation_settings_ui['in_flow_shift_bool'],
+            generation_settings_ui['in_flow_shift']
+        ]
     )
 
     refresh_opt.click(
@@ -268,5 +275,12 @@ with gr.Blocks() as imgedit_block:
         ]
     )
 
-    width_imgedit = generation_settings_ui['in_width']
-    height_imgedit = generation_settings_ui['in_height']
+    txt2img_params['pprompt'] = prompts_ui['in_pprompt']
+    txt2img_params['nprompt'] = prompts_ui['in_nprompt']
+    txt2img_params['width'] = generation_settings_ui['in_width']
+    txt2img_params['height'] = generation_settings_ui['in_height']
+    txt2img_params['steps'] = generation_settings_ui['in_steps']
+    txt2img_params['sampling'] = generation_settings_ui['in_sampling']
+    txt2img_params['scheduler'] = generation_settings_ui['in_scheduler']
+    txt2img_params['cfg'] = generation_settings_ui['in_cfg']
+    txt2img_params['seed'] = inputs_map['in_seed']

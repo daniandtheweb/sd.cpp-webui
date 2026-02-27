@@ -44,6 +44,10 @@ def create_extras_ui():
             label="Output Name (optional)",
             value=config.get('def_output')
         )
+        mmap = gr.Checkbox(
+            label="MMAP",
+            value=config.get('def_mmap')
+        )
         color = gr.Checkbox(
             label="Color",
             value=config.get('def_color')
@@ -60,6 +64,7 @@ def create_extras_ui():
         'in_predict': predict,
         'in_lora_apply': lora_apply,
         'in_output': output,
+        'in_mmap': mmap,
         'in_color': color,
         'in_verbose': verbose
     }

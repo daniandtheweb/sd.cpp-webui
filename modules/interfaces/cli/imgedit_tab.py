@@ -1,18 +1,16 @@
-"""sd.cpp-webui - Anything to Video UI"""
-
-from functools import partial
+"""sd.cpp-webui - Image edit UI"""
 
 import gradio as gr
 
-from modules.sdcpp import any2video
+from modules.core.cli.sdcpp_cli import imgedit
 from modules.utils.ui_handler import (
-    update_interactivity, refresh_all_options
+    get_ordered_inputs, bind_generation_pipeline,
+    refresh_all_options
 )
-import modules.utils.queue as queue_manager
 from modules.shared_instance import (
     config, subprocess_manager
 )
-from modules.ui.models import create_video_model_sel_ui
+from modules.ui.models import create_imgedit_model_sel_ui
 from modules.ui.prompts import create_prompts_ui
 from modules.ui.generation_settings import (
     create_quant_ui, create_generation_settings_ui,
@@ -20,6 +18,9 @@ from modules.ui.generation_settings import (
 )
 from modules.ui.upscale import create_upscl_ui
 from modules.ui.controlnet import create_cnnet_ui
+from modules.ui.qwen import create_qwen_ui
+from modules.ui.circular import create_circular_ui
+from modules.ui.photomaker import create_photomaker_ui
 from modules.ui.eta import create_eta_ui
 from modules.ui.taesd import create_taesd_ui
 from modules.ui.vae_tiling import create_vae_tiling_ui
@@ -31,34 +32,29 @@ from modules.ui.environment import create_env_ui
 # from modules.ui.experimental import create_experimental_ui
 
 
-any2video_params = {}
-
-with gr.Blocks() as any2video_block:
+with gr.Blocks() as imgedit_block:
     inputs_map = {}
+    diffusion_mode = gr.Number(value=1, visible=False)
     # Directory Textboxes
-    emb_dir_txt = gr.Textbox(value=config.get('emb_dir'), visible=False)
-    lora_dir_txt = gr.Textbox(value=config.get('lora_dir'), visible=False)
     taesd_dir_txt = gr.Textbox(value=config.get('taesd_dir'), visible=False)
-    phtmkr_dir_txt = gr.Textbox(value=config.get('phtmkr_dir'), visible=False)
-    upscl_dir_txt = gr.Textbox(value=config.get('upscl_dir'), visible=False)
-    cnnet_dir_txt = gr.Textbox(value=config.get('cnnet_dir'), visible=False)
 
     # Title
-    any2video_title = gr.Markdown("# Anything to Video")
+    imgedit_title = gr.Markdown("# Image Edit")
 
     with gr.Accordion(
         label="Models selection", open=False
     ):
         # Model & VAE Selection
-        model_ui = create_video_model_sel_ui()
+        model_ui = create_imgedit_model_sel_ui()
         inputs_map.update(model_ui)
+        inputs_map['in_diffusion_mode'] = diffusion_mode
 
         # Model Type Selection
         quant_ui = create_quant_ui()
         inputs_map.update(quant_ui)
 
     # Prompts
-    prompts_ui = create_prompts_ui()
+    prompts_ui = create_prompts_ui(nprompt_support=False)
     inputs_map.update(prompts_ui)
 
     # Settings
@@ -67,47 +63,8 @@ with gr.Blocks() as any2video_block:
 
             with gr.Tab("Generation Settings"):
 
-                generation_settings_ui = create_generation_settings_ui()
+                generation_settings_ui = create_generation_settings_ui(unet_mode=True)
                 inputs_map.update(generation_settings_ui)
-
-                with gr.Row():
-                    frames = gr.Number(
-                        label="Video Frames",
-                        minimum=1,
-                        value=1,
-                        scale=1,
-                        interactive=True,
-                        step=1
-                    )
-                    fps = gr.Number(
-                        label="FPS",
-                        minimum=1,
-                        value=24,
-                        scale=1,
-                        interactive=True,
-                        step=1
-                    )
-                inputs_map['in_frames'] = frames
-                inputs_map['in_fps'] = fps
-
-                with gr.Accordion(
-                    label="Flow Shift", open=False
-                ):
-                    flow_shift_bool = gr.Checkbox(
-                        label="Enable Flow Shift", value=False
-                    )
-                    flow_shift = gr.Number(
-                        label="Flow Shift",
-                        minimum=1.0,
-                        maximum=12.0,
-                        value=3.0,
-                        interactive=False,
-                        step=0.1
-                    )
-                inputs_map['in_flow_shift_bool'] = flow_shift_bool
-                inputs_map['in_flow_shift'] = flow_shift
-
-                flow_shift_comp = [flow_shift]
 
                 bottom_generation_settings_ui = create_bottom_generation_settings_ui()
                 inputs_map.update(bottom_generation_settings_ui)
@@ -121,6 +78,18 @@ with gr.Blocks() as any2video_block:
                 # ControlNet
                 cnnet_ui = create_cnnet_ui()
                 inputs_map.update(cnnet_ui)
+
+                # Qwen
+                qwen_ui = create_qwen_ui()
+                inputs_map.update(qwen_ui)
+
+                # Circular padding
+                circular_ui = create_circular_ui()
+                inputs_map.update(circular_ui)
+
+                # PhotoMaker
+                photomaker_ui = create_photomaker_ui()
+                inputs_map.update(photomaker_ui)
 
                 # ETA
                 eta_ui = create_eta_ui()
@@ -168,27 +137,10 @@ with gr.Blocks() as any2video_block:
         # Output
         with gr.Column(scale=1):
             with gr.Row():
-                with gr.Accordion(
-                    label="Image to Video", open=False
-                ):
-                    img_inp_any2video = gr.Image(
-                        sources="upload", type="filepath"
-                    )
-                    inputs_map['in_img_inp'] = img_inp_any2video
-            with gr.Row():
-                with gr.Accordion(
-                    label="First-Last Frame Video", open=False
-                ):
-                    with gr.Row():
-                        first_frame_inp = gr.Image(
-                            sources="upload", type="filepath"
-                        )
-                        inputs_map['in_first_frame_inp'] = first_frame_inp
-                    with gr.Row():
-                        last_frame_inp = gr.Image(
-                            sources="upload", type="filepath"
-                        )
-                        inputs_map['in_last_frame_inp'] = last_frame_inp
+                ref_img_imgedit = gr.Image(
+                    sources="upload", type="filepath"
+                )
+                inputs_map['in_ref_img'] = ref_img_imgedit
             with gr.Group():
                 with gr.Row():
                     gen_btn = gr.Button(
@@ -211,7 +163,8 @@ with gr.Blocks() as any2video_block:
                         value=0,
                         interactive=False,
                         visible=False,
-                        label="Progress"
+                        label="Progress",
+                        show_reset_button=False
                     )
                 with gr.Row():
                     progress_textbox = gr.Textbox(
@@ -220,8 +173,8 @@ with gr.Blocks() as any2video_block:
                         interactive=False
                     )
                 with gr.Row():
-                    video_final = gr.Gallery(
-                        label="Generated videos",
+                    img_final = gr.Gallery(
+                        label="Generated images",
                         show_label=False,
                         columns=[3],
                         rows=[1],
@@ -244,61 +197,23 @@ with gr.Blocks() as any2video_block:
                         show_copy_button=True,
                     )
 
-    ordered_keys = sorted(inputs_map.keys())
-    ordered_components = [inputs_map[key] for key in ordered_keys]
-
-    def submit_job(*args):
-        params = dict(zip(ordered_keys, args))
-
-        queue_manager.add_job(any2video, params)
-
-        q_len = queue_manager.get_queue_size()
-
-        print(f"Job submitted! Position in queue: {q_len}"),
-
-        return (
-            gr.Timer(value=0.01, active=True)
-        )
-
-    def poll_status():
-        state = queue_manager.get_status()
-        q_len = queue_manager.get_queue_size()
-
-        if state["is_running"] or q_len > 0:
-            timer_update = gr.Timer(value=0.01, active=True)
-        else:
-            timer_update = gr.Timer(active=False)
-
-        if q_len > 0:
-            queue_update = gr.update(value=f"⏳ Jobs in queue: {q_len}", visible=True)
-        else:
-            queue_update = gr.update(visible=False)
-
-        return (
-            state["command"],
-            state["progress"],
-            state["status"],
-            state["stats"],
-            state["images"],
-            timer_update,
-            queue_update
-        )
+    ordered_keys, ordered_components = get_ordered_inputs(inputs_map)
 
     timer = gr.Timer(value=0.01, active=False)
 
-    gen_btn.click(
-        submit_job,
-        inputs=ordered_components,
-        outputs=[timer]
-    )
+    ui_outputs = {
+        'gen_btn': gen_btn,
+        'timer': timer,
+        'command': command,
+        'progress_slider': progress_slider,
+        'progress_textbox': progress_textbox,
+        'stats': stats,
+        'img_final': img_final,
+        'queue_tracker': queue_tracker
+    }
 
-    timer.tick(
-        poll_status,
-        inputs=[],
-        outputs=[
-            command, progress_slider, progress_textbox,
-            stats, video_final, timer, queue_tracker
-        ]
+    bind_generation_pipeline(
+        imgedit, ordered_keys, ordered_components, ui_outputs
     )
 
     kill_btn.click(
@@ -307,7 +222,6 @@ with gr.Blocks() as any2video_block:
         outputs=[]
     )
 
-    # Interactive Bindings
     refresh_opt.click(
         refresh_all_options,
         inputs=[],
@@ -318,18 +232,5 @@ with gr.Blocks() as any2video_block:
         ]
     )
 
-    flow_shift_bool.change(
-        partial(update_interactivity, len(flow_shift_comp)),
-        inputs=flow_shift_bool,
-        outputs=flow_shift_comp
-    )
-
-    any2video_params['pprompt'] = prompts_ui['in_pprompt']
-    any2video_params['nprompt'] = prompts_ui['in_nprompt']
-    any2video_params['width'] = generation_settings_ui['in_width']
-    any2video_params['height'] = generation_settings_ui['in_height']
-    any2video_params['steps'] = generation_settings_ui['in_steps']
-    any2video_params['sampling'] = generation_settings_ui['in_sampling']
-    any2video_params['scheduler'] = generation_settings_ui['in_scheduler']
-    any2video_params['cfg'] = generation_settings_ui['in_cfg']
-    any2video_params['seed'] = inputs_map['in_seed']
+    width_imgedit = generation_settings_ui['in_width']
+    height_imgedit = generation_settings_ui['in_height']

@@ -8,17 +8,20 @@ import hashlib
 import subprocess
 
 
-def exe_name():
+def exe_name(mode="cli"):
     """
     Returns the stable-diffusion executable name.
     Prioritizes 'sd-cli' over 'sd', and checks both PATH and current directory.
     Verifies the binary can be executed by running <binary> --version.
     Accumulates errors for failed candidates, only exits if all fail.
     """
-    if os.name == "nt":
-        candidates = ["sd-cli.exe", "sd.exe"]
-    else:
+    if mode == "server":
+        candidates = ["sd-server"]
+    elif mode == "cli":
         candidates = ["sd-cli", "sd"]
+
+    if os.name == "nt":
+        candidates = [f"{c}.exe" for c in candidates]
 
     failed_candidates = []
 
@@ -56,10 +59,7 @@ def exe_name():
             print(f"Warning: {error}")
 
     # If no candidates were found or all failed, exit with error
-    if os.name == "nt":
-        print(f"Error: Neither sd-cli.exe nor sd.exe found in PATH or current directory")
-    else:
-        print(f"Error: Neither sd-cli nor sd found in PATH or current directory")
+    print(f"Error: Could not find valid executable for mode '{mode}' (tried: {', '.join(candidates)}) in PATH or current directory")
     exit(1)
 
 
@@ -82,11 +82,11 @@ class SDOptionsCache:
         _help_cache: Dictionary holding cached option values.
     """
 
-    def __init__(self, first_run=False):
+    def __init__(self, mode="cli", first_run=False):
         """
         Initializes the SDOptionsCache and prepares the cache.
         """
-        self.SD = exe_name()
+        self.SD = exe_name(mode=mode)
         self.SD_PATH = self._resolve_sd_path()
         self.SCRIPT_PATH = os.path.abspath(__file__)
 
@@ -238,4 +238,64 @@ class SDOptionsCache:
                 f"Valid options are: {list(option_map.keys())}"
             )
 
-        return self._parse_help_option(option_map[option])
+        parsed_options = self._parse_help_option(option_map[option])
+
+        if not parsed_options:
+            fallbacks = {
+                "samplers": [
+                    "euler",
+                    "euler_a",
+                    "heun",
+                    "dpm2",
+                    "dpm++2s_a",
+                    "dpm++2m",
+                    "dpm++2mv2",
+                    "ipndm",
+                    "ipndm_v",
+                    "lcm",
+                    "ddim_trailing",
+                    "tcd",
+                    "res_multistep",
+                    "res_2s"
+                ],
+                "schedulers": [
+                    "discrete",
+                    "karras",
+                    "exponential",
+                    "ays",
+                    "gits",
+                    "smoothstep",
+                    "sgm_uniform",
+                    "simple",
+                    "kl_optimal",
+                    "lcm",
+                    "bong_tangent"
+                ],
+                "previews": [
+                    "none",
+                    "proj",
+                    "tae",
+                    "vae"
+                ],
+                "prediction": [
+                    "eps",
+                    "v",
+                    "edm_v",
+                    "sd3_flow",
+                    "flux_flow",
+                    "flux2_flow"
+                ],
+                "rng": [
+                    "std_default",
+                    "cuda",
+                    "cpu"
+                ],
+                "sampler_rng": [
+                    "std_default",
+                    "cuda",
+                    "cpu"
+                ],
+            }
+            return fallbacks.get(option, [])
+
+        return parsed_options

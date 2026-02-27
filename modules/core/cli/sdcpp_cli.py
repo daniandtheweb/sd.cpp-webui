@@ -1,4 +1,4 @@
-"""sd.cpp-webui - stable-diffusion.cpp command module"""
+"""sd.cpp-webui - core - stable-diffusion.cpp cli"""
 
 import os
 import re
@@ -14,7 +14,7 @@ from modules.utils.sdcpp_utils import (
     extract_env_vars, generate_output_filename
 )
 from modules.shared_instance import (
-    config, subprocess_manager, SD
+    config, subprocess_manager, SD_CLI
 )
 from modules.ui.constants import CIRCULAR_PADDING
 
@@ -31,7 +31,7 @@ class CommandRunner:
         self.mode = mode
         self.params = params
         self.env_vars = extract_env_vars(self.params)
-        self.command = [SD, '-M', self.mode]
+        self.command = [SD_CLI, '-M', self.mode]
         self.fcommand = ""
         self.outputs = []
         self.output_path = ""
@@ -184,9 +184,13 @@ class CommandRunner:
         else:
             gallery_update = None
 
-        yield (self.fcommand, gr.update(visible=True, value=0),
-               gr.update(visible=True, value="Initializing..."),
-               gr.update(value=""), None)
+        yield (
+            self.fcommand,
+            gr.update(visible=True, value=0),
+            gr.update(visible=True, value="Initializing..."),
+            gr.update(value=""),
+            None
+        )
 
         final_stats_str = "Process completed with unknown stats."
         for update in subprocess_manager.run_subprocess(
@@ -202,15 +206,24 @@ class CommandRunner:
                     f"Last Speed: {stats.get('last_speed', 'N/A')}"
                 )
             else:
-                yield (self.fcommand, gr.update(value=update["percent"]),
-                       update["status"], gr.update(value=""), gallery_update)
+                yield (
+                    self.fcommand,
+                    gr.update(value=update["percent"]),
+                    update["status"],
+                    gr.update(value=""),
+                    gallery_update
+                )
 
         if self.preview_path and os.path.isfile(self.preview_path):
             os.remove(self.preview_path)
 
-        yield (self.fcommand, gr.update(visible=False, value=100),
-               gr.update(visible=False, value=""),
-               gr.update(value=final_stats_str), self.outputs)
+        yield (
+            self.fcommand,
+            gr.update(visible=False, value=100),
+            gr.update(visible=False, value=""),
+            gr.update(value=final_stats_str),
+            self.outputs
+        )
 
 
 class ImageGenerationRunner(CommandRunner):
@@ -398,6 +411,7 @@ class ImageGenerationRunner(CommandRunner):
             '--preview-noisy': (self._get_param('in_preview_noisy')
                                 if self._get_param('in_preview_bool')
                                 else False),
+            '--mmap': self._get_param('in_mmap'),
             '--color': self._get_param('in_color'),
             '-v': self._get_param('in_verbose'),
         }
@@ -622,7 +636,7 @@ def convert(params: dict):
         )
 
     command = [
-        SD, '-M', 'convert',
+        SD_CLI, '-M', 'convert',
         '--model', orig_model_path,
         '-o', gguf_path,
         '--type', in_quant_type

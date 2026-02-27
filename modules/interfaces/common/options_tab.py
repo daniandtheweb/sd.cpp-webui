@@ -2,6 +2,7 @@
 
 import gradio as gr
 
+from modules.utils.ui_handler import get_ordered_inputs
 from modules.shared_instance import (
     config, sd_options
 )
@@ -319,8 +320,7 @@ with gr.Blocks() as options_block:
                 value="Restart server", variant="stop"
             )
 
-    ordered_keys = sorted(settings_map.keys())
-    ordered_components = [settings_map[key] for key in ordered_keys]
+    ordered_keys, ordered_components = get_ordered_inputs(settings_map)
 
     set_btn.click(
         save_settings_wrapper,

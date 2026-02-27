@@ -4,9 +4,9 @@ from functools import partial
 
 import gradio as gr
 
-from modules.sdcpp import upscale
+from modules.core.cli.sdcpp_cli import upscale
 from modules.utils.ui_handler import (
-    update_interactivity
+    update_interactivity, get_ordered_inputs
 )
 from modules.utils.image_utils import (
     switch_sizes, size_extractor
@@ -182,8 +182,7 @@ with gr.Blocks() as upscale_block:
         **env_ui
     }
 
-    ordered_keys = sorted(inputs_map.keys())
-    ordered_components = [inputs_map[key] for key in ordered_keys]
+    ordered_keys, ordered_components = get_ordered_inputs(inputs_map)
 
     def upscale_wrapper(*args):
         """
