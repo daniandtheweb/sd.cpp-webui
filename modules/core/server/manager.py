@@ -142,6 +142,7 @@ class ServerRunner:
             '--force-sdxl-vae-conv-scale': (
                 self._get_param('in_force_sdxl_vae_conv_scale')
             ),
+            '--mmap': self._get_param('in_mmap'),
             '--color': self._get_param('in_color'),
             '-v': self._get_param('in_verbose')
         }

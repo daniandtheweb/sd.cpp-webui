@@ -398,6 +398,7 @@ class ImageGenerationRunner(CommandRunner):
             '--preview-noisy': (self._get_param('in_preview_noisy')
                                 if self._get_param('in_preview_bool')
                                 else False),
+            '--mmap': self._get_param('in_mmap'),
             '--color': self._get_param('in_color'),
             '-v': self._get_param('in_verbose'),
         }
