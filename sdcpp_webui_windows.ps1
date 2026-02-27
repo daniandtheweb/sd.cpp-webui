@@ -1,5 +1,6 @@
 $parsedArgs = @{
     Help = $false
+    Server = $false
     Listen = $false
     Autostart = $false
     Darkmode = $false
@@ -9,7 +10,9 @@ $parsedArgs = @{
 
 foreach ($arg in $args) {
     switch -Regex ($arg) {
-        '^(--help|-h)$'        { $parsedArgs.Help = $true }
+        '^(--help|-h)$'         { $parsedArgs.Help = $true }
+        '^--server$'            { $parsedArgs.Server = $true}
+        '^-Server$'             { $parsedArgs.Server = $true}
         '^--listen$'            { $parsedArgs.Listen = $true }
         '^-Listen$'             { $parsedArgs.Listen = $true }
         '^--autostart$'         { $parsedArgs.Autostart = $true }
@@ -29,6 +32,7 @@ foreach ($arg in $args) {
 
 # --- Assign variables for convenience ---
 $Help = $parsedArgs.Help
+$Server = $parsedArgs.Server
 $Listen = $parsedArgs.Listen
 $Autostart = $parsedArgs.Autostart
 $Darkmode = $parsedArgs.Darkmode
@@ -49,6 +53,7 @@ Usage: .\sdcpp_webui.ps1 [options]
 
 Options:
     -h, --help                                   Show this help message
+    -Server, --server                            Enable stable-diffusion.cpp's server mode
     -Listen, --listen                            Share sd.cpp-webui on your local network
     -Autostart, --autostart                      Open the UI automatically
     -Darkmode, --darkmode                        Forces the UI to launch in dark mode
@@ -64,11 +69,20 @@ if ($Help) {
     Show-Help
 }
 
+# --- sd-server.exe Check ---
+if ($Server) {
+    if (-not (Test-Path -Path ".\sd-server.exe") -and -not (Get-Command sd-server -ErrorAction SilentlyContinue)) {
+        Write-Host "Error: '--server' flag was used, but the 'sd-server.exe' executable was not found." -ForegroundColor Red
+        Write-Host "Please place the 'sd-server.exe' executable in this folder." -ForegroundColor Red
+        exit 1
+    }
+}
+
 # --- sd.exe Check ---
 if (-not (Test-Path -Path ".\sd-cli.exe") -and -not (Get-Command sd-cli -ErrorAction SilentlyContinue) -and `
     -not (Test-Path -Path ".\sd.exe") -and -not (Get-Command sd -ErrorAction SilentlyContinue)) {
-    Write-Warning "Neither 'sd-cli.exe' nor 'sd.exe' executables were found in this directory or your PATH."
-    Write-Warning "Please place the stable-diffusion.cpp executable (renamed to 'sd-cli.exe' or 'sd.exe') in this folder."
+    Write-Host "Error: Neither 'sd-cli.exe' nor 'sd.exe' executables were found." -ForegroundColor Red
+    Write-Host "Please place the 'sd-cli.exe' or 'sd.exe' executables in this folder." -ForegroundColor Red
     exit 1
 }
 
@@ -94,6 +108,7 @@ else {
 
 # --- Build Python Argument List ---
 $pythonArgs = @()
+if ($Server) { $pythonArgs += "--server" }
 if ($Listen) { $pythonArgs += "--listen" }
 if ($Autostart) { $pythonArgs += "--autostart" }
 if ($Darkmode) { $pythonArgs += "--darkmode" }

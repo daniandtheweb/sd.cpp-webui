@@ -28,7 +28,10 @@ for arg in "$@"; do
     -h|--help)
       print_help
       ;;
-    --server|--listen|--autostart|--darkmode|--credentials|--allow-insecure-dir)
+    --server)
+      SERVER_MODE=1
+      ;;
+    --listen|--autostart|--darkmode|--credentials|--allow-insecure-dir)
       ;;
     *)
       printf "Error: Unknown command parameter: %s\n" "$arg" >&2
@@ -37,10 +40,16 @@ for arg in "$@"; do
   esac
 done
 
-if [ ! -x "sd-cli" ] && ! command -v "sd-cli" > /dev/null && \
+if [ "$SERVER_MODE" -eq 1 ]; then
+  if [ ! -x "sd-server" ] && ! command -v "sd-server" > /dev/null; then
+    echo "Error: '--server' flag was used, but the 'sd-server' executable was not found or is not executable."
+    echo "Please place the 'sd-server' executable in this folder or ensure it is in your PATH."
+    exit 1
+  fi
+elif [ ! -x "sd-cli" ] && ! command -v "sd-cli" > /dev/null && \
    [ ! -x "sd" ] && ! command -v "sd" > /dev/null; then
-  echo "Warning: Neither 'sd-cli' nor 'sd' executables were found in this directory or your PATH."
-  echo "Please place the stable-diffusion.cpp executable (renamed to 'sd-cli' or 'sd') in this folder."
+  echo "Error: Neither 'sd-cli' nor 'sd' executables were found or they're not executable."
+  echo "Please place the 'sd-cli' or 'sd' executable in this folder or ensure it is in your PATH."
   exit 1
 fi
 
