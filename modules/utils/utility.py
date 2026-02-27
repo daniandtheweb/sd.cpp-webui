@@ -149,6 +149,8 @@ class SubprocessManager:
                 sys.stdout.write("\n\n")
 
             print(display_line)
+            if 'generate_image completed' in clean_line:
+                return {"final_stats": dict(final_stats)}, False
             return None, False
 
         return None, last_was_progress
@@ -212,6 +214,8 @@ class SubprocessManager:
 
                     if update_data:
                         yield update_data
+                        if "final_stats" in update_data:
+                            final_stats.clear()
 
         finally:
             if last_was_progress:
@@ -220,7 +224,8 @@ class SubprocessManager:
                 print("Subprocess terminated.")
             self.process = None
 
-        yield {"final_stats": final_stats}
+        if final_stats:
+            yield {"final_stats": final_stats}
 
     def kill_subprocess(self):
         """

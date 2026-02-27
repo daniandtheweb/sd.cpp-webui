@@ -12,7 +12,7 @@ import gradio as gr
 
 from modules.utils.utility import get_path
 from modules.utils.sdcpp_utils import generate_output_filename
-from modules.shared_instance import config
+from modules.shared_instance import config, server_state
 
 
 class ApiTaskRunner:
@@ -164,7 +164,7 @@ class ApiTaskRunner:
             self.fcommand,
             gr.update(),
             gr.update(),
-            gr.update(value="Sending Request..."),
+            gr.update(),
             None
         )
 
@@ -177,12 +177,13 @@ class ApiTaskRunner:
 
             if response.status_code == 200:
                 self._process_response(response.json())
+                gen_stats = getattr(server_state, "last_generation_stats", "No stats recorded.")
 
                 yield (
                     self.fcommand,
                     gr.update(),
                     gr.update(),
-                    gr.update(),
+                    gr.update(value=gen_stats),
                     self.outputs
                 )
             else:

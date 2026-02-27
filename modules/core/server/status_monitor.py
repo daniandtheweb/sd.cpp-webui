@@ -54,7 +54,7 @@ def get_active_model_name(ip, port):
 
 def server_status_monitor_wrapper(ip, port):
     """
-    Monitors server state and progress. 
+    Monitors server state and progress.
     Hides progress bar/status when progress reaches 100%.
     """
     if not server_state.running:
@@ -76,7 +76,9 @@ def server_status_monitor_wrapper(ip, port):
             text_update = gr.update(visible=False, value="")
         else:
             slider_update = gr.update(visible=True, value=val)
-            text_update = gr.update(visible=True, value=latest.get("status", ""))
+            text_update = gr.update(
+                visible=True, value=latest.get("status", "")
+            )
 
     model_name = get_active_model_name(ip, port)
     if model_name in ["Loading weights...", "None", "Checking status..."]:
@@ -86,4 +88,9 @@ def server_status_monitor_wrapper(ip, port):
         combined_status = f"Running (Model: {model_name})"
         btn_interactive = True
 
-    return combined_status, gr.update(interactive=btn_interactive), slider_update, text_update
+    return (
+        combined_status,
+        gr.update(interactive=btn_interactive),
+        slider_update,
+        text_update
+    )

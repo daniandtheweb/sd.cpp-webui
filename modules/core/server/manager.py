@@ -29,6 +29,7 @@ class ServerRunner:
         self.params = params
         self.env_vars = extract_env_vars(self.params)
         self.command = [SD_SERVER]
+        self.fcommand = ""
 
     def _get_param(self, key: str, default: Any = None) -> Any:
         """Helper to get a parameter from the params dictionary."""
@@ -150,41 +151,60 @@ class ServerRunner:
         }
         self._add_flags(flags)
 
-    def start(self):
-        """Starts the server thread."""
-        cmd_str = " ".join(self.command)
-        print(f"[SD-Server] Starting: {cmd_str}")
+    def _prepare_for_run(self):
+        """Prepares the final command string for printing."""
+        self.fcommand = ' '.join(map(str, self.command))
+
+    def run(self):
+        """Starts the server thread and handles initial setup/logging."""
+        self._prepare_for_run()
+        print(f"\n\n{self.fcommand}\n\n")
+
+        process_env = os.environ.copy()
+
+        if self.env_vars:
+            settings_to_print = []
+
+            for key, value in self.env_vars.items():
+                if isinstance(value, bool):
+                    if value is True:
+                        process_env[key] = "1"
+                        settings_to_print.append(f"{key}=1")
+                elif isinstance(value, int):
+                    process_env[key] = str(value)
+                    settings_to_print.append(f"{key}={str(value)}")
+
+            if settings_to_print:
+                full_line = " ".join(settings_to_print)
+                print(f"  SET: {full_line}\n\n")
 
         def run_server_wrapper():
             server_state.running = True
 
-            process_env = os.environ.copy()
-
-            if self.env_vars:
-                settings_to_print = []
-
-                for key, value in self.env_vars.items():
-                    if isinstance(value, bool):
-                        if value is True:
-                            process_env[key] = "1"
-                            settings_to_print.append(f"{key}=1")
-                    elif isinstance(value, int):
-                        process_env[key] = str(value)
-                        settings_to_print.append(f"{key}={str(value)}")
-
-                if settings_to_print:
-                    full_line = " ".join(settings_to_print)
-                    print(f"[SD-Server] SET: {full_line}")
-
             try:
-                # Iterate over generator to keep process alive and log output
-                for update in subprocess_manager.run_subprocess(self.command, env=process_env):
-                    server_state.latest_update = update
+                final_stats_str = "Process completed with unknown stats."
+                for update in subprocess_manager.run_subprocess(
+                    self.command, env=process_env
+                ):
+                    if "final_stats" in update:
+                        stats = update["final_stats"]
+                        final_stats_str = (
+                            f"Sampling: {stats.get('sampling_time', 'N/A')} | "
+                            f"Decode: {stats.get('decoding_time', 'N/A')} | "
+                            f"Total: {stats.get('total_time', 'N/A')} | "
+                            f"Last Speed: {stats.get('last_speed', 'N/A')}"
+                        )
+                        print(f"[SD-Server] Session Stats: {final_stats_str}")
+
+                        server_state.last_generation_stats = final_stats_str
+
+                        server_state.latest_update = {"status": final_stats_str, "percent": 100}
+                    else:
+                        server_state.latest_update = update
             except Exception as e:
                 print(f"[SD-Server] Crashed: {e}")
             finally:
                 server_state.running = False
-                print("[SD-Server] Terminated.")
 
         thread = threading.Thread(target=run_server_wrapper, daemon=True)
         thread.start()
@@ -202,7 +222,7 @@ def start_server(params):
     try:
         runner = ServerRunner(params)
         runner.build_command()
-        return runner.start()
+        return runner.run()
 
     except Exception as e:
         return f"Error: {e}", gr.update(interactive=False)

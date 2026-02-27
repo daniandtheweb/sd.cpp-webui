@@ -17,6 +17,7 @@ class ServerState:
     def __init__(self):
         self.running = False
         self.latest_update = {}
+        self.last_generation_stats = ""
 
 
 config = ConfigManager()

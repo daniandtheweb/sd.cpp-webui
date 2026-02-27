@@ -273,10 +273,10 @@ with gr.Blocks() as txt2img_server_block:
     ui_outputs = {
         'gen_btn': gen_btn,
         'timer': timer,
-        'command': command,
         'progress_slider': progress_slider,
         'progress_textbox': progress_textbox,
         'stats': stats,
+        'command': command,
         'img_final': img_final,
         'queue_tracker': queue_tracker
     }

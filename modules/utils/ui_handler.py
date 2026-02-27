@@ -83,7 +83,7 @@ def bind_generation_pipeline(api_func, ordered_keys, ordered_components, outputs
         outputs=[
             outputs_map['timer'],
             outputs_map['progress_slider'],
-            outputs_map['progress_textbox']
+            outputs_map['progress_textbox'],
         ]
     )
 

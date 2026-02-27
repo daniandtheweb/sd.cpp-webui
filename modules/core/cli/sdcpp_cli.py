@@ -184,9 +184,13 @@ class CommandRunner:
         else:
             gallery_update = None
 
-        yield (self.fcommand, gr.update(visible=True, value=0),
-               gr.update(visible=True, value="Initializing..."),
-               gr.update(value=""), None)
+        yield (
+            self.fcommand,
+            gr.update(visible=True, value=0),
+            gr.update(visible=True, value="Initializing..."),
+            gr.update(value=""),
+            None
+        )
 
         final_stats_str = "Process completed with unknown stats."
         for update in subprocess_manager.run_subprocess(
@@ -202,15 +206,24 @@ class CommandRunner:
                     f"Last Speed: {stats.get('last_speed', 'N/A')}"
                 )
             else:
-                yield (self.fcommand, gr.update(value=update["percent"]),
-                       update["status"], gr.update(value=""), gallery_update)
+                yield (
+                    self.fcommand,
+                    gr.update(value=update["percent"]),
+                    update["status"],
+                    gr.update(value=""),
+                    gallery_update
+                )
 
         if self.preview_path and os.path.isfile(self.preview_path):
             os.remove(self.preview_path)
 
-        yield (self.fcommand, gr.update(visible=False, value=100),
-               gr.update(visible=False, value=""),
-               gr.update(value=final_stats_str), self.outputs)
+        yield (
+            self.fcommand,
+            gr.update(visible=False, value=100),
+            gr.update(visible=False, value=""),
+            gr.update(value=final_stats_str),
+            self.outputs
+        )
 
 
 class ImageGenerationRunner(CommandRunner):
