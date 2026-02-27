@@ -274,7 +274,7 @@ with gr.Blocks()as img2img_server_block:
                         show_label=True,
                         value="",
                         interactive=False,
-                        show_copy_button=True,
+                        buttons=['copy'],
                     )
 
     ordered_keys, ordered_components = get_ordered_inputs(inputs_map)

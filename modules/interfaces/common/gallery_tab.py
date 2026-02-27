@@ -107,7 +107,7 @@ with gr.Blocks() as gallery_block:
                 interactive=False,
                 scale=1,
                 min_width=300,
-                show_copy_button=True,
+                buttons=['copy'],
                 max_lines=4
             )
             # Negative prompts
@@ -117,7 +117,7 @@ with gr.Blocks() as gallery_block:
                 interactive=False,
                 scale=1,
                 min_width=300,
-                show_copy_button=True,
+                buttons=['copy'],
                 max_lines=4
             )
             with gr.Row():
@@ -152,7 +152,7 @@ with gr.Blocks() as gallery_block:
                 interactive=False,
                 scale=1,
                 min_width=150,
-                show_copy_button=True,
+                buttons=['copy'],
                 max_lines=1
             )
             info_params['scheduler'] = gr.Textbox(
@@ -161,7 +161,7 @@ with gr.Blocks() as gallery_block:
                 interactive=False,
                 scale=1,
                 min_width=150,
-                show_copy_button=True,
+                buttons=['copy'],
                 max_lines=1
             )
             with gr.Row():
