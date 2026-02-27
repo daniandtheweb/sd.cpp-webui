@@ -147,7 +147,7 @@ with gr.Blocks() as imgedit_server_block:
                         value="Stopped (No Model Loaded)",
                         interactive=False
                     )
-                    server_status_timer = gr.Timer(value=0.1, active=False)
+                    server_status_timer = gr.Timer(value=0.1, active=True)
 
     # Prompts
     prompts_ui = create_prompts_ui(nprompt_support=False)
@@ -191,11 +191,7 @@ with gr.Blocks() as imgedit_server_block:
                 with gr.Row():
                     gen_btn = gr.Button(
                         value="Generate", size="lg",
-                        variant="primary"
-                    )
-                    kill_btn = gr.Button(
-                        value="Stop", size="lg",
-                        variant="stop"
+                        variant="primary", interactive=False
                     )
                 with gr.Row():
                     queue_tracker = gr.Textbox(
@@ -254,19 +250,19 @@ with gr.Blocks() as imgedit_server_block:
     server_start.click(
         fn=start_server_wrapper,
         inputs=ordered_components,
-        outputs=[server_status, gen_btn, server_status_timer]
+        outputs=[server_status, gen_btn]
     )
 
     server_stop.click(
         fn=stop_server,
         inputs=[],
-        outputs=[server_status, gen_btn, server_status_timer]
+        outputs=[server_status, gen_btn]
     )
 
     server_status_timer.tick(
         fn=server_status_monitor_wrapper,
         inputs=[listen_ip, port],
-        outputs=[server_status, gen_btn]
+        outputs=[server_status, gen_btn, progress_slider, progress_textbox]
     )
 
     timer = gr.Timer(value=0.01, active=False)
@@ -284,12 +280,6 @@ with gr.Blocks() as imgedit_server_block:
 
     bind_generation_pipeline(
         imgedit_api, ordered_keys, ordered_components, ui_outputs
-    )
-
-    kill_btn.click(
-        subprocess_manager.kill_subprocess,
-        inputs=[],
-        outputs=[]
     )
 
     refresh_opt.click(

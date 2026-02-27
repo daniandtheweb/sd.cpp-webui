@@ -16,6 +16,7 @@ SD_SERVER = exe_name("server")
 class ServerState:
     def __init__(self):
         self.running = False
+        self.latest_update = {}
 
 
 config = ConfigManager()

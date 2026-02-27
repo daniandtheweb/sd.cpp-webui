@@ -151,7 +151,7 @@ with gr.Blocks() as txt2img_server_block:
                         value="Stopped (No Model Loaded)",
                         interactive=False
                     )
-                    server_status_timer = gr.Timer(value=0.1, active=False)
+                    server_status_timer = gr.Timer(value=0.1, active=True)
 
     # Prompts
     prompts_ui = create_prompts_ui()
@@ -194,7 +194,7 @@ with gr.Blocks() as txt2img_server_block:
                 with gr.Row():
                     gen_btn = gr.Button(
                         value="Generate", size="lg",
-                        variant="primary"
+                        variant="primary", interactive=False
                     )
                 with gr.Row():
                     queue_tracker = gr.Textbox(
@@ -253,19 +253,19 @@ with gr.Blocks() as txt2img_server_block:
     server_start.click(
         fn=start_server_wrapper,
         inputs=ordered_components,
-        outputs=[server_status, gen_btn, server_status_timer]
+        outputs=[server_status, gen_btn]
     )
 
     server_stop.click(
         fn=stop_server,
         inputs=[],
-        outputs=[server_status, gen_btn, server_status_timer]
+        outputs=[server_status, gen_btn]
     )
 
     server_status_timer.tick(
         fn=server_status_monitor_wrapper,
         inputs=[listen_ip, port],
-        outputs=[server_status, gen_btn]
+        outputs=[server_status, gen_btn, progress_slider, progress_textbox]
     )
 
     timer = gr.Timer(value=0.01, active=False)

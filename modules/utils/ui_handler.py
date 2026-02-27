@@ -50,7 +50,9 @@ def bind_generation_pipeline(api_func, ordered_keys, ordered_components, outputs
         print(f"\n\nJob submitted! Position in queue: {q_len}.\n"),
 
         return (
-            gr.Timer(value=0.1, active=True)
+            gr.Timer(value=0.01, active=True),
+            gr.update(visible=True, value=0),
+            gr.update(visible=True, value="Added to queue...")
         )
 
     def poll_status():
@@ -58,7 +60,7 @@ def bind_generation_pipeline(api_func, ordered_keys, ordered_components, outputs
         q_len = queue_manager.get_queue_size()
 
         is_active = state["is_running"] or q_len > 0
-        timer_update = gr.Timer(value=0.1, active=is_active)
+        timer_update = gr.Timer(value=0.01, active=is_active)
 
         queue_display = gr.update(
             value=f"⏳ Jobs in queue: {q_len}" if q_len > 0 else "",
@@ -78,7 +80,11 @@ def bind_generation_pipeline(api_func, ordered_keys, ordered_components, outputs
     outputs_map['gen_btn'].click(
         fn=submit_job,
         inputs=ordered_components,
-        outputs=[outputs_map['timer']]
+        outputs=[
+            outputs_map['timer'],
+            outputs_map['progress_slider'],
+            outputs_map['progress_textbox']
+        ]
     )
 
     outputs_map['timer'].tick(

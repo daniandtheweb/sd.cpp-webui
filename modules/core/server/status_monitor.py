@@ -1,11 +1,10 @@
 """sd.cpp-webui - core - Server status monitor module"""
 
-import os
 import requests
 
 import gradio as gr
 
-from modules.shared_instance import server_state, config
+from modules.shared_instance import server_state
 
 
 def get_server_status():
@@ -55,13 +54,31 @@ def get_active_model_name(ip, port):
 
 def server_status_monitor_wrapper(ip, port):
     """
-    Checks the internal state first, then pings the network.
+    Monitors server state and progress. 
+    Hides progress bar/status when progress reaches 100%.
     """
     if not server_state.running:
-        return "Stopped (No Model Loaded)", gr.update(interactive=False)
+        return (
+            "Stopped (No Model Loaded)",
+            gr.update(interactive=False),
+            gr.update(visible=False),
+            gr.update(visible=False)
+        )
+
+    latest = server_state.latest_update
+    slider_update = gr.update()
+    text_update = gr.update()
+
+    if "percent" in latest:
+        val = latest["percent"]
+        if val >= 100 or val == 0:
+            slider_update = gr.update(visible=False, value=100)
+            text_update = gr.update(visible=False, value="")
+        else:
+            slider_update = gr.update(visible=True, value=val)
+            text_update = gr.update(visible=True, value=latest.get("status", ""))
 
     model_name = get_active_model_name(ip, port)
-
     if model_name in ["Loading weights...", "None", "Checking status..."]:
         combined_status = "Loading (Model initializing...)"
         btn_interactive = False
@@ -69,4 +86,4 @@ def server_status_monitor_wrapper(ip, port):
         combined_status = f"Running (Model: {model_name})"
         btn_interactive = True
 
-    return combined_status, gr.update(interactive=btn_interactive)
+    return combined_status, gr.update(interactive=btn_interactive), slider_update, text_update

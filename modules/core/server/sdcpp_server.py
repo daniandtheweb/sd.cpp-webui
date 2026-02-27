@@ -114,7 +114,7 @@ class ApiTaskRunner:
 
     def _build_payload(self) -> dict:
         """Constructs the JSON payload for standard endpoints."""
-        prompt = self._get_param('in_pprompt', '') + self._get_extra_args_string()
+        prompt = self._get_param('in_pprompt', '')
         return {
             "prompt": prompt,
             "negative_prompt": self._get_param('in_nprompt', ''),
@@ -148,10 +148,27 @@ class ApiTaskRunner:
         self._resolve_paths()
         payload_or_files = self._build_payload()
 
-        yield (self.fcommand, gr.update(visible=True, value=10), "Connecting...", "Sending Request", None)
+        if isinstance(payload_or_files, tuple):
+            self.fcommand = json.dumps(payload_or_files[0], indent=4)
+        else:
+            display_payload = payload_or_files.copy()
+            for key in ["init_images", "mask"]:
+                if key in display_payload:
+                    if isinstance(display_payload[key], list):
+                        display_payload[key] = [img[:60] + "..." for img in display_payload[key]]
+                    elif isinstance(display_payload[key], str):
+                        display_payload[key] = display_payload[key][:60] + "..."
+            self.fcommand = json.dumps(display_payload, indent=4)
+
+        yield (
+            self.fcommand,
+            gr.update(),
+            gr.update(),
+            gr.update(value="Sending Request..."),
+            None
+        )
 
         try:
-            # Handle both JSON and Multipart based on what _build_payload returns
             if isinstance(payload_or_files, tuple):
                 data, files = payload_or_files
                 response = requests.post(self.url, data=data, files=files, timeout=None)
@@ -159,13 +176,31 @@ class ApiTaskRunner:
                 response = requests.post(self.url, json=payload_or_files, timeout=None)
 
             if response.status_code == 200:
-                yield (self.fcommand, gr.update(value=80), "Decoding...", "Processing Response", None)
                 self._process_response(response.json())
-                yield (self.fcommand, gr.update(visible=False, value=100), "Done", f"Saved to {os.path.dirname(self.output_path)}", self.outputs)
+
+                yield (
+                    self.fcommand,
+                    gr.update(),
+                    gr.update(),
+                    gr.update(),
+                    self.outputs
+                )
             else:
-                yield (self.fcommand, gr.update(value=0), "Error", f"Status {response.status_code}: {response.text}", None)
-        except Exception as e:
-            yield (self.fcommand, gr.update(value=0), "Connection Failed", str(e), None)
+                yield (
+                    self.fcommand,
+                    gr.update(),
+                    gr.update(),
+                    gr.update(),
+                    None
+                )
+        except Exception:
+            yield (
+                self.fcommand,
+                gr.update(),
+                gr.update(),
+                gr.update(),
+                None
+            )
 
 
 class Txt2ImgApiRunner(ApiTaskRunner):
@@ -174,7 +209,6 @@ class Txt2ImgApiRunner(ApiTaskRunner):
             dir_key='txt2img_dir', subctrl_id=0, extension='png'
         )
         self.url = f"http://{self.ip}:{self.port}/sdapi/v1/txt2img"
-        self.fcommand = f"POST {self.url}"
 
 
 class Img2ImgApiRunner(ApiTaskRunner):
@@ -183,7 +217,6 @@ class Img2ImgApiRunner(ApiTaskRunner):
             dir_key='img2img_dir', subctrl_id=0, extension='png'
         )
         self.url = f"http://{self.ip}:{self.port}/sdapi/v1/img2img"
-        self.fcommand = f"POST {self.url}"
 
     def _build_payload(self) -> dict:
         payload = super()._build_payload()
@@ -214,7 +247,6 @@ class ImgEditApiRunner(ApiTaskRunner):
     def prepare(self):
         self._set_output_path(dir_key='imgedit_dir', subctrl_id=2, extension='png')
         self.url = f"http://{self.ip}:{self.port}/v1/images/edits"
-        self.fcommand = f"POST {self.url}"
 
     def _build_payload(self) -> tuple:
         """Constructs multipart form data and files."""

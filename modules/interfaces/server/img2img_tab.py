@@ -1,7 +1,5 @@
 """sd.cpp-webui - Image to image UI"""
 
-import requests
-
 from functools import partial
 
 import gradio as gr
@@ -12,13 +10,11 @@ from modules.core.server.manager import (
 )
 from modules.core.server.status_monitor import server_status_monitor_wrapper
 from modules.utils.ui_handler import (
-    ckpt_tab_switch, unet_tab_switch, update_interactivity,
-    refresh_all_options
+    ckpt_tab_switch, unet_tab_switch,
+    get_ordered_inputs, bind_generation_pipeline,
+    update_interactivity, refresh_all_options
 )
-import modules.utils.queue as queue_manager
-from modules.shared_instance import (
-    config, subprocess_manager
-)
+from modules.shared_instance import config
 from modules.ui.models import create_img_model_sel_ui
 from modules.ui.prompts import create_prompts_ui
 from modules.ui.generation_settings import (
@@ -159,7 +155,7 @@ with gr.Blocks()as img2img_server_block:
                         value="Stopped (No Model Loaded)",
                         interactive=False
                     )
-                    server_status_timer = gr.Timer(value=0.1, active=False)
+                    server_status_timer = gr.Timer(value=0.1, active=True)
 
     # Prompts
     prompts_ui = create_prompts_ui()
@@ -234,11 +230,7 @@ with gr.Blocks()as img2img_server_block:
                 with gr.Row():
                     gen_btn = gr.Button(
                         value="Generate", size="lg",
-                        variant="primary"
-                    )
-                    kill_btn = gr.Button(
-                        value="Stop", size="lg",
-                        variant="stop"
+                        variant="primary", interactive=False
                     )
                 with gr.Row():
                     queue_tracker = gr.Textbox(
@@ -285,8 +277,7 @@ with gr.Blocks()as img2img_server_block:
                         show_copy_button=True,
                     )
 
-    ordered_keys = sorted(inputs_map.keys())
-    ordered_components = [inputs_map[key] for key in ordered_keys]
+    ordered_keys, ordered_components = get_ordered_inputs(inputs_map)
 
     def start_server_wrapper(*args):
         # Reconstruct the dictionary {key: value}
@@ -297,82 +288,36 @@ with gr.Blocks()as img2img_server_block:
     server_start.click(
         fn=start_server_wrapper,
         inputs=ordered_components,
-        outputs=[server_status, gen_btn, server_status_timer]
+        outputs=[server_status, gen_btn]
     )
 
     server_stop.click(
         fn=stop_server,
         inputs=[],
-        outputs=[server_status, gen_btn, server_status_timer]
+        outputs=[server_status, gen_btn]
     )
 
     server_status_timer.tick(
         fn=server_status_monitor_wrapper,
         inputs=[listen_ip, port],
-        outputs=[server_status, gen_btn]
+        outputs=[server_status, gen_btn, progress_slider, progress_textbox]
     )
-
-    def submit_job(*args):
-        """
-        Pack parameters and add to queue.
-        """
-        params = dict(zip(ordered_keys, args))
-
-        # Add the API task to the queue
-        queue_manager.add_job(img2img_api, params)
-
-        return gr.Timer(value=0.1, active=True)
-
-    def poll_status():
-        """
-        Check queue status and update UI elements.
-        """
-        state = queue_manager.get_status()
-        q_len = queue_manager.get_queue_size()
-
-        # Decide if timer should keep running
-        if state["is_running"] or q_len > 0:
-            timer_update = gr.Timer(value=0.1, active=True)
-        else:
-            timer_update = gr.Timer(active=False)
-
-        # Update queue text
-        if q_len > 0:
-            queue_update = gr.update(value=f"⏳ Jobs in queue: {q_len}", visible=True)
-        else:
-            queue_update = gr.update(visible=False)
-
-        return (
-            state["command"],
-            state["progress"],   # slider value
-            state["status"],     # status text
-            state["stats"],      # stats text
-            state["images"],     # gallery
-            timer_update,
-            queue_update
-        )
 
     timer = gr.Timer(value=0.01, active=False)
 
-    gen_btn.click(
-        submit_job,
-        inputs=ordered_components,
-        outputs=[timer]
-    )
+    ui_outputs = {
+        'gen_btn': gen_btn,
+        'timer': timer,
+        'command': command,
+        'progress_slider': progress_slider,
+        'progress_textbox': progress_textbox,
+        'stats': stats,
+        'img_final': img_final,
+        'queue_tracker': queue_tracker
+    }
 
-    timer.tick(
-        poll_status,
-        inputs=[],
-        outputs=[
-            command, progress_slider, progress_textbox,
-            stats, img_final, timer, queue_tracker
-        ]
-    )
-
-    kill_btn.click(
-        subprocess_manager.kill_subprocess,
-        inputs=[],
-        outputs=[]
+    bind_generation_pipeline(
+        img2img_api, ordered_keys, ordered_components, ui_outputs
     )
 
     # Interactive Bindings

@@ -9,7 +9,9 @@ import gradio as gr
 
 from modules.utils.utility import get_path
 from modules.utils.sdcpp_utils import extract_env_vars
-from modules.shared_instance import config, subprocess_manager, SD_SERVER, server_state
+from modules.shared_instance import (
+    config, subprocess_manager, SD_SERVER, server_state
+)
 from modules.ui.constants import CIRCULAR_PADDING
 
 
@@ -176,8 +178,8 @@ class ServerRunner:
 
             try:
                 # Iterate over generator to keep process alive and log output
-                for _ in subprocess_manager.run_subprocess(self.command, env=process_env):
-                    pass
+                for update in subprocess_manager.run_subprocess(self.command, env=process_env):
+                    server_state.latest_update = update
             except Exception as e:
                 print(f"[SD-Server] Crashed: {e}")
             finally:
@@ -188,42 +190,35 @@ class ServerRunner:
         thread.start()
 
         server_state.running = True
-        return "Running", gr.update(interactive=True), gr.update(active=True)
+        return "Running", gr.update(interactive=True)
 
 
 def start_server(params):
     """Start the sd-server subprocess with validated paths."""
 
     if server_state.running:
-        return "Running", gr.update(), gr.update()
+        return "Running", gr.update()
 
     try:
-        # Extract necessary params for path validation checks if needed here,
-        # or rely on the ServerRunner to fail if paths are missing.
-        # Ideally, we map the UI inputs to the standard keys expected by Runner.
-
-        # Note: Ensure the 'params' passed in has keys matching
-        # 'in_diffusion_mode', 'in_ckpt_model', etc.
-
         runner = ServerRunner(params)
         runner.build_command()
         return runner.start()
 
     except Exception as e:
-        return f"Error: {e}", gr.update(interactive=False), gr.update()
+        return f"Error: {e}", gr.update(interactive=False)
 
 
 def stop_server():
     """Stop the sd-server subprocess."""
     if not server_state.running:
-        return "Stopped", gr.update(interactive=False), gr.update()
+        return "Stopped", gr.update(interactive=False)
 
     try:
         # Use the manager to kill the process
         subprocess_manager.kill_subprocess()
         server_state.running = False
 
-        return "Stopped", gr.update(interactive=False), gr.update(active=False)
+        return "Stopped", gr.update(interactive=False)
 
     except Exception:
-        return "Error", gr.update(interactive=False), gr.update(active=False)
+        return "Error", gr.update(interactive=False)
