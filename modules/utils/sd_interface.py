@@ -238,4 +238,64 @@ class SDOptionsCache:
                 f"Valid options are: {list(option_map.keys())}"
             )
 
-        return self._parse_help_option(option_map[option])
+        parsed_options = self._parse_help_option(option_map[option])
+
+        if not parsed_options:
+            fallbacks = {
+                "samplers": [
+                    "euler",
+                    "euler_a",
+                    "heun",
+                    "dpm2",
+                    "dpm++2s_a",
+                    "dpm++2m",
+                    "dpm++2mv2",
+                    "ipndm",
+                    "ipndm_v",
+                    "lcm",
+                    "ddim_trailing",
+                    "tcd",
+                    "res_multistep",
+                    "res_2s"
+                ],
+                "schedulers": [
+                    "discrete",
+                    "karras",
+                    "exponential",
+                    "ays",
+                    "gits",
+                    "smoothstep",
+                    "sgm_uniform",
+                    "simple",
+                    "kl_optimal",
+                    "lcm",
+                    "bong_tangent"
+                ],
+                "previews": [
+                    "none",
+                    "proj",
+                    "tae",
+                    "vae"
+                ],
+                "prediction": [
+                    "eps",
+                    "v",
+                    "edm_v",
+                    "sd3_flow",
+                    "flux_flow",
+                    "flux2_flow"
+                ],
+                "rng": [
+                    "std_default",
+                    "cuda",
+                    "cpu"
+                ],
+                "sampler_rng": [
+                    "std_default",
+                    "cuda",
+                    "cpu"
+                ],
+            }
+            return fallbacks.get(option, [])
+
+        return parsed_options
