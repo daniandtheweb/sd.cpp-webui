@@ -194,8 +194,6 @@ class ServerRunner:
                             f"Total: {stats.get('total_time', 'N/A')} | "
                             f"Last Speed: {stats.get('last_speed', 'N/A')}"
                         )
-                        print(f"[SD-Server] Session Stats: {final_stats_str}")
-
                         server_state.last_generation_stats = final_stats_str
 
                         server_state.latest_update = {"status": final_stats_str, "percent": 100}
