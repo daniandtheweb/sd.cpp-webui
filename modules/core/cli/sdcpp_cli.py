@@ -206,6 +206,11 @@ class CommandRunner:
                     f"Last Speed: {stats.get('last_speed', 'N/A')}"
                 )
             else:
+                if self.preview_path and os.path.isfile(self.preview_path):
+                    gallery_update = [self.preview_path]
+                else:
+                    gallery_update = gr.skip()
+
                 yield (
                     self.fcommand,
                     gr.update(value=update["percent"]),
@@ -217,12 +222,19 @@ class CommandRunner:
         if self.preview_path and os.path.isfile(self.preview_path):
             os.remove(self.preview_path)
 
+        valid_outputs = [out for out in self.outputs if os.path.isfile(out)]
+
+        if valid_outputs:
+            final_gallery_update = valid_outputs
+        else:
+            final_gallery_update = gr.skip()
+
         yield (
             self.fcommand,
             gr.update(visible=False, value=100),
             gr.update(visible=False, value=""),
             gr.update(value=final_stats_str),
-            self.outputs
+            final_gallery_update
         )
 
 

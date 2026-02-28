@@ -217,9 +217,9 @@ class ApiTaskRunner:
 
         yield (
             self.fcommand,
-            gr.update(),
-            gr.update(),
-            gr.update(),
+            gr.skip(),
+            gr.skip(),
+            gr.skip(),
             None
         )
 
@@ -242,25 +242,25 @@ class ApiTaskRunner:
 
                 yield (
                     self.fcommand,
-                    gr.update(),
-                    gr.update(),
+                    gr.skip(),
+                    gr.skip(),
                     gr.update(value=gen_stats),
                     self.outputs
                 )
             else:
                 yield (
                     self.fcommand,
-                    gr.update(),
-                    gr.update(),
-                    gr.update(),
+                    gr.skip(),
+                    gr.skip(),
+                    gr.skip(),
                     None
                 )
         except Exception:
             yield (
                 self.fcommand,
-                gr.update(),
-                gr.update(),
-                gr.update(),
+                gr.skip(),
+                gr.skip(),
+                gr.skip(),
                 None
             )
 

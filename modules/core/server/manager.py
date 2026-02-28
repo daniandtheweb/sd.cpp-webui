@@ -217,7 +217,7 @@ def start_server(params):
     """Start the sd-server subprocess with validated paths."""
 
     if server_state.running:
-        return "Running", gr.update()
+        return "Running", gr.skip()
 
     try:
         runner = ServerRunner(params)
