@@ -39,13 +39,19 @@ def get_models(models_folder: str) -> List[str]:
         print(f"The {models_folder} folder does not exist.")
         return []
 
+    models = []
     try:
-        models = [
-            model
-            for model in os.listdir(models_folder)
-            if (os.path.isfile(os.path.join(models_folder, model))
-                and model.endswith(SUPPORTED_EXTENSIONS))
-        ]
+        for root, _, files in os.walk(models_folder):
+            for file in files:
+                if file.endswith(SUPPORTED_EXTENSIONS):
+                    full_path = os.path.join(root, file)
+
+                    rel_path = os.path.relpath(full_path, models_folder)
+
+                    rel_path = rel_path.replace("\\", "/")
+
+                    models.append(rel_path)
+
         return sorted(models)
     except OSError as e:
         print(f"Could not read files from '{models_folder}': {e}")
