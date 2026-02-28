@@ -6,14 +6,20 @@ import threading
 
 _job_queue = queue.Queue()
 
-current_job_state = {
-    "command": "",
-    "progress": 0,
-    "status": "Idle",
-    "stats": "",
-    "images": None,
-    "is_running": False
-}
+
+def get_clean_state():
+    return {
+        "command": "",
+        "progress": 0,
+        "status": "Idle",
+        "stats": "",
+        "images": None,
+        "is_running": False,
+        "is_finished": False
+    }
+
+
+current_job_state = get_clean_state()
 
 
 def _background_worker():
@@ -27,6 +33,7 @@ def _background_worker():
         func = job['func']
         params = job['params']
 
+        current_job_state.update(get_clean_state())
         current_job_state["is_running"] = True
 
         try:
@@ -43,6 +50,7 @@ def _background_worker():
 
         finally:
             current_job_state["is_running"] = False
+            current_job_state["is_finished"] = True
             _job_queue.task_done()
 
 

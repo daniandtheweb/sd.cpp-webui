@@ -656,8 +656,8 @@ def convert(params: dict):
 
     yield (
         fcommand,
-        gr.Slider(visible=True, value=0),
-        gr.Textbox(visible=True, value="Initializing conversion..."),
+        gr.update(visible=True, value=0),
+        gr.update(visible=True, value="Initializing conversion..."),
     )
 
     last_was_progress = False

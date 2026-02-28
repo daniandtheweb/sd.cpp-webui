@@ -50,7 +50,6 @@ def bind_generation_pipeline(api_func, ordered_keys, ordered_components, outputs
         print(f"\n\nJob submitted! Position in queue: {q_len}.\n"),
 
         return (
-            gr.Timer(value=0.01, active=True),
             gr.update(visible=True, value=0),
             gr.update(visible=True, value="Added to queue...")
         )
@@ -59,8 +58,19 @@ def bind_generation_pipeline(api_func, ordered_keys, ordered_components, outputs
         state = queue_manager.get_status()
         q_len = queue_manager.get_queue_size()
 
-        is_active = state["is_running"] or q_len > 0
-        timer_update = gr.Timer(value=0.01, active=is_active)
+        if not state["is_running"] and q_len == 0:
+            if state.get("is_finished"):
+                state["is_finished"] = False
+            else:
+                return (
+                    gr.skip(),
+                    gr.skip(),
+                    gr.skip(),
+                    gr.skip(),
+                    gr.skip(),
+                    gr.skip(),
+                    gr.skip(),
+                )
 
         queue_display = gr.update(
             value=f"⏳ Jobs in queue: {q_len}" if q_len > 0 else "",
@@ -73,7 +83,7 @@ def bind_generation_pipeline(api_func, ordered_keys, ordered_components, outputs
             state["status"],
             state["stats"],
             state["images"],
-            timer_update,
+            gr.skip(),
             queue_display
         )
 
@@ -81,7 +91,6 @@ def bind_generation_pipeline(api_func, ordered_keys, ordered_components, outputs
         fn=submit_job,
         inputs=ordered_components,
         outputs=[
-            outputs_map['timer'],
             outputs_map['progress_slider'],
             outputs_map['progress_textbox'],
         ]
