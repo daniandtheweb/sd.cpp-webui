@@ -72,6 +72,16 @@ def bind_generation_pipeline(api_func, ordered_keys, ordered_components, outputs
                     gr.skip(),
                 )
 
+        prog = state["progress"]
+        stat = state["status"]
+
+        if not state["is_running"] and q_len > 0:
+            prog = gr.skip()
+            stat = gr.skip()
+        elif prog == 0:
+            prog = gr.skip()
+            stat = gr.skip()
+
         queue_display = gr.update(
             value=f"⏳ Jobs in queue: {q_len}" if q_len > 0 else "",
             visible=(q_len > 0)
@@ -79,8 +89,8 @@ def bind_generation_pipeline(api_func, ordered_keys, ordered_components, outputs
 
         return (
             state["command"],
-            state["progress"],
-            state["status"],
+            prog,
+            stat,
             state["stats"],
             state["images"],
             gr.skip(),

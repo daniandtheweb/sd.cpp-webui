@@ -71,9 +71,12 @@ def server_status_monitor_wrapper(ip, port):
 
     if "percent" in latest:
         val = latest["percent"]
-        if val >= 100 or val == 0:
+        if val >= 100:
             slider_update = gr.update(visible=False, value=100)
             text_update = gr.update(visible=False, value="")
+        elif val == 0:
+            slider_update = gr.skip()
+            text_update = gr.skip()
         else:
             slider_update = gr.update(visible=True, value=val)
             text_update = gr.update(
