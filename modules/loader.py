@@ -1,11 +1,14 @@
 """sd.cpp-webui - Model loader module"""
 
 import os
+import requests
 from typing import List
 
 import gradio as gr
 
-from modules.shared_instance import config
+from modules.shared_instance import (
+    config, current_mode, server_state
+)
 
 
 SUPPORTED_EXTENSIONS = (".gguf", ".safetensors", ".sft", ".pth", ".ckpt")
@@ -69,6 +72,52 @@ def reload_models(models_folder: str) -> gr.Dropdown:
         gr.Dropdown: A Gradio update object with the new list of models.
     """
     return gr.update(choices=get_models(models_folder))
+
+
+def get_loras() -> List[str]:
+    """
+    Lists all the available LoRAs.
+
+    Supports two modes:
+        1. server: fetches from the /sdapi/v1/loras endpoint.
+        2. cli: scans the local filesystem using get_models.
+    """
+    if current_mode == "server":
+        ip = server_state.ip
+        port = server_state.port
+
+        if not ip or not port:
+            return []
+
+        lora_api_url = f"http://{ip}:{port}/sdapi/v1/loras"
+
+        try:
+
+            resp_lora = requests.get(lora_api_url, timeout=1.0)
+
+            if resp_lora.status_code == 200:
+                lora_data = resp_lora.json()
+
+                lora_names = []
+
+                for item in lora_data:
+                    if isinstance(item, dict) and "path" in item:
+                        lora_names.append(item.get("path"))
+                return lora_names
+            else:
+                return []
+        except requests.exceptions.RequestException:
+            return []
+
+    elif current_mode == "cli":
+        lora_dir = MODEL_DIR_MAP.get("Lora")
+        if lora_dir:
+            return get_models(lora_dir)
+        else:
+            print("LoRA directory not configured in config.")
+            return []
+
+    return []
 
 
 def model_choice(model_type: str) -> gr.Textbox:

@@ -57,6 +57,9 @@ def server_status_monitor_wrapper(ip, port):
     Monitors server state and progress.
     Hides progress bar/status when progress reaches 100%.
     """
+    server_state.ip = ip
+    server_state.port = port
+
     if not server_state.running:
         return (
             "Stopped (No Model Loaded)",

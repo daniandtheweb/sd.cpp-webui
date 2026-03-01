@@ -2,6 +2,7 @@
 
 import os
 import io
+import re
 import json
 import base64
 import requests
@@ -132,6 +133,37 @@ class ApiTaskRunner:
                         config.get(dir_key), self.params.get(param_key)
                     )
 
+    def _extract_loras(self, text: str) -> tuple:
+        """
+        Finds <lora:name:multiplier> tags, extracts them into dicts,
+        and removes them from the text.
+        Returns: (cleaned_text, list_of_lora_dicts)
+        """
+        if not text:
+            return text, []
+
+        extracted_loras = []
+        # Regex matches <lora:filename:multiplier>
+        pattern = r'<lora:([^:]+):([^>]+)>'
+
+        def match_handler(match):
+            path = match.group(1).strip()
+            try:
+                multiplier = float(match.group(2).strip())
+            except ValueError:
+                multiplier = 1.0
+
+            extracted_loras.append({
+                "path": path,
+                "multiplier": multiplier,
+                "is_high_noise": False
+            })
+            return ""
+
+        cleaned_text = re.sub(pattern, match_handler, text)
+
+        return cleaned_text, extracted_loras
+
     def _get_param(self, key: str, default: Any = None) -> Any:
         return self.params.get(key, default)
 
@@ -165,11 +197,18 @@ class ApiTaskRunner:
         return f"<sd_cpp_extra_args>{json.dumps(extra_args)}</sd_cpp_extra_args>" if extra_args else ""
 
     def _build_payload(self) -> dict:
-        """Constructs the JSON payload for standard endpoints."""
-        prompt = self._get_param('in_pprompt', '')
-        return {
-            "prompt": prompt,
-            "negative_prompt": self._get_param('in_nprompt', ''),
+        """Constructs the JSON payload for sdapi endpoints."""
+        raw_pprompt = self._get_param('in_pprompt', '')
+        raw_nprompt = self._get_param('in_nprompt', '')
+
+        clean_pprompt, pprompt_loras = self._extract_loras(raw_pprompt)
+        clean_nprompt, nprompt_loras = self._extract_loras(raw_nprompt)
+
+        loras = pprompt_loras + nprompt_loras
+
+        payload = {
+            "prompt": clean_pprompt,
+            "negative_prompt": clean_nprompt,
             "sampler_name": self._get_param('in_sampling', 'Euler a'),
             "scheduler": self._get_param('in_scheduler', 'discrete'),
             "width": int(self._get_param('in_width', 512)),
@@ -179,6 +218,12 @@ class ApiTaskRunner:
             "steps": int(self._get_param('in_steps', 20)),
             "cfg_scale": float(self._get_param('in_cfg', 7.0)),
         }
+
+        if loras:
+            unique_loras = {lora['path']: lora for lora in loras}.values()
+            payload["lora"] = list(unique_loras)
+
+        return payload
 
     def _process_response(self, data: dict):
         base, ext = os.path.splitext(self.output_path)

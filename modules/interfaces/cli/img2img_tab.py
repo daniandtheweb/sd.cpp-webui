@@ -8,12 +8,13 @@ from modules.core.cli.sdcpp_cli import img2img
 from modules.utils.ui_handler import (
     ckpt_tab_switch, unet_tab_switch, update_interactivity,
     get_ordered_inputs, bind_generation_pipeline,
-    refresh_all_options
+    apply_lora, refresh_all_options
 )
 from modules.shared_instance import (
     config, subprocess_manager
 )
 from modules.ui.models import create_img_model_sel_ui
+from modules.ui.loras import create_lora_sel_ui
 from modules.ui.prompts import create_prompts_ui
 from modules.ui.generation_settings import (
     create_quant_ui, create_generation_settings_ui,
@@ -57,6 +58,10 @@ with gr.Blocks()as img2img_block:
         # Model Type Selection
         quant_ui = create_quant_ui()
         inputs_map.update(quant_ui)
+
+    # Loras
+    lora_ui = create_lora_sel_ui()
+    inputs_map.update(lora_ui)
 
     # Prompts
     prompts_ui = create_prompts_ui()
@@ -258,6 +263,18 @@ with gr.Blocks()as img2img_block:
         subprocess_manager.kill_subprocess,
         inputs=[],
         outputs=[]
+    )
+
+    lora_ui['in_apply_lora_btn'].click(
+        apply_lora,
+        inputs=[
+            lora_ui['in_lora_model'], lora_ui['in_lora_strength'],
+            lora_ui['in_lora_prompt_switch'],
+            prompts_ui['in_pprompt'], prompts_ui['in_nprompt']
+        ],
+        outputs=[
+            prompts_ui['in_pprompt'], prompts_ui['in_nprompt']
+        ]
     )
 
     # Interactive Bindings

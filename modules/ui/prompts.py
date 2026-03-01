@@ -6,7 +6,7 @@ from modules.shared_instance import config
 from .constants import RELOAD_SYMBOL
 
 
-def create_prompts_ui(nprompt_support = True):
+def create_prompts_ui(nprompt_support=True):
     """Create the prompts UI"""
 
     def save_and_refresh_prompts(name, p_prompt, n_prompt):
@@ -57,7 +57,7 @@ def create_prompts_ui(nprompt_support = True):
                     )
     with gr.Row():
         pprompt = gr.Textbox(
-            placeholder="Positive prompt\nUse loras from the loras folder with: <lora:lora_name:lora_strenght>, for example: <lora:anime:0.8>",
+            placeholder="Positive prompt\nUse loras from the loras folder with: <lora:lora_name:lora_strength>, for example: <lora:anime:0.8>",
             label="Positive Prompt",
             lines=3,
             buttons=['copy'],

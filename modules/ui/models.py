@@ -6,9 +6,12 @@ import gradio as gr
 
 from modules.shared_instance import config
 from modules.loader import (
-    get_models, reload_models
+    get_models, reload_models,
+    get_loras
 )
-from modules.utils.ui_handler import get_session_value, update_session_cache
+from modules.utils.ui_handler import (
+    get_session_value, update_session_cache
+)
 from .constants import RELOAD_SYMBOL
 
 
@@ -26,7 +29,10 @@ def create_model_widget(
 
     current_value = get_session_value(option_key)
 
-    choices = list(get_models(full_path)) if full_path else []
+    if dir_key == 'lora_dir':
+        choices = list(get_loras())
+    else:
+        choices = list(get_models(full_path)) if full_path else []
 
     with gr.Group():
         path_component_txt = gr.Textbox(value=full_path, visible=False)
@@ -53,11 +59,18 @@ def create_model_widget(
                 value=RELOAD_SYMBOL,
                 scale=1
             )
-            reload_btn.click(
-                reload_models,
-                inputs=[path_component_txt],
-                outputs=[dropdown]
-            )
+            if dir_key == 'lora_dir':
+                reload_btn.click(
+                    fn=lambda _: gr.update(choices=list(get_loras())),
+                    inputs=[path_component_txt],
+                    outputs=[dropdown]
+                )
+            else:
+                reload_btn.click(
+                    fn=reload_models,
+                    inputs=[path_component_txt],
+                    outputs=[dropdown]
+                )
             clear_btn = gr.ClearButton(
                 dropdown,
                 scale=1

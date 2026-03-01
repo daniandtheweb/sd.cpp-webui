@@ -4,7 +4,7 @@ import gradio as gr
 
 import modules.utils.queue as queue_manager
 from modules.shared_instance import (
-    config, sd_options
+    config, sd_options, current_mode
 )
 
 
@@ -119,6 +119,26 @@ def bind_generation_pipeline(api_func, ordered_keys, ordered_components, outputs
             outputs_map['queue_tracker']
         ]
     )
+
+
+def apply_lora(
+    lora_model, lora_strength, lora_prompt_switch,
+    pprompt, nprompt
+):
+    if lora_model:
+        lora_string = "<lora:" + lora_model + ":" + str(lora_strength) + ">"
+        n_lora_string = "<lora:" + lora_model + ":-" + str(lora_strength) + ">"
+
+        if lora_prompt_switch == "Positive":
+            pprompt = "".join([pprompt, lora_string])
+
+        elif lora_prompt_switch == "Negative":
+            if nprompt is True:
+                nprompt = "".join([nprompt, lora_string])
+            elif nprompt.visible is False:
+                pprompt = "".join([pprompt, n_lora_string])
+
+    return (pprompt, nprompt)
 
 
 class ModelState:
