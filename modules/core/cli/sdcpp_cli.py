@@ -4,35 +4,26 @@ import os
 import re
 import sys
 import subprocess
-from enum import IntEnum
 from typing import Dict, Any, Generator
 
 import gradio as gr
 
-from modules.utils.utility import get_path
-from modules.utils.sdcpp_utils import (
-    extract_env_vars, generate_output_filename
+from modules.core.common.sd_common import (
+    DiffusionMode, CommonRunner
 )
+from modules.utils.sdcpp_utils import generate_output_filename
 from modules.shared_instance import (
     config, subprocess_manager, SD_CLI
 )
-from modules.ui.constants import CIRCULAR_PADDING
 
 
-class DiffusionMode(IntEnum):
-    CHECKPOINT = 0
-    UNET = 1
-
-
-class CommandRunner:
+class CommandRunner(CommonRunner):
     """Builds and runs stable-diffusion.cpp commands and yelds UI updates."""
 
     def __init__(self, mode: str, params: Dict[str, Any]):
+        super().__init__(params)
         self.mode = mode
-        self.params = params
-        self.env_vars = extract_env_vars(self.params)
         self.command = [SD_CLI, '-M', self.mode]
-        self.fcommand = ""
         self.outputs = []
         self.output_path = ""
         self.preview_path = None
@@ -65,34 +56,6 @@ class CommandRunner:
             name_parts, subctrl_id
         )
 
-    def _resolve_paths(self):
-        """Resolves all model and directory paths from the config."""
-        path_mappings = {
-            'ckpt_dir': ['in_ckpt_model'],
-            'vae_dir': ['in_ckpt_vae', 'in_unet_vae'],
-            'unet_dir': ['in_unet_model', 'in_high_noise_model'],
-            'txt_enc_dir': [
-                'in_clip_g', 'in_clip_l', 'in_t5xxl', 'in_llm',
-                'in_umt5_xxl', 'in_clip_vision_h'
-            ],
-            'taesd_dir': ['in_taesd'],
-            'phtmkr_dir': ['in_phtmkr'],
-            'upscl_dir': ['in_upscl'],
-            'cnnet_dir': ['in_cnnet']
-        }
-        for dir_key, param_keys in path_mappings.items():
-            for param_key in param_keys:
-                if param_key in self.params:
-                    # Create a new key for the full path, e.g., 'f_ckpt_model'
-                    full_path_key = f"f_{param_key.replace('in_', '')}"
-                    self.params[full_path_key] = get_path(
-                        config.get(dir_key), self.params.get(param_key)
-                    )
-
-    def _get_param(self, key: str, default: Any = None) -> Any:
-        """Helper to get a parameter from the params dictionary."""
-        return self.params.get(key, default)
-
     def _add_base_args(self):
         """Adds arguments common to all modes."""
         self.command.extend([
@@ -112,18 +75,6 @@ class CommandRunner:
             '--lora-apply-mode', str(self._get_param('in_lora_apply')),
             '-o', self.output_path
         ])
-
-    def _add_options(self, options: Dict[str, Any]):
-        """Adds key-value options to the command if the value is not None."""
-        for opt, val in options.items():
-            if val is not None:
-                self.command.extend([opt, str(val)])
-
-    def _add_flags(self, flags: Dict[str, bool]):
-        """Adds boolean flags to the command if they are True."""
-        for flag, condition in flags.items():
-            if condition:
-                self.command.append(flag)
 
     def _prepare_for_run(self):
         """
@@ -162,22 +113,7 @@ class CommandRunner:
         self._prepare_for_run()
         print(f"\n\n{self.fcommand}\n\n")
 
-        process_env = os.environ.copy()
-
-        if self.env_vars:
-            settings_to_print = []
-
-            for key, value in self.env_vars.items():
-                if isinstance(value, bool):
-                    if value is True:
-                        process_env[key] = "1"
-                        settings_to_print.append(f"{key}=1")
-                elif isinstance(value, int):
-                    process_env[key] = str(value)
-                    settings_to_print.append(f"{key}={str(value)}")
-            if settings_to_print:
-                full_line = " ".join(settings_to_print)
-                print(f"  SET: {full_line}\n\n")
+        process_env = self._build_process_env()
 
         if self.preview_path:
             gallery_update = [self.preview_path]
@@ -385,48 +321,15 @@ class ImageGenerationRunner(CommandRunner):
         }
         self._add_options(options)
 
-        flags = {
-            '--offload-to-cpu': self._get_param('in_offload_to_cpu'),
-            '--vae-tiling': self._get_param('in_vae_tiling'),
-            '--vae-on-cpu': self._get_param('in_vae_cpu'),
-            '--clip-on-cpu': self._get_param('in_clip_cpu'),
-            '--control-net-cpu': self._get_param('in_cnnet_cpu'),
-            '--canny': self._get_param('in_canny'),
-            '--chroma-disable-dit-mask': (
-                self._get_param('in_disable_dit_mask')
-            ),
-            '--chroma-enable-t5-mask': self._get_param('in_enable_t5_mask'),
-            '--qwen-image-zero-cond-t': (
-                self._get_param('in_enable_zero_cond_t')
-            ),
-            '--circular': (
-                self._get_param('in_circular_padding') == CIRCULAR_PADDING[1]
-            ),
-            '--circularx': (
-                self._get_param('in_circular_padding') == CIRCULAR_PADDING[2]
-            ),
-            '--circulary': (
-                self._get_param('in_circular_padding') == CIRCULAR_PADDING[3]
-            ),
-            '--fa': self._get_param('in_flash_attn'),
-            '--diffusion-fa': self._get_param('in_diffusion_fa'),
-            '--diffusion-conv-direct': (
-                self._get_param('in_diffusion_conv_direct')
-            ),
-            '--vae-conv-direct': self._get_param('in_vae_conv_direct'),
-            '--force-sdxl-vae-conv-scale': (
-                self._get_param('in_force_sdxl_vae_conv_scale')
-            ),
+        flags = self._get_common_flags()
+        flags.update({
             '--taesd-preview-only': (self._get_param('in_preview_taesd')
                                      if self._get_param('in_preview_bool')
                                      else False),
             '--preview-noisy': (self._get_param('in_preview_noisy')
                                 if self._get_param('in_preview_bool')
                                 else False),
-            '--mmap': self._get_param('in_mmap'),
-            '--color': self._get_param('in_color'),
-            '-v': self._get_param('in_verbose'),
-        }
+        })
         self._add_flags(flags)
 
 
@@ -539,21 +442,15 @@ class Any2VideoRunner(CommandRunner):
         }
         self._add_options(options)
 
-        flags = {
-            '--offload-to-cpu': self._get_param('in_offload_to_cpu'),
-            '--vae-tiling': self._get_param('in_vae_tiling'),
-            '--vae-on-cpu': self._get_param('in_vae_cpu'),
-            '--clip-on-cpu': self._get_param('in_clip_cpu'),
-            '--control-net-cpu': self._get_param('in_cnnet_cpu'),
-            '--canny': self._get_param('in_canny'),
-            '--color': self._get_param('in_color'),
-            '--diffusion-fa': self._get_param('in_flash_attn'),
-            '--diffusion-conv-direct': (
-                self._get_param('in_diffusion_conv_direct')
-            ),
-            '--vae-conv-direct': self._get_param('in_vae_conv_direct'),
-            '-v': self._get_param('in_verbose')
-        }
+        flags = self._get_common_flags()
+        flags.update({
+            '--taesd-preview-only': (self._get_param('in_preview_taesd')
+                                     if self._get_param('in_preview_bool')
+                                     else False),
+            '--preview-noisy': (self._get_param('in_preview_noisy')
+                                if self._get_param('in_preview_bool')
+                                else False),
+        })
         self._add_flags(flags)
 
 
@@ -576,15 +473,7 @@ class UpscaleRunner(CommandRunner):
         }
         self._add_options(options)
 
-        flags = {
-            '--diffusion-fa': self._get_param('in_flash_attn'),
-            '--diffusion-conv-direct': (
-                self._get_param('in_diffusion_conv_direct')
-            ),
-            '--color': self._get_param('in_color'),
-            '-v': self._get_param('in_verbose')
-        }
-        self._add_flags(flags)
+        self._add_flags(self._get_common_flags())
 
 
 def txt2img(params: dict) -> Generator:
