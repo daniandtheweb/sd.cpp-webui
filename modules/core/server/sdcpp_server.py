@@ -11,8 +11,11 @@ from typing import Dict, Any, Generator
 
 import gradio as gr
 
-from modules.utils.utility import get_path
+from modules.utils.file_utils import get_path
 from modules.utils.sdcpp_utils import generate_output_filename
+from modules.utils.metadata_utils import (
+    build_a1111_metadata, save_image_with_metadata
+)
 from modules.shared_instance import config, server_state
 
 
@@ -30,58 +33,6 @@ class ApiTaskRunner:
         self.output_path = ""
         self.outputs = []
         self.fcommand = ""
-
-    def _build_a1111_metadata(self) -> str:
-        """
-        Constructs an A1111-formatted metadata string from
-        the runner's parameters so that the GalleryManager
-        can parse it back perfectly.
-        """
-        pprompt = self._get_param('in_pprompt', '')
-        nprompt = self._get_param('in_nprompt', '')
-        steps = self._get_param('in_steps', 20)
-        cfg = self._get_param('in_cfg', 7.0)
-        seed = server_state.seed
-        width = self._get_param('in_width', 512)
-        height = self._get_param('in_height', 512)
-        sampler = self._get_param('in_sampling', 'Euler a')
-        scheduler = self._get_param('in_scheduler', '')
-        rng = self._get_param('in_rng', '')
-        sampler_rng = self._get_param('in_sampler_rng', '')
-
-        model_path = str(self._get_param('in_ckpt_model', 'unknown'))
-        model_name = os.path.basename(model_path)
-
-        vae_path = str(self._get_param('in_ckpt_vae', 'unknown'))
-        vae_name = os.path.basename(vae_path)
-
-        full_sampler = f"{sampler} {scheduler}".strip()
-
-        meta_str = f"{pprompt}\n"
-        if nprompt:
-            meta_str += f"Negative prompt: {nprompt}\n"
-
-        meta_str += (
-            f"Steps: {steps}, CFG scale: {cfg}, Seed: {seed}, "
-            f"Size: {width}x{height}, Model: {model_name}, "
-            f"RNG: {rng}, Sampler RNG: {sampler_rng} , "
-            f"Sampler: {full_sampler}, "
-            f"VAE: {vae_name}, Version: sd.cpp-webui"
-        )
-
-        return meta_str
-
-    def _save_image_with_metadata(self, image: Image.Image, target_path: str):
-        """
-        Saves a PIL Image with A1111-style parameters
-        written to the tEXt chunk.
-        """
-        pnginfo = PngImagePlugin.PngInfo()
-
-        metadata_string = self._build_a1111_metadata()
-        pnginfo.add_text("parameters", metadata_string)
-
-        image.save(target_path, format="PNG", pnginfo=pnginfo)
 
     def _set_output_path(self, dir_key: str, subctrl_id: int, extension: str):
         """Determines and sets the output path for the command."""
@@ -239,7 +190,8 @@ class ApiTaskRunner:
             image = Image.open(io.BytesIO(image_bytes))
             target_path = self.output_path if i == 0 else f"{base}_{i + 1}{ext}"
             if ext.lower() == '.png':
-                self._save_image_with_metadata(image, target_path)
+                meta_string = build_a1111_metadata(self.params, server_state.seed)
+                save_image_with_metadata(image, target_path, meta_string)
             else:
                 image.save(target_path)
             self.outputs.append(target_path)

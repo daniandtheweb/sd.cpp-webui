@@ -4,7 +4,7 @@ import os
 from enum import IntEnum
 from typing import Dict, Any
 
-from modules.utils.utility import get_path
+from modules.utils.file_utils import get_path
 from modules.utils.sdcpp_utils import extract_env_vars
 from modules.shared_instance import config
 from modules.ui.constants import CIRCULAR_PADDING

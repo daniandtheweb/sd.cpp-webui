@@ -3,10 +3,10 @@
 import gradio as gr
 
 from modules.core.cli.sdcpp_cli import txt2img
-from modules.utils.ui_handler import (
-    ckpt_tab_switch, unet_tab_switch,
+from modules.utils.ui_events import (
     get_ordered_inputs, bind_generation_pipeline,
-    apply_lora, refresh_all_options
+    apply_lora, unet_tab_switch, ckpt_tab_switch,
+    refresh_all_options
 )
 from modules.shared_instance import subprocess_manager
 from modules.ui.models import create_img_model_sel_ui

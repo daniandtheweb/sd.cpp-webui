@@ -8,7 +8,7 @@ from modules.loader import (
     get_models, reload_models
 )
 from modules.shared_instance import config
-from modules.utils.ui_handler import update_interactivity
+from modules.utils.ui_events import update_interactivity
 from .constants import RELOAD_SYMBOL
 
 

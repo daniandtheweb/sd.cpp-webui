@@ -6,8 +6,10 @@ from modules.config import ConfigManager
 from modules.utils.sd_interface import (
     SDOptionsCache, exe_name
 )
-from modules.utils.utility import SubprocessManager
+from modules.utils.subprocess_manager import SubprocessManager
 import modules.utils.queue as queue_manager
+from modules.utils.ui_state import ModelState
+from modules.utils.prompt_manager import PromptManager
 
 
 SD_CLI = exe_name("cli")
@@ -36,3 +38,7 @@ subprocess_manager = SubprocessManager()
 queue_manager.start_worker()
 
 server_state = ServerState()
+
+model_state = ModelState()
+
+prompt_manager = PromptManager()

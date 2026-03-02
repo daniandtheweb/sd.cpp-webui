@@ -1,8 +1,8 @@
-"""sd.cpp-webui - Configuration module"""
+"""sd.cpp-webui - utils - configuration module"""
 
 import os
 import json
-from typing import Dict, Any, List
+from typing import Any, Dict
 
 
 CURRENT_DIR = os.getcwd()
@@ -109,11 +109,7 @@ class ConfigManager:
         self.config_path = os.getenv(
             'SD_WEBUI_CONFIG_PATH', config_path or DEFAULT_CONFIG_PATH
         )
-        self.prompts_path = os.getenv(
-            'SD_WEBUI_PROMPTS_PATH', prompts_path or DEFAULT_PROMPTS_PATH
-        )
         self.data = self._load_json(self.config_path) or {}
-        self.prompts = self._load_json(self.prompts_path) or {}
         self._initialize_files()
 
     def _load_json(self, file_path: str) -> Dict[str, Any]:
@@ -139,7 +135,6 @@ class ConfigManager:
 
     def _initialize_files(self):
         """Ensures config and prompt files exist and have default values."""
-        # Initialize config
         updated_config = False
         for key, value in DEFAULT_SETTINGS.items():
             if key not in self.data:
@@ -148,11 +143,6 @@ class ConfigManager:
         if updated_config:
             self.save_config()
             print("Missing settings added to config file.")
-
-        # Initialize prompts file if it doesn't exist
-        if not os.path.isfile(self.prompts_path):
-            self.save_prompts()
-            print("Created empty prompts file")
 
     def get(self, key: str, default: Any = None) -> Any:
         """
@@ -202,31 +192,3 @@ class ConfigManager:
         self.data = DEFAULT_SETTINGS.copy()
         self.save_config()
         print("Reset defaults completed.")
-
-    def get_prompts(self) -> List[str]:
-        """Returns a list of saved prompts."""
-        return sorted(list(self.prompts.keys()))
-
-    def save_prompts(self):
-        """Saves the current prompts dictionary to disk."""
-        self._save_json(self.prompts_path, self.prompts)
-
-    def add_prompt(self, name: str, positive: str, negative: str):
-        """Adds or updates a prompt."""
-        if not name:
-            return
-        self.prompts[name.strip()] = {
-            'positive': positive, 'negative': negative
-        }
-        self.save_prompts()
-
-    def delete_prompt(self, name: str):
-        """Deletes a prompt."""
-        if name in self.prompts:
-            del self.prompts[name]
-            self.save_prompts()
-
-    def get_prompt(self, name: str) -> tuple[str, str]:
-        """Retrieves a specific prompt as two separate strings for Gradio."""
-        prompt = self.prompts.get(name, {'positive': '', 'negative': ''})
-        return prompt['positive'], prompt['negative']

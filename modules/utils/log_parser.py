@@ -1,30 +1,30 @@
-"""sd.cpp-webui - Utility module"""
+"""sd.cpp-webui - utils - log parsing module"""
 
-import os
 import re
 import sys
-import subprocess
-
-import gradio as gr
 
 
-class SubprocessManager:
+class LogParser:
     """
-    Class to manage subprocess execution and control.
-
-    Attributes:
-        process: The currently running subprocess,
-                 or None if no subprocess is active.
+    Class to parse stdout logs and calculate progress and ETAs.
     """
 
     def __init__(self):
-        """Initializes the SubprocessManager with no active subprocess."""
-        self.process = None
         self.STATS_REGEX = re.compile(r"completed, taking ([\d.]+)s")
         self.TOTAL_TIME_REGEX = re.compile(r"completed in ([\d.]+)s")
         self.ETA_REGEX = re.compile(r'(\d+)/(\d+)\s*-\s*([\d.]+)(s/it|it/s)')
         self.SIMPLE_REGEX = re.compile(r'(\d+)/(\d+)')
         self.SEED_REGEX = re.compile(r"generating image:.*?seed\s+(\d+)")
+
+    def _is_progress_line(self, line, phase):
+        """
+        Checks if a line is a progress bar line.
+        """
+        return (
+            phase in ["Loading Model", "Sampling", "Upscaling"] and
+            "|" in line and
+            "/" in line
+        )
 
     def _parse_final_stats(self, line, final_stats):
         """
@@ -52,29 +52,6 @@ class SubprocessManager:
             if match:
                 from modules.shared_instance import server_state
                 server_state.seed = int(match.group(1))
-
-    def _determine_phase(self, line):
-        """
-        Determines the current phase of
-        the subprocess based on the output line.
-        """
-        if 'loading model' in line or 'loading diffusion model' in line:
-            return "Loading Model"
-        elif 'sampling using' in line:
-            return "Sampling"
-        elif 'upscaling from' in line:
-            return "Upscaling"
-        return None
-
-    def _is_progress_line(self, line, phase):
-        """
-        Checks if a line is a progress bar line.
-        """
-        return (
-            phase in ["Loading Model", "Sampling", "Upscaling"] and
-            "|" in line and
-            "/" in line
-        )
 
     def _parse_progress_update(self, line, final_stats):
         """Parses a progress bar line and returns a dictionary for the UI."""
@@ -129,8 +106,8 @@ class SubprocessManager:
             }
         return {}
 
-    def _process_line(self, raw_line, clean_line, phase,
-                      final_stats, last_was_progress):
+    def process_line(self, raw_line, clean_line, phase,
+                     final_stats, last_was_progress):
         """
         Processes output with visual padding around progress bars.
         """
@@ -162,96 +139,15 @@ class SubprocessManager:
 
         return None, last_was_progress
 
-    def _stream_output(self):
+    def determine_phase(self, line):
         """
-        Generates raw strings from the subprocess stdout,
-        breaking at line endings or progress updates."""
-        buffer = bytearray()
-        for byte in iter(lambda: self.process.stdout.read(1), b''):
-            buffer.extend(byte)
-
-            is_line_end = byte in (b'\r', b'\n')
-            is_progress_end = (
-                    len(buffer) > 4 and
-                    byte in (b's', b't') and
-                    (buffer.endswith(b'it/s') or buffer.endswith(b's/it'))
-            )
-
-            if is_line_end or is_progress_end:
-                yield buffer.decode('utf-8', errors='replace')
-                buffer.clear()
-
-        if buffer:
-            yield buffer.decode('utf-8', errors='replace')
-
-    def run_subprocess(self, command, env=None):
+        Determines the current phase of
+        the subprocess based on the output line.
         """
-        Runs a subprocess and yields UI updates with reduced complexity.
-        """
-        phase = "Initializing"
-        final_stats = {}
-        last_was_progress = False
-        last_processed_content = ""
-        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-
-        try:
-            with subprocess.Popen(
-                command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-                bufsize=0, env=env
-            ) as self.process:
-
-                for raw_line in self._stream_output():
-                    clean_line = ansi_escape.sub('', raw_line)
-
-                    if (
-                        clean_line == last_processed_content or
-                        not clean_line.strip()
-                    ):
-                        continue
-
-                    new_phase = self._determine_phase(clean_line)
-                    if new_phase:
-                        phase = new_phase
-
-                    update_data, last_was_progress = self._process_line(
-                        raw_line, clean_line, phase,
-                        final_stats, last_was_progress
-                    )
-                    last_processed_content = clean_line
-
-                    if update_data:
-                        yield update_data
-                        if "final_stats" in update_data:
-                            final_stats.clear()
-
-        finally:
-            if last_was_progress:
-                print("\n")
-            if self.process and self.process.returncode != 0:
-                print("Subprocess terminated.")
-            self.process = None
-
-        if final_stats:
-            yield {"final_stats": final_stats}
-
-    def kill_subprocess(self):
-        """
-        Terminates the currently running subprocess, if any.
-
-        This method sets the subprocess attribute to None after termination
-        and prints a message indicating whether a subprocess was running.
-        """
-        if self.process is not None:
-            self.process.terminate()
-        else:
-            print("No subprocess running.")
-
-
-def random_seed():
-    """Sets the seed to -1"""
-    return gr.update(value=-1)
-
-
-def get_path(directory, filename):
-    """Helper function to construct paths"""
-    return os.path.join(directory, filename) if filename else None
+        if 'loading model' in line or 'loading diffusion model' in line:
+            return "Loading Model"
+        elif 'sampling using' in line:
+            return "Sampling"
+        elif 'upscaling from' in line:
+            return "Upscaling"
+        return None

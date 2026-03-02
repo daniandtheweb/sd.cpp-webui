@@ -5,10 +5,9 @@ from functools import partial
 import gradio as gr
 
 from modules.core.cli.sdcpp_cli import any2video
-from modules.utils.ui_handler import (
-    update_interactivity,
+from modules.utils.ui_events import (
     get_ordered_inputs, bind_generation_pipeline,
-    apply_lora, refresh_all_options
+    apply_lora, update_interactivity, refresh_all_options
 )
 from modules.shared_instance import (
     config, subprocess_manager

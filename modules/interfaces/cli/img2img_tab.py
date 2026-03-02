@@ -5,10 +5,10 @@ from functools import partial
 import gradio as gr
 
 from modules.core.cli.sdcpp_cli import img2img
-from modules.utils.ui_handler import (
-    ckpt_tab_switch, unet_tab_switch, update_interactivity,
+from modules.utils.ui_events import (
     get_ordered_inputs, bind_generation_pipeline,
-    apply_lora, refresh_all_options
+    apply_lora, unet_tab_switch, ckpt_tab_switch,
+    update_interactivity, refresh_all_options
 )
 from modules.shared_instance import (
     config, subprocess_manager

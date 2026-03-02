@@ -7,10 +7,10 @@ from modules.core.server.manager import (
     start_server, stop_server
 )
 from modules.core.server.status_monitor import server_status_monitor_wrapper
-from modules.utils.ui_handler import (
-    ckpt_tab_switch, unet_tab_switch,
+from modules.utils.ui_events import (
     get_ordered_inputs, bind_generation_pipeline,
-    apply_lora, refresh_all_options
+    apply_lora, unet_tab_switch, ckpt_tab_switch,
+    refresh_all_options
 )
 from modules.ui.models import create_img_model_sel_ui
 from modules.ui.loras import create_lora_sel_ui

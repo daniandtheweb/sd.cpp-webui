@@ -9,7 +9,7 @@ from modules.loader import (
     get_models, reload_models,
     get_loras
 )
-from modules.utils.ui_handler import (
+from modules.utils.ui_state import (
     get_session_value, update_session_cache
 )
 from .constants import RELOAD_SYMBOL

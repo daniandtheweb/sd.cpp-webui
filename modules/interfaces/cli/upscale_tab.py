@@ -5,8 +5,8 @@ from functools import partial
 import gradio as gr
 
 from modules.core.cli.sdcpp_cli import upscale
-from modules.utils.ui_handler import (
-    update_interactivity, get_ordered_inputs
+from modules.utils.ui_events import (
+    get_ordered_inputs, update_interactivity
 )
 from modules.utils.image_utils import (
     switch_sizes, size_extractor

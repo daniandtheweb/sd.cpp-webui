@@ -3,7 +3,7 @@
 import gradio as gr
 
 from modules.core.cli.sdcpp_cli import convert
-from modules.utils.ui_handler import get_ordered_inputs
+from modules.utils.ui_events import get_ordered_inputs
 from modules.shared_instance import (
     config, subprocess_manager
 )

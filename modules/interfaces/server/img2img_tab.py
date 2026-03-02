@@ -9,10 +9,10 @@ from modules.core.server.manager import (
     start_server, stop_server
 )
 from modules.core.server.status_monitor import server_status_monitor_wrapper
-from modules.utils.ui_handler import (
-    ckpt_tab_switch, unet_tab_switch,
+from modules.utils.ui_events import (
     get_ordered_inputs, bind_generation_pipeline,
-    update_interactivity, apply_lora, refresh_all_options
+    apply_lora, unet_tab_switch, ckpt_tab_switch,
+    update_interactivity, refresh_all_options
 )
 from modules.shared_instance import config
 from modules.ui.models import create_img_model_sel_ui

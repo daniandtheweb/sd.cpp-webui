@@ -1,8 +1,7 @@
 import os
 
-from modules.utils.utility import (
-    random_seed, get_path
-)
+from modules.utils.file_utils import get_path
+from modules.utils.math_utils import random_seed
 
 
 def test_random_seed_returns_correct_gradio_update_object():
@@ -22,6 +21,7 @@ def test_random_seed_returns_correct_gradio_update_object():
     # what we expect.
     assert result == expected_output
 
+
 def test_get_path_returns_joined_path_when_filename_provided():
     """Tests the 'happy path' where both arguments are given."""
     # Arrange
@@ -36,6 +36,7 @@ def test_get_path_returns_joined_path_when_filename_provided():
     # Assert
     assert result == expected
 
+
 def test_get_path_returns_none_when_filename_is_none():
     """Tests the case where filename is None."""
     # Arrange
@@ -48,8 +49,11 @@ def test_get_path_returns_none_when_filename_is_none():
     # Assert
     assert result is None
 
+
 def test_get_path_returns_none_when_filename_is_empty_string():
-    """Tests the edge case where filename is an empty string (which is 'falsy')."""
+    """
+    Tests the edge case where filename is an empty string (which is 'falsy').
+    """
     # Arrange
     directory = "path/to/data"
     filename = ""

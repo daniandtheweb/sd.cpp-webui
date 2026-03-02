@@ -7,7 +7,7 @@ from modules.core.server.manager import (
     start_server, stop_server
 )
 from modules.core.server.status_monitor import server_status_monitor_wrapper
-from modules.utils.ui_handler import (
+from modules.utils.ui_events import (
     get_ordered_inputs, bind_generation_pipeline,
     apply_lora, refresh_all_options
 )

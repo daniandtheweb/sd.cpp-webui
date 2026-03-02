@@ -3,7 +3,7 @@
 import gradio as gr
 
 from modules.core.cli.sdcpp_cli import imgedit
-from modules.utils.ui_handler import (
+from modules.utils.ui_events import (
     get_ordered_inputs, bind_generation_pipeline,
     apply_lora, refresh_all_options
 )

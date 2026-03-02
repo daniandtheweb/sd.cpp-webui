@@ -2,7 +2,9 @@
 
 import gradio as gr
 
-from modules.utils.ui_handler import get_ordered_inputs
+from modules.utils.ui_events import (
+    get_ordered_inputs, refresh_all_options
+)
 from modules.shared_instance import (
     config, sd_options
 )
@@ -25,16 +27,6 @@ from modules.ui.environment import create_env_ui
 
 
 OUTPUT_SCHEMES = ["Sequential", "Timestamp", "TimestampMS", "EpochTime"]
-
-
-def refresh_all_options():
-    """Updates the available options from the sd executable."""
-    sd_options.refresh()
-    return [
-        gr.update(choices=sd_options.get_opt("samplers")),
-        gr.update(choices=sd_options.get_opt("schedulers")),
-        gr.update(choices=sd_options.get_opt("prediction"))
-    ]
 
 
 def save_settings_wrapper(*args):
@@ -340,6 +332,7 @@ with gr.Blocks() as options_block:
         outputs=[
             generation_settings_ui['in_sampling'],
             generation_settings_ui['in_scheduler'],
+            preview_ui['in_preview_mode'],
             predict
         ]
     )
