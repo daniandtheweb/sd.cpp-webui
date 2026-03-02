@@ -15,22 +15,22 @@ def build_a1111_metadata(
     """
     Constructs an A1111-formatted metadata string.
     """
-    pprompt = params.get_param('in_pprompt', '')
-    nprompt = params.get_param('in_nprompt', '')
-    steps = params.get_param('in_steps', 20)
-    cfg = params.get_param('in_cfg', 7.0)
+    pprompt = params.get('in_pprompt', '')
+    nprompt = params.get('in_nprompt', '')
+    steps = params.get('in_steps', 20)
+    cfg = params.get('in_cfg', 7.0)
     seed = server_state.seed
-    width = params.get_param('in_width', 512)
-    height = params.get_param('in_height', 512)
-    sampler = params.get_param('in_sampling', 'Euler a')
-    scheduler = params.get_param('in_scheduler', '')
-    rng = params.get_param('in_rng', '')
-    sampler_rng = params.get_param('in_sampler_rng', '')
+    width = params.get('in_width', 512)
+    height = params.get('in_height', 512)
+    sampler = params.get('in_sampling', 'Euler a')
+    scheduler = params.get('in_scheduler', '')
+    rng = params.get('in_rng', '')
+    sampler_rng = params.get('in_sampler_rng', '')
 
-    model_path = str(params.get_param('in_ckpt_model', 'unknown'))
+    model_path = str(params.get('in_ckpt_model', 'unknown'))
     model_name = os.path.basename(model_path)
 
-    vae_path = str(params.get_param('in_ckpt_vae', 'unknown'))
+    vae_path = str(params.get('in_ckpt_vae', 'unknown'))
     vae_name = os.path.basename(vae_path)
 
     full_sampler = f"{sampler} {scheduler}".strip()

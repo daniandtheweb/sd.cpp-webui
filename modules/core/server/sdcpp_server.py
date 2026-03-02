@@ -6,7 +6,7 @@ import re
 import json
 import base64
 import requests
-from PIL import Image, PngImagePlugin
+from PIL import Image
 from typing import Dict, Any, Generator
 
 import gradio as gr
@@ -253,6 +253,8 @@ class ApiTaskRunner:
                     None
                 )
         except Exception:
+            import traceback
+            traceback.print_exc()
             yield (
                 self.fcommand,
                 gr.skip(),
