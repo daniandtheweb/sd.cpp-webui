@@ -26,6 +26,7 @@ def exe_name(mode="cli"):
     failed_candidates = []
 
     for cand in candidates:
+        is_local = False
         executable_path = shutil.which(cand)
 
         # Check if executable exists in current directory
