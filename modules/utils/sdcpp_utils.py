@@ -25,7 +25,7 @@ def extract_env_vars(params: Dict[str, Any]) -> Dict[str, str]:
             env_key = key[4:]
             value = params.pop(key)
             if env_key not in env_vars:
-                env_vars[env_key] = value
+                env_vars[env_key] = str(value)
 
     if is_vk_override_true and vk_device_id is not None:
         env_vars['GGML_VK_VISIBLE_DEVICES'] = vk_device_id
@@ -47,30 +47,20 @@ def generate_output_filename(
     prefix_str = ""
 
     match scheme:
-        case "Sequential":
-            next_img = get_next_img(subctrl=subctrl_id)
-            if "." in next_img:
-                prefix_str, _ = os.path.splitext(next_img)
-            else:
-                prefix_str, _ = next_img, ""
         case "Timestamp":
             prefix_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         case "TimestampMS":
             prefix_str = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
         case "EpochTime":
             prefix_str = str(int(time.time()))
-        case _:
-            # Default fallback
+        case "Sequential" | _:
             next_img = get_next_img(subctrl=subctrl_id)
-            if "." in next_img:
-                prefix_str, _ = os.path.splitext(next_img)
-            else:
-                prefix_str, _ = next_img, ""
+            prefix_str = os.path.splitext(next_img)[0]
 
     if name_parts:
         suffix_str = "_".join(name_parts)
     else:
-        suffix_str = None
+        suffix_str = ""
 
     if suffix_str:
         final_filename = f"{prefix_str}_{suffix_str}"
