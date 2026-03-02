@@ -78,7 +78,7 @@ class ServerRunner(CommonRunner):
                         )
                         server_state.last_generation_stats = final_stats_str
 
-                        server_state.latest_update = {"status": final_stats_str, "percent": 100}
+                        server_state.latest_update = {"status": final_stats_str}
                     else:
                         server_state.latest_update = update
             except Exception as e:

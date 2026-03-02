@@ -253,8 +253,6 @@ class ApiTaskRunner:
                     None
                 )
         except Exception:
-            import traceback
-            traceback.print_exc()
             yield (
                 self.fcommand,
                 gr.skip(),

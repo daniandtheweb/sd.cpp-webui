@@ -5,6 +5,7 @@ import requests
 import gradio as gr
 
 from modules.shared_instance import server_state
+import modules.utils.queue as queue_manager
 
 
 def get_server_status():
@@ -67,27 +68,40 @@ def server_status_monitor_wrapper(ip, port):
             gr.update(visible=False),
             gr.update(visible=False)
         )
+    model_name = get_active_model_name(ip, port)
+    is_loading_model = model_name in ["Loading weights...", "Checking status..."]
 
+    job = queue_manager.get_status()
     latest = server_state.latest_update
-    slider_update = gr.update()
-    text_update = gr.update()
 
-    if "percent" in latest:
-        val = latest["percent"]
+    is_active = job.get("is_running", False)
+
+    if is_active:
+        val = latest.get("percent", 0)
+        status = latest.get("status", "")
+
         if val >= 100:
-            slider_update = gr.update(visible=False, value=100)
-            text_update = gr.update(visible=False, value="")
-        elif val == 0:
-            slider_update = gr.skip()
-            text_update = gr.skip()
+            slider_update = gr.update(visible=True, value=100)
+            text_update = gr.update(visible=True, value="Decoding...")
+        elif val <= 0:
+            slider_update = gr.update(visible=True, value=0)
+            text_update = gr.update(visible=True, value="Starting...")
         else:
             slider_update = gr.update(visible=True, value=val)
-            text_update = gr.update(
-                visible=True, value=latest.get("status", "")
-            )
+            text_update = gr.update(visible=True, value=status)
+
+    elif is_loading_model:
+        val = latest.get("percent", 0)
+        slider_update = gr.update(visible=True, value=val)
+        text_update = gr.update(visible=True, value="")
+
+    else:
+        slider_update = gr.update(visible=False)
+        text_update = gr.update(visible=False)
+        server_state.latest_update = {}
 
     model_name = get_active_model_name(ip, port)
-    if model_name in ["Loading weights...", "None", "Checking status..."]:
+    if is_loading_model or model_name == "None":
         combined_status = "Loading (Model initializing...)"
         btn_interactive = False
     else:
