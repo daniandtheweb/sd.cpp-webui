@@ -1,10 +1,12 @@
 """sd.cpp-webui - UI interactivity and events module"""
 
+import os
+
 import gradio as gr
 
 import modules.utils.queue as queue_manager
 from modules.shared_instance import (
-    sd_options, model_state
+    sd_options, model_state, current_mode
 )
 
 
@@ -15,8 +17,12 @@ def get_ordered_inputs(inputs_map):
     return ordered_keys, ordered_components
 
 
-def bind_generation_pipeline(api_func, ordered_keys, ordered_components, outputs_map):
-    """Connects the UI components to the generation queue."""
+def bind_generation_pipeline(
+    api_func, ordered_keys, ordered_components, outputs_map
+):
+    """
+    Connects the UI components to the generation queue.
+    """
 
     def submit_job(*args):
         params = dict(zip(ordered_keys, args))
@@ -104,6 +110,7 @@ def apply_lora(
     pprompt, nprompt
 ):
     if lora_model:
+        lora_model = os.path.splitext(lora_model)[0]
         lora_string = "<lora:" + lora_model + ":" + str(lora_strength) + ">"
         n_lora_string = "<lora:" + lora_model + ":-" + str(lora_strength) + ">"
 

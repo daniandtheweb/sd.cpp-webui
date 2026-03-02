@@ -12,6 +12,7 @@ from typing import Dict, Any, Generator
 import gradio as gr
 
 from modules.utils.file_utils import get_path
+from modules.loader import get_loras
 from modules.utils.sdcpp_utils import generate_output_filename
 from modules.utils.metadata_utils import (
     build_a1111_metadata, save_image_with_metadata
@@ -23,6 +24,8 @@ class ApiTaskRunner:
     """
     Builds and manages API requests to the sd.cpp server.
     """
+
+    _lora_lookup_cache = {}
 
     def __init__(self, params: Dict[str, Any]):
         self.params = params
@@ -97,15 +100,46 @@ class ApiTaskRunner:
         # Regex matches <lora:filename:multiplier>
         pattern = r'<lora:([^:]+):([^>]+)>'
 
+        matches = re.findall(pattern, text)
+        needs_refresh = False
+
+        for name, _ in matches:
+            name = name.strip()
+
+            if name not in ApiTaskRunner._lora_lookup_cache:
+                needs_refresh = True
+                break
+
+        if needs_refresh:
+            available_loras = get_loras()
+
+            ApiTaskRunner._lora_lookup_cache.clear()
+
+            for lora_path in available_loras:
+                base_name = os.path.splitext(os.path.basename(lora_path))[0]
+                path_no_ext = os.path.splitext(lora_path)[0]
+                base_with_ext = os.path.basename(lora_path)
+
+                ApiTaskRunner._lora_lookup_cache[base_name] = lora_path
+                ApiTaskRunner._lora_lookup_cache[path_no_ext] = lora_path
+                ApiTaskRunner._lora_lookup_cache[base_with_ext] = lora_path
+                ApiTaskRunner._lora_lookup_cache[lora_path] = lora_path
+
         def match_handler(match):
-            path = match.group(1).strip()
+            parsed_name = match.group(1).strip()
+
+            if parsed_name in ApiTaskRunner._lora_lookup_cache:
+                parsed_name = ApiTaskRunner._lora_lookup_cache[parsed_name]
+            else:
+                print(f"Warning: LoRA '{parsed_name} wasn't found.")
+
             try:
                 multiplier = float(match.group(2).strip())
             except ValueError:
                 multiplier = 1.0
 
             extracted_loras.append({
-                "path": path,
+                "path": parsed_name,
                 "multiplier": multiplier,
                 "is_high_noise": False
             })
@@ -245,6 +279,10 @@ class ApiTaskRunner:
                     self.outputs
                 )
             else:
+                # SAFEGUARD: The API rejected the request (missing lora?).
+                #            Wipe lora cache.
+                ApiTaskRunner._lora_lookup_cache.clear()
+                ApiTaskRunner._lora_cache_timestamp = 0
                 yield (
                     self.fcommand,
                     gr.skip(),
@@ -253,6 +291,9 @@ class ApiTaskRunner:
                     None
                 )
         except Exception:
+            # SAFEGUARD: Hard crash. Wipe lora cache.
+            ApiTaskRunner._lora_lookup_cache.clear()
+            ApiTaskRunner._lora_cache_timestamp = 0
             yield (
                 self.fcommand,
                 gr.skip(),
