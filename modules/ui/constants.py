@@ -22,7 +22,10 @@ RNG = sd_options.get_opt("rng")
 SAMPLER_RNG = sd_options.get_opt("sampler_rng")
 PREVIEW = sd_options.get_opt("previews")
 PREDICTION = ['Default'] + sd_options.get_opt("prediction")
-CACHE_MODE = ["easycache", "ucache", "dbcache", "taylorseer", "cache-dit"]
+CACHE_MODE = [
+    "easycache", "ucache", "dbcache",
+    "taylorseer", "cache-dit", "spectrum"
+]
 CACHE_DIT_PRESET = ["none", "slow", "medium", "fast", "ultra"]
 SCM_POLICY = ["none", "dynamic", "static"]
 RELOAD_SYMBOL = '\U0001F504'
