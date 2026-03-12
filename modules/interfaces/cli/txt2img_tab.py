@@ -218,72 +218,8 @@ with gr.Blocks() as txt2img_block:
         'queue_tracker': queue_tracker
     }
 
-        queue_manager.add_job(txt2img, params)
-
-        q_len = queue_manager.get_queue_size()
-
-        print(f"\n\nJob submitted! Position in queue: {q_len}.\n"),
-
-        return (
-            gr.Timer(value=0.01, active=True)
-        )
-
-
-    def poll_status():
-        state = queue_manager.get_status()
-        q_len = queue_manager.get_queue_size()
-
-        if state["is_running"] or q_len > 0:
-            timer_update = gr.Timer(value=0.01, active=True)
-        else:
-            timer_update = gr.Timer(active=False)
-
-        if q_len > 0:
-            queue_update = gr.update(value=f"⏳ Jobs in queue: {q_len}", visible=True)
-        else:
-            queue_update = gr.update(visible=False)
-        
-        # 解密图片
-        images = state["images"]
-        if images:
-            from modules.utils.image_display import decrypt_and_display
-            if isinstance(images, list):
-                decrypted = []
-                for img in images:
-                    if isinstance(img, str):
-                        result = decrypt_and_display(img)
-                        if result:
-                            decrypted.append(result)
-                    else:
-                        decrypted.append(img)
-                images = decrypted if decrypted else None
-            else:
-                result = decrypt_and_display(images)
-                images = result
-
-        return (
-            state["command"],
-            state["progress"],
-            state["status"],
-            state["stats"],
-            images,
-            timer_update,
-            queue_update
-        )
-
-
-    timer = gr.Timer(value=0.01, active=False)
-
-    gen_btn.click(
-        submit_job,
-        inputs=ordered_components,
-        outputs=[timer]
-    )
-
-    timer.tick(
-        poll_status,
-        inputs=[],
-        outputs=[command, progress_slider, progress_textbox, stats, img_final, timer, queue_tracker]
+    bind_generation_pipeline(
+        txt2img, ordered_keys, ordered_components, ui_outputs
     )
 
     kill_btn.click(

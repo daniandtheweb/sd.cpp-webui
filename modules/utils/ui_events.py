@@ -71,12 +71,30 @@ def bind_generation_pipeline(
             visible=(q_len > 0)
         )
 
+        # 解密图片
+        images = state["images"]
+        if images:
+            from modules.utils.image_display import decrypt_and_display
+            if isinstance(images, list):
+                decrypted = []
+                for img in images:
+                    if isinstance(img, str):
+                        result = decrypt_and_display(img)
+                        if result:
+                            decrypted.append(result)
+                    else:
+                        decrypted.append(img)
+                images = decrypted if decrypted else None
+            else:
+                result = decrypt_and_display(images)
+                images = result
+
         return (
             state["command"],
             prog,
             stat,
             state["stats"],
-            state["images"],
+            images,
             gr.skip(),
             queue_display
         )
