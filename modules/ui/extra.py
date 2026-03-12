@@ -23,20 +23,17 @@ def create_extras_ui():
         rng = gr.Dropdown(
             label="RNG",
             choices=RNG,
-            value=config.get('def_rng'),
-            allow_custom_value=True
+            value=config.get('def_rng')
         )
         sampler_rng = gr.Dropdown(
             label="Sampler RNG",
             choices=SAMPLER_RNG,
-            value=config.get('def_sampler_rng'),
-            allow_custom_value=True
+            value=config.get('def_sampler_rng')
         )
         predict = gr.Dropdown(
             label="Prediction",
             choices=PREDICTION,
-            value=config.get('def_predict'),
-            allow_custom_value=True
+            value=config.get('def_predict')
         )
         lora_apply = gr.Dropdown(
             label="Lora apply mode",

@@ -54,16 +54,14 @@ def create_generation_settings_ui(unet_mode: bool = False):
                 label="Sampling method",
                 choices=SAMPLERS,
                 value=config.get('def_sampling'),
-                interactive=True,
-                allow_custom_value=True
+                interactive=True
             )
         with gr.Column():
             scheduler = gr.Dropdown(
                 label="Scheduler",
                 choices=SCHEDULERS,
                 value=config.get('def_scheduler'),
-                interactive=True,
-                allow_custom_value=True
+                interactive=True
             )
 
     with gr.Row():

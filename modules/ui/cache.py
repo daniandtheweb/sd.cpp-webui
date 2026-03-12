@@ -25,16 +25,14 @@ def create_cache_ui():
             label="Cache mode",
             choices=CACHE_MODE,
             value=config.get('def_cache_mode'),
-            interactive=False,
-            allow_custom_value=True
+            interactive=False
         )
 
         cache_dit_preset = gr.Dropdown(
             label="cache-dit preset",
             choices=CACHE_DIT_PRESET,
             value=config.get('def_cache_dit_preset'),
-            interactive=False,
-            allow_custom_value=True
+            interactive=False
         )
 
         with gr.Accordion(
@@ -66,8 +64,7 @@ def create_cache_ui():
             scm_policy = gr.Dropdown(
                 label="SCM Policy",
                 choices=SCM_POLICY,
-                value=config.get('def_scm_policy'),
-                allow_custom_value=True
+                value=config.get('def_scm_policy')
             )
 
     cache_comp = [
