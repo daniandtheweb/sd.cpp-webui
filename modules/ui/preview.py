@@ -20,7 +20,8 @@ def create_preview_ui():
         preview_mode = gr.Dropdown(
             label="Preview mode",
             choices=PREVIEW,
-            value=config.get('def_preview_mode')
+            value=config.get('def_preview_mode'),
+            allow_custom_value=True
         )
         preview_interval = gr.Number(
             label="Preview interval",
