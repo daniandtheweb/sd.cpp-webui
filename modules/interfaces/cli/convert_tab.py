@@ -2,7 +2,8 @@
 
 import gradio as gr
 
-from modules.sdcpp import convert
+from modules.core.cli.sdcpp_cli import convert
+from modules.utils.ui_events import get_ordered_inputs
 from modules.shared_instance import (
     config, subprocess_manager
 )
@@ -119,7 +120,6 @@ with gr.Blocks() as convert_block:
                         interactive=False,
                         visible=False,
                         label="Progress",
-                        show_reset_button=False
                     )
                 with gr.Row():
                     status_textbox = gr.Textbox(
@@ -134,12 +134,10 @@ with gr.Blocks() as convert_block:
                         show_label=True,
                         value="",
                         interactive=False,
-                        show_copy_button=True,
+                        buttons=['copy'],
                     )
 
-    ordered_keys = sorted(inputs_map.keys())
-    ordered_components = [inputs_map[key] for key in ordered_keys]
-
+    ordered_keys, ordered_components = get_ordered_inputs(inputs_map)
 
     def convert_wrapper(*args):
         """
@@ -148,7 +146,6 @@ with gr.Blocks() as convert_block:
         """
         params = dict(zip(ordered_keys, args))
         yield from convert(params)
-
 
     # Interactive Bindings
     convert_btn.click(

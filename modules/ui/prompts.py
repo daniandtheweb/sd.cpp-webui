@@ -2,24 +2,24 @@
 
 import gradio as gr
 
-from modules.shared_instance import config
+from modules.shared_instance import prompt_manager
 from .constants import RELOAD_SYMBOL
 from .lora_selector import create_lora_selector_ui
 
 
-def create_prompts_ui(nprompt_support = True):
+def create_prompts_ui(nprompt_support=True):
     """Create the prompts UI"""
 
     def save_and_refresh_prompts(name, p_prompt, n_prompt):
-        config.add_prompt(name, p_prompt, n_prompt)
-        return gr.update(choices=config.get_prompts(), value=name)
+        prompt_manager.add_prompt(name, p_prompt, n_prompt)
+        return gr.update(choices=prompt_manager.get_prompts(), value=name)
 
     def delete_and_refresh_prompts(name):
-        config.delete_prompt(name)
-        return gr.update(choices=config.get_prompts())
+        prompt_manager.delete_prompt(name)
+        return gr.update(choices=prompt_manager.get_prompts())
 
     def refresh_prompt_list():
-        return gr.update(choices=config.get_prompts())
+        return gr.update(choices=prompt_manager.get_prompts())
 
     with gr.Row():
         with gr.Accordion(
@@ -29,7 +29,7 @@ def create_prompts_ui(nprompt_support = True):
                 with gr.Column():
                     saved_prompts = gr.Dropdown(
                         label="Prompts",
-                        choices=config.get_prompts(),
+                        choices=prompt_manager.get_prompts(),
                         interactive=True,
                         allow_custom_value=False
                     )
@@ -61,10 +61,10 @@ def create_prompts_ui(nprompt_support = True):
     
     with gr.Row():
         pprompt = gr.Textbox(
-            placeholder="Positive prompt\nUse loras from the loras folder with: <lora:lora_name:lora_strenght>, for example: <lora:anime:0.8>",
+            placeholder="Positive prompt\nUse loras from the loras folder with: <lora:lora_name:lora_strength>, for example: <lora:anime:0.8>",
             label="Positive Prompt",
             lines=3,
-            show_copy_button=True,
+            buttons=['copy'],
             visible=True
         )
     with gr.Row():
@@ -72,7 +72,7 @@ def create_prompts_ui(nprompt_support = True):
             placeholder="Negative prompt",
             label="Negative Prompt",
             lines=3,
-            show_copy_button=True,
+            buttons=['copy'],
             visible=nprompt_support
         )
 
@@ -95,7 +95,7 @@ def create_prompts_ui(nprompt_support = True):
     )
 
     load_prompt_btn.click(
-        config.get_prompt,
+        prompt_manager.get_prompt,
         inputs=[saved_prompts],
         outputs=[pprompt, nprompt]
     )

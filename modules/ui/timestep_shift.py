@@ -4,7 +4,7 @@ from functools import partial
 
 import gradio as gr
 
-from modules.utils.ui_handler import update_interactivity
+from modules.utils.ui_events import update_interactivity
 
 
 def create_timestep_shift_ui():

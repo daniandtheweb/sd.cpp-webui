@@ -6,14 +6,20 @@ import threading
 
 _job_queue = queue.Queue()
 
-current_job_state = {
-    "command": "",
-    "progress": 0,
-    "status": "Idle",
-    "stats": "",
-    "images": None,
-    "is_running": False
-}
+
+def get_clean_state():
+    return {
+        "command": "",
+        "progress": 0,
+        "status": "Idle",
+        "stats": "",
+        "images": None,
+        "is_running": False,
+        "is_finished": False
+    }
+
+
+current_job_state = get_clean_state()
 
 
 def _background_worker():
@@ -27,15 +33,25 @@ def _background_worker():
         func = job['func']
         params = job['params']
 
+        current_job_state.update(get_clean_state())
         current_job_state["is_running"] = True
 
         try:
             for result in func(params):
-                current_job_state["command"] = result[0]
-                current_job_state["progress"] = result[1]
-                current_job_state["status"] = result[2]
-                current_job_state["stats"] = result[3]
-                current_job_state["images"] = result[4]
+                if isinstance(result, (tuple, list)) and len(result) >= 5:
+                    (
+                        current_job_state["command"],
+                        current_job_state["progress"],
+                        current_job_state["status"],
+                        current_job_state["stats"],
+                        current_job_state["images"],
+                        *rest
+                    ) = result
+                else:
+                    print(
+                        "Worker Warning: Expected 5 items from generator, " +
+                        f"got {len(result) if result else 0}"
+                    )
 
         except Exception as e:
             current_job_state["status"] = f"Error: {str(e)}"
@@ -43,10 +59,12 @@ def _background_worker():
 
         finally:
             current_job_state["is_running"] = False
+            current_job_state["is_finished"] = True
             _job_queue.task_done()
 
 
 def start_worker():
+    """Starts the background queue processor."""
     threading.Thread(target=_background_worker, daemon=True).start()
 
 

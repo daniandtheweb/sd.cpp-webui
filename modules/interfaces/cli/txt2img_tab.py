@@ -2,13 +2,15 @@
 
 import gradio as gr
 
-from modules.sdcpp import txt2img
-from modules.utils.ui_handler import (
-    ckpt_tab_switch, unet_tab_switch, refresh_all_options
+from modules.core.cli.sdcpp_cli import txt2img
+from modules.utils.ui_events import (
+    get_ordered_inputs, bind_generation_pipeline,
+    apply_lora, unet_tab_switch, ckpt_tab_switch,
+    refresh_all_options
 )
-import modules.utils.queue as queue_manager
 from modules.shared_instance import subprocess_manager
 from modules.ui.models import create_img_model_sel_ui
+from modules.ui.loras import create_lora_sel_ui
 from modules.ui.prompts import create_prompts_ui
 from modules.ui.generation_settings import (
     create_quant_ui, create_generation_settings_ui,
@@ -29,7 +31,7 @@ from modules.ui.extra import create_extras_ui
 from modules.ui.preview import create_preview_ui
 from modules.ui.performance import create_performance_ui
 from modules.ui.environment import create_env_ui
-#from modules.ui.experimental import create_experimental_ui
+# from modules.ui.experimental import create_experimental_ui
 
 
 txt2img_params = {}
@@ -50,6 +52,10 @@ with gr.Blocks() as txt2img_block:
         # Model Type Selection
         quant_ui = create_quant_ui()
         inputs_map.update(quant_ui)
+
+    # Loras
+    lora_ui = create_lora_sel_ui()
+    inputs_map.update(lora_ui)
 
     # Prompts
     prompts_ui = create_prompts_ui()
@@ -165,7 +171,6 @@ with gr.Blocks() as txt2img_block:
                         interactive=False,
                         visible=False,
                         label="Progress",
-                        show_reset_button=False
                     )
                 with gr.Row():
                     progress_textbox = gr.Textbox(
@@ -195,15 +200,23 @@ with gr.Blocks() as txt2img_block:
                         show_label=True,
                         value="",
                         interactive=False,
-                        show_copy_button=True,
+                        buttons=['copy'],
                     )
 
-    ordered_keys = sorted(inputs_map.keys())
-    ordered_components = [inputs_map[key] for key in ordered_keys]
+    ordered_keys, ordered_components = get_ordered_inputs(inputs_map)
 
+    timer = gr.Timer(value=0.1, active=True)
 
-    def submit_job(*args):
-        params = dict(zip(ordered_keys, args))
+    ui_outputs = {
+        'gen_btn': gen_btn,
+        'timer': timer,
+        'command': command,
+        'progress_slider': progress_slider,
+        'progress_textbox': progress_textbox,
+        'stats': stats,
+        'img_final': img_final,
+        'queue_tracker': queue_tracker
+    }
 
         queue_manager.add_job(txt2img, params)
 
@@ -277,6 +290,18 @@ with gr.Blocks() as txt2img_block:
         subprocess_manager.kill_subprocess,
         inputs=[],
         outputs=[]
+    )
+
+    lora_ui['in_apply_lora_btn'].click(
+        apply_lora,
+        inputs=[
+            lora_ui['in_lora_model'], lora_ui['in_lora_strength'],
+            lora_ui['in_lora_prompt_switch'],
+            prompts_ui['in_pprompt'], prompts_ui['in_nprompt']
+        ],
+        outputs=[
+            prompts_ui['in_pprompt'], prompts_ui['in_nprompt']
+        ]
     )
 
     # Interactive Bindings

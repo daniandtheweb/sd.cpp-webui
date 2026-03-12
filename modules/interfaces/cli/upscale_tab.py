@@ -4,9 +4,9 @@ from functools import partial
 
 import gradio as gr
 
-from modules.sdcpp import upscale
-from modules.utils.ui_handler import (
-    update_interactivity
+from modules.core.cli.sdcpp_cli import upscale
+from modules.utils.ui_events import (
+    get_ordered_inputs, update_interactivity
 )
 from modules.utils.image_utils import (
     switch_sizes, size_extractor
@@ -62,7 +62,6 @@ with gr.Blocks() as upscale_block:
                         maximum=4096,
                         value=config.get('def_width'),
                         step=1,
-                        show_reset_button=False,
                         interactive=False
                     )
                     init_height = gr.Slider(
@@ -71,14 +70,13 @@ with gr.Blocks() as upscale_block:
                         maximum=4096,
                         value=config.get('def_height'),
                         step=1,
-                        show_reset_button=False,
                         interactive=False
                     )
                 switch_size_btn = gr.Button(
                     value=SWITCH_V_SYMBOL, scale=1,
                     interactive=False
                 )
-                rescale_comp=[init_width, init_height, switch_size_btn]
+                rescale_comp = [init_width, init_height, switch_size_btn]
             switch_size_btn.click(
                 switch_sizes,
                 inputs=[init_height,
@@ -165,7 +163,7 @@ with gr.Blocks() as upscale_block:
                         show_label=True,
                         value="",
                         interactive=False,
-                        show_copy_button=True,
+                        buttons=['copy'],
                     )
 
     inputs_map = {
@@ -182,9 +180,7 @@ with gr.Blocks() as upscale_block:
         **env_ui
     }
 
-    ordered_keys = sorted(inputs_map.keys())
-    ordered_components = [inputs_map[key] for key in ordered_keys]
-
+    ordered_keys, ordered_components = get_ordered_inputs(inputs_map)
 
     def upscale_wrapper(*args):
         """
@@ -205,7 +201,6 @@ with gr.Blocks() as upscale_block:
             return (
                 gr.update(value=int(width)), gr.update(value=int(height))
             )
-
 
     # Interactive Bindings
     img_inp_upscale.change(

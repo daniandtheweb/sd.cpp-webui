@@ -1,2 +1,1 @@
-gradio==5.44.1
-Pillow>=10.0.0
+gradio==6.9.0

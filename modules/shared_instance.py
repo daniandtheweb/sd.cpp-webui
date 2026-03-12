@@ -1,19 +1,44 @@
 """sd.cpp-webui - Shared Instance Helper"""
 
+import sys
+
 from modules.config import ConfigManager
 from modules.utils.sd_interface import (
     SDOptionsCache, exe_name
 )
-from modules.utils.utility import SubprocessManager
+from modules.utils.subprocess_manager import SubprocessManager
 import modules.utils.queue as queue_manager
+from modules.utils.ui_state import ModelState
+from modules.utils.prompt_manager import PromptManager
 
 
-SD = exe_name()
+SD_CLI = exe_name("cli")
+
+SD_SERVER = exe_name("server")
+
+
+class ServerState:
+    def __init__(self):
+        self.running = False
+        self.latest_update = {}
+        self.ip = ""
+        self.port = ""
+        self.last_generation_stats = ""
+        self.seed = ""
+
 
 config = ConfigManager()
 
-sd_options = SDOptionsCache()
+current_mode = "server" if "--server" in sys.argv else "cli"
+
+sd_options = SDOptionsCache(mode=current_mode)
 
 subprocess_manager = SubprocessManager()
 
 queue_manager.start_worker()
+
+server_state = ServerState()
+
+model_state = ModelState()
+
+prompt_manager = PromptManager()

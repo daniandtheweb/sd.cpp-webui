@@ -6,7 +6,7 @@ import gradio as gr
 
 from modules.shared_instance import config
 from modules.ui.constants import PREVIEW
-from modules.utils.ui_handler import update_interactivity
+from modules.utils.ui_events import update_interactivity
 
 
 def create_preview_ui():

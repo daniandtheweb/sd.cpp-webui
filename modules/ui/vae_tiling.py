@@ -4,7 +4,7 @@ from functools import partial
 
 import gradio as gr
 
-from modules.utils.ui_handler import update_interactivity
+from modules.utils.ui_events import update_interactivity
 from modules.shared_instance import config
 
 

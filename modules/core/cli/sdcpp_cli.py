@@ -1,126 +1,62 @@
-"""sd.cpp-webui - stable-diffusion.cpp command module"""
+"""sd.cpp-webui - core - stable-diffusion.cpp cli"""
 
 import os
 import re
 import sys
-import time
-import datetime
 import subprocess
-from enum import IntEnum
 from typing import Dict, Any, Generator
 
 import gradio as gr
 
-from modules.utils.utility import get_path
-from modules.gallery import get_next_img
-from modules.shared_instance import (
-    config, subprocess_manager, SD
+from modules.core.common.sd_common import (
+    DiffusionMode, CommonRunner
 )
-from modules.ui.constants import CIRCULAR_PADDING
+from modules.utils.sdcpp_utils import generate_output_filename
+from modules.shared_instance import (
+    config, subprocess_manager, SD_CLI
+)
 
 
-class DiffusionMode(IntEnum):
-    CHECKPOINT = 0
-    UNET = 1
-
-
-class CommandRunner:
+class CommandRunner(CommonRunner):
     """Builds and runs stable-diffusion.cpp commands and yelds UI updates."""
 
     def __init__(self, mode: str, params: Dict[str, Any]):
+        super().__init__(params)
         self.mode = mode
-        self.params = params
-        self.env_vars = self._extract_env_vars()
-        self.command = [SD, '-M', self.mode]
-        self.fcommand = ""
+        self.command = [SD_CLI, '-M', self.mode]
         self.outputs = []
         self.output_path = ""
         self.preview_path = None
         self.enable_encryption = config.get('enable_encryption', False)
         self.encryption_password = config.get('encryption_password', '123')
 
-    def _extract_env_vars(self) -> Dict[str, Any]:
-        """
-        Parses the params dictionary to find and extract environment
-        variables, applying conditional logic as needed.
-        """
-        env_vars = {}
-
-        is_vk_override_true = self.params.pop('env_vk_visible_override', False)
-        vk_device_id = self.params.pop('env_GGML_VK_VISIBLE_DEVICES', None)
-        is_cuda_override_true = self.params.pop('env_cuda_visible_override', False)
-        cuda_device_id = self.params.pop('env_CUDA_VISIBLE_DEVICES', None)
-
-        for key in list(self.params.keys()):
-            if key.startswith("env_"):
-                env_key = key[4:]
-                value = self.params.pop(key)
-                if env_key not in env_vars:
-                    env_vars[env_key] = value
-
-        if is_vk_override_true and vk_device_id is not None:
-            env_vars['GGML_VK_VISIBLE_DEVICES'] = vk_device_id
-        if is_cuda_override_true and cuda_device_id is not None:
-            env_vars['CUDA_VISIBLE_DEVICES'] = cuda_device_id
-
-        return env_vars
-
     def _set_output_path(self, dir_key: str, subctrl_id: int, extension: str):
         """Determines and sets the output path for the command."""
         output_dir = config.get(dir_key)
-        filename = self._get_param('in_output')
+        filename_override = self._get_param('in_output')
         output_scheme = config.get('def_output_scheme')
 
-        if filename:
-            self.output_path = os.path.join(output_dir, f"{filename}.{extension}")
-        else:
-            match output_scheme:
-                case "Sequential":
-                    # Default
-                    self.output_path = os.path.join(output_dir, get_next_img(subctrl=subctrl_id))
-                case "Timestamp":
-                    # By-second timestamp
-                    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-                    self.output_path = os.path.join(output_dir, f"{timestamp}.{extension}")
-                case "TimestampMS":
-                    # By-microsecond timestamp
-                    timestamp_ms = datetime.datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-                    self.output_path = os.path.join(output_dir, f"{timestamp_ms}.{extension}")
-                case "EpochTime":
-                    # Unix/Epoch time in seconds
-                    epoch_time = int(time.time())
-                    self.output_path = os.path.join(output_dir, f"{epoch_time}.{extension}")
-                case _:
-                    # Default fallback
-                    self.output_path = os.path.join(output_dir, get_next_img(subctrl=subctrl_id))
+        if filename_override and str(filename_override).strip():
+            filename = f"{filename_override}.{extension}"
+            self.output_path = os.path.join(output_dir, filename)
+            return
 
-    def _resolve_paths(self):
-        """Resolves all model and directory paths from the config."""
-        path_mappings = {
-            'ckpt_dir': ['in_ckpt_model'],
-            'vae_dir': ['in_ckpt_vae', 'in_unet_vae'],
-            'unet_dir': ['in_unet_model', 'in_high_noise_model'],
-            'txt_enc_dir': [
-                'in_clip_g', 'in_clip_l', 'in_t5xxl', 'in_llm',
-                'in_umt5_xxl', 'in_clip_vision_h'
-            ],
-            'taesd_dir': ['in_taesd'],
-            'phtmkr_dir': ['in_phtmkr'],
-            'upscl_dir': ['in_upscl'],
-            'cnnet_dir': ['in_cnnet']
-        }
-        for dir_key, param_keys in path_mappings.items():
-            for param_key in param_keys:
-                if param_key in self.params:
-                    # Create a new key for the full path, e.g., 'f_ckpt_model'
-                    full_path_key = f"f_{param_key.replace('in_', '')}"
-                    self.params[full_path_key] = get_path(
-                        config.get(dir_key), self.params.get(param_key)
-                    )
+        name_parts = []
 
-    def _get_param(self, key: str, default: Any = None) -> Any:
-        """Helper to get a parameter from the params dictionary."""
-        return self.params.get(key, default)
+        if config.get('def_output_steps'):
+            steps_val = self._get_param('in_steps')
+            if steps_val:
+                name_parts.append(f"{steps_val}_steps")
+
+        if config.get('def_output_quant'):
+            quant_val = self._get_param('in_model_type')
+            if quant_val and quant_val != "Default":
+                name_parts.append(str(quant_val))
+
+        self.output_path = generate_output_filename(
+            output_dir, output_scheme, extension,
+            name_parts, subctrl_id
+        )
 
     def _add_base_args(self):
         """Adds arguments common to all modes."""
@@ -144,18 +80,6 @@ class CommandRunner:
         
         if self.enable_encryption:
             self.command.extend(['--encrypt', self.encryption_password])
-
-    def _add_options(self, options: Dict[str, Any]):
-        """Adds key-value options to the command if the value is not None."""
-        for opt, val in options.items():
-            if val is not None:
-                self.command.extend([opt, str(val)])
-
-    def _add_flags(self, flags: Dict[str, bool]):
-        """Adds boolean flags to the command if they are True."""
-        for flag, condition in flags.items():
-            if condition:
-                self.command.append(flag)
 
     def _prepare_for_run(self):
         """
@@ -194,31 +118,20 @@ class CommandRunner:
         self._prepare_for_run()
         print(f"\n\n{self.fcommand}\n\n")
 
-        process_env = os.environ.copy()
-
-        if self.env_vars:
-            settings_to_print = []
-
-            for key, value in self.env_vars.items():
-                if isinstance(value, bool):
-                    if value is True:
-                        process_env[key] = "1"
-                        settings_to_print.append(f"{key}=1")
-                elif isinstance(value, int):
-                    process_env[key] = str(value)
-                    settings_to_print.append(f"{key}={str(value)}")
-            if settings_to_print:
-                full_line = " ".join(settings_to_print)
-                print(f"  SET: {full_line}\n\n")
+        process_env = self._build_process_env()
 
         if self.preview_path:
             gallery_update = [self.preview_path]
         else:
             gallery_update = None
 
-        yield (self.fcommand, gr.update(visible=True, value=0),
-               gr.update(visible=True, value="Initializing..."),
-               gr.update(value=""), None)
+        yield (
+            self.fcommand,
+            gr.update(visible=True, value=0),
+            gr.update(visible=True, value="Initializing..."),
+            gr.update(value=""),
+            None
+        )
 
         final_stats_str = "Process completed with unknown stats."
         for update in subprocess_manager.run_subprocess(
@@ -234,15 +147,36 @@ class CommandRunner:
                     f"Last Speed: {stats.get('last_speed', 'N/A')}"
                 )
             else:
-                yield (self.fcommand, gr.update(value=update["percent"]),
-                       update["status"], gr.update(value=""), gallery_update)
+                if self.preview_path and os.path.isfile(self.preview_path):
+                    gallery_update = [self.preview_path]
+                else:
+                    gallery_update = gr.skip()
+
+                yield (
+                    self.fcommand,
+                    gr.update(value=update["percent"]),
+                    update["status"],
+                    gr.update(value=""),
+                    gallery_update
+                )
 
         if self.preview_path and os.path.isfile(self.preview_path):
             os.remove(self.preview_path)
 
-        yield (self.fcommand, gr.update(visible=False, value=100),
-               gr.update(visible=False, value=""),
-               gr.update(value=final_stats_str), self.outputs)
+        valid_outputs = [out for out in self.outputs if os.path.isfile(out)]
+
+        if valid_outputs:
+            final_gallery_update = valid_outputs
+        else:
+            final_gallery_update = gr.skip()
+
+        yield (
+            self.fcommand,
+            gr.update(visible=False, value=100),
+            gr.update(visible=False, value=""),
+            gr.update(value=final_stats_str),
+            final_gallery_update
+        )
 
 
 class ImageGenerationRunner(CommandRunner):
@@ -268,7 +202,6 @@ class ImageGenerationRunner(CommandRunner):
         # Filter out any keys that have a None value before returning
         return {k: v for k, v in options.items() if v is not None}
 
-
     def build_command(self, output_dir_key: str, subctrl_id: int):
         """Builds the common command for image generation."""
         self._resolve_paths()
@@ -291,9 +224,11 @@ class ImageGenerationRunner(CommandRunner):
             '--type': (self._get_param('in_model_type')
                        if self._get_param('in_model_type') != "Default"
                        else None),
-            '--tensor-type-rules': (self._get_param('in_tensor_type_rules')
-                                    if self._get_param('in_tensor_type_rules') != ""
-                                    else None),
+            '--tensor-type-rules': (
+                self._get_param('in_tensor_type_rules')
+                if self._get_param('in_tensor_type_rules') != ""
+                else None
+            ),
             # Scheduler
             '--scheduler': (self._get_param('in_scheduler')
                             if not self._get_param('in_sigmas')
@@ -344,22 +279,28 @@ class ImageGenerationRunner(CommandRunner):
             # VAE Tiling
             **({
                 '--vae-tile-overlap': self._get_param('in_vae_tile_overlap'),
-                '--vae-tile-size': (f"{size}x{size}"
-                                    if (size := self._get_param('in_vae_tile_size'))
-                                    else None),
-                '--vae-relative-tile-size': (f"{size}x{size}"
-                                             if (
-                                             self._get_param('in_vae_relative_bool') and
-                                             (size := self._get_param('in_vae_relative_tile_size'))
-                                             )
-                                             else None),
+                '--vae-tile-size': (
+                    f"{size}x{size}"
+                    if (size := self._get_param('in_vae_tile_size'))
+                    else None
+                ),
+                '--vae-relative-tile-size': (
+                    f"{size}x{size}"
+                    if (
+                        self._get_param('in_vae_relative_bool') and
+                        (size := self._get_param('in_vae_relative_tile_size'))
+                    )
+                    else None
+                ),
             } if self._get_param('in_vae_tiling') else {}),
             # Cache
             **({
                 '--cache-mode': self._get_param('in_cache_mode'),
-                '--cache-preset': (self._get_param('in_cache_dit_preset')
-                                   if self._get_param('in_cache_dit_preset') != "none"
-                                   else None),
+                '--cache-preset': (
+                    self._get_param('in_cache_dit_preset')
+                    if self._get_param('in_cache_dit_preset') != "none"
+                    else None
+                ),
                 '--cache-option': (
                     val.strip('"')
                     if (val := self._get_param('in_cache_option')) and str(val).strip('"') != ""
@@ -369,8 +310,8 @@ class ImageGenerationRunner(CommandRunner):
                                if self._get_param('in_scm_mask') != ""
                                else None),
                 '--scm-policy': (self._get_param('in_scm_policy')
-                                if self._get_param('in_scm_policy') != "none"
-                                else None)
+                                 if self._get_param('in_scm_policy') != "none"
+                                 else None)
             } if self._get_param('in_cache_bool') else {}),
             # Prediction type override
             '--prediction': (self._get_param('in_predict')
@@ -385,41 +326,21 @@ class ImageGenerationRunner(CommandRunner):
         }
         self._add_options(options)
 
-        flags = {
-            '--offload-to-cpu': self._get_param('in_offload_to_cpu'),
-            '--vae-tiling': self._get_param('in_vae_tiling'),
-            '--vae-on-cpu': self._get_param('in_vae_cpu'),
-            '--clip-on-cpu': self._get_param('in_clip_cpu'),
-            '--control-net-cpu': self._get_param('in_cnnet_cpu'),
-            '--canny': self._get_param('in_canny'),
-            '--chroma-disable-dit-mask': (
-                self._get_param('in_disable_dit_mask')
-            ),
-            '--chroma-enable-t5-mask': self._get_param('in_enable_t5_mask'),
-            '--qwen-image-zero-cond-t': self._get_param('in_enable_zero_cond_t'),
-            '--circular': self._get_param('in_circular_padding') == CIRCULAR_PADDING[1],
-            '--circularx': self._get_param('in_circular_padding') == CIRCULAR_PADDING[2],
-            '--circulary': self._get_param('in_circular_padding') == CIRCULAR_PADDING[3],
-            '--diffusion-fa': self._get_param('in_flash_attn'),
-            '--diffusion-conv-direct': (
-                self._get_param('in_diffusion_conv_direct')
-            ),
-            '--vae-conv-direct': self._get_param('in_vae_conv_direct'),
-            '--force-sdxl-vae-conv-scale': self._get_param('in_force_sdxl_vae_conv_scale'),
+        flags = self._get_common_flags()
+        flags.update({
             '--taesd-preview-only': (self._get_param('in_preview_taesd')
                                      if self._get_param('in_preview_bool')
                                      else False),
             '--preview-noisy': (self._get_param('in_preview_noisy')
                                 if self._get_param('in_preview_bool')
                                 else False),
-            '--color': self._get_param('in_color'),
-            '-v': self._get_param('in_verbose'),
-        }
+        })
         self._add_flags(flags)
 
 
 class Txt2ImgRunner(ImageGenerationRunner):
     """Builds the txt2img command."""
+
     def build_command(self):
         super().build_command(
             output_dir_key='txt2img_dir', subctrl_id=0
@@ -428,6 +349,7 @@ class Txt2ImgRunner(ImageGenerationRunner):
 
 class Img2ImgRunner(ImageGenerationRunner):
     """Builds the img2img command."""
+
     def build_command(self):
         super().build_command(
             output_dir_key='img2img_dir', subctrl_id=1
@@ -450,15 +372,19 @@ class Img2ImgRunner(ImageGenerationRunner):
 
 class ImgEditRunner(ImageGenerationRunner):
     """Builds the image editing (instruct) command."""
+
     def build_command(self):
         super().build_command(
             output_dir_key='imgedit_dir', subctrl_id=2
         )
-        self.command.extend(['--ref-image', str(self._get_param('in_ref_img'))])
+        self.command.extend(
+            ['--ref-image', str(self._get_param('in_ref_img'))]
+        )
 
 
 class Any2VideoRunner(CommandRunner):
     """Builds the any2video command."""
+
     def _add_base_args(self):
         # Override to add video-specific base arguments
         super()._add_base_args()
@@ -521,26 +447,21 @@ class Any2VideoRunner(CommandRunner):
         }
         self._add_options(options)
 
-        flags = {
-            '--offload-to-cpu': self._get_param('in_offload_to_cpu'),
-            '--vae-tiling': self._get_param('in_vae_tiling'),
-            '--vae-on-cpu': self._get_param('in_vae_cpu'),
-            '--clip-on-cpu': self._get_param('in_clip_cpu'),
-            '--control-net-cpu': self._get_param('in_cnnet_cpu'),
-            '--canny': self._get_param('in_canny'),
-            '--color': self._get_param('in_color'),
-            '--diffusion-fa': self._get_param('in_flash_attn'),
-            '--diffusion-conv-direct': (
-                self._get_param('in_diffusion_conv_direct')
-            ),
-            '--vae-conv-direct': self._get_param('in_vae_conv_direct'),
-            '-v': self._get_param('in_verbose')
-        }
+        flags = self._get_common_flags()
+        flags.update({
+            '--taesd-preview-only': (self._get_param('in_preview_taesd')
+                                     if self._get_param('in_preview_bool')
+                                     else False),
+            '--preview-noisy': (self._get_param('in_preview_noisy')
+                                if self._get_param('in_preview_bool')
+                                else False),
+        })
         self._add_flags(flags)
 
 
 class UpscaleRunner(CommandRunner):
     """Builds the upscale command."""
+
     def build_command(self):
         self._resolve_paths()
         self._set_output_path('upscale_dir', 4, 'png')
@@ -557,15 +478,7 @@ class UpscaleRunner(CommandRunner):
         }
         self._add_options(options)
 
-        flags = {
-            '--diffusion-fa': self._get_param('in_flash_attn'),
-            '--diffusion-conv-direct': (
-                self._get_param('in_diffusion_conv_direct')
-            ),
-            '--color': self._get_param('in_color'),
-            '-v': self._get_param('in_verbose')
-        }
-        self._add_flags(flags)
+        self._add_flags(self._get_common_flags())
 
 
 def txt2img(params: dict) -> Generator:
@@ -629,7 +542,7 @@ def convert(params: dict):
         )
 
     command = [
-        SD, '-M', 'convert',
+        SD_CLI, '-M', 'convert',
         '--model', orig_model_path,
         '-o', gguf_path,
         '--type', in_quant_type
@@ -649,8 +562,8 @@ def convert(params: dict):
 
     yield (
         fcommand,
-        gr.Slider(visible=True, value=0),
-        gr.Textbox(visible=True, value="Initializing conversion..."),
+        gr.update(visible=True, value=0),
+        gr.update(visible=True, value="Initializing conversion..."),
     )
 
     last_was_progress = False

@@ -5,7 +5,7 @@ from functools import partial
 import gradio as gr
 
 from modules.shared_instance import config
-from modules.utils.ui_handler import update_interactivity
+from modules.utils.ui_events import update_interactivity
 from .constants import (
     CACHE_MODE, CACHE_DIT_PRESET, SCM_POLICY
 )

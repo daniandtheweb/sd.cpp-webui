@@ -37,6 +37,10 @@ def create_performance_ui():
                 label="Flash Attention",
                 value=config.get('def_flash_attn')
             )
+            diffusion_fa = gr.Checkbox(
+                label="Flash Attention in the diffusion model only",
+                value=config.get('def_diffusion_fa')
+            )
             diffusion_conv_direct = gr.Checkbox(
                 label="Conv2D Direct for diffusion",
                 value=config.get('def_diffusion_conv_direct')
@@ -50,12 +54,13 @@ def create_performance_ui():
                 value=config.get('def_force_sdxl_vae_conv_scale')
             )
 
-    return{
+    return {
         'in_threads': threads,
         'in_offload_to_cpu': offload_to_cpu,
         'in_vae_cpu': vae_cpu,
         'in_clip_cpu': clip_cpu,
         'in_flash_attn': flash_attn,
+        'in_diffusion_fa': diffusion_fa,
         'in_diffusion_conv_direct': diffusion_conv_direct,
         'in_vae_conv_direct': vae_conv_direct,
         'in_force_sdxl_vae_conv_scale': force_sdxl_vae_conv_scale,
