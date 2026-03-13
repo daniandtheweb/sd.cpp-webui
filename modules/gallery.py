@@ -99,7 +99,18 @@ class GalleryManager:
 
         page_files = files[start_index:end_index]
 
-        imgs = [Image.open(path) for path in page_files]
+        # 解密图片
+        from modules.utils.image_display import decrypt_and_display
+        imgs = []
+        for path in page_files:
+            try:
+                img = decrypt_and_display(path)
+                if img is None:
+                    img = Image.open(path)
+                imgs.append(img)
+            except Exception as e:
+                print(f"Failed to load image {path}: {e}")
+                imgs.append(Image.open(path))
 
         dir_map = {
             0: 'txt2img',

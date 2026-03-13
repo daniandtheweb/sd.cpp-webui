@@ -55,6 +55,7 @@ def create_prompts_ui(nprompt_support=True):
                     save_prompt_btn = gr.Button(
                         value="Save prompt", size="lg",
                     )
+
     with gr.Row():
         pprompt = gr.Textbox(
             placeholder="Positive prompt\nUse loras from the loras folder with: <lora:lora_name:lora_strength>, for example: <lora:anime:0.8>",

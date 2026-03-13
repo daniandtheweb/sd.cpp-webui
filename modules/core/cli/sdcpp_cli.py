@@ -27,6 +27,8 @@ class CommandRunner(CommonRunner):
         self.outputs = []
         self.output_path = ""
         self.preview_path = None
+        self.enable_encryption = config.get('enable_encryption', False)
+        self.encryption_password = config.get('encryption_password', '123')
 
     def _set_output_path(self, dir_key: str, subctrl_id: int, extension: str):
         """Determines and sets the output path for the command."""
@@ -75,6 +77,9 @@ class CommandRunner(CommonRunner):
             '--lora-apply-mode', str(self._get_param('in_lora_apply')),
             '-o', self.output_path
         ])
+        
+        if self.enable_encryption:
+            self.command.extend(['--encrypt', self.encryption_password])
 
     def _prepare_for_run(self):
         """
@@ -97,8 +102,8 @@ class CommandRunner(CommonRunner):
             self.outputs = [self.output_path]
         else:
             base, ext = os.path.splitext(self.output_path)
-            self.outputs = [self.output_path] + [
-                f"{base}_{i}{ext}" for i in range(2, batch_count + 1)
+            self.outputs = [
+                f"{base}_{i}{ext}" for i in range(batch_count)
             ]
 
     def build_command(self):
