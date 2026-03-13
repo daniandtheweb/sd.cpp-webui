@@ -23,11 +23,12 @@ def bind_generation_pipeline(
     """
     Connects the UI components to the generation queue.
     """
+    tab_id = api_func.__name__
 
     def submit_job(*args):
         params = dict(zip(ordered_keys, args))
 
-        queue_manager.add_job(api_func, params)
+        queue_manager.add_job(api_func, params, owner=tab_id)
 
         q_len = queue_manager.get_queue_size()
 
@@ -41,6 +42,17 @@ def bind_generation_pipeline(
     def poll_status():
         state = queue_manager.get_status()
         q_len = queue_manager.get_queue_size()
+
+        if state.get("owner") != tab_id and state.get("owner") is not None:
+            return (
+                gr.skip(),
+                gr.skip(),
+                gr.skip(),
+                gr.skip(),
+                gr.skip(),
+                gr.skip(),
+                gr.skip()
+            )
 
         if not state["is_running"] and q_len == 0:
             if state.get("is_finished"):
