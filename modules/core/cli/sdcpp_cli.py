@@ -9,7 +9,7 @@ from typing import Dict, Any, Generator
 import gradio as gr
 
 from modules.core.common.sd_common import (
-    DiffusionMode, CommonRunner
+    DiffusionMode, CommonRunner, process_editor_mask
 )
 from modules.utils.sdcpp_utils import generate_output_filename
 from modules.shared_instance import (
@@ -357,7 +357,22 @@ class Img2ImgRunner(ImageGenerationRunner):
             str(self._get_param('in_strength'))
         ])
 
+        mask_input = self._get_param('in_img_mask') or self._get_param('in_mask')
+        mask_img = process_editor_mask(mask_input)
+        final_mask_path = None
+
+        if mask_img is not None:
+            # The CLI requires a file path, so we save the PIL Image to disk
+            output_dir = config.get('img2img_dir')
+            final_mask_path = os.path.join(output_dir, "sdcpp_temp_mask.png")
+
+            try:
+                mask_img.save(final_mask_path)
+            except Exception as e:
+                print(f"Error saving temporary mask for CLI: {e}")
+                final_mask_path = None
         options = {
+            '--mask': final_mask_path,
             '--img-cfg-scale': (self._get_param('in_img_cfg')
                                 if self._get_param('in_img_cfg_bool')
                                 else None),

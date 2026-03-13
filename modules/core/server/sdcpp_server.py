@@ -11,6 +11,7 @@ from typing import Dict, Any, Generator
 
 import gradio as gr
 
+from modules.core.common.sd_common import process_editor_mask
 from modules.utils.file_utils import get_path
 from modules.loader import get_loras
 from modules.utils.sdcpp_utils import generate_output_filename
@@ -331,15 +332,14 @@ class Img2ImgApiRunner(ApiTaskRunner):
             init_img.save(buf, format="PNG")
             payload["init_images"] = [base64.b64encode(buf.getvalue()).decode('utf-8')]
 
-        mask_img = self._get_param('in_mask_img')
+        mask_input = self._get_param('in_img_mask') or self._get_param('in_mask_img')
+        mask_img = process_editor_mask(mask_input)
+
         if mask_img is not None:
-            if not isinstance(mask_img, Image.Image):
-                mask_img = Image.fromarray(mask_img)
             m_buf = io.BytesIO()
             mask_img.save(m_buf, format="PNG")
             payload["mask"] = base64.b64encode(m_buf.getvalue()).decode('utf-8')
             payload["inpainting_mask_invert"] = self._get_param('in_invert_mask', False)
-
         return payload
 
 
@@ -376,13 +376,10 @@ class ImgEditApiRunner(ApiTaskRunner):
             buf.seek(0)
             files.append(("image[]", ("image.png", buf, "image/png")))
 
-        mask_img = self._get_param('in_mask_img')
-        if mask_img is not None:
-            if isinstance(mask_img, str):
-                mask_img = Image.open(mask_img)
-            elif not isinstance(mask_img, Image.Image):
-                mask_img = Image.fromarray(mask_img)
+        mask_input = self._get_param('in_img_mask') or self._get_param('in_mask_img')
+        mask_img = process_editor_mask(mask_input)
 
+        if mask_img is not None:
             m_buf = io.BytesIO()
             mask_img.save(m_buf, format="PNG")
             m_buf.seek(0)

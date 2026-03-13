@@ -185,6 +185,14 @@ with gr.Blocks()as img2img_block:
                     sources="upload", type="filepath"
                 )
                 inputs_map['in_img_inp'] = img_inp_img2img
+            with gr.Row():
+                with gr.Accordion(label="Mask", open=False):
+                    img_mask = gr.ImageEditor(
+                        sources="upload",
+                        type="filepath",
+                        layers=False
+                    )
+                inputs_map['in_img_mask'] = img_mask
             with gr.Group():
                 with gr.Row():
                     gen_btn = gr.Button(
