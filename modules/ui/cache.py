@@ -25,14 +25,14 @@ def create_cache_ui():
             label="Cache mode",
             choices=CACHE_MODE,
             value=config.get('def_cache_mode'),
-            interactive=False
+            interactive=config.get('def_cache_bool')
         )
 
         cache_dit_preset = gr.Dropdown(
             label="cache-dit preset",
             choices=CACHE_DIT_PRESET,
             value=config.get('def_cache_dit_preset'),
-            interactive=False
+            interactive=config.get('def_cache_bool')
         )
 
         with gr.Accordion(

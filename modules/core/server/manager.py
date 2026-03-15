@@ -37,6 +37,7 @@ class ServerRunner(CommonRunner):
         # Additional Components
         options.update({
             '--threads': self._get_param('in_threads'),
+            '--cache-mode': self._get_param('in_cache_mode'),
             '--taesd': self._get_param('f_taesd'),
             '--photo-maker': self._get_param('f_phtmkr'),
             '--upscale-model': self._get_param('f_upscl'),
