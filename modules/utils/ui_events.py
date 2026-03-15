@@ -6,8 +6,11 @@ import gradio as gr
 
 import modules.utils.queue as queue_manager
 from modules.shared_instance import (
-    sd_options, model_state, current_mode
+    sd_options, model_state
 )
+
+
+_polling_configs = []
 
 
 def get_ordered_inputs(inputs_map):
@@ -25,6 +28,8 @@ def bind_generation_pipeline(
     """
     tab_id = api_func.__name__
 
+    last_q_len = [-1]
+
     def submit_job(*args):
         params = dict(zip(ordered_keys, args))
 
@@ -36,16 +41,23 @@ def bind_generation_pipeline(
 
         return (
             gr.update(visible=True, value=0),
-            gr.update(visible=True, value="Added to queue...")
+            gr.update(visible=True, value="Added to queue..."),
         )
 
     def poll_status():
+        just_finished = queue_manager.consume_finished()
         state = queue_manager.get_status()
         q_len = queue_manager.get_queue_size()
 
-        if state.get("owner") != tab_id and state.get("owner") is not None:
+        owner = state.get("owner")
+        is_running = state.get("is_running")
+        imgs = state.get("images", None)
+
+        if imgs is None:
+            imgs = gr.update(value=None)
+
+        if not just_finished and (owner != tab_id or (not is_running and q_len == 0)):
             return (
-                gr.skip(),
                 gr.skip(),
                 gr.skip(),
                 gr.skip(),
@@ -54,42 +66,34 @@ def bind_generation_pipeline(
                 gr.skip()
             )
 
-        if not state["is_running"] and q_len == 0:
-            if state.get("is_finished"):
-                state["is_finished"] = False
-            else:
-                return (
-                    gr.skip(),
-                    gr.skip(),
-                    gr.skip(),
-                    gr.skip(),
-                    gr.skip(),
-                    gr.skip(),
-                    gr.skip(),
-                )
+        prog = state.get("progress", 0)
+        stat = state.get("status", "")
+        cmd = state.get("command", "")
+        stats = state.get("stats", "")
 
-        prog = state["progress"]
-        stat = state["status"]
+        is_error = isinstance(stat, str) and stat.startswith("Error")
 
-        if not state["is_running"] and q_len > 0:
-            prog = gr.skip()
-            stat = gr.skip()
-        elif prog == 0:
-            prog = gr.skip()
-            stat = gr.skip()
+        if not just_finished:
+            if not is_running and q_len > 0:
+                prog = gr.skip()
+            elif isinstance(prog, int) and prog == 0 and not is_error:
+                prog = gr.skip()
 
-        queue_display = gr.update(
-            value=f"⏳ Jobs in queue: {q_len}" if q_len > 0 else "",
-            visible=(q_len > 0)
-        )
+        if q_len > 0:
+            queue_display = gr.update(
+                visible=True,
+                value=f"⏳ Jobs in queue: {q_len}"
+            )
+        else:
+            queue_display = gr.update(visible=False, value="")
+            last_q_len[0] = q_len
 
         return (
-            state["command"],
+            cmd,
             prog,
             stat,
-            state["stats"],
-            state["images"],
-            gr.skip(),
+            stats,
+            imgs,
             queue_display
         )
 
@@ -111,7 +115,6 @@ def bind_generation_pipeline(
             outputs_map['progress_textbox'],
             outputs_map['stats'],
             outputs_map['img_final'],
-            outputs_map['timer'],
             outputs_map['queue_tracker']
         ]
     )

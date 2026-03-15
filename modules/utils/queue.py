@@ -5,6 +5,7 @@ import threading
 
 
 _job_queue = queue.Queue()
+_state_lock = threading.Lock()
 
 
 def get_clean_state():
@@ -35,9 +36,10 @@ def _background_worker():
         params = job['params']
         owner = job.get('owner')
 
-        current_job_state.update(get_clean_state())
-        current_job_state["is_running"] = True
-        current_job_state["owner"] = owner
+        with _state_lock:
+            current_job_state.update(get_clean_state())
+            current_job_state["is_running"] = True
+            current_job_state["owner"] = owner
 
         try:
             for result in func(params):
@@ -57,12 +59,14 @@ def _background_worker():
                     )
 
         except Exception as e:
-            current_job_state["status"] = f"Error: {str(e)}"
+            with _state_lock:
+                current_job_state["status"] = f"Error: {str(e)}"
             print(f"Worker Error: {e}")
 
         finally:
-            current_job_state["is_running"] = False
-            current_job_state["is_finished"] = True
+            with _state_lock:
+                current_job_state["is_running"] = False
+                current_job_state["is_finished"] = True
             _job_queue.task_done()
 
 
@@ -91,3 +95,11 @@ def get_queue_size():
 
 def get_status():
     return current_job_state
+
+
+def consume_finished():
+    with _state_lock:
+        if current_job_state["is_finished"]:
+            current_job_state["is_finished"] = False
+            return True
+        return False
