@@ -42,6 +42,7 @@ def bind_generation_pipeline(
         return (
             gr.update(visible=True, value=0),
             gr.update(visible=True, value="Added to queue..."),
+            gr.update(value=0.1),
         )
 
     def poll_status():
@@ -53,6 +54,8 @@ def bind_generation_pipeline(
         is_running = state.get("is_running")
         imgs = state.get("images", None)
 
+        timer_update = gr.skip()
+
         if imgs is None:
             imgs = gr.update(value=None)
 
@@ -63,8 +66,12 @@ def bind_generation_pipeline(
                 gr.skip(),
                 gr.skip(),
                 gr.skip(),
+                gr.skip(),
                 gr.skip()
             )
+
+        if just_finished and q_len == 0:
+            timer_update = gr.update(value=10.0)
 
         prog = state.get("progress", 0)
         stat = state.get("status", "")
@@ -94,6 +101,7 @@ def bind_generation_pipeline(
             stat,
             stats,
             imgs,
+            timer_update,
             queue_display
         )
 
@@ -103,6 +111,7 @@ def bind_generation_pipeline(
         outputs=[
             outputs_map['progress_slider'],
             outputs_map['progress_textbox'],
+            outputs_map['timer']
         ]
     )
 
@@ -115,6 +124,7 @@ def bind_generation_pipeline(
             outputs_map['progress_textbox'],
             outputs_map['stats'],
             outputs_map['img_final'],
+            outputs_map['timer'],
             outputs_map['queue_tracker']
         ]
     )

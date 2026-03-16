@@ -250,7 +250,7 @@ with gr.Blocks()as img2img_block:
 
     ordered_keys, ordered_components = get_ordered_inputs(inputs_map)
 
-    timer = gr.Timer(value=0.1, active=True)
+    timer = gr.Timer(value=10, active=True)
 
     ui_outputs = {
         'gen_btn': gen_btn,
