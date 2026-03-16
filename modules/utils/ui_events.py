@@ -71,7 +71,7 @@ def bind_generation_pipeline(
             )
 
         if just_finished and q_len == 0:
-            timer_update = gr.update(value=10.0)
+            timer_update = gr.update(value=0.1)
 
         prog = state.get("progress", 0)
         stat = state.get("status", "")
