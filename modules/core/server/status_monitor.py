@@ -1,6 +1,6 @@
 """sd.cpp-webui - core - Server status monitor module"""
 
-import requests
+import httpx
 
 import gradio as gr
 
@@ -24,7 +24,7 @@ def get_active_model_name(ip, port):
     base_url = f"http://{ip}:{port}"
 
     try:
-        resp = requests.get(f"{base_url}/sdapi/v1/sd-models", timeout=1.0)
+        resp = httpx.get(f"{base_url}/sdapi/v1/sd-models", timeout=1.0)
         if resp.status_code == 200:
             data = resp.json()
             if isinstance(data, list) and len(data) > 0:
@@ -32,20 +32,20 @@ def get_active_model_name(ip, port):
                 if name and name.strip():
                     return name
 
-        resp_opt = requests.get(f"{base_url}/sdapi/v1/options", timeout=1.0)
+        resp_opt = httpx.get(f"{base_url}/sdapi/v1/options", timeout=1.0)
         if resp_opt.status_code == 200:
             opt_data = resp_opt.json()
             checkpoint = opt_data.get("sd_model_checkpoint")
             if checkpoint and checkpoint.strip():
                 return checkpoint
 
-        resp_v1 = requests.get(f"{base_url}/v1/models", timeout=1.0)
+        resp_v1 = httpx.get(f"{base_url}/v1/models", timeout=1.0)
         if resp_v1.status_code == 200:
             v1_data = resp_v1.json()
             if "data" in v1_data and len(v1_data["data"]) > 0:
                 return v1_data["data"][0].get("id", "Unknown")
 
-    except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
+    except httpx.RequestError:
         return "Loading weights..."
     except Exception:
         return "Checking status..."

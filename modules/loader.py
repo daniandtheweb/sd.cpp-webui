@@ -1,7 +1,7 @@
 """sd.cpp-webui - Model loader module"""
 
 import os
-import requests
+import httpx
 from typing import List
 
 import gradio as gr
@@ -93,7 +93,7 @@ def get_loras() -> List[str]:
 
         try:
 
-            resp_lora = requests.get(lora_api_url, timeout=1.0)
+            resp_lora = httpx.get(lora_api_url, timeout=1.0)
 
             if resp_lora.status_code == 200:
                 lora_data = resp_lora.json()
@@ -106,7 +106,7 @@ def get_loras() -> List[str]:
                 return lora_names
             else:
                 return []
-        except requests.exceptions.RequestException:
+        except httpx.HTTPError:
             return []
 
     elif current_mode == "cli":

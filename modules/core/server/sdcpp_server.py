@@ -5,7 +5,7 @@ import io
 import re
 import json
 import base64
-import requests
+import httpx
 from PIL import Image
 from typing import Dict, Any, Generator
 
@@ -258,11 +258,11 @@ class ApiTaskRunner:
         try:
             if isinstance(payload_or_files, tuple):
                 data, files = payload_or_files
-                response = requests.post(
+                response = httpx.post(
                     self.url, data=data, files=files, timeout=None
                 )
             else:
-                response = requests.post(
+                response = httpx.post(
                     self.url, json=payload_or_files, timeout=None
                 )
 
