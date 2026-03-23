@@ -2,7 +2,7 @@
 
 **sd.cpp-webui** is a simple, lightweight [Gradio](https://github.com/gradio-app/gradio)-based web interface for [stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp).
 
-Designed to run text-to-image and video generation models locally without heavy dependencies, this program acts primarily as a command generator for **stable-diffusion.cpp**, with some extra features for image management.
+Designed to run local AI text-to-image and video generation models without heavy dependencies, this program acts primarily as a command generator for **stable-diffusion.cpp**, with some extra features for image management.
 
 ## Features
 
@@ -54,7 +54,7 @@ This WebUI, by using **stable-diffusion.cpp** as its core, supports a large numb
   4. Access the WebUI with the browser at `http://localhost:7860/`.
 
 
-<img width="2617" height="1828" alt="sdcpp_webui_screenshot" src="https://github.com/user-attachments/assets/1119195a-6c7c-483d-b475-d0ef6ae96fb0" />
+<img width="2617" height="1828" alt="Screenshot of sd.cpp-webui, a lightweight Gradio interface for local AI image generation using stable-diffusion.cpp" src="https://github.com/user-attachments/assets/1119195a-6c7c-483d-b475-d0ef6ae96fb0" />
 
 
 ## Contributors
