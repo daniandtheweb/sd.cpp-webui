@@ -316,7 +316,7 @@ with gr.Blocks()as img2img_server_block:
         outputs=[server_status, gen_btn, progress_slider, progress_textbox]
     )
 
-    timer = gr.Timer(value=10, active=True)
+    timer = gr.Timer(value=0.1, active=False)
 
     ui_outputs = {
         'gen_btn': gen_btn,

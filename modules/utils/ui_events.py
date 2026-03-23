@@ -28,63 +28,65 @@ def bind_generation_pipeline(
     """
     tab_id = api_func.__name__
 
-    last_q_len = [-1]
-
     def submit_job(*args):
         params = dict(zip(ordered_keys, args))
 
+        current_state = queue_manager.get_status()
+        already_running = current_state.get("is_running", False)
+
         queue_manager.add_job(api_func, params, owner=tab_id)
 
-        q_len = queue_manager.get_queue_size()
-
-        print(f"\n\nJob submitted! Position in queue: {q_len}.\n"),
+        if already_running:
+            return (
+                gr.skip(),
+                gr.skip(),
+                gr.skip()
+            )
 
         return (
             gr.update(visible=True, value=0),
             gr.update(visible=True, value="Added to queue..."),
-            gr.update(value=0.1),
+            gr.update(active=True),
         )
 
     def poll_status():
-        just_finished = queue_manager.consume_finished()
         state = queue_manager.get_status()
         q_len = queue_manager.get_queue_size()
+        just_finished = queue_manager.consume_finished()
 
         owner = state.get("owner")
         is_running = state.get("is_running")
         imgs = state.get("images", None)
 
-        timer_update = gr.skip()
+        if just_finished and q_len == 0 and not is_running:
+            timer_update = gr.update(active=False)
+        elif q_len > 0 or is_running:
+            timer_update = gr.update(active=True)
+        else:
+            timer_update = gr.skip()
 
-        if imgs is None:
-            imgs = gr.update(value=None)
-
-        if not just_finished and (owner != tab_id or (not is_running and q_len == 0)):
+        if not just_finished and ((owner != tab_id and not is_running) or (not is_running and q_len == 0)):
             return (
                 gr.skip(),
                 gr.skip(),
                 gr.skip(),
                 gr.skip(),
                 gr.skip(),
-                gr.skip(),
+                timer_update,
                 gr.skip()
             )
-
-        if just_finished and q_len == 0:
-            timer_update = gr.update(value=0.1)
 
         prog = state.get("progress", 0)
         stat = state.get("status", "")
         cmd = state.get("command", "")
         stats = state.get("stats", "")
 
-        is_error = isinstance(stat, str) and stat.startswith("Error")
-
-        if not just_finished:
-            if not is_running and q_len > 0:
-                prog = gr.skip()
-            elif isinstance(prog, int) and prog == 0 and not is_error:
-                prog = gr.skip()
+        if just_finished and q_len == 0 and not is_running:
+            prog_update = gr.update(visible=False, value=0)
+            stat_update = gr.update(visible=False, value="")
+        else:
+            prog_update = prog
+            stat_update = stat
 
         if q_len > 0:
             queue_display = gr.update(
@@ -93,12 +95,14 @@ def bind_generation_pipeline(
             )
         else:
             queue_display = gr.update(visible=False, value="")
-            last_q_len[0] = q_len
+
+        if imgs is None:
+            imgs = gr.update(value=None)
 
         return (
             cmd,
-            prog,
-            stat,
+            prog_update,
+            stat_update,
             stats,
             imgs,
             timer_update,

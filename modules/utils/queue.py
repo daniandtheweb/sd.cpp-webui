@@ -94,7 +94,8 @@ def get_queue_size():
 
 
 def get_status():
-    return current_job_state
+    with _state_lock:
+        return current_job_state.copy()
 
 
 def consume_finished():
@@ -102,4 +103,5 @@ def consume_finished():
         if current_job_state["is_finished"]:
             current_job_state["is_finished"] = False
             return True
-        return False
+        else:
+            return False
