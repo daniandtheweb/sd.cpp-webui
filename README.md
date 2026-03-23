@@ -1,19 +1,21 @@
-# sd.cpp-webui
+# sd.cpp-webui - A Lightweight Gradio WebUI for stable-diffusion.cpp
 
-A simple Gradio-based interface for [stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp).
+**sd.cpp-webui** is a simple, lightweight [Gradio](https://github.com/gradio-app/gradio)-based web interface for [stable-diffusion.cpp](https://github.com/leejet/stable-diffusion.cpp).
 
-This program acts primarily as a command generator for **stable-diffusion.cpp**, with some extra features.
+Designed to run text-to-image and video generation models locally without heavy dependencies, this program acts primarily as a command generator for **stable-diffusion.cpp**, with some extra features for image management.
 
 ## Features
 
-- Minimal python dependencies (Gradio is the main one, no PyTorch required)
-- Supports most **stable-diffusion.cpp** features (the missing ones are work in progress)
-- Live preview using **stable-diffusion.cpp**'s preview option
-- Built-in image gallery
-- Metadata reader
-- Protected login with credentials
+- **Lightweight:** Minimal Python dependencies (Gradio is the main requirement, no PyTorch required).
+- **Feature support:** Supports most **stable-diffusion.cpp** features (missing features are work in progress).
+- **Generation preview:** Live image preview using **stable-diffusion.cpp**'s native preview option.
+- **Image management:** Built-in image gallery.
+- **Metadata reader:** Built-in metadata reader to extract generation data from images.
+- **Secure access:** Optional protected login with user credentials.
 
 ## **stable-diffusion.cpp**'s supported models
+
+This WebUI, by using **stable-diffusion.cpp** as its core, supports a large number of image/video generation models, including:
 
 - SD1.x, SD2.x, SD-Turbo, SDXL, SDXL-Turbo, NitroFusion
 - SD3, SD3.5, FLUX.1-Krea-dev, FLUX.1-dev, FLUX.1-schnell, FLUX.2-dev, Chroma, Qwen Image, Z-Image-Turbo
