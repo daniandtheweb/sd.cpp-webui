@@ -152,7 +152,7 @@ with gr.Blocks() as txt2img_server_block:
                         value="Stopped (No Model Loaded)",
                         interactive=False
                     )
-                    server_status_timer = gr.Timer(value=1, active=True)
+                    server_status_timer = gr.Timer(value=1, active=False)
 
     # Loras
     lora_ui = create_lora_sel_ui()
@@ -257,13 +257,13 @@ with gr.Blocks() as txt2img_server_block:
     server_start.click(
         fn=start_server_wrapper,
         inputs=ordered_components,
-        outputs=[server_status, gen_btn]
+        outputs=[server_status, server_status_timer, gen_btn]
     )
 
     server_stop.click(
         fn=stop_server,
         inputs=[],
-        outputs=[server_status, gen_btn]
+        outputs=[server_status, server_status_timer, gen_btn]
     )
 
     server_status_timer.tick(

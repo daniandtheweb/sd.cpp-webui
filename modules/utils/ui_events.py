@@ -40,13 +40,11 @@ def bind_generation_pipeline(
             return (
                 gr.skip(),
                 gr.skip(),
-                gr.skip()
             )
 
         return (
             gr.update(visible=True, value=0),
             gr.update(visible=True, value="Added to queue..."),
-            gr.update(active=True),
         )
 
     def poll_status():
@@ -115,8 +113,11 @@ def bind_generation_pipeline(
         outputs=[
             outputs_map['progress_slider'],
             outputs_map['progress_textbox'],
-            outputs_map['timer']
         ]
+    ).then(
+        fn=lambda: gr.update(active=True),
+        inputs=[],
+        outputs=[outputs_map['timer']]
     )
 
     outputs_map['timer'].tick(

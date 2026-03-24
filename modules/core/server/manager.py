@@ -91,7 +91,7 @@ class ServerRunner(CommonRunner):
         thread.start()
 
         server_state.running = True
-        return "Running", gr.update(interactive=True)
+        return "Running", gr.update(active=True), gr.update(interactive=True)
 
 
 def start_server(params):
@@ -119,7 +119,15 @@ def stop_server():
         subprocess_manager.kill_subprocess()
         server_state.running = False
 
-        return "Stopped", gr.update(interactive=False)
+        return (
+            "Stopped",
+            gr.update(active=False),
+            gr.update(interactive=False)
+        )
 
     except Exception:
-        return "Error", gr.update(interactive=False)
+        return (
+            "Error",
+            gr.update(active=False),
+            gr.update(interactive=False)
+        )
