@@ -6,8 +6,7 @@ from typing import Any, Dict
 
 
 CURRENT_DIR = os.getcwd()
-DEFAULT_CONFIG_PATH = 'config.json'
-DEFAULT_PROMPTS_PATH = 'prompts.json'
+DEFAULT_CONFIG_PATH = os.path.join('user_data', 'config.json')
 DEFAULT_SETTINGS = {
     'def_theme': "default",
     'ckpt_dir': os.path.join(CURRENT_DIR, "models/checkpoints/"),
@@ -105,7 +104,7 @@ class ConfigManager:
         'def_llm': 'txt_enc_dir',
     }
 
-    def __init__(self, config_path: str = None, prompts_path: str = None):
+    def __init__(self, config_path: str = None):
         self.config_path = os.getenv(
             'SD_WEBUI_CONFIG_PATH', config_path or DEFAULT_CONFIG_PATH
         )

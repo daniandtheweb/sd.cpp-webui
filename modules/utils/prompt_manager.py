@@ -5,7 +5,7 @@ from typing import Tuple, List
 
 from .file_utils import load_json, save_json
 
-DEFAULT_PROMPTS_PATH = 'prompts.json'
+DEFAULT_PROMPTS_PATH = os.path.join('user_data', 'prompts.json')
 
 
 class PromptManager:

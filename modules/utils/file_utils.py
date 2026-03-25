@@ -2,6 +2,7 @@
 
 import os
 import json
+import shutil
 from typing import Any, Dict
 
 
@@ -29,3 +30,25 @@ def save_json(file_path: str, data: Dict[str, Any]):
             json.dump(data, f, indent=4)
     except OSError as e:
         print(f"Error saving to {file_path}: {e}")
+
+
+def migrate_legacy_configs(config_dir: str = "user_data"):
+    """
+    Silently migrates legacy configuration files from the root directory
+    to the new config directory to ensure backward compatibility.
+    """
+    os.makedirs(config_dir, exist_ok=True)
+
+    legacy_files = {
+        'config.json': os.path.join(config_dir, 'config.json'),
+        'prompts.json': os.path.join(config_dir, 'prompts.json'),
+        'presets.json': os.path.join(config_dir, 'presets.json')
+    }
+
+    for old_path, new_path in legacy_files.items():
+        if os.path.isfile(old_path):
+            if not os.path.isfile(new_path):
+                print(f"Migrating legacy config: {old_path} -> {new_path}")
+                shutil.move(old_path, new_path)
+            else:
+                return

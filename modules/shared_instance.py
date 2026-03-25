@@ -2,6 +2,7 @@
 
 import sys
 
+from modules.utils.file_utils import migrate_legacy_configs
 from modules.config import ConfigManager
 from modules.utils.sd_interface import (
     SDOptionsCache, exe_name
@@ -27,6 +28,8 @@ class ServerState:
         self.last_generation_stats = ""
         self.seed = ""
 
+
+migrate_legacy_configs()
 
 config = ConfigManager()
 

@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 
 from .file_utils import load_json, save_json
 
-DEFAULT_PRESETS_PATH = 'presets.json'
+DEFAULT_PRESETS_PATH = os.path.join('user_data', 'presets.json')
 
 
 class PresetManager:
