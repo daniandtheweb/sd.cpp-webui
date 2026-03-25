@@ -11,12 +11,14 @@ from modules.core.server.manager import (
 from modules.core.server.status_monitor import server_status_monitor_wrapper
 from modules.utils.ui_events import (
     get_ordered_inputs, bind_generation_pipeline,
-    apply_lora, unet_tab_switch, ckpt_tab_switch,
+    unet_tab_switch, ckpt_tab_switch,
     update_interactivity, refresh_all_options
 )
 from modules.shared_instance import config
 from modules.ui.models import create_img_model_sel_ui
-from modules.ui.loras import create_lora_sel_ui
+from modules.ui.loras import (
+    create_lora_sel_ui, bind_lora_events
+)
 from modules.ui.prompts import create_prompts_ui
 from modules.ui.presets import (
     create_presets_ui, bind_presets_events
@@ -321,6 +323,10 @@ with gr.Blocks()as img2img_server_block:
         outputs=[server_status, gen_btn, progress_slider, progress_textbox]
     )
 
+    bind_lora_events(lora_ui, prompts_ui)
+
+    bind_presets_events(presets_ui, generation_settings_ui)
+
     timer = gr.Timer(value=0.1, active=False)
 
     ui_outputs = {
@@ -336,20 +342,6 @@ with gr.Blocks()as img2img_server_block:
 
     bind_generation_pipeline(
         img2img_api, ordered_keys, ordered_components, ui_outputs
-    )
-
-    bind_presets_events(presets_ui, generation_settings_ui)
-
-    lora_ui['in_apply_lora_btn'].click(
-        apply_lora,
-        inputs=[
-            lora_ui['in_lora_model'], lora_ui['in_lora_strength'],
-            lora_ui['in_lora_prompt_switch'],
-            prompts_ui['in_pprompt'], prompts_ui['in_nprompt']
-        ],
-        outputs=[
-            prompts_ui['in_pprompt'], prompts_ui['in_nprompt']
-        ]
     )
 
     # Interactive Bindings

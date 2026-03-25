@@ -2,8 +2,9 @@
 
 import gradio as gr
 
-from modules.shared_instance import config, current_mode
+from modules.shared_instance import config
 from modules.ui.models import create_model_widget
+from modules.utils.ui_events import apply_lora
 
 
 def create_lora_sel_ui():
@@ -39,3 +40,19 @@ def create_lora_sel_ui():
         'in_lora_strength': lora_strength,
         'in_apply_lora_btn': apply_lora_btn,
     }
+
+
+def bind_lora_events(lora_ui, prompts_ui):
+    """Keep all click events encaplsulated in this file"""
+
+    lora_ui['in_apply_lora_btn'].click(
+        apply_lora,
+        inputs=[
+            lora_ui['in_lora_model'], lora_ui['in_lora_strength'],
+            lora_ui['in_lora_prompt_switch'],
+            prompts_ui['in_pprompt'], prompts_ui['in_nprompt']
+        ],
+        outputs=[
+            prompts_ui['in_pprompt'], prompts_ui['in_nprompt']
+        ]
+    )
