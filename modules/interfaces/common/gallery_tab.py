@@ -89,6 +89,7 @@ with gr.Blocks() as gallery_block:
                 rows=[4],
                 object_fit="contain",
                 height="auto",
+                fit_columns=False,
                 scale=2
             )
             with gr.Row():
