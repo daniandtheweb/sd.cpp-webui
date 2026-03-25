@@ -63,8 +63,17 @@ def generate_output_filename(
         suffix_str = ""
 
     if suffix_str:
-        final_filename = f"{prefix_str}_{suffix_str}"
+        base_filename = f"{prefix_str}_{suffix_str}"
     else:
-        final_filename = prefix_str
+        base_filename = prefix_str
 
-    return os.path.join(directory, f"{final_filename}.{extension}")
+    test_path = os.path.join(directory, f"{base_filename}.{extension}")
+
+    counter = 1
+    while os.path.exists(test_path):
+        test_path = os.path.join(
+            directory, f"{base_filename}_{counter}.{extension}"
+        )
+        counter += 1
+
+    return test_path

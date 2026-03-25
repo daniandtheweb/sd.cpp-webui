@@ -35,8 +35,17 @@ class CommandRunner(CommonRunner):
         output_scheme = config.get('def_output_scheme')
 
         if filename_override and str(filename_override).strip():
-            filename = f"{filename_override}.{extension}"
-            self.output_path = os.path.join(output_dir, filename)
+            base_name = str(filename_override).strip()
+            filename = f"{base_name}.{extension}"
+            test_path = os.path.join(output_dir, filename)
+
+            counter = 1
+            while os.path.exists(test_path):
+                filename = f"{base_name}_{counter}.{extension}"
+                test_path = os.path.join(output_dir, filename)
+                counter += 1
+
+            self.output_path = test_path
             return
 
         name_parts = []
