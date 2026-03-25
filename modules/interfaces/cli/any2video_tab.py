@@ -12,6 +12,7 @@ from modules.utils.ui_events import (
 from modules.shared_instance import (
     config, subprocess_manager
 )
+from modules.ui.constants import SAMPLERS
 from modules.ui.models import create_video_model_sel_ui
 from modules.ui.loras import (
     create_lora_sel_ui, bind_lora_events
@@ -124,6 +125,41 @@ with gr.Blocks() as any2video_block:
                 bottom_generation_settings_ui = create_bottom_generation_settings_ui()
                 inputs_map.update(bottom_generation_settings_ui)
 
+            with gr.Tab("High Noise Settings"):
+                high_noise_bool = gr.Checkbox(
+                    label="Enable High Noise Generation (Wan2.2)", value=False
+                )
+                with gr.Row():
+                    high_noise_steps = gr.Number(
+                        label="High Noise Steps",
+                        minimum=1,
+                        value=8,
+                        step=1,
+                        interactive=False
+                    )
+                    high_noise_cfg = gr.Number(
+                        label="High Noise CFG Scale",
+                        minimum=0.0,
+                        value=3.5,
+                        step=0.1,
+                        interactive=False
+                    )
+                with gr.Row():
+                    high_noise_sampling = gr.Dropdown(
+                        label="High Noise Sampling Method",
+                        choices=SAMPLERS,
+                        value=config.get('def_sampler'),
+                        allow_custom_value=True,
+                        interactive=False
+                    )
+
+                inputs_map['in_high_noise_bool'] = high_noise_bool
+                inputs_map['in_high_noise_steps'] = high_noise_steps
+                inputs_map['in_high_noise_cfg'] = high_noise_cfg
+                inputs_map['in_high_noise_sampling'] = high_noise_sampling
+
+                high_noise_comp = [high_noise_steps, high_noise_cfg, high_noise_sampling]
+
             with gr.Tab("Image Enhancement"):
 
                 # Upscale
@@ -201,6 +237,15 @@ with gr.Blocks() as any2video_block:
                             sources="upload", type="filepath"
                         )
                         inputs_map['in_last_frame_inp'] = last_frame_inp
+            with gr.Row():
+                with gr.Accordion(
+                    label="Video to Video (VACE)", open=False
+                ):
+                    control_video_dir = gr.Textbox(
+                        label="Control Video Frames Directory",
+                        placeholder="Path to folder containing extracted frames (e.g., ./post+depth)"
+                    )
+                    inputs_map['in_control_video_dir'] = control_video_dir
             with gr.Group():
                 with gr.Row():
                     gen_btn = gr.Button(
@@ -300,6 +345,12 @@ with gr.Blocks() as any2video_block:
         partial(update_interactivity, len(flow_shift_comp)),
         inputs=flow_shift_bool,
         outputs=flow_shift_comp
+    )
+
+    high_noise_bool.change(
+        partial(update_interactivity, len(high_noise_comp)),
+        inputs=high_noise_bool,
+        outputs=high_noise_comp
     )
 
     any2video_params['pprompt'] = prompts_ui['in_pprompt']

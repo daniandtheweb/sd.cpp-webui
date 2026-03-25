@@ -7,6 +7,8 @@ user_data/
 *.gguf
 *.png
 *.jpg
+*.jpeg
+*.avi
 *.json
 *.part
 sd*

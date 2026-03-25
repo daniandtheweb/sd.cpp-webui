@@ -217,7 +217,7 @@ with gr.Blocks() as gallery_block:
 
     # Interactive bindings
     gallery.select(
-        gallery_manager.get_img_info,
+        gallery_manager.get_media_info,
         inputs=[],
         outputs=param_ctrls + [path_info, img_info_txt]
     )
@@ -295,7 +295,7 @@ with gr.Blocks() as gallery_block:
     )
 
     del_img.click(
-        gallery_manager.delete_img,
+        gallery_manager.delete_media,
         inputs=[],
         outputs=[gallery, page_num_select, gallery] + param_ctrls + [
                  path_info, img_info_txt]

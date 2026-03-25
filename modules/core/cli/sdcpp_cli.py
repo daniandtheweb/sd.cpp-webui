@@ -424,6 +424,12 @@ class Any2VideoRunner(CommandRunner):
     def _add_base_args(self):
         # Override to add video-specific base arguments
         super()._add_base_args()
+
+        if '-o' in self.command:
+            idx = self.command.index('-o')
+            base_path, _ = os.path.splitext(self.command[idx + 1])
+            self.command[idx + 1] = base_path
+
         self.command.extend([
             '--video-frames', str(self._get_param('in_frames')),
             '--fps', str(self._get_param('in_fps')),
@@ -441,6 +447,10 @@ class Any2VideoRunner(CommandRunner):
 
         init_img = (self._get_param('in_img_inp')
                     or self._get_param('in_first_frame_inp'))
+
+        use_high_noise = self._get_param('in_high_noise_bool')
+        high_noise_model = self._get_param('f_high_noise_model')
+
         options = {
             # VAE
             '--vae': self._get_param('f_unet_vae'),
@@ -448,19 +458,32 @@ class Any2VideoRunner(CommandRunner):
             '--diffusion-model': self._get_param('f_unet_model'),
             '--clip_vision': self._get_param('f_clip_vision_h'),
             '--t5xxl': self._get_param('f_umt5_xxl'),
+            # Wan2.2 High Noise Configuration
             '--high-noise-diffusion-model': (
-                self._get_param('f_high_noise_model')
+                high_noise_model if use_high_noise else None
             ),
-            # TAESD
-            '--taesd': self._get_param('f_taesd'),
+            '--high-noise-cfg-scale': (self._get_param('in_high_noise_cfg')
+                                       if use_high_noise else None),
+            '--high-noise-sampling-method': (
+                self._get_param('in_high_noise_sampling')
+                if use_high_noise else None
+            ),
+            '--high-noise-steps': (self._get_param('in_high_noise_steps')
+                                   if use_high_noise else None),
+            # Inputs for I2V, FLF2V, and VACE V2V
             '--init-img': init_img,
             '--end-img': self._get_param('in_last_frame_inp'),
+            '--control-video': self._get_param('in_control_video_dir'),
+            # TAESD
+            '--taesd': self._get_param('f_taesd'),
+            # Upscaling
             '--upscale-model': (self._get_param('f_upscl')
                                 if self._get_param('in_upscl_bool')
                                 else None),
             '--upscale-repeats': (self._get_param('in_upscl_rep')
                                   if self._get_param('in_upscl_bool')
                                   else None),
+            # Additional Params
             '--type': (self._get_param('in_model_type')
                        if self._get_param('in_model_type') != "Default"
                        else None),

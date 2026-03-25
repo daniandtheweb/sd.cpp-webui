@@ -5,7 +5,7 @@ import time
 import datetime
 from typing import Dict, Any
 
-from modules.gallery import get_next_img
+from modules.gallery import get_next_media
 
 
 def extract_env_vars(params: Dict[str, Any]) -> Dict[str, str]:
@@ -54,7 +54,7 @@ def generate_output_filename(
         case "EpochTime":
             prefix_str = str(int(time.time()))
         case "Sequential" | _:
-            next_img = get_next_img(subctrl=subctrl_id)
+            next_img = get_next_media(subctrl=subctrl_id)
             prefix_str = os.path.splitext(next_img)[0]
 
     if name_parts:
