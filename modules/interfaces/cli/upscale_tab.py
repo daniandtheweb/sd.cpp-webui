@@ -9,7 +9,7 @@ from modules.utils.ui_events import (
     get_ordered_inputs, update_interactivity
 )
 from modules.utils.image_utils import (
-    switch_sizes, size_extractor
+    switch_sizes, size_updater
 )
 from modules.shared_instance import (
     config, subprocess_manager
@@ -190,17 +190,6 @@ with gr.Blocks() as upscale_block:
         # This line programmatically creates the dictionary.
         params = dict(zip(ordered_keys, args))
         yield from upscale(params)
-
-    def size_updater(img_inp):
-        if img_inp is None:
-            return (
-                gr.update(), gr.update()
-            )
-        else:
-            width, height = size_extractor(img_inp)
-            return (
-                gr.update(value=int(width)), gr.update(value=int(height))
-            )
 
     # Interactive Bindings
     img_inp_upscale.change(

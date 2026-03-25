@@ -3,6 +3,7 @@
 import gradio as gr
 
 from modules.core.cli.sdcpp_cli import imgedit
+from modules.utils.image_utils import size_updater
 from modules.utils.ui_events import (
     get_ordered_inputs, bind_generation_pipeline,
     refresh_all_options
@@ -244,6 +245,15 @@ with gr.Blocks() as imgedit_block:
             generation_settings_ui['in_sampling'],
             generation_settings_ui['in_scheduler'],
             preview_ui['in_preview_mode'], extras_ui['in_predict']
+        ]
+    )
+
+    ref_img_imgedit.change(
+        size_updater,
+        inputs=ref_img_imgedit,
+        outputs=[
+            generation_settings_ui['in_width'],
+            generation_settings_ui['in_height']
         ]
     )
 

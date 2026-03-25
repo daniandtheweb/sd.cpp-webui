@@ -5,6 +5,7 @@ from functools import partial
 import gradio as gr
 
 from modules.core.cli.sdcpp_cli import img2img
+from modules.utils.image_utils import size_updater
 from modules.utils.ui_events import (
     get_ordered_inputs, bind_generation_pipeline,
     unet_tab_switch, ckpt_tab_switch,
@@ -323,6 +324,7 @@ with gr.Blocks()as img2img_block:
             generation_settings_ui['in_flow_shift']
         ]
     )
+
     refresh_opt.click(
         refresh_all_options,
         inputs=[],
@@ -337,6 +339,15 @@ with gr.Blocks()as img2img_block:
         partial(update_interactivity, len(cfg_comp)),
         inputs=img_cfg_bool,
         outputs=cfg_comp
+    )
+
+    img_inp_img2img.change(
+        size_updater,
+        inputs=img_inp_img2img,
+        outputs=[
+            generation_settings_ui['in_width'],
+            generation_settings_ui['in_height']
+        ]
     )
 
     img2img_params['pprompt'] = prompts_ui['in_pprompt']

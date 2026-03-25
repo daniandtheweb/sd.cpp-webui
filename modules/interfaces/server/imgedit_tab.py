@@ -7,6 +7,7 @@ from modules.core.server.manager import (
     start_server, stop_server
 )
 from modules.core.server.status_monitor import server_status_monitor_wrapper
+from modules.utils.image_utils import size_updater
 from modules.utils.ui_events import (
     get_ordered_inputs, bind_generation_pipeline,
     refresh_all_options
@@ -302,6 +303,15 @@ with gr.Blocks() as imgedit_server_block:
             generation_settings_ui['in_sampling'],
             generation_settings_ui['in_scheduler'],
             extras_ui['in_predict']
+        ]
+    )
+
+    ref_img_imgedit_server.change(
+        size_updater,
+        inputs=ref_img_imgedit_server,
+        outputs=[
+            generation_settings_ui['in_width'],
+            generation_settings_ui['in_height']
         ]
     )
 
