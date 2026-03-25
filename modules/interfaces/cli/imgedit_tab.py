@@ -150,8 +150,12 @@ with gr.Blocks() as imgedit_block:
         # Output
         with gr.Column(scale=1):
             with gr.Row():
-                ref_img_imgedit = gr.Image(
-                    sources="upload", type="filepath"
+                ref_img_imgedit = gr.Gallery(
+                    label="Reference Images",
+                    interactive=True,
+                    type="filepath",
+                    object_fit="contain",
+                    height="auto"
                 )
                 inputs_map['in_ref_img'] = ref_img_imgedit
             with gr.Group():

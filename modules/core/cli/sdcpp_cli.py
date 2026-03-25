@@ -387,9 +387,26 @@ class ImgEditRunner(ImageGenerationRunner):
         super().build_command(
             output_dir_key='imgedit_dir', subctrl_id=2
         )
-        self.command.extend(
-            ['--ref-image', str(self._get_param('in_ref_img'))]
-        )
+
+        ref_imgs = self._get_param('in_ref_img')
+
+        if not ref_imgs:
+            return
+
+        if not isinstance(ref_imgs, list):
+            ref_imgs = [ref_imgs]
+
+        for img in ref_imgs:
+            if isinstance(img, tuple):
+                img_path = img[0]
+            elif isinstance(img, dict) and "name" in img:
+                img_path = img["name"]
+            else:
+                img_path = str(img)
+
+            self.command.extend(
+                ['--ref-image', img_path]
+            )
 
 
 class Any2VideoRunner(CommandRunner):

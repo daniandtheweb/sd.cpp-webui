@@ -364,17 +364,31 @@ class ImgEditApiRunner(ApiTaskRunner):
 
         # Files
         files = []
-        init_img = self._get_param('in_ref_img') or self._get_param('in_img_inp')
-        if init_img is not None:
-            if isinstance(init_img, str):
-                init_img = Image.open(init_img)
-            elif not isinstance(init_img, Image.Image):
-                init_img = Image.fromarray(init_img)
+        init_imgs = self._get_param('in_ref_img') or self._get_param('in_img_inp')
+        if init_imgs is not None:
+            if not isinstance(init_imgs, list):
+                init_imgs = [init_imgs]
 
-            buf = io.BytesIO()
-            init_img.save(buf, format="PNG")
-            buf.seek(0)
-            files.append(("image[]", ("image.png", buf, "image/png")))
+            for idx, img_item in enumerate(init_imgs):
+                if isinstance(img_item, tuple):
+                    img_val = img_item[0]
+                elif isinstance(img_item, dict) and "name" in img_item:
+                    img_val = img_item["name"]
+                else:
+                    img_val = img_item
+
+                if isinstance(img_val, str):
+                    img_obj = Image.open(img_val)
+                elif isinstance(img_val, Image.Image):
+                    img_obj = img_val
+                else:
+                    img_obj = Image.fromarray(img_val)
+
+                buf = io.BytesIO()
+                img_obj.save(buf, format="PNG")
+                buf.seek(0)
+
+                files.append(("image[]", (f"image_{idx}.png", buf, "image/png")))
 
         mask_input = self._get_param('in_img_mask') or self._get_param('in_mask_img')
         mask_img = process_editor_mask(mask_input)
