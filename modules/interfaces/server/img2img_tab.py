@@ -18,6 +18,9 @@ from modules.shared_instance import config
 from modules.ui.models import create_img_model_sel_ui
 from modules.ui.loras import create_lora_sel_ui
 from modules.ui.prompts import create_prompts_ui
+from modules.ui.presets import (
+    create_presets_ui, bind_presets_events
+)
 from modules.ui.generation_settings import (
     create_quant_ui, create_generation_settings_ui,
     create_bottom_generation_settings_ui
@@ -169,6 +172,8 @@ with gr.Blocks()as img2img_server_block:
     # Settings
     with gr.Row():
         with gr.Column(scale=1):
+
+            presets_ui = create_presets_ui()
 
             with gr.Tab("Generation Settings"):
 
@@ -332,6 +337,8 @@ with gr.Blocks()as img2img_server_block:
     bind_generation_pipeline(
         img2img_api, ordered_keys, ordered_components, ui_outputs
     )
+
+    bind_presets_events(presets_ui, generation_settings_ui)
 
     lora_ui['in_apply_lora_btn'].click(
         apply_lora,
