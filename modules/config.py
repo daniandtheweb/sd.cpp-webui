@@ -59,7 +59,6 @@ DEFAULT_SETTINGS = {
     'def_vae_relative_tile_size': 0,
     'def_cache_bool': False,
     'def_cache_mode': "easycache",
-    'def_cache_dit_preset': "none",
     'def_scm_policy': "none",
     'def_threads': 0,
     'def_offload_to_cpu': False,

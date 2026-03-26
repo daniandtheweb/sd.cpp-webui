@@ -300,11 +300,6 @@ class ImageGenerationRunner(CommandRunner):
             # Cache
             **({
                 '--cache-mode': self._get_param('in_cache_mode'),
-                '--cache-preset': (
-                    self._get_param('in_cache_dit_preset')
-                    if self._get_param('in_cache_dit_preset') != "none"
-                    else None
-                ),
                 '--cache-option': (
                     val.strip('"')
                     if (val := self._get_param('in_cache_option')) and str(val).strip('"') != ""

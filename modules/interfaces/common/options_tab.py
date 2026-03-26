@@ -180,7 +180,6 @@ with gr.Blocks() as options_block:
         settings_map.update({
             'def_cache_bool': cache_ui['in_cache_bool'],
             'def_cache_mode': cache_ui['in_cache_mode'],
-            'def_cache_dit_preset': cache_ui['in_cache_dit_preset']
         })
 
         extras_ui = create_extras_ui()
