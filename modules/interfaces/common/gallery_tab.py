@@ -213,91 +213,107 @@ with gr.Blocks() as gallery_block:
             # Delete image Button
             del_img = gr.Button(
                 value="Delete", variant="stop")
+            convert_to_mp4_btn = gr.Button(
+                    value="Convert AVI to MP4",
+                    interactive=False,
+                    visible=False,
+                    variant="primary"
+                )
 
     param_ctrls = [info_params[f] for f in FIELDS]
+
+    nav_outputs = [
+        gallery, page_num_select
+    ]
 
     # Interactive bindings
     gallery.select(
         gallery_manager.get_media_info,
         inputs=[],
-        outputs=param_ctrls + [path_info, img_info_txt]
+        outputs=param_ctrls + [path_info, img_info_txt, convert_to_mp4_btn]
     )
 
     txt2img_btn.click(
         gallery_manager.reload_gallery,
         inputs=[def_page, txt2img_ctrl, sort_order],
-        outputs=[gallery, page_num_select, gallery, gallery]
+        outputs=nav_outputs
     )
 
     img2img_btn.click(
         gallery_manager.reload_gallery,
         inputs=[def_page, img2img_ctrl, sort_order],
-        outputs=[gallery, page_num_select, gallery, gallery]
+        outputs=nav_outputs
     )
 
     imgedit_btn.click(
         gallery_manager.reload_gallery,
         inputs=[def_page, imgedit_ctrl, sort_order],
-        outputs=[gallery, page_num_select, gallery, gallery]
+        outputs=nav_outputs
     )
 
     any2video_btn.click(
         gallery_manager.reload_gallery,
         inputs=[def_page, any2video_ctrl, sort_order],
-        outputs=[gallery, page_num_select, gallery, gallery]
+        outputs=nav_outputs
     )
 
     upscl_btn.click(
         gallery_manager.reload_gallery,
         inputs=[def_page, upscl_ctrl, sort_order],
-        outputs=[gallery, page_num_select, gallery, gallery]
+        outputs=nav_outputs
     )
 
     pvw_btn.click(
         gallery_manager.prev_page,
         inputs=[],
-        outputs=[gallery, page_num_select, gallery, gallery]
+        outputs=nav_outputs
     )
 
     nxt_btn.click(
         gallery_manager.next_page,
         inputs=[],
-        outputs=[gallery, page_num_select, gallery, gallery]
+        outputs=nav_outputs
     )
 
     first_btn.click(
         gallery_manager.reload_gallery,
         inputs=[],
-        outputs=[gallery, page_num_select, gallery, gallery]
+        outputs=nav_outputs
     )
 
     last_btn.click(
         gallery_manager.last_page,
         inputs=[],
-        outputs=[gallery, page_num_select, gallery, gallery]
+        outputs=nav_outputs
     )
 
     go_btn.click(
         gallery_manager.reload_gallery,
         inputs=[page_num_select],
-        outputs=[gallery, page_num_select, gallery, gallery]
+        outputs=nav_outputs
     )
 
     page_num_select.submit(
         gallery_manager.reload_gallery,
         inputs=[page_num_select],
-        outputs=[gallery, page_num_select, gallery, gallery]
+        outputs=nav_outputs
     )
 
     sort_order.change(
         gallery_manager.reload_gallery,
         inputs=[page_num_select, gr.State(None), sort_order],
-        outputs=[gallery, page_num_select, gallery, gallery]
+        outputs=nav_outputs
     )
 
     del_img.click(
         gallery_manager.delete_media,
         inputs=[],
-        outputs=[gallery, page_num_select, gallery] + param_ctrls + [
-                 path_info, img_info_txt]
+        outputs=[gallery, page_num_select] + param_ctrls + [
+                 path_info, img_info_txt, convert_to_mp4_btn]
+    )
+
+    convert_to_mp4_btn.click(
+        gallery_manager.convert_to_mp4,
+        inputs=[],
+        outputs=nav_outputs
     )

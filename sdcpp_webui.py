@@ -84,7 +84,9 @@ def create_copy_fn(tab_id: str, fields: list = None) -> callable:
 def lazy_load_gallery(is_loaded, page, ctrl):
     if is_loaded:
         # If already loaded, return existing values (do nothing)
-        return gr.skip(), gr.skip(), gr.skip(), gr.skip(), True
+        return (
+            gr.skip(), gr.skip(), True
+        )
 
     results = gallery_manager.reload_gallery(page, ctrl)
 
@@ -245,8 +247,7 @@ def sdcpp_launch(
             fn=lazy_load_gallery,
             inputs=[gallery_loaded_state, def_page, txt2img_ctrl],
             outputs=[
-                gallery, page_num_select, gallery,
-                gallery, gallery_loaded_state
+                gallery, page_num_select, gallery_loaded_state
             ]
         )
 

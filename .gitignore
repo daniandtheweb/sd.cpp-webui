@@ -9,6 +9,7 @@ user_data/
 *.jpg
 *.jpeg
 *.avi
+*.mp4
 *.json
 *.part
 sd*
