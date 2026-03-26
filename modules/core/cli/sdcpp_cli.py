@@ -333,6 +333,10 @@ class ImageGenerationRunner(CommandRunner):
             '--preview-noisy': (self._get_param('in_preview_noisy')
                                 if self._get_param('in_preview_bool')
                                 else False),
+            '--increase-ref-index': self._get_param('in_increase_ref_index'),
+            '--disable-auto-resize-ref-image': self._get_param(
+                'in_disable_auto_resize_ref_image'
+            ),
         })
         self._add_flags(flags)
 
@@ -411,6 +415,11 @@ class ImgEditRunner(ImageGenerationRunner):
             self.command.extend(
                 ['--ref-image', img_path]
             )
+        flags = {
+            '--increase-ref-index': self._get_param('in_increase_ref_index', False),
+            '--disable-auto-resize-ref-image': self._get_param('in_disable_auto_resize_ref_image', False)
+        }
+        self._add_flags(flags)
 
 
 class Any2VideoRunner(CommandRunner):
@@ -579,6 +588,7 @@ def convert(params: dict):
     in_model_dir = params.get('in_model_dir')
     in_quant_type = params.get('in_quant_type')
     in_tensor_type_rules = params.get('in_tensor_type_rules')
+    in_convert_name = params.get('in_convert_name', False)
     in_gguf_name = params.get('in_gguf_name')
     in_color = params.get('in_color', True)
     in_verbose = params.get('in_verbose', False)
@@ -604,6 +614,8 @@ def convert(params: dict):
 
     if in_tensor_type_rules:
         command.extend(['--tensor-type-rules', in_tensor_type_rules])
+    if in_convert_name:
+        command.append('--convert-name')
     if in_color:
         command.append('--color')
     if in_verbose:

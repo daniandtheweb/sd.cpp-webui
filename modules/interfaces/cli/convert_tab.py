@@ -95,6 +95,12 @@ with gr.Blocks() as convert_block:
                 )
                 inputs_map['in_tensor_type_rules'] = tensor_type_rules
 
+            with gr.Row():
+                convert_name = gr.Checkbox(
+                    label="Convert tensor name"
+                )
+                inputs_map['in_convert_name'] = convert_name
+
             color = gr.Checkbox(
                 label="Color", value=True
             )

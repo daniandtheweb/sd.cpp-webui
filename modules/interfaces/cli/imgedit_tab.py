@@ -25,6 +25,7 @@ from modules.ui.generation_settings import (
 )
 from modules.ui.upscale import create_upscl_ui
 from modules.ui.controlnet import create_cnnet_ui
+from modules.ui.ref_img import create_ref_img_ui
 from modules.ui.qwen import create_qwen_ui
 from modules.ui.circular import create_circular_ui
 from modules.ui.photomaker import create_photomaker_ui
@@ -91,6 +92,10 @@ with gr.Blocks() as imgedit_block:
                 # ControlNet
                 cnnet_ui = create_cnnet_ui()
                 inputs_map.update(cnnet_ui)
+
+                # Reference Image Settings
+                ref_img_ui = create_ref_img_ui()
+                inputs_map.update(ref_img_ui)
 
                 # Qwen
                 qwen_ui = create_qwen_ui()
