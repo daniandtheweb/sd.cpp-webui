@@ -83,6 +83,7 @@ class CommandRunner(CommonRunner):
             '--sampler-rng', str(self._get_param('in_sampler_rng')),
             '--lora-apply-mode', str(self._get_param('in_lora_apply')),
             '-o', self.output_path
+            # --output-begin-idx - to implement
         ])
 
     def _prepare_for_run(self):
@@ -268,7 +269,9 @@ class ImageGenerationRunner(CommandRunner):
             # Upscale
             **({
                 '--upscale-model': self._get_param('f_upscl'),
-                '--upscale-repeats': self._get_param('in_upscl_rep')
+                '--upscale-repeats': self._get_param('in_upscl_rep'),
+                '--upscale-tile-size': self._get_param('in_upscl_tile_size'),
+
             } if self._get_param('in_upscl_bool') else {}),
             # ControlNet
             **({
@@ -487,6 +490,9 @@ class Any2VideoRunner(CommandRunner):
             '--upscale-repeats': (self._get_param('in_upscl_rep')
                                   if self._get_param('in_upscl_bool')
                                   else None),
+            '--upscale-tile-size': (self._get_param('in_upscl_tile_size')
+                                    if self._get_param('in_upscl_bool')
+                                    else None),
             # Additional Params
             '--type': (self._get_param('in_model_type')
                        if self._get_param('in_model_type') != "Default"
@@ -537,6 +543,7 @@ class UpscaleRunner(CommandRunner):
             '-W': self._get_param('in_init_width'),
             '-H': self._get_param('in_init_height'),
             '--upscale-repeats': self._get_param('in_upscl_rep'),
+            '--upscale-tile-size': self._get_param('in_upscl_tile_size'),
             '-o': self.output_path,
         }
         self._add_options(options)

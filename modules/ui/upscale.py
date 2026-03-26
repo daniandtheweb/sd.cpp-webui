@@ -45,8 +45,18 @@ def create_upscl_ui():
             step=1,
             interactive=False
         )
+        upscl_tile_size = gr.Number(
+            label="Tile size for ESRGAN",
+            minimum=1,
+            maximum=4096,
+            value=128,
+            step=1,
+            interactive=False
+        )
 
-    upscl_comp = [upscl, reload_upscl_btn, clear_upscl_btn, upscl_rep]
+    upscl_comp = [
+        upscl, reload_upscl_btn, clear_upscl_btn, upscl_rep, upscl_tile_size
+    ]
 
     reload_upscl_btn.click(
         reload_models, inputs=[upscl_dir_txt], outputs=[upscl]
@@ -61,5 +71,6 @@ def create_upscl_ui():
     return {
         'in_upscl_bool': upscl_bool,
         'in_upscl': upscl,
-        'in_upscl_rep': upscl_rep
+        'in_upscl_rep': upscl_rep,
+        'in_upscl_tile_size': upscl_tile_size,
     }

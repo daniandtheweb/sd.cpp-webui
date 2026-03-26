@@ -91,6 +91,13 @@ with gr.Blocks() as upscale_block:
                 value=1,
                 step=1
             )
+            upscl_tile_size = gr.Number(
+                label="Tile size for ESRGAN",
+                minimum=1,
+                maximum=4096,
+                value=128,
+                step=1,
+            )
             with gr.Row():
                 with gr.Accordion(
                     label="Extra", open=False
@@ -172,6 +179,7 @@ with gr.Blocks() as upscale_block:
         'in_init_width': init_width,
         'in_init_height': init_height,
         'in_upscl_rep': upscl_rep,
+        'in_upscl_tile_size': upscl_tile_size,
         'in_output': output,
         'in_flash_attn': flash_attn,
         'in_diffusion_conv_direct': diffusion_conv_direct,
