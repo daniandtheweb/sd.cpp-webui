@@ -26,7 +26,6 @@ CACHE_MODE = [
     "easycache", "ucache", "dbcache",
     "taylorseer", "cache-dit", "spectrum"
 ]
-CACHE_DIT_PRESET = ["none", "slow", "medium", "fast", "ultra"]
 SCM_POLICY = ["none", "dynamic", "static"]
 RELOAD_SYMBOL = '\U0001F504'
 RANDOM_SYMBOL = '\U0001F3B2'

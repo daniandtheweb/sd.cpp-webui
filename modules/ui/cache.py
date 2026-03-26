@@ -7,7 +7,7 @@ import gradio as gr
 from modules.shared_instance import config
 from modules.utils.ui_events import update_interactivity
 from .constants import (
-    CACHE_MODE, CACHE_DIT_PRESET, SCM_POLICY
+    CACHE_MODE, SCM_POLICY
 )
 
 
