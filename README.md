@@ -54,7 +54,7 @@ This WebUI, by using **stable-diffusion.cpp** as its core, supports a large numb
   4. Access the WebUI with the browser at `http://localhost:7860/`.
 
 
-<img width="2617" height="1828" alt="Screenshot of sd.cpp-webui, a lightweight Gradio interface for local AI image generation using stable-diffusion.cpp" src="https://github.com/user-attachments/assets/1119195a-6c7c-483d-b475-d0ef6ae96fb0" />
+<img width="2860" height="1954" alt="Screenshot of sd.cpp-webui, a lightweight Gradio interface for local AI image generation using stable-diffusion.cpp" src="https://github.com/user-attachments/assets/9e6cc19f-55f4-4f76-8202-fa41bbbc4975" />
 
 
 ## Contributors
