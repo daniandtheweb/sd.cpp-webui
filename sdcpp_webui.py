@@ -48,6 +48,17 @@ from modules.config import ConfigManager
 from modules.ui.constants import FIELDS, SAMPLERS, SCHEDULERS
 
 
+DARK_MODE_JS = """
+function refresh() {
+    const url = new URL(window.location);
+
+    if (url.searchParams.get('__theme') !== 'dark') {
+        url.searchParams.set('__theme', 'dark');
+        window.location.href = url.href;
+    }
+}
+"""
+
 os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
 config = ConfigManager()
 
@@ -93,6 +104,47 @@ def lazy_load_gallery(is_loaded, page, ctrl):
     return *results, True
 
 
+def get_allowed_paths(config_data, base_path: str) -> list:
+    """Parses config to find allowed external or linked directories."""
+    allowed_paths = []
+    dirs = [
+        val for key, val in config.data.items()
+        if key.endswith('_dir') and isinstance(val, str) and val
+    ]
+
+    for path in dirs:
+        # Expand user tildes
+        expanded_path = os.path.expanduser(path)
+
+        abs_path = os.path.abspath(expanded_path)
+
+        # Check if it's a symlink (STRIP TRAILING SLASHES)
+        # os.path.islink() returns False if the path ends with a separator
+        is_link = os.path.islink(abs_path.rstrip(os.sep))
+
+        # Check if it is physically outside the base path
+        real_path = os.path.realpath(abs_path)
+        is_external = not real_path.startswith(base_path)
+
+        if is_link or is_external:
+            if is_link:
+                allowed_paths.append(real_path)
+            if abs_path != real_path:
+                allowed_paths.append(abs_path)
+            elif not is_link:
+                allowed_paths.append(abs_path)
+
+    unique_paths = list(set(allowed_paths))
+
+    if unique_paths:
+        print("Allowing external/linked directories:")
+        for path in unique_paths:
+            print(f" - {path}")
+        print()
+
+    return unique_paths
+
+
 def load_credentials(filepath: str = "credentials.json"):
     """
     Loads usernames and passwords from a JSON file.
@@ -114,6 +166,70 @@ def load_credentials(filepath: str = "credentials.json"):
         return None
 
 
+def build_launch_args(
+    listen: bool, autostart: bool, credentials: bool
+) -> dict:
+
+    launch_args = {}
+
+    if listen:
+        launch_args["server_name"] = "0.0.0.0"
+    if autostart:
+        launch_args["inbrowser"] = True
+
+    if credentials:
+        auth_data = load_credentials()
+        if auth_data:
+            print(f"Secure mode enabled with {len(auth_data)} users.")
+            launch_args["auth"] = auth_data
+        else:
+            print("Secure mode requested but failed to load credentials. Launching without auth.")
+
+    return launch_args
+
+
+def render_server_ui():
+    gr.Markdown("# <center>sd.cpp-webui - server</center>")
+    with gr.Tabs() as tabs:
+        with gr.TabItem("txt2img", id="txt2img"):
+            txt2img_server_block.render()
+        with gr.TabItem("img2img", id="img2img"):
+            img2img_server_block.render()
+        with gr.TabItem("imgedit", id="imgedit"):
+            imgedit_server_block.render()
+        with gr.TabItem("Gallery", id="gallery") as gallery_tab:
+            cpy_2_any2video_btn.visible = False
+            cpy_2_upscale_btn.visible = False
+            gallery_block.render()
+        with gr.TabItem("Options", id="options"):
+            options_block.render()
+
+    return tabs, gallery_tab
+
+
+def render_cli_ui():
+    gr.Markdown("# <center>sd.cpp-webui - cli</center>")
+    with gr.Tabs() as tabs:
+        with gr.TabItem("txt2img", id="txt2img"):
+            txt2img_block.render()
+        with gr.TabItem("img2img", id="img2img"):
+            img2img_block.render()
+        with gr.TabItem("imgedit", id="imgedit"):
+            imgedit_block.render()
+        with gr.TabItem("any2video", id="any2video"):
+            any2video_block.render()
+        with gr.TabItem("Gallery", id="gallery") as gallery_tab:
+            gallery_block.render()
+        with gr.TabItem("Upscaler", id="upscale"):
+            upscale_block.render()
+        with gr.TabItem("Checkpoint Converter", id="convert"):
+            convert_block.render()
+        with gr.TabItem("Options", id="options"):
+            options_block.render()
+
+    return tabs, gallery_tab
+
+
 def restart_server():
     """
     Restarts the sdcpp-webui.
@@ -125,175 +241,88 @@ def restart_server():
     os.execv(python, [python] + new_args)
 
 
+def bind_ui_events(server: bool, tabs, gallery_tab, gallery_loaded_state):
+    common_inputs = [info_params[f] for f in FIELDS]
+
+    gallery_tab.select(
+        fn=lazy_load_gallery,
+        inputs=[gallery_loaded_state, def_page, txt2img_ctrl],
+        outputs=[
+            gallery, page_num_select, gallery_loaded_state
+        ]
+    )
+
+    t2i_params = txt2img_server_params if server else txt2img_params
+    i2i_params = img2img_server_params if server else img2img_params
+    i2i_inp = img_inp_img2img_server if server else img_inp_img2img
+    ie_width = width_imgedit_server if server else width_imgedit
+    ie_height = height_imgedit_server if server else height_imgedit
+    ie_ref = ref_img_imgedit_server if server else ref_img_imgedit
+
+    # Copy data from gallery image to txt2img.
+    cpy_2_txt2img_btn.click(
+        create_copy_fn("txt2img", FIELDS),
+        inputs=common_inputs,
+        outputs=[tabs] + [t2i_params[f] for f in FIELDS]
+    )
+    # Copy data from gallery image to img2img.
+    cpy_2_img2img_btn.click(
+        create_copy_fn("img2img", FIELDS + ['input_image']),
+        inputs=common_inputs + [path_info],
+        outputs=[tabs] + [i2i_params[f] for f in FIELDS] + [i2i_inp]
+    )
+    # Copy data from gallery image to imgedit
+    cpy_2_imgedit_btn.click(
+        create_copy_fn("imgedit"),
+        inputs=[info_params['width'], info_params['height'], path_info],
+        outputs=[tabs, ie_width, ie_height, ie_ref]
+    )
+    if not server:
+        # Copy data from gallery image to any2video.
+        cpy_2_any2video_btn.click(
+            create_copy_fn("any2video", FIELDS),
+            inputs=common_inputs + [path_info],
+            outputs=[tabs] + [any2video_params[f] for f in FIELDS]
+        )
+        cpy_2_upscale_btn.click(
+            create_copy_fn("upscale"),
+            inputs=[path_info],
+            outputs=[tabs, img_inp_upscale]
+        )
+
+    restart_btn.click(
+        fn=restart_server,
+        inputs=[],
+        outputs=[]
+    )
+
+
 def sdcpp_launch(
     server: bool = False, listen: bool = False,
     autostart: bool = False, darkmode: bool = False,
     credentials: bool = False, insecure_dir: bool = False
 ):
     """Logic for launching sdcpp based on arguments"""
-    launch_args = {}
-
-    if listen:
-        launch_args["server_name"] = "0.0.0.0"
-    if autostart:
-        launch_args["inbrowser"] = True
-
-    # this js forces the url to redirect to the darkmode link
-    dark_js = """
-    function refresh() {
-        const url = new URL(window.location);
-
-        if (url.searchParams.get('__theme') !== 'dark') {
-            url.searchParams.set('__theme', 'dark');
-            window.location.href = url.href;
-        }
-    }
-    """ if darkmode else None
-
-    if credentials:
-        auth_data = load_credentials()
-        if auth_data:
-            print(f"Secure mode enabled with {len(auth_data)} users.")
-            launch_args["auth"] = auth_data
-        else:
-            print("Secure mode requested but failed to load credentials. Launching without auth.")
+    launch_args = build_launch_args(listen, autostart, credentials)
+    dark_js = DARK_MODE_JS if darkmode else None
 
     if insecure_dir:
-        allowed_paths = []
-
-        base_path = os.path.abspath(os.getcwd())
-
-        dirs = [
-            val for key, val in config.data.items()
-            if key.endswith('_dir') and isinstance(val, str) and val
-        ]
-
-        for path in dirs:
-            # Expand user tildes
-            expanded_path = os.path.expanduser(path)
-
-            abs_path = os.path.abspath(expanded_path)
-
-            # Check if it's a symlink (STRIP TRAILING SLASHES)
-            # os.path.islink() returns False if the path ends with a separator
-            is_link = os.path.islink(abs_path.rstrip(os.sep))
-
-            # Check if it is physically outside the base path
-            real_path = os.path.realpath(abs_path)
-            is_external = not real_path.startswith(base_path)
-
-            if is_link or is_external:
-                if is_link:
-                    allowed_paths.append(real_path)
-                if abs_path != real_path:
-                    allowed_paths.append(abs_path)
-                elif not is_link:
-                    allowed_paths.append(abs_path)
-
-        # Remove duplicates
-        allowed_paths = list(set(allowed_paths))
-
-        if allowed_paths:
-            print("Allowing external/linked directories:")
-            for path in allowed_paths:
-                print(f" - {path}")
-            print()
-
-        launch_args["allowed_paths"] = allowed_paths
+        launch_args["allowed_paths"] = get_allowed_paths(
+            config.data, os.path.abspath(os.getcwd())
+        )
 
     with gr.Blocks(
         title="sd.cpp-webui"
     ) as sdcpp:
 
         gallery_loaded_state = gr.State(value=False)
-        common_inputs = [info_params[f] for f in FIELDS]
 
         if server:
-            gr.Markdown("# <center>sd.cpp-webui - server</center>")
-            with gr.Tabs() as tabs:
-                with gr.TabItem("txt2img", id="txt2img"):
-                    txt2img_server_block.render()
-                with gr.TabItem("img2img", id="img2img"):
-                    img2img_server_block.render()
-                with gr.TabItem("imgedit", id="imgedit"):
-                    imgedit_server_block.render()
-                with gr.TabItem("Gallery", id="gallery") as gallery_tab:
-                    cpy_2_any2video_btn.visible = False
-                    cpy_2_upscale_btn.visible = False
-                    gallery_block.render()
-                with gr.TabItem("Options", id="options"):
-                    options_block.render()
+            tabs, gallery_tab = render_server_ui()
         else:
-            gr.Markdown("# <center>sd.cpp-webui - cli</center>")
-            with gr.Tabs() as tabs:
-                with gr.TabItem("txt2img", id="txt2img"):
-                    txt2img_block.render()
-                with gr.TabItem("img2img", id="img2img"):
-                    img2img_block.render()
-                with gr.TabItem("imgedit", id="imgedit"):
-                    imgedit_block.render()
-                with gr.TabItem("any2video", id="any2video"):
-                    any2video_block.render()
-                with gr.TabItem("Gallery", id="gallery") as gallery_tab:
-                    gallery_block.render()
-                with gr.TabItem("Upscaler", id="upscale"):
-                    upscale_block.render()
-                with gr.TabItem("Checkpoint Converter", id="convert"):
-                    convert_block.render()
-                with gr.TabItem("Options", id="options"):
-                    options_block.render()
+            tabs, gallery_tab = render_cli_ui()
 
-        gallery_tab.select(
-            fn=lazy_load_gallery,
-            inputs=[gallery_loaded_state, def_page, txt2img_ctrl],
-            outputs=[
-                gallery, page_num_select, gallery_loaded_state
-            ]
-        )
-
-        t2i_params = txt2img_server_params if server else txt2img_params
-        i2i_params = img2img_server_params if server else img2img_params
-        i2i_inp = img_inp_img2img_server if server else img_inp_img2img
-        ie_width = width_imgedit_server if server else width_imgedit
-        ie_height = height_imgedit_server if server else height_imgedit
-        ie_ref = ref_img_imgedit_server if server else ref_img_imgedit
-
-        # Copy data from gallery image to txt2img.
-        cpy_2_txt2img_btn.click(
-            create_copy_fn("txt2img", FIELDS),
-            inputs=common_inputs,
-            outputs=[tabs] + [t2i_params[f] for f in FIELDS]
-        )
-        # Copy data from gallery image to img2img.
-        cpy_2_img2img_btn.click(
-            create_copy_fn("img2img", FIELDS + ['input_image']),
-            inputs=common_inputs + [path_info],
-            outputs=[tabs] + [i2i_params[f] for f in FIELDS] + [i2i_inp]
-        )
-        # Copy data from gallery image to imgedit
-        cpy_2_imgedit_btn.click(
-            create_copy_fn("imgedit"),
-            inputs=[info_params['width'], info_params['height'], path_info],
-            outputs=[tabs, ie_width, ie_height, ie_ref]
-        )
-        if not server:
-            # Copy data from gallery image to any2video.
-            cpy_2_any2video_btn.click(
-                create_copy_fn("any2video", FIELDS),
-                inputs=common_inputs + [path_info],
-                outputs=[tabs] + [any2video_params[f] for f in FIELDS]
-            )
-            cpy_2_upscale_btn.click(
-                create_copy_fn("upscale"),
-                inputs=[path_info],
-                outputs=[tabs, img_inp_upscale]
-            )
-
-        restart_btn.click(
-            fn=restart_server,
-            inputs=[],
-            outputs=[]
-        )
+        bind_ui_events(server, tabs, gallery_tab, gallery_loaded_state)
 
     # Pass the arguments to sdcpp.launch with argument unpacking
     sdcpp.launch(
