@@ -25,8 +25,12 @@ from modules.ui.generation_settings import (
     create_quant_ui, create_generation_settings_ui,
     create_bottom_generation_settings_ui
 )
+from modules.ui.high_noise_generation_settings import (
+    create_high_noise_generation_settings_ui
+)
 from modules.ui.upscale import create_upscl_ui
 from modules.ui.controlnet import create_cnnet_ui
+from modules.ui.slg import create_slg_ui
 from modules.ui.eta import create_eta_ui
 from modules.ui.taesd import create_taesd_ui
 from modules.ui.vae_tiling import create_vae_tiling_ui
@@ -122,43 +126,42 @@ with gr.Blocks() as any2video_block:
 
                 flow_shift_comp = [flow_shift]
 
+                with gr.Accordion(
+                    label="Wan & MoE Specifics", open=False
+                ):
+                    with gr.Row():
+                        moe_boundary_bool = gr.Checkbox(
+                            label="Enable MoE Boundary",
+                            value=False
+                        )
+                        moe_boundary = gr.Number(
+                            label="MoE Boundary",
+                            value=0.875,
+                            step=0.001,
+                            interactive=False
+                        )
+                    with gr.Row():
+                        vace_strength_bool = gr.Checkbox(
+                            label="Enable VACE Strength",
+                            value=False
+                        )
+                        vace_strength = gr.Number(
+                            label="VACE Strength",
+                            value=1.0,
+                            step=0.1,
+                            interactive=False
+                        )
+                inputs_map['in_moe_boundary_bool'] = moe_boundary_bool
+                inputs_map['in_moe_boundary'] = moe_boundary
+                inputs_map['in_vace_strength_bool'] = vace_strength_bool
+                inputs_map['in_vace_strength'] = vace_strength
+
                 bottom_generation_settings_ui = create_bottom_generation_settings_ui()
                 inputs_map.update(bottom_generation_settings_ui)
 
             with gr.Tab("High Noise Settings"):
-                high_noise_bool = gr.Checkbox(
-                    label="Enable High Noise Generation (Wan2.2)", value=False
-                )
-                with gr.Row():
-                    high_noise_steps = gr.Number(
-                        label="High Noise Steps",
-                        minimum=1,
-                        value=8,
-                        step=1,
-                        interactive=False
-                    )
-                    high_noise_cfg = gr.Number(
-                        label="High Noise CFG Scale",
-                        minimum=0.0,
-                        value=3.5,
-                        step=0.1,
-                        interactive=False
-                    )
-                with gr.Row():
-                    high_noise_sampling = gr.Dropdown(
-                        label="High Noise Sampling Method",
-                        choices=SAMPLERS,
-                        value=config.get('def_sampler'),
-                        allow_custom_value=True,
-                        interactive=False
-                    )
-
-                inputs_map['in_high_noise_bool'] = high_noise_bool
-                inputs_map['in_high_noise_steps'] = high_noise_steps
-                inputs_map['in_high_noise_cfg'] = high_noise_cfg
-                inputs_map['in_high_noise_sampling'] = high_noise_sampling
-
-                high_noise_comp = [high_noise_steps, high_noise_cfg, high_noise_sampling]
+                high_noise_generation_settings_ui = create_high_noise_generation_settings_ui()
+                inputs_map.update(high_noise_generation_settings_ui)
 
             with gr.Tab("Image Enhancement"):
 
@@ -169,6 +172,10 @@ with gr.Blocks() as any2video_block:
                 # ControlNet
                 cnnet_ui = create_cnnet_ui()
                 inputs_map.update(cnnet_ui)
+
+                # Skip Layer Guidance
+                slg_ui = create_slg_ui()
+                inputs_map.update(slg_ui)
 
                 # ETA
                 eta_ui = create_eta_ui()
@@ -347,10 +354,16 @@ with gr.Blocks() as any2video_block:
         outputs=flow_shift_comp
     )
 
-    high_noise_bool.change(
-        partial(update_interactivity, len(high_noise_comp)),
-        inputs=high_noise_bool,
-        outputs=high_noise_comp
+    moe_boundary_bool.change(
+        partial(update_interactivity, moe_boundary),
+        inputs=moe_boundary_bool,
+        outputs=moe_boundary
+    )
+
+    vace_strength_bool.change(
+        partial(update_interactivity, vace_strength),
+        inputs=vace_strength_bool,
+        outputs=vace_strength
     )
 
     any2video_params['pprompt'] = prompts_ui['in_pprompt']

@@ -283,6 +283,15 @@ class ImageGenerationRunner(CommandRunner):
             '--chroma-t5-mask-pad': (self._get_param('in_t5_mask_pad')
                                      if self._get_param('in_enable_t5_mask')
                                      else None),
+            # Skip Layer Guidance (SLG)
+            **({
+                '--slg-scale': self._get_param('in_slg_scale'),
+                '--skip-layer-start': self._get_param('in_skip_layer_start'),
+                '--skip-layer-end': self._get_param('in_skip_layer_end'),
+                '--skip-layers': (self._get_param('in_skip_layers')
+                                  if self._get_param('in_skip_layers') != ""
+                                  else None),
+            } if self._get_param('in_slg_bool') else {}),
             # VAE Tiling
             **({
                 '--vae-tile-overlap': self._get_param('in_vae_tile_overlap'),
@@ -418,11 +427,6 @@ class ImgEditRunner(ImageGenerationRunner):
             self.command.extend(
                 ['--ref-image', img_path]
             )
-        flags = {
-            '--increase-ref-index': self._get_param('in_increase_ref_index', False),
-            '--disable-auto-resize-ref-image': self._get_param('in_disable_auto_resize_ref_image', False)
-        }
-        self._add_flags(flags)
 
 
 class Any2VideoRunner(CommandRunner):
@@ -467,16 +471,65 @@ class Any2VideoRunner(CommandRunner):
             '--t5xxl': self._get_param('f_umt5_xxl'),
             # Wan2.2 High Noise Configuration
             '--high-noise-diffusion-model': (
-                high_noise_model if use_high_noise else None
+                high_noise_model
+                if use_high_noise else None
             ),
-            '--high-noise-cfg-scale': (self._get_param('in_high_noise_cfg')
-                                       if use_high_noise else None),
+            '--high-noise-cfg-scale': (
+                self._get_param('in_high_noise_cfg')
+                if use_high_noise else None
+            ),
             '--high-noise-sampling-method': (
                 self._get_param('in_high_noise_sampling')
                 if use_high_noise else None
             ),
-            '--high-noise-steps': (self._get_param('in_high_noise_steps')
-                                   if use_high_noise else None),
+            '--high-noise-steps': (
+                self._get_param('in_high_noise_steps')
+                if use_high_noise else None
+            ),
+            '--high-noise-img-cfg-scale': (
+                self._get_param('in_high_noise_img_cfg')
+                if use_high_noise else None
+            ),
+            '--high-noise-guidance': (
+                self._get_param('in_high_noise_guidance')
+                if use_high_noise else None
+            ),
+            '--high-noise-slg-scale': (
+                self._get_param('in_high_noise_slg_scale')
+                if use_high_noise else None
+            ),
+            '--high-noise-skip-layer-start': (
+                self._get_param('in_high_noise_skip_layer_start')
+                if use_high_noise else None
+            ),
+            '--high-noise-skip-layer-end': (
+                self._get_param('in_high_noise_skip_layer_end')
+                if use_high_noise else None
+            ),
+            '--high-noise-eta': (
+                self._get_param('in_high_noise_eta')
+                if use_high_noise else None
+            ),
+            '--high-noise-skip-layers': (
+                self._get_param('in_high_noise_skip_layers')
+                if use_high_noise else None
+            ),
+            # Skip Layer Guidance (SLG)
+            **({
+                '--slg-scale': self._get_param('in_slg_scale'),
+                '--skip-layer-start': self._get_param('in_skip_layer_start'),
+                '--skip-layer-end': self._get_param('in_skip_layer_end'),
+                '--skip-layers': (self._get_param('in_skip_layers')
+                                  if self._get_param('in_skip_layers') != ""
+                                  else None),
+            } if self._get_param('in_slg_bool') else {}),
+            # Wan & MoE Specifics
+            '--moe-boundary': (self._get_param('in_moe_boundary')
+                               if self._get_param('in_moe_boundary_bool')
+                               else None),
+            '--vace-strength': (self._get_param('in_vace_strength')
+                                if self._get_param('in_vace_strength_bool')
+                                else None),
             # Inputs for I2V, FLF2V, and VACE V2V
             '--init-img': init_img,
             '--end-img': self._get_param('in_last_frame_inp'),
