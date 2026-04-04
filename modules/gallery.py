@@ -4,7 +4,6 @@ import os
 import shutil
 import subprocess
 from typing import List, Tuple, Any, Optional
-from PIL import Image
 
 import gradio as gr
 
