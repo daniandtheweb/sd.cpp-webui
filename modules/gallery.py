@@ -16,6 +16,9 @@ from modules.utils.metadata_utils import (
 )
 
 
+PAGE_SIZE = 16
+
+
 class GalleryManager:
     """Controls the gallery block"""
 
@@ -31,7 +34,7 @@ class GalleryManager:
         self.page_num: int = 1
         self.ctrl: int = 0
 
-        self.sort_order: str = config.get('def_gallery_sorting')
+        self.sort_order: str = config.get('def_gallery_sorting', 'Date (Oldest First)')
 
         self.selected_media_index_on_page: Optional[int] = None
         self.selected_media_global_index: Optional[int] = None
@@ -82,7 +85,7 @@ class GalleryManager:
 
         files = self._get_sorted_files()
         total_items = len(files)
-        total_pages = (total_items + 15) // 16 or 1
+        total_pages = (total_items + 15) // PAGE_SIZE or 1
 
         try:
             page_num = int(page_num)
@@ -96,12 +99,10 @@ class GalleryManager:
 
         self.page_num = int(page_num)
 
-        start_index = (self.page_num - 1) * 16
-        end_index = start_index + 16
+        start_index = (self.page_num - 1) * PAGE_SIZE
+        end_index = start_index + PAGE_SIZE
 
         page_files = files[start_index:end_index]
-
-        page_files
 
         dir_map = {
             0: 'txt2img',
@@ -132,7 +133,7 @@ class GalleryManager:
         """Helper for next/prev/last page navigation."""
         files = self._get_sorted_files()
         total_items = len(files)
-        total_pages = (total_items + 15) // 16 or 1
+        total_pages = (total_items + 15) // PAGE_SIZE or 1
 
         if direction == 1:  # Next
             self.page_num = (
@@ -165,7 +166,7 @@ class GalleryManager:
 
     def get_media_info(self, sel_data: gr.SelectData) -> Tuple[Any, ...]:
         """Reads and parses generation data from a selected media."""
-        if not sel_data:
+        if sel_data is None:
             # Return empty values if no image is selected
             return (
                 "", "", None, None, None, "", "", None, None, "", "",
@@ -175,7 +176,7 @@ class GalleryManager:
         self.selected_media_index_on_page = sel_data.index
         # Calculate the global index across all pages
         self.selected_media_global_index = (
-            ((self.page_num - 1) * 16) + sel_data.index
+            ((self.page_num - 1) * PAGE_SIZE) + sel_data.index
         )
 
         files = self._get_sorted_files()
@@ -200,7 +201,7 @@ class GalleryManager:
             elif file_path_lower.endswith(('.jpg', '.jpeg')):
                 raw_text = parse_jpg_metadata(self.current_media_path)
                 width, height = size_extractor(self.current_media_path)
-            elif file_path_lower.endswith(('.avi', 'mp4')):
+            elif file_path_lower.endswith(('.avi', '.mp4')):
                 raw_text = ""
                 width, height = get_avi_resolution(self.current_media_path)
         except Exception as e:
@@ -231,7 +232,7 @@ class GalleryManager:
             cmd = [
                 'ffmpeg', '-y', '-i', self.current_media_path,
                 '-c:v', 'libx264', '-c:a', 'aac',
-                '-strict', 'experimental', out_path
+                '-movflags', '+faststart', out_path
             ]
             try:
                 subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
@@ -291,8 +292,8 @@ class GalleryManager:
         if new_global_index >= len(files_after_delete):
             new_global_index = len(files_after_delete) - 1
 
-        new_page_num = (new_global_index // 16) + 1
-        new_page_index = new_global_index % 16
+        new_page_num = (new_global_index // PAGE_SIZE) + 1
+        new_page_index = new_global_index % PAGE_SIZE
 
         gallery_update, page_num = self.reload_gallery(
             page_num=new_page_num, selected_index=new_page_index
