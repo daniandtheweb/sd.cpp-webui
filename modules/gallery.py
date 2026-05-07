@@ -119,7 +119,7 @@ class GalleryManager:
             self.current_media_path = None
 
         return (
-            gr.update(
+            gr.Gallery(
                 value=page_files,
                 label=current_label,
                 selected_index=selected_index
