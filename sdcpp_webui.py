@@ -92,6 +92,11 @@ def create_copy_fn(tab_id: str, fields: list = None) -> callable:
     return copy_fn
 
 
+def copy_to_imgedit(width, height, path_info):
+    gallery_path = [path_info] if path_info else []
+    return [gr.Tabs(selected="imgedit"), width, height, gallery_path]
+
+
 def lazy_load_gallery(is_loaded, page, ctrl):
     if is_loaded:
         # If already loaded, return existing values (do nothing)
@@ -273,7 +278,7 @@ def bind_ui_events(server: bool, tabs, gallery_tab, gallery_loaded_state):
     )
     # Copy data from gallery image to imgedit
     cpy_2_imgedit_btn.click(
-        create_copy_fn("imgedit"),
+        copy_to_imgedit,
         inputs=[info_params['width'], info_params['height'], path_info],
         outputs=[tabs, ie_width, ie_height, ie_ref]
     )
