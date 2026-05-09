@@ -61,6 +61,7 @@ DEFAULT_SETTINGS = {
     'def_cache_mode': "easycache",
     'def_scm_policy': "none",
     'def_threads': 0,
+    'def_max_vram': 0,
     'def_offload_to_cpu': False,
     'def_vae_cpu': False,
     'def_clip_cpu': False,

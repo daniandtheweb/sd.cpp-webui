@@ -23,6 +23,12 @@ def create_performance_ui():
                 label="Offload to CPU",
                 value=config.get('def_offload_to_cpu')
             )
+            max_vram = gr.Slider(
+                label="Max VRAM budget (GiB) for segmented graph execution",
+                value=config.get('def_max_vram'),
+                maximum=64,
+                step=0.1
+            )
             vae_cpu = gr.Checkbox(
                 label="VAE on CPU",
                 value=config.get('def_vae_cpu')
@@ -56,6 +62,7 @@ def create_performance_ui():
 
     return {
         'in_threads': threads,
+        'in_max_vram': max_vram,
         'in_offload_to_cpu': offload_to_cpu,
         'in_vae_cpu': vae_cpu,
         'in_clip_cpu': clip_cpu,

@@ -205,6 +205,7 @@ with gr.Blocks() as options_block:
         performance_ui = create_performance_ui()
         settings_map.update({
             'def_threads': performance_ui['in_threads'],
+            'def_max_vram': performance_ui['in_max_vram'],
             'def_offload_to_cpu': performance_ui['in_offload_to_cpu'],
             'def_vae_cpu': performance_ui['in_vae_cpu'],
             'def_clip_cpu': performance_ui['in_clip_cpu'],
