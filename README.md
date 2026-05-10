@@ -47,7 +47,7 @@ This WebUI, by using **stable-diffusion.cpp** as its core, supports a large numb
       git clone https://github.com/daniandtheweb/sd.cpp-webui.git
       ```
 
-  2. Obtain the `stable-diffusion.cpp` binary (sd for Linux/MacOS or sd.exe for Windows) by compiling or downloading it from the releases and place it in the main `sd.cpp-webui` folder.
+  2. Obtain the `stable-diffusion.cpp` binary (sd-cli for Linux/MacOS or sd-cli.exe for Windows) by compiling or downloading it from the releases and place it in the main `sd.cpp-webui` folder.
 
   3. Run `sdcpp_webui.sh` if you're on Linux/MacOS or `sdcpp_webui_windows.ps1` if you're on Windows.
 
