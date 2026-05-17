@@ -27,6 +27,7 @@ def create_performance_ui():
                 label="Max VRAM budget (GiB) for segmented graph execution",
                 value=config.get('def_max_vram'),
                 maximum=64,
+                minimum=-1,
                 step=0.1
             )
             vae_cpu = gr.Checkbox(

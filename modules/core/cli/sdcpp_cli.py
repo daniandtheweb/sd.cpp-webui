@@ -294,7 +294,7 @@ class ImageGenerationRunner(CommandRunner):
             } if self._get_param('in_slg_bool') else {}),
             # Performance
             '--max-vram': (self._get_param('in_max_vram')
-                           if self._get_param('in_max_vram') > 0
+                           if self._get_param('in_max_vram') != 0
                            else None),
             # VAE Tiling
             **({
