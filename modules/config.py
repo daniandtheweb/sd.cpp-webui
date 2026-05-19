@@ -94,6 +94,7 @@ class ConfigManager:
         'def_vae': 'vae_dir',
         'def_ckpt_vae': 'vae_dir',
         'def_unet_vae': 'vae_dir',
+        'def_audio_vae': 'vae_dir',
         'def_taesd': 'taesd_dir',
         'def_phtmkr': 'phtmkr_dir',
         'def_cnnet': 'cnnet_dir',
@@ -101,6 +102,8 @@ class ConfigManager:
         'def_clip_l': 'txt_enc_dir',
         'def_clip_g': 'txt_enc_dir',
         'def_clip_vision_h': 'txt_enc_dir',
+        'def_umt5_xxl': 'txt_enc_dir',
+        'def_emb_connect': 'txt_enc_dir',
         'def_llm': 'txt_enc_dir',
     }
 

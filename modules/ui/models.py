@@ -262,6 +262,12 @@ def create_video_model_sel_ui():
                 dir_key='vae_dir',
                 option_key='def_unet_vae',
             )
+        with gr.Column():
+            audio_vae = create_model_widget(
+                label="Audio VAE",
+                dir_key='vae_dir',
+                option_key='def_audio_vae',
+            )
     with gr.Row():
         with gr.Column():
             clip_vision_h = create_model_widget(
@@ -276,6 +282,20 @@ def create_video_model_sel_ui():
                 option_key='def_umt5_xxl',
             )
     with gr.Row():
+        with gr.Column():
+            llm = create_model_widget(
+                label="llm",
+                dir_key='txt_enc_dir',
+                option_key='def_llm',
+
+            )
+        with gr.Column():
+            emb_connect = create_model_widget(
+                label="Embedding Connectors",
+                dir_key='txt_enc_dir',
+                option_key='def_emb_connect',
+            )
+    with gr.Row():
         with gr.Accordion(
             label="High Noise", open=False
         ):
@@ -288,7 +308,10 @@ def create_video_model_sel_ui():
     return {
         'in_unet_model': unet_model,
         'in_unet_vae': unet_vae,
+        'in_audio_vae': audio_vae,
         'in_clip_vision_h': clip_vision_h,
         'in_umt5_xxl': umt5_xxl,
+        'in_llm': llm,
+        'in_emb_connect': emb_connect,
         'in_high_noise_model': high_noise_model
     }

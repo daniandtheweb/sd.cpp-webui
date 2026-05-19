@@ -56,7 +56,7 @@ class GalleryManager:
             files = (
                 os.path.join(media_dir, f)
                 for f in os.listdir(media_dir)
-                if f.lower().endswith(('.png', '.jpg', '.jpeg', '.avi', '.mp4'))
+                if f.lower().endswith(('.png', '.jpg', '.jpeg', '.avi', '.webm', '.webp', '.mp4'))
             )
             if self.sort_order == "Date (Newest First)":
                 return sorted(files, key=os.path.getctime, reverse=True)

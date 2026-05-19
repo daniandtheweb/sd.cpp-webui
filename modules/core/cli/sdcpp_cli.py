@@ -440,11 +440,6 @@ class Any2VideoRunner(CommandRunner):
         # Override to add video-specific base arguments
         super()._add_base_args()
 
-        if '-o' in self.command:
-            idx = self.command.index('-o')
-            base_path, _ = os.path.splitext(self.command[idx + 1])
-            self.command[idx + 1] = base_path
-
         self.command.extend([
             '--video-frames', str(self._get_param('in_frames')),
             '--fps', str(self._get_param('in_fps')),
@@ -452,7 +447,7 @@ class Any2VideoRunner(CommandRunner):
 
     def build_command(self):
         self._resolve_paths()
-        self._set_output_path('any2video_dir', 3, 'avi')
+        self._set_output_path('any2video_dir', 3, 'webm')
 
         self.command.extend(['-p', self._get_param('in_pprompt', "")])
         if self._get_param('in_nprompt'):
@@ -469,10 +464,14 @@ class Any2VideoRunner(CommandRunner):
         options = {
             # VAE
             '--vae': self._get_param('f_unet_vae'),
+            '--audio-vae': self._get_param('f_audio_vae'),
             # Wan2.1, Wan2.2
             '--diffusion-model': self._get_param('f_unet_model'),
             '--clip_vision': self._get_param('f_clip_vision_h'),
             '--t5xxl': self._get_param('f_umt5_xxl'),
+            # LTX-2.3
+            '--llm': self._get_param('f_llm'),
+            '--embeddings-connectors': self._get_param('f_emb_connect'),
             # Wan2.2 High Noise Configuration
             '--high-noise-diffusion-model': (
                 high_noise_model

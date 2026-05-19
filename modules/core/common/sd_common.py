@@ -78,11 +78,11 @@ class CommonRunner():
         """
         path_mappings = {
             'ckpt_dir': ['in_ckpt_model'],
-            'vae_dir': ['in_ckpt_vae', 'in_unet_vae'],
+            'vae_dir': ['in_ckpt_vae', 'in_unet_vae', 'in_audio_vae'],
             'unet_dir': ['in_unet_model', 'in_high_noise_model'],
             'txt_enc_dir': [
                 'in_clip_g', 'in_clip_l', 'in_t5xxl', 'in_llm',
-                'in_umt5_xxl', 'in_clip_vision_h'
+                'in_umt5_xxl', 'in_clip_vision_h', 'in_emb_connect'
             ],
             'taesd_dir': ['in_taesd'],
             'phtmkr_dir': ['in_phtmkr'],
