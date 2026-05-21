@@ -46,6 +46,11 @@ def create_vae_tiling_ui():
             value=config.get('def_vae_relative_tile_size'),
             interactive=False
         )
+        temporal_tiling = gr.Checkbox(
+            label="Temporal tiling for LTX video VAE decode",
+            value=config.get('def_temporal_tiling'),
+            interactive=True
+        )
 
         vae_tile_comp = [
             vae_tile_overlap, vae_tile_size, vae_relative_bool
@@ -68,5 +73,6 @@ def create_vae_tiling_ui():
         'in_vae_tile_overlap': vae_tile_overlap,
         'in_vae_tile_size': vae_tile_size,
         'in_vae_relative_bool': vae_relative_bool,
-        'in_vae_relative_tile_size': vae_relative_tile_size
+        'in_vae_relative_tile_size': vae_relative_tile_size,
+        'in_temporal_tiling': temporal_tiling
     }

@@ -8,6 +8,8 @@ user_data/
 *.png
 *.jpg
 *.jpeg
+*.webp
+*.webm
 *.avi
 *.mp4
 *.json

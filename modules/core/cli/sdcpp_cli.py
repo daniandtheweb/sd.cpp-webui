@@ -580,6 +580,8 @@ class Any2VideoRunner(CommandRunner):
             '--preview-noisy': (self._get_param('in_preview_noisy')
                                 if self._get_param('in_preview_bool')
                                 else False),
+            # LTX Specifics
+            '--temporal-tiling': self._get_param('in_temporal_tiling'),
         })
         self._add_flags(flags)
 

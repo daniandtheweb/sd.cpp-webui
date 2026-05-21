@@ -57,6 +57,7 @@ DEFAULT_SETTINGS = {
     'def_vae_tile_size': 32,
     'def_vae_relative_bool': False,
     'def_vae_relative_tile_size': 0,
+    'def_temporal_tiling': False,
     'def_cache_bool': False,
     'def_cache_mode': "easycache",
     'def_scm_policy': "none",

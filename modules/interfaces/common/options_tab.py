@@ -6,7 +6,7 @@ from modules.utils.ui_events import (
     get_ordered_inputs, refresh_all_options
 )
 from modules.shared_instance import (
-    config, sd_options
+    config
 )
 from modules.ui.constants import (
     PREDICTION, SORT_OPTIONS, THEMES
@@ -173,7 +173,8 @@ with gr.Blocks() as options_block:
             'def_vae_tile_overlap': vae_tiling_ui['in_vae_tile_overlap'],
             'def_vae_tile_size': vae_tiling_ui['in_vae_tile_size'],
             'def_vae_relative_bool': vae_tiling_ui['in_vae_relative_bool'],
-            'def_vae_relative_tile_size': vae_tiling_ui['in_vae_relative_tile_size']
+            'def_vae_relative_tile_size': vae_tiling_ui['in_vae_relative_tile_size'],
+            'def_temporal_tiling': vae_tiling_ui['in_temporal_tiling']
         })
 
         cache_ui = create_cache_ui()
