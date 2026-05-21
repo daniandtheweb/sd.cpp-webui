@@ -256,7 +256,7 @@ def create_imgedit_model_sel_ui():
 def create_video_model_sel_ui():
     """Create the video model selection UI"""
     with gr.Row():
-        gr.Markdown("Supports: Wan2.1, Wan2.2")
+        gr.Markdown("Supports: LTX-2.3, Wan2.1, Wan2.2")
     with gr.Row():
         with gr.Column():
             unet_model = create_model_widget(
