@@ -12,7 +12,6 @@ from modules.utils.ui_events import (
 from modules.shared_instance import (
     config, subprocess_manager
 )
-from modules.ui.constants import SAMPLERS
 from modules.ui.models import create_video_model_sel_ui
 from modules.ui.loras import (
     create_lora_sel_ui, bind_lora_events
@@ -312,7 +311,12 @@ with gr.Blocks() as any2video_block:
 
     bind_lora_events(lora_ui, prompts_ui)
 
-    bind_presets_events(presets_ui, generation_settings_ui)
+    is_loading_preset = gr.State(value=False)
+
+    bind_presets_events(
+        presets_ui, generation_settings_ui, model_ui,
+        preset_flag=is_loading_preset
+    )
 
     timer = gr.Timer(value=0.1, active=False)
 

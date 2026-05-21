@@ -53,20 +53,15 @@ def create_presets_ui():
     }
 
 
-def bind_presets_events(presets_ui, generation_settings_ui):
+def bind_presets_events(presets_ui, *ui_dicts, preset_flag=None):
     """Keep all click events encapsulated in this file"""
 
-    preset_map = {
-        'sampling': generation_settings_ui['in_sampling'],
-        'scheduler': generation_settings_ui['in_scheduler'],
-        'width': generation_settings_ui['in_width'],
-        'height': generation_settings_ui['in_height'],
-        'steps': generation_settings_ui['in_steps'],
-        'cfg': generation_settings_ui['in_cfg']
-    }
+    combined_ui = {}
+    for ui_dict in ui_dicts:
+        combined_ui.update(ui_dict)
 
-    preset_keys = list(preset_map.keys())
-    preset_components = list(preset_map.values())
+    preset_keys = list(combined_ui.keys())
+    preset_components = list(combined_ui.values())
 
     def save_and_refresh_presets(name, *values):
         settings_dict = dict(zip(preset_keys, values))
@@ -78,7 +73,18 @@ def bind_presets_events(presets_ui, generation_settings_ui):
         if not preset:
             return [gr.skip()] * len(preset_keys)
 
-        return tuple(preset.get(key, gr.skip()) for key in preset_keys)
+        output_values = []
+        for key in preset_keys:
+            old_key_format = key.replace('in_', '')
+            if key in preset:
+                val = preset[key]
+            elif old_key_format in preset:
+                val = preset[old_key_format]
+            else:
+                val = gr.skip()
+            output_values.append(val)
+
+        return tuple(output_values)
 
     def delete_and_refresh_presets(name):
         preset_manager.delete_preset(name)
@@ -93,11 +99,20 @@ def bind_presets_events(presets_ui, generation_settings_ui):
         outputs=[presets_ui['saved_presets']]
     )
 
-    presets_ui['load_preset_btn'].click(
-        load_selected_preset,
-        inputs=[presets_ui['saved_presets']],
-        outputs=preset_components
-    )
+    if preset_flag is not None:
+        presets_ui['load_preset_btn'].click(
+            fn=lambda: True, inputs=[], outputs=[preset_flag]
+        ).then(
+            fn=load_selected_preset,
+            inputs=[presets_ui['saved_presets']],
+            outputs=preset_components
+        )
+    else:
+        presets_ui['load_preset_btn'].click(
+            load_selected_preset,
+            inputs=[presets_ui['saved_presets']],
+            outputs=preset_components
+        )
 
     presets_ui['del_preset_btn'].click(
         delete_and_refresh_presets,
@@ -106,7 +121,5 @@ def bind_presets_events(presets_ui, generation_settings_ui):
     )
 
     presets_ui['reload_presets_btn'].click(
-        refresh_preset_list,
-        inputs=[],
-        outputs=[presets_ui['saved_presets']]
+        refresh_preset_list, inputs=[], outputs=[presets_ui['saved_presets']]
     )
