@@ -181,6 +181,7 @@ with gr.Blocks() as options_block:
         settings_map.update({
             'def_cache_bool': cache_ui['in_cache_bool'],
             'def_cache_mode': cache_ui['in_cache_mode'],
+            'def_scm_policy': cache_ui['in_scm_policy'],
         })
 
         extras_ui = create_extras_ui()
@@ -211,6 +212,7 @@ with gr.Blocks() as options_block:
             'def_vae_cpu': performance_ui['in_vae_cpu'],
             'def_clip_cpu': performance_ui['in_clip_cpu'],
             'def_flash_attn': performance_ui['in_flash_attn'],
+            'def_diffusion-fa': performance_ui['in_diffusion_fa'],
             'def_diffusion_conv_direct': performance_ui['in_diffusion_conv_direct'],
             'def_vae_conv_direct': performance_ui['in_vae_conv_direct'],
             'def_force_sdxl_vae_conv_scale': performance_ui['in_force_sdxl_vae_conv_scale']

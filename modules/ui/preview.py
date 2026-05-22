@@ -48,7 +48,7 @@ def create_preview_ui():
         outputs=preview_comp
     )
 
-    return{
+    return {
         'in_preview_bool': preview_bool,
         'in_preview_mode': preview_mode,
         'in_preview_interval': preview_interval,
