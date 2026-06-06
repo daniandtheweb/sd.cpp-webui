@@ -28,6 +28,69 @@ from modules.ui.environment import create_env_ui
 
 OUTPUT_SCHEMES = ["Sequential", "Timestamp", "TimestampMS", "EpochTime"]
 
+OPTION_KEY_MAP = {
+    # Quant
+    'in_model_type': 'def_model_type',
+    'in_tensor_type_rules': 'def_tensor_type_rules',
+
+    # TAESD
+    'in_taesd': 'def_taesd',
+
+    # VAE tiling
+    'in_vae_tiling': 'def_vae_tiling',
+    'in_vae_tile_overlap': 'def_vae_tile_overlap',
+    'in_vae_tile_size': 'def_vae_tile_size',
+    'in_vae_relative_bool': 'def_vae_relative_bool',
+    'in_vae_relative_tile_size': 'def_vae_relative_tile_size',
+    'in_temporal_tiling': 'def_temporal_tiling',
+
+    # Cache
+    'in_cache_bool': 'def_cache_bool',
+    'in_cache_mode': 'def_cache_mode',
+    'in_cache_option': 'def_cache_option',
+    'in_scm_mask': 'def_scm_mask',
+    'in_scm_policy': 'def_scm_policy',
+
+    # Extras
+    'in_sigmas': 'def_sigmas',
+    'in_rng': 'def_rng',
+    'in_sampler_rng': 'def_sampler_rng',
+    'in_predict': 'def_predict',
+    'in_lora_apply': 'def_lora_apply',
+    'in_output': 'def_output',
+    'in_mmap': 'def_mmap',
+    'in_color': 'def_color',
+    'in_verbose': 'def_verbose',
+
+    # Preview
+    'in_preview_bool': 'def_preview_bool',
+    'in_preview_mode': 'def_preview_mode',
+    'in_preview_interval': 'def_preview_interval',
+    'in_preview_taesd': 'def_preview_taesd',
+    'in_preview_noisy': 'def_preview_noisy',
+
+    # Performance
+    'in_threads': 'def_threads',
+    'in_max_vram': 'def_max_vram',
+    'in_offload_to_cpu': 'def_offload_to_cpu',
+    'in_vae_cpu': 'def_vae_cpu',
+    'in_clip_cpu': 'def_clip_cpu',
+    'in_flash_attn': 'def_flash_attn',
+    'in_diffusion_fa': 'def_diffusion_fa',
+    'in_diffusion_conv_direct': 'def_diffusion_conv_direct',
+    'in_vae_conv_direct': 'def_vae_conv_direct',
+    'in_force_sdxl_vae_conv_scale': 'def_force_sdxl_vae_conv_scale',
+
+    # Environment
+    'env_vk_visible_override': 'def_env_vk_visible_override',
+    'env_GGML_VK_VISIBLE_DEVICES': 'def_env_GGML_VK_VISIBLE_DEVICES',
+    'env_cuda_visible_override': 'def_env_cuda_visible_override',
+    'env_CUDA_VISIBLE_DEVICES': 'def_env_CUDA_VISIBLE_DEVICES',
+    'env_GGML_VK_DISABLE_COOPMAT': 'def_env_GGML_VK_DISABLE_COOPMAT',
+    'env_GGML_VK_DISABLE_INTEGER_DOT_PRODUCT': 'def_env_GGML_VK_DISABLE_INTEGER_DOT_PRODUCT',}
+
+def resolve_option_key(ui_key: str) -> str:
+    return OPTION_KEY_MAP.get(ui_key, ui_key)
 
 class SettingsRegistry:
     """Manages UI-to-config mapping, saving, and ordering."""
@@ -132,7 +195,7 @@ with gr.Blocks() as options_block:
 
         quant_ui = create_quant_ui()
         for k, v in quant_ui.items():
-            registry.register(k, v)
+            registry.register(resolve_option_key(k), v)
 
     with gr.Tab(label="Generation settings"):
 
@@ -181,17 +244,6 @@ with gr.Blocks() as options_block:
 
     with gr.Tab(label="Advanced settings"):
 
-        with gr.Row():
-            # Prediction mode
-            registry.register(
-                'predict', gr.Dropdown(
-                    label="Prediction",
-                    choices=PREDICTION,
-                    value=config.get('def_predict'),
-                    interactive=True
-                )
-            )
-
         for prefix, ui_dict in [
             ('taesd', create_taesd_ui()),
             ('vae_tiling', create_vae_tiling_ui()),
@@ -202,7 +254,7 @@ with gr.Blocks() as options_block:
             ('env', create_env_ui())
         ]:
             for k, v in ui_dict.items():
-                registry.register(k, v)
+                registry.register(resolve_option_key(k), v)
 
     with gr.Tab(label="Directories"):
 
@@ -303,14 +355,26 @@ with gr.Blocks() as options_block:
     )
 
     # Safely collect refresh targets
-    refresh_targets = [
+    refresh_outputs = [
         registry.map.get('def_sampling'),
         registry.map.get('def_scheduler'),
-        registry.map.get('in_preview_mode'),
-        registry.map.get('predict')
+        registry.map.get('def_preview_mode'),
+        registry.map.get('def_predict'),
     ]
+
     # Remove any missing components to prevent Gradio initialization crash
-    refresh_outputs = [comp for comp in refresh_targets if comp is not None]
+    missing_refresh_outputs = [
+        name for name, component in zip(
+            ['def_sampling', 'def_scheduler', 'def_preview_mode', 'predict'],
+            refresh_outputs
+        )
+        if component is None
+    ]
+
+    if missing_refresh_outputs:
+        raise RuntimeError(
+            f"Missing refresh output component(s): {missing_refresh_outputs}"
+        )
 
     refresh_opt.click(
         refresh_all_options,
