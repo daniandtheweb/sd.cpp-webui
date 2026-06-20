@@ -5,6 +5,7 @@ import os
 import sys
 import json
 import argparse
+import warnings
 
 import gradio as gr
 
@@ -58,6 +59,8 @@ function refresh() {
     }
 }
 """
+
+warnings.filterwarnings("ignore", message=".*HTTP_422_UNPROCESSABLE_ENTITY.*")
 
 os.environ['GRADIO_ANALYTICS_ENABLED'] = 'False'
 config = ConfigManager()
