@@ -99,6 +99,7 @@ class ConfigManager:
         'def_taesd': 'taesd_dir',
         'def_phtmkr': 'phtmkr_dir',
         'def_cnnet': 'cnnet_dir',
+        'def_uncond_unet': 'unet_dir',
         'def_t5xxl': 'txt_enc_dir',
         'def_clip_l': 'txt_enc_dir',
         'def_clip_g': 'txt_enc_dir',

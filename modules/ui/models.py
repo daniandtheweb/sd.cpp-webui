@@ -113,7 +113,7 @@ def create_ckpt_model_sel_ui():
 def create_unet_model_sel_ui():
     """Create the UNET model selection UI using a helper for clarity"""
     with gr.Row():
-        gr.Markdown("Supports: SD3, SD3.5, FLUX.1-Krea-dev, FLUX.1-dev, FLUX.1-schnell, FLUX.2-dev, Chroma, Qwen Image, Z-Image-Turbo")
+        gr.Markdown("Supports: SD3, SD3.5, FLUX.1-Krea-dev, FLUX.1-dev, FLUX.1-schnell, FLUX.2-dev, Chroma, Qwen Image, Z-Image-Turbo, Anima, Ernie Image, Ideogram 4")
     with gr.Row():
         with gr.Column():
             unet_model = create_model_widget(
@@ -127,6 +127,12 @@ def create_unet_model_sel_ui():
                 dir_key='vae_dir',
                 option_key='def_unet_vae',
             )
+    with gr.Row():
+        uncond_unet_model = create_model_widget(
+            label="Unconditional UNET Model",
+            dir_key='unet_dir',
+            option_key='def_uncond_unet',
+        )
     with gr.Row():
         with gr.Column():
             clip_g = create_model_widget(
@@ -162,6 +168,7 @@ def create_unet_model_sel_ui():
     return {
         'in_unet_model': unet_model,
         'in_unet_vae': unet_vae,
+        'in_uncond_unet_model': uncond_unet_model,
         'in_clip_g': clip_g,
         'in_clip_l': clip_l,
         'in_t5xxl': t5xxl,

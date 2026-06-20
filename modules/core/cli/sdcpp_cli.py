@@ -198,6 +198,7 @@ class ImageGenerationRunner(CommandRunner):
         elif diffusion_mode == DiffusionMode.UNET:
             options['--diffusion-model'] = self._get_param('f_unet_model')
             options['--vae'] = self._get_param('f_unet_vae')
+            options['--uncond-diffusion-model'] = self._get_param('f_uncond_unet_model')
             options['--clip_g'] = self._get_param('f_clip_g')
             options['--clip_l'] = self._get_param('f_clip_l')
             options['--t5xxl'] = self._get_param('f_t5xxl')
