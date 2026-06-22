@@ -18,3 +18,9 @@ sd*
 !sd*.py
 !*.ps1
 /venv
+
+outputs/pprompts/pprompt_*.txt
+outputs/nprompts/nprompt_*.txt
+
+!outputs/pprompts/pprompts.txt
+!outputs/nprompts/nprompts.txt

@@ -18,7 +18,7 @@ from modules.shared_instance import (
 
 
 class CommandRunner(CommonRunner):
-    """Builds and runs stable-diffusion.cpp commands and yelds UI updates."""
+    """Builds and runs stable-diffusion.cpp commands and yields UI updates."""
 
     def __init__(self, mode: str, params: Dict[str, Any]):
         super().__init__(params)
@@ -27,6 +27,50 @@ class CommandRunner(CommonRunner):
         self.outputs = []
         self.output_path = ""
         self.preview_path = None
+
+    def _get_next_synced_index(self) -> int:
+        """Finds the next available sequential index by scanning both prompt folders."""
+        pp_dir = os.path.join('outputs', 'pprompts')
+        np_dir = os.path.join('outputs', 'nprompts')
+        os.makedirs(pp_dir, exist_ok=True)
+        os.makedirs(np_dir, exist_ok=True)
+
+        max_idx = -1
+        for d in [pp_dir, np_dir]:
+            for f in os.listdir(d):
+                # Updated to recognize both pprompt_ and nprompt_ prefixes
+                if (f.startswith('pprompt_') or f.startswith('nprompt_')) and f.endswith('.txt'):
+                    try:
+                        # Strip prefix and extension to get the number
+                        num_str = f.replace('pprompt_', '').replace('nprompt_', '').replace('.txt', '')
+                        idx = int(num_str)
+                        if idx > max_idx:
+                            max_idx = idx
+                    except ValueError:
+                        continue
+        return max_idx + 1
+
+    def _save_prompts(self) -> tuple:
+        """Saves positive and negative prompts to synced sequential files (skips if empty)."""
+        idx = self._get_next_synced_index()
+        pp_dir = os.path.join('outputs', 'pprompts')
+        np_dir = os.path.join('outputs', 'nprompts')
+
+        pp_text = str(self._get_param('in_pprompt', "")).strip()
+        np_text = str(self._get_param('in_nprompt', "")).strip()
+
+        # Only create paths if text exists
+        pp_path = os.path.join(pp_dir, f"pprompt_{idx}.txt") if pp_text else None
+        np_path = os.path.join(np_dir, f"nprompt_{idx}.txt") if np_text else None
+
+        if pp_path:
+            with open(pp_path, 'w', encoding='utf-8') as f:
+                f.write(pp_text)
+        if np_path:
+            with open(np_path, 'w', encoding='utf-8') as f:
+                f.write(np_text)
+
+        return pp_path, np_path
 
     def _set_output_path(self, dir_key: str, subctrl_id: int, extension: str):
         """Determines and sets the output path for the command."""
@@ -90,15 +134,8 @@ class CommandRunner(CommonRunner):
         """
         Prepares the final command string for printing and computes outputs.
         """
-        prompt = self._get_param('in_pprompt', "")
-        nprompt = self._get_param('in_nprompt', "")
-
-        # Prepare a copy for printing
+        # Prepare a copy for printing (shows actual .txt paths)
         cmd_print = self.command.copy()
-        if '-p' in cmd_print:
-            cmd_print[cmd_print.index('-p') + 1] = f'"{prompt}"'
-        if '-n' in cmd_print:
-            cmd_print[cmd_print.index('-n') + 1] = f'"{nprompt}"'
         self.fcommand = ' '.join(map(str, cmd_print))
 
         # Compute all output filenames
@@ -213,9 +250,12 @@ class ImageGenerationRunner(CommandRunner):
         self._resolve_paths()
         self._set_output_path(output_dir_key, subctrl_id, 'png')
 
-        self.command.extend(['-p', self._get_param('in_pprompt', "")])
-        if self._get_param('in_nprompt'):
-            self.command.extend(['-n', self._get_param('in_nprompt')])
+        # Save prompts to synced sequential files
+        pp_path, np_path = self._save_prompts()
+        if pp_path:
+            self.command.extend(['--prompt-file', pp_path])
+        if np_path:
+            self.command.extend(['--negative-prompt-file', np_path])
 
         self._add_base_args()
 
@@ -450,9 +490,11 @@ class Any2VideoRunner(CommandRunner):
         self._resolve_paths()
         self._set_output_path('any2video_dir', 3, 'webm')
 
-        self.command.extend(['-p', self._get_param('in_pprompt', "")])
-        if self._get_param('in_nprompt'):
-            self.command.extend(['-n', self._get_param('in_nprompt')])
+        # Save prompts to synced sequential files
+        pp_path, np_path = self._save_prompts()
+        self.command.extend(['--prompt-file', pp_path])
+        if self._get_param('in_nprompt', "").strip():
+            self.command.extend(['--negative-prompt-file', np_path])
 
         self._add_base_args()
 
