@@ -28,6 +28,17 @@ class CommandRunner(CommonRunner):
         self.output_path = ""
         self.preview_path = None
 
+    def _make_relative(self, path):
+        """Converts absolute paths to be relative to the executable directory."""
+        if not path or not os.path.isabs(str(path)):
+            return path
+        try:
+            exe_dir = os.path.dirname(os.path.abspath(SD_CLI))
+            return os.path.relpath(str(path), start=exe_dir)
+        except ValueError:
+            # Fallback for cross-drive paths on Windows
+            return path
+
     def _get_next_synced_index(self) -> int:
         """Finds the next available sequential index by scanning both prompt folders."""
         pp_dir = os.path.join('outputs', 'pprompts')
@@ -89,7 +100,7 @@ class CommandRunner(CommonRunner):
                 test_path = os.path.join(output_dir, filename)
                 counter += 1
 
-            self.output_path = test_path
+            self.output_path = self._make_relative(test_path)
             return
 
         name_parts = []
@@ -104,10 +115,10 @@ class CommandRunner(CommonRunner):
             if quant_val and quant_val != "Default":
                 name_parts.append(str(quant_val))
 
-        self.output_path = generate_output_filename(
+        self.output_path = self._make_relative(generate_output_filename(
             output_dir, output_scheme, extension,
             name_parts, subctrl_id
-        )
+        ))
 
     def _add_base_args(self):
         """Adds arguments common to all modes."""
@@ -116,19 +127,55 @@ class CommandRunner(CommonRunner):
             '--steps', str(self._get_param('in_steps')),
             '-W', str(self._get_param('in_width')),
             '-H', str(self._get_param('in_height')),
-            '-b', str(self._get_param('in_batch_count')),
             '--cfg-scale', str(self._get_param('in_cfg')),
-            '-s', str(self._get_param('in_seed')),
-            '--clip-skip', str(self._get_param('in_clip_skip')),
-            '--embd-dir', config.get('emb_dir'),
-            '--lora-model-dir', config.get('lora_dir'),
-            '-t', str(self._get_param('in_threads')),
-            '--rng', str(self._get_param('in_rng')),
-            '--sampler-rng', str(self._get_param('in_sampler_rng')),
-            '--lora-apply-mode', str(self._get_param('in_lora_apply')),
             '-o', self.output_path
             # --output-begin-idx - to implement
         ])
+
+        # Only add -s if seed differs from default (-1)
+        seed = self._get_param('in_seed')
+        if seed and str(seed) != "-1":
+            self.command.extend(['-s', str(self._get_param('in_seed'))])
+
+        # Only add -b if batch count differs from default (1)
+        batch_count = self._get_param('in_batch_count')
+        if batch_count and str(batch_count) != "1":
+            self.command.extend(['-b', str(batch_count)])
+
+        # Only add --clip-skip if it differs from default (-1)
+        clip_skip = self._get_param('in_clip_skip')
+        if clip_skip and str(clip_skip) != "-1":
+            self.command.extend(['--clip-skip', str(clip_skip)])
+
+        self.command.extend([
+            '--embd-dir', self._make_relative(config.get('emb_dir')),
+        ])
+
+        rng = str(self._get_param('in_rng'))
+        if rng and str(rng) != "Default":
+            self.command.extend([
+                '--rng', str(self._get_param('in_rng'))
+            ])
+
+        sampler_rng = str(self._get_param('in_sampler_rng'))
+        if sampler_rng and str(sampler_rng) != "Default":
+            self.command.extend([
+                '--sampler-rng', str(self._get_param('in_sampler_rng')),
+            ])
+
+        # Only add -t if it differs from default (0)
+        threads = self._get_param('in_threads')
+        if threads and str(threads) != "0":
+            self.command.extend(['-t', str(self._get_param('in_threads'))])
+
+        # Only add LoRA arguments if prompts contain <lora:name:strength> tags
+        pp_text = str(self._get_param('in_pprompt', "")).strip()
+        np_text = str(self._get_param('in_nprompt', "")).strip()
+        if re.search(r'<lora:[^:]+:[^>]+>', f"{pp_text} {np_text}"):
+            self.command.extend([
+                '--lora-model-dir', self._make_relative(config.get('lora_dir')),
+                '--lora-apply-mode', str(self._get_param('in_lora_apply'))
+            ])
 
     def _prepare_for_run(self):
         """
@@ -230,17 +277,17 @@ class ImageGenerationRunner(CommandRunner):
         diffusion_mode = self._get_param('in_diffusion_mode')
 
         if diffusion_mode == DiffusionMode.CHECKPOINT:
-            options['--model'] = self._get_param('f_ckpt_model')
-            options['--vae'] = self._get_param('f_ckpt_vae')
+            options['--model'] = self._make_relative(self._get_param('f_ckpt_model'))
+            options['--vae'] = self._make_relative(self._get_param('f_ckpt_vae'))
         elif diffusion_mode == DiffusionMode.UNET:
-            options['--diffusion-model'] = self._get_param('f_unet_model')
-            options['--vae'] = self._get_param('f_unet_vae')
-            options['--uncond-diffusion-model'] = self._get_param('f_uncond_unet_model')
-            options['--clip_g'] = self._get_param('f_clip_g')
-            options['--clip_l'] = self._get_param('f_clip_l')
-            options['--t5xxl'] = self._get_param('f_t5xxl')
-            options['--llm'] = self._get_param('f_llm')
-            options['--llm_vision'] = self._get_param('f_llm_vision')
+            options['--diffusion-model'] = self._make_relative(self._get_param('f_unet_model'))
+            options['--vae'] = self._make_relative(self._get_param('f_unet_vae'))
+            options['--uncond-diffusion-model'] = self._make_relative(self._get_param('f_uncond_unet_model'))
+            options['--clip_g'] = self._make_relative(self._get_param('f_clip_g'))
+            options['--clip_l'] = self._make_relative(self._get_param('f_clip_l'))
+            options['--t5xxl'] = self._make_relative(self._get_param('f_t5xxl'))
+            options['--llm'] = self._make_relative(self._get_param('f_llm'))
+            options['--llm_vision'] = self._make_relative(self._get_param('f_llm_vision'))
 
         # Filter out any keys that have a None value before returning
         return {k: v for k, v in options.items() if v is not None}
@@ -261,7 +308,7 @@ class ImageGenerationRunner(CommandRunner):
 
         if self._get_param('in_preview_bool'):
             base_name, extension = os.path.splitext(self.output_path)
-            self.preview_path = base_name + "_preview" + extension
+            self.preview_path = self._make_relative(base_name + "_preview" + extension)
 
         options = {
             # Models
@@ -283,12 +330,12 @@ class ImageGenerationRunner(CommandRunner):
                          if self._get_param('in_sigmas') != ""
                          else None),
             # TAESD
-            '--taesd': self._get_param('f_taesd'),
+            '--taesd': self._make_relative(self._get_param('f_taesd')),
             # PhotoMaker
             **({
-                '--photo-maker': self._get_param('f_phtmkr'),
-                '--pm-id-images-dir': self._get_param('in_phtmkr_id'),
-                '--pm-id-embed-path': self._get_param('in_phtmkr_emb'),
+                '--photo-maker': self._make_relative(self._get_param('f_phtmkr')),
+                '--pm-id-images-dir': self._make_relative(self._get_param('in_phtmkr_id')),
+                '--pm-id-embed-path': self._make_relative(self._get_param('in_phtmkr_emb')),
                 '--pm-style-strength': self._get_param('in_phtmkr_strength')
             } if self._get_param('in_phtmkr_bool') else {}),
             # Guidance
@@ -309,15 +356,15 @@ class ImageGenerationRunner(CommandRunner):
                       else None),
             # Upscale
             **({
-                '--upscale-model': self._get_param('f_upscl'),
+                '--upscale-model': self._make_relative(self._get_param('f_upscl')),
                 '--upscale-repeats': self._get_param('in_upscl_rep'),
                 '--upscale-tile-size': self._get_param('in_upscl_tile_size'),
 
             } if self._get_param('in_upscl_bool') else {}),
             # ControlNet
             **({
-                '--control-net': self._get_param('f_cnnet'),
-                '--control-image': self._get_param('in_control_img'),
+                '--control-net': self._make_relative(self._get_param('f_cnnet')),
+                '--control-image': self._make_relative(self._get_param('in_control_img')),
                 '--control-strength': self._get_param('in_control_strength')
             } if self._get_param('in_cnnet_bool') else {}),
             # Chroma
@@ -376,7 +423,7 @@ class ImageGenerationRunner(CommandRunner):
             # Preview
             **({
                 '--preview': self._get_param('in_preview_mode'),
-                '--preview-path': self.preview_path,
+                '--preview-path': self._make_relative(self.preview_path),
                 '--preview-interval': self._get_param('in_preview_interval'),
             } if self._get_param('in_preview_bool') else {})
         }
@@ -416,7 +463,7 @@ class Img2ImgRunner(ImageGenerationRunner):
         )
 
         # Add img2img specific arguments
-        self.command.extend(['--init-img', str(self._get_param('in_img_inp'))])
+        self.command.extend(['--init-img', self._make_relative(str(self._get_param('in_img_inp')))])
         self.command.extend([
             '--strength',
             str(self._get_param('in_strength'))
@@ -437,7 +484,7 @@ class Img2ImgRunner(ImageGenerationRunner):
                 print(f"Error saving temporary mask for CLI: {e}")
                 final_mask_path = None
         options = {
-            '--mask': final_mask_path,
+            '--mask': self._make_relative(final_mask_path),
             '--img-cfg-scale': (self._get_param('in_img_cfg')
                                 if self._get_param('in_img_cfg_bool')
                                 else None),
@@ -470,7 +517,7 @@ class ImgEditRunner(ImageGenerationRunner):
                 img_path = str(img)
 
             self.command.extend(
-                ['--ref-image', img_path]
+                ['--ref-image', self._make_relative(img_path)]
             )
 
 
@@ -506,18 +553,18 @@ class Any2VideoRunner(CommandRunner):
 
         options = {
             # VAE
-            '--vae': self._get_param('f_unet_vae'),
-            '--audio-vae': self._get_param('f_audio_vae'),
+            '--vae': self._make_relative(self._get_param('f_unet_vae')),
+            '--audio-vae': self._make_relative(self._get_param('f_audio_vae')),
             # Wan2.1, Wan2.2
-            '--diffusion-model': self._get_param('f_unet_model'),
-            '--clip_vision': self._get_param('f_clip_vision_h'),
-            '--t5xxl': self._get_param('f_umt5_xxl'),
+            '--diffusion-model': self._make_relative(self._get_param('f_unet_model')),
+            '--clip_vision': self._make_relative(self._get_param('f_clip_vision_h')),
+            '--t5xxl': self._make_relative(self._get_param('f_umt5_xxl')),
             # LTX-2.3
-            '--llm': self._get_param('f_llm'),
-            '--embeddings-connectors': self._get_param('f_emb_connect'),
+            '--llm': self._make_relative(self._get_param('f_llm')),
+            '--embeddings-connectors': self._make_relative(self._get_param('f_emb_connect')),
             # Wan2.2 High Noise Configuration
             '--high-noise-diffusion-model': (
-                high_noise_model
+                self._make_relative(high_noise_model)
                 if use_high_noise else None
             ),
             '--high-noise-cfg-scale': (
@@ -577,9 +624,9 @@ class Any2VideoRunner(CommandRunner):
                                 if self._get_param('in_vace_strength_bool')
                                 else None),
             # Inputs for I2V, FLF2V, and VACE V2V
-            '--init-img': init_img,
-            '--end-img': self._get_param('in_last_frame_inp'),
-            '--control-video': self._get_param('in_control_video_dir'),
+            '--init-img': self._make_relative(init_img),
+            '--end-img': self._make_relative(self._get_param('in_last_frame_inp')),
+            '--control-video': self._make_relative(self._get_param('in_control_video_dir')),
             # TAESD
             '--taesd': self._get_param('f_taesd'),
             # Upscaling
@@ -603,7 +650,7 @@ class Any2VideoRunner(CommandRunner):
             '--control-net': (self._get_param('f_cnnet')
                               if self._get_param('in_cnnet_bool')
                               else None),
-            '--control-image': (self._get_param('in_control_img')
+            '--control-image': (self._make_relative(self._get_param('in_control_img'))
                                 if self._get_param('in_cnnet_bool')
                                 else None),
             '--control-strength': (self._get_param('in_control_strength')
@@ -639,8 +686,8 @@ class UpscaleRunner(CommandRunner):
         init_img = (self._get_param('in_img_inp')
                     or self._get_param('in_first_frame_inp'))
         options = {
-            '--init-img': init_img,
-            '--upscale-model': self._get_param('f_upscl'),
+            '--init-img': self._make_relative(init_img),
+            '--upscale-model': self._make_relative(self._get_param('f_upscl')),
             '-W': self._get_param('in_init_width'),
             '-H': self._get_param('in_init_height'),
             '--upscale-repeats': self._get_param('in_upscl_rep'),
@@ -701,16 +748,18 @@ def convert(params: dict):
     in_color = params.get('in_color', True)
     in_verbose = params.get('in_verbose', False)
 
-    orig_model_path = os.path.join(in_model_dir, in_orig_model)
+    exe_dir = os.path.dirname(os.path.abspath(SD_CLI))
+
+    orig_model_path = os.path.relpath(os.path.join(in_model_dir, in_orig_model), start=exe_dir)
 
     if in_gguf_name:
         if not in_gguf_name.endswith('.gguf'):
             in_gguf_name += '.gguf'
-        gguf_path = os.path.join(in_model_dir, in_gguf_name)
+        gguf_path = os.path.relpath(os.path.join(in_model_dir, in_gguf_name), start=exe_dir)
     else:
         model_name, _ = os.path.splitext(in_orig_model)
-        gguf_path = os.path.join(
-            in_model_dir, f"{model_name}-{in_quant_type}.gguf"
+        gguf_path = os.path.relpath(
+            os.path.join(in_model_dir, f"{model_name}-{in_quant_type}.gguf"), start=exe_dir
         )
 
     command = [

@@ -18,8 +18,8 @@ MODELS = [
     "TAESD", "Lora", "Embeddings", "Upscaler", "ControlNet"
 ]
 CIRCULAR_PADDING = ["None", "Circular", "Circular X", "Circular Y"]
-RNG = sd_options.get_opt("rng")
-SAMPLER_RNG = sd_options.get_opt("sampler_rng")
+RNG = ['Default'] + sd_options.get_opt("rng")
+SAMPLER_RNG = ['Default'] + sd_options.get_opt("sampler_rng")
 PREVIEW = sd_options.get_opt("previews")
 PREDICTION = ['Default'] + sd_options.get_opt("prediction")
 CACHE_MODE = [
