@@ -64,8 +64,13 @@ def bind_presets_events(presets_ui, *ui_dicts, preset_flag=None):
     preset_components = list(combined_ui.values())
 
     def save_and_refresh_presets(name, *values):
+        if getattr(preset_manager, "is_default", lambda x: False)(name):
+            gr.Warning(f"Cannot overwrite the default preset: '{name}'. Please use a different name.")
+            return gr.skip()
+
         settings_dict = dict(zip(preset_keys, values))
         preset_manager.add_preset(name, **settings_dict)
+        gr.Info(f"Preset '{name}' saved.")
         return gr.update(choices=preset_manager.get_presets(), value=name)
 
     def load_selected_preset(preset_name):
@@ -84,10 +89,16 @@ def bind_presets_events(presets_ui, *ui_dicts, preset_flag=None):
                 val = gr.skip()
             output_values.append(val)
 
+        gr.Info(f"Preset '{preset_name}' loaded.")
+
         return tuple(output_values)
 
     def delete_and_refresh_presets(name):
+        if getattr(preset_manager, "is_default", lambda x: False)(name):
+            gr.Warning(f"Cannot delete default preset: '{name}'.")
+            return gr.skip()
         preset_manager.delete_preset(name)
+        gr.Info(f"Preset '{name}' deleted.")
         return gr.update(choices=preset_manager.get_presets())
 
     def refresh_preset_list():
