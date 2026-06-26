@@ -15,6 +15,22 @@ from modules.utils.ui_state import (
 from .constants import RELOAD_SYMBOL
 
 
+def _get_initial_diffusion_mode():
+    """
+    Determine which tab should be active based on loaded session defaults.
+    """
+    ckpt_keys = ('def_ckpt', 'def_ckpt_vae')
+    unet_keys = ('def_unet', 'def_unet_vae', 'def_uncond_unet',
+                 'def_clip_g', 'def_clip_l', 'def_t5xxl',
+                 'def_llm', 'def_llm_vision')
+
+    has_ckpt = any(get_session_value(k) is not None for k in ckpt_keys)
+    has_unet = any(get_session_value(k) is not None for k in unet_keys)
+
+    # Switch to UNET tab if UNET defaults exist but Checkpoint defaults do not
+    return 1 if has_unet and not has_ckpt else 0
+
+
 def create_model_widget(
     label, dir_key, option_key, **kwargs
 ):
@@ -179,10 +195,13 @@ def create_unet_model_sel_ui():
 
 def create_img_model_sel_ui():
     """Create the image model selection UI."""
-    diffusion_mode = gr.Number(value=0, visible=False)
+    initial_mode = _get_initial_diffusion_mode()
+    diffusion_mode = gr.Number(value=initial_mode, visible=False)
     model_inputs = {'in_diffusion_mode': diffusion_mode}
 
-    with gr.Tabs() as model_tabs:
+    initial_tab = "unet" if initial_mode == 1 else "checkpoint"
+
+    with gr.Tabs(selected=initial_tab) as model_tabs:
         with gr.Tab("Checkpoint", id="checkpoint") as ckpt_tab:
             ckpt_inputs = create_ckpt_model_sel_ui()
             model_inputs.update(ckpt_inputs)
