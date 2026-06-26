@@ -18,6 +18,7 @@ from .constants import RELOAD_SYMBOL
 def _get_initial_diffusion_mode():
     """
     Determine which tab should be active based on loaded session defaults.
+    Prefers user configuration if both or neither tabs have defaults.
     """
     ckpt_keys = ('def_ckpt', 'def_ckpt_vae')
     unet_keys = ('def_unet', 'def_unet_vae', 'def_uncond_unet',
@@ -27,8 +28,16 @@ def _get_initial_diffusion_mode():
     has_ckpt = any(get_session_value(k) is not None for k in ckpt_keys)
     has_unet = any(get_session_value(k) is not None for k in unet_keys)
 
-    # Switch to UNET tab if UNET defaults exist but Checkpoint defaults do not
-    return 1 if has_unet and not has_ckpt else 0
+    # 1. If ONLY ONE tab has values, prioritize that tab
+    if has_unet and not has_ckpt:
+        return 1
+    if has_ckpt and not has_unet:
+        return 0
+
+    # 2. If BOTH or NEITHER have values, defer to the config setting
+    preferred_tab = config.get('def_model_tab')
+
+    return 1 if preferred_tab == 'unet' else 0
 
 
 def create_model_widget(

@@ -2,14 +2,12 @@
 
 import gradio as gr
 
-from modules.utils.ui_events import (
-    get_ordered_inputs, refresh_all_options
-)
+from modules.utils.ui_events import refresh_all_options
 from modules.shared_instance import (
     config
 )
 from modules.ui.constants import (
-    PREDICTION, SORT_OPTIONS, THEMES
+    SORT_OPTIONS, THEMES
 )
 from modules.ui.models import create_model_widget
 from modules.ui.generation_settings import (
@@ -87,10 +85,12 @@ OPTION_KEY_MAP = {
     'env_cuda_visible_override': 'def_env_cuda_visible_override',
     'env_CUDA_VISIBLE_DEVICES': 'def_env_CUDA_VISIBLE_DEVICES',
     'env_GGML_VK_DISABLE_COOPMAT': 'def_env_GGML_VK_DISABLE_COOPMAT',
-    'env_GGML_VK_DISABLE_INTEGER_DOT_PRODUCT': 'def_env_GGML_VK_DISABLE_INTEGER_DOT_PRODUCT',}
+    'env_GGML_VK_DISABLE_INTEGER_DOT_PRODUCT': 'def_env_GGML_VK_DISABLE_INTEGER_DOT_PRODUCT'}
+
 
 def resolve_option_key(ui_key: str) -> str:
     return OPTION_KEY_MAP.get(ui_key, ui_key)
+
 
 class SettingsRegistry:
     """Manages UI-to-config mapping, saving, and ordering."""
@@ -127,6 +127,13 @@ with gr.Blocks() as options_block:
     options_title = gr.Markdown("# Options")
 
     with gr.Tab(label="Default models"):
+        with gr.Row():
+            registry.register(
+                'def_model_tab', gr.Radio(
+                    label="Default model TAB",
+                    choices=["checkpoint", "unet"],
+                    value=config.get('def_model_tab'))
+                )
         with gr.Row():
             registry.register(
                 'def_ckpt', create_model_widget(
