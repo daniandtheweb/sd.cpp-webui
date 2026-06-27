@@ -128,14 +128,10 @@ class CommandRunner(CommonRunner):
             '-W', str(self._get_param('in_width')),
             '-H', str(self._get_param('in_height')),
             '--cfg-scale', str(self._get_param('in_cfg')),
+            '-s', str(self._get_param('in_seed')),
             '-o', self.output_path
             # --output-begin-idx - to implement
         ])
-
-        # Only add -s if seed differs from default (-1)
-        seed = self._get_param('in_seed')
-        if seed and str(seed) != "-1":
-            self.command.extend(['-s', str(self._get_param('in_seed'))])
 
         # Only add -b if batch count differs from default (1)
         batch_count = self._get_param('in_batch_count')
