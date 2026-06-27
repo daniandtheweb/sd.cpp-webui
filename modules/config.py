@@ -65,8 +65,20 @@ DEFAULT_SETTINGS = {
     'def_threads': 0,
     'def_max_vram': 0,
     'def_offload_to_cpu': False,
-    'def_vae_cpu': False,
-    'def_clip_cpu': False,
+    'def_backend_table': [
+        ["primary", "default"],
+        ["diffusion", "default"],
+        ["te", "default"],
+        ["vae", "default"],
+        ["controlnet", "default"]
+    ],
+    'def_params_backend_table': [
+        ["primary", "default"],
+        ["diffusion", "default"],
+        ["te", "default"],
+        ["vae", "default"],
+        ["controlnet", "default"]
+    ],
     'def_flash_attn': False,
     'def_diffusion_fa': False,
     'def_diffusion_conv_direct': False,

@@ -139,6 +139,8 @@ class CommonRunner():
         """
         return {
             '--offload-to-cpu': self._get_param('in_offload_to_cpu'),
+            '--stream-layers': self._get_param('in_stream_layers'),
+            '--eager-load': self._get_param('in_eager_load'),
             '--vae-tiling': self._get_param('in_vae_tiling'),
             '--vae-on-cpu': self._get_param('in_vae_cpu'),
             '--clip-on-cpu': self._get_param('in_clip_cpu'),

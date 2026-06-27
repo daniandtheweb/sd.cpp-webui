@@ -83,6 +83,50 @@ class CommandRunner(CommonRunner):
 
         return pp_path, np_path
 
+    def _parse_backend_table(self, param_key: str = 'in_backend_table') -> str | None:
+        """
+        Parses the 2D list from Gradio into a valid sd.cpp backend string.
+        Example output: "cuda0,te=cpu,vae=vulkan0"
+        """
+        backend_table = self._get_param(param_key)
+
+        # If UI didn't pass it or it's empty, return None
+        if not backend_table or not isinstance(backend_table, list):
+            return None
+
+        parts = []
+
+        # 1. Find and append the primary backend first
+        for row in backend_table:
+            if len(row) < 2:
+                continue
+            component = str(row[0]).strip().lower()
+            device = str(row[1]).strip().lower()
+
+            if component == "primary":
+                if device and device != "default":
+                    parts.append(device)
+                break
+
+        # 2. Process component overrides
+        for row in backend_table:
+            if len(row) < 2:
+                continue
+            component = str(row[0]).strip().lower()
+            device = str(row[1]).strip().lower()
+
+            # Skip invalid/default rows and the primary row we already handled
+            if not component or component == "primary" or not device or device == "default":
+                continue
+
+            # Map Gradio friendly names to CLI args
+            if component == "clip":
+                component = "te"
+
+            parts.append(f"{component}={device}")
+
+        return ",".join(parts) if parts else None
+
     def _set_output_path(self, dir_key: str, subctrl_id: int, extension: str):
         """Determines and sets the output path for the command."""
         output_dir = config.get(dir_key)
@@ -380,6 +424,8 @@ class ImageGenerationRunner(CommandRunner):
             '--max-vram': (self._get_param('in_max_vram')
                            if self._get_param('in_max_vram') != 0
                            else None),
+            '--backend': self._parse_backend_table('in_backend_table'),
+            '--params-backend': self._parse_backend_table('in_params_backend_table'),
             # VAE Tiling
             **({
                 '--vae-tile-overlap': self._get_param('in_vae_tile_overlap'),
@@ -654,7 +700,13 @@ class Any2VideoRunner(CommandRunner):
                                    else None),
             '--prediction': (self._get_param('in_predict')
                              if self._get_param('in_predict') != "Default"
-                             else None)
+                             else None),
+            # Performance
+            '--max-vram': (self._get_param('in_max_vram')
+                           if self._get_param('in_max_vram') != 0
+                           else None),
+            '--backend': self._parse_backend_table('in_backend_table'),
+            '--params-backend': self._parse_backend_table('in_params_backend_table'),
         }
         self._add_options(options)
 
