@@ -10,12 +10,20 @@ def create_prompts_ui(nprompt_support=True):
     """Create the prompts UI"""
 
     def save_and_refresh_prompts(name, p_prompt, n_prompt):
+        if not name:
+            gr.Warning("Please give a name to the prompt to save.")
+            return gr.skip()
         prompt_manager.add_prompt(name, p_prompt, n_prompt)
+        gr.Info(f"Prompt '{name}' saved successfully.")
         return gr.update(choices=prompt_manager.get_prompts(), value=name)
 
     def delete_and_refresh_prompts(name):
+        if not name:
+            gr.Warning("Please select a prompt to delete.")
+            return gr.skip()
         prompt_manager.delete_prompt(name)
-        return gr.update(choices=prompt_manager.get_prompts())
+        gr.Info(f"Prompt '{name}' has been deleted.")
+        return gr.update(choices=prompt_manager.get_prompts(), value=None)
 
     def refresh_prompt_list():
         return gr.update(choices=prompt_manager.get_prompts())
