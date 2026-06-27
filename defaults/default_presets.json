@@ -27,5 +27,15 @@
         "in_height": 1024,
         "in_cfg": 1,
         "in_diffusion_mode": 1
+    },
+
+    "Anima Turbo": {
+        "in_sampling": "euler",
+        "in_scheduler": "simple",
+        "in_steps": 8,
+        "in_width": 1024,
+        "in_height": 1024,
+        "in_cfg": 1,
+        "in_diffusion_mode": 1
     }
 }
