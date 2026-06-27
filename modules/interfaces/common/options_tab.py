@@ -70,7 +70,6 @@ OPTION_KEY_MAP = {
     # Performance
     'in_threads': 'def_threads',
     'in_max_vram': 'def_max_vram',
-    'in_offload_to_cpu': 'def_offload_to_cpu',
     'in_backend_table': 'def_backend_table',
     'in_params_backend_table': 'def_params_backend_table',
     'in_flash_attn': 'def_flash_attn',

@@ -22,8 +22,10 @@ user_data/
 
 !defaults/*.json
 
+outputs/commands/command_*.txt
 outputs/pprompts/pprompt_*.txt
 outputs/nprompts/nprompt_*.txt
 
+!outputs/commands/commands.txt
 !outputs/pprompts/pprompts.txt
 !outputs/nprompts/nprompts.txt

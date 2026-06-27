@@ -64,7 +64,6 @@ DEFAULT_SETTINGS = {
     'def_scm_policy': "none",
     'def_threads': 0,
     'def_max_vram': 0,
-    'def_offload_to_cpu': False,
     'def_backend_table': [
         ["primary", "default"],
         ["diffusion", "default"],

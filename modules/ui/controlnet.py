@@ -49,10 +49,6 @@ def create_cnnet_ui():
             value=0.9,
             interactive=False
         )
-        cnnet_cpu = gr.Checkbox(
-            label="ControlNet on CPU",
-            interactive=False
-        )
         canny = gr.Checkbox(
             label="Canny (edge detection)",
             interactive=False
@@ -60,7 +56,7 @@ def create_cnnet_ui():
 
     cnnet_comp = [
         cnnet, reload_cnnet_btn, clear_cnnet_btn, control_img,
-        control_strength, cnnet_cpu, canny
+        control_strength, canny
     ]
 
     reload_cnnet_btn.click(
@@ -80,6 +76,5 @@ def create_cnnet_ui():
         'in_cnnet': cnnet,
         'in_control_img': control_img,
         'in_control_strength': control_strength,
-        'in_cnnet_cpu': cnnet_cpu,
         'in_canny': canny
     }

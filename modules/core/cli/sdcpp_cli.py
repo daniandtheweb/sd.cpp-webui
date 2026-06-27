@@ -27,6 +27,7 @@ class CommandRunner(CommonRunner):
         self.outputs = []
         self.output_path = ""
         self.preview_path = None
+        self.run_idx = self._get_next_synced_index()
 
     def _make_relative(self, path):
         """Converts absolute paths to be relative to the executable directory."""
@@ -40,20 +41,21 @@ class CommandRunner(CommonRunner):
             return path
 
     def _get_next_synced_index(self) -> int:
-        """Finds the next available sequential index by scanning both prompt folders."""
-        pp_dir = os.path.join('outputs', 'pprompts')
-        np_dir = os.path.join('outputs', 'nprompts')
-        os.makedirs(pp_dir, exist_ok=True)
-        os.makedirs(np_dir, exist_ok=True)
+        """Finds the next available sequential index by scanning prompt and command folders."""
+        dirs = [
+            os.path.join('outputs', 'pprompts'),
+            os.path.join('outputs', 'nprompts'),
+            os.path.join('outputs', 'commands')
+        ]
 
         max_idx = -1
-        for d in [pp_dir, np_dir]:
+        for d in dirs:
+            os.makedirs(d, exist_ok=True)
             for f in os.listdir(d):
-                # Updated to recognize both pprompt_ and nprompt_ prefixes
-                if (f.startswith('pprompt_') or f.startswith('nprompt_')) and f.endswith('.txt'):
+                if (f.startswith('pprompt_') or f.startswith('nprompt_') or f.startswith('command_')) and f.endswith('.txt'):
                     try:
-                        # Strip prefix and extension to get the number
-                        num_str = f.replace('pprompt_', '').replace('nprompt_', '').replace('.txt', '')
+                        # Strip all possible prefixes and the extension to get the number
+                        num_str = f.replace('pprompt_', '').replace('nprompt_', '').replace('command_', '').replace('.txt', '')
                         idx = int(num_str)
                         if idx > max_idx:
                             max_idx = idx
@@ -63,7 +65,7 @@ class CommandRunner(CommonRunner):
 
     def _save_prompts(self) -> tuple:
         """Saves positive and negative prompts to synced sequential files (skips if empty)."""
-        idx = self._get_next_synced_index()
+        idx = self.run_idx
         pp_dir = os.path.join('outputs', 'pprompts')
         np_dir = os.path.join('outputs', 'nprompts')
 
@@ -82,6 +84,14 @@ class CommandRunner(CommonRunner):
                 f.write(np_text)
 
         return pp_path, np_path
+
+    def _save_command(self):
+        """Saves the final generated CLI command to a synced file."""
+        cmd_dir = os.path.join('outputs', 'commands')
+        cmd_path = os.path.join(cmd_dir, f"command_{self.run_idx}.txt")
+
+        with open(cmd_path, 'w', encoding='utf-8') as f:
+            f.write(self.fcommand)
 
     def _parse_backend_table(self, param_key: str = 'in_backend_table') -> str | None:
         """
@@ -245,6 +255,7 @@ class CommandRunner(CommonRunner):
     def run(self) -> Generator:
         """Runs the command and yields Gradio updates."""
         self._prepare_for_run()
+        self._save_command()
         print(f"\n\n{self.fcommand}\n\n")
 
         process_env = self._build_process_env()

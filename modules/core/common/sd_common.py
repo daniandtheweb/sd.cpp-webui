@@ -138,13 +138,9 @@ class CommonRunner():
         Returns the execution flags shared by almost all commands.
         """
         return {
-            '--offload-to-cpu': self._get_param('in_offload_to_cpu'),
             '--stream-layers': self._get_param('in_stream_layers'),
             '--eager-load': self._get_param('in_eager_load'),
             '--vae-tiling': self._get_param('in_vae_tiling'),
-            '--vae-on-cpu': self._get_param('in_vae_cpu'),
-            '--clip-on-cpu': self._get_param('in_clip_cpu'),
-            '--control-net-cpu': self._get_param('in_cnnet_cpu'),
             '--canny': self._get_param('in_canny'),
             '--chroma-disable-dit-mask': self._get_param('in_disable_dit_mask'),
             '--chroma-enable-t5-mask': self._get_param('in_enable_t5_mask'),

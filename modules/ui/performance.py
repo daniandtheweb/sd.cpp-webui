@@ -39,10 +39,6 @@ def create_performance_ui():
             value=0
         )
         with gr.Group():
-            offload_to_cpu = gr.Checkbox(
-                label="Offload to CPU",
-                value=config.get('def_offload_to_cpu')
-            )
             max_vram = gr.Slider(
                 label="Max VRAM budget (GiB) for segmented graph execution",
                 value=config.get('def_max_vram'),
@@ -84,7 +80,6 @@ def create_performance_ui():
     return {
         'in_threads': threads,
         'in_max_vram': max_vram,
-        'in_offload_to_cpu': offload_to_cpu,
         'in_stream_layers': stream_layers,
         'in_eager_load': eager_load,
         'in_backend_table': backend_table,
