@@ -29,7 +29,7 @@ def create_performance_ui():
                 interactive=True,
                 row_count=(5, "dynamic"),
                 column_count=(2, "fixed"),
-                label="Backend Configuration",
+                label="Parameters Backend Configuration",
                 type="array"
             )
         threads = gr.Number(
