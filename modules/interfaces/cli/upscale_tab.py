@@ -105,6 +105,10 @@ with gr.Blocks() as upscale_block:
                     output = gr.Textbox(
                         label="Output Name (optional)", value=""
                     )
+                    offload_to_cpu = gr.Checkbox(
+                        label="Offload to CPU",
+                        value=config.get('def_offload_to_cpu')
+                    )
                     flash_attn = gr.Checkbox(
                         label="Flash Attention", value=config.get('def_flash_attn')
                     )
@@ -181,6 +185,7 @@ with gr.Blocks() as upscale_block:
         'in_upscl_rep': upscl_rep,
         'in_upscl_tile_size': upscl_tile_size,
         'in_output': output,
+        'in_offload_to_cpu': offload_to_cpu,
         'in_flash_attn': flash_attn,
         'in_diffusion_conv_direct': diffusion_conv_direct,
         'in_color': color,

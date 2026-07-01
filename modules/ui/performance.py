@@ -56,6 +56,10 @@ def create_performance_ui():
             )
 
         with gr.Group():
+            offload_to_cpu = gr.Checkbox(
+                label="Offload to CPU",
+                value=config.get('def_offload_to_cpu')
+            )
             flash_attn = gr.Checkbox(
                 label="Flash Attention",
                 value=config.get('def_flash_attn')
@@ -84,6 +88,7 @@ def create_performance_ui():
         'in_eager_load': eager_load,
         'in_backend_table': backend_table,
         'in_params_backend_table': params_backend_table,
+        'in_offload_to_cpu': offload_to_cpu,
         'in_flash_attn': flash_attn,
         'in_diffusion_fa': diffusion_fa,
         'in_diffusion_conv_direct': diffusion_conv_direct,

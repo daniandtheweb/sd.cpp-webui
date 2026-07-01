@@ -72,6 +72,7 @@ OPTION_KEY_MAP = {
     'in_max_vram': 'def_max_vram',
     'in_backend_table': 'def_backend_table',
     'in_params_backend_table': 'def_params_backend_table',
+    'in_offload_to_cpu': 'def_offload_to_cpu',
     'in_flash_attn': 'def_flash_attn',
     'in_diffusion_fa': 'def_diffusion_fa',
     'in_diffusion_conv_direct': 'def_diffusion_conv_direct',

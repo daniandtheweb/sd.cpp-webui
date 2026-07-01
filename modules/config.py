@@ -78,6 +78,7 @@ DEFAULT_SETTINGS = {
         ["vae", "default"],
         ["controlnet", "default"]
     ],
+    'def_offload_to_cpu': False,
     'def_flash_attn': False,
     'def_diffusion_fa': False,
     'def_diffusion_conv_direct': False,
