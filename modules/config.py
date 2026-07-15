@@ -78,6 +78,8 @@ DEFAULT_SETTINGS = {
         ["vae", "default"],
         ["controlnet", "default"]
     ],
+    'def_stream_layers': False,
+    'def_eager_load': False,
     'def_flash_attn': False,
     'def_diffusion_fa': False,
     'def_diffusion_conv_direct': False,
