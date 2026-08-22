@@ -292,7 +292,6 @@ class ApiTaskRunner:
                 # SAFEGUARD: The API rejected the request (missing lora?).
                 #            Wipe lora cache.
                 ApiTaskRunner._lora_lookup_cache.clear()
-                ApiTaskRunner._lora_cache_timestamp = 0
                 yield (
                     self.fcommand,
                     gr.skip(),
@@ -303,7 +302,6 @@ class ApiTaskRunner:
         except Exception:
             # SAFEGUARD: Hard crash. Wipe lora cache.
             ApiTaskRunner._lora_lookup_cache.clear()
-            ApiTaskRunner._lora_cache_timestamp = 0
             yield (
                 self.fcommand,
                 gr.skip(),
@@ -324,7 +322,7 @@ class Txt2ImgApiRunner(ApiTaskRunner):
 class Img2ImgApiRunner(ApiTaskRunner):
     def prepare(self):
         self._set_output_path(
-            dir_key='img2img_dir', subctrl_id=0, extension='png'
+            dir_key='img2img_dir', subctrl_id=1, extension='png'
         )
         self.url = f"http://{self.ip}:{self.port}/sdapi/v1/img2img"
 
