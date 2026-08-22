@@ -2,7 +2,6 @@
 
 import os
 import io
-import re
 import json
 import base64
 import httpx
@@ -11,17 +10,17 @@ from typing import Dict, Any, Generator
 
 import gradio as gr
 
-from modules.core.common.sd_common import process_editor_mask
-from modules.utils.file_utils import get_path
+from modules.core.common.sd_common import (
+    CommonRunner, LORA_TAG_PATTERN, image_to_pil, process_editor_mask
+)
 from modules.loader import get_loras
-from modules.utils.sdcpp_utils import generate_output_filename
 from modules.utils.metadata_utils import (
     build_a1111_metadata, save_image_with_metadata
 )
 from modules.shared_instance import config, server_state
 
 
-class ApiTaskRunner:
+class ApiTaskRunner(CommonRunner):
     """
     Builds and manages API requests to the sd.cpp server.
     """
@@ -29,73 +28,13 @@ class ApiTaskRunner:
     _lora_lookup_cache = {}
 
     def __init__(self, params: Dict[str, Any]):
-        self.params = params
+        super().__init__(params)
         self.ip = str(self._get_param('in_ip'))
         self.port = str(self._get_param('in_port'))
         self.url = ""
 
         self.output_path = ""
         self.outputs = []
-        self.fcommand = ""
-
-    def _set_output_path(self, dir_key: str, subctrl_id: int, extension: str):
-        """Determines and sets the output path for the command."""
-        output_dir = config.get(dir_key)
-        filename_override = self._get_param('in_output')
-        output_scheme = config.get('def_output_scheme')
-
-        if filename_override and str(filename_override).strip():
-            base_name = str(filename_override).strip()
-            filename = f"{base_name}.{extension}"
-            test_path = os.path.join(output_dir, filename)
-
-            counter = 1
-            while os.path.exists(test_path):
-                filename = f"{base_name}_{counter}.{extension}"
-                test_path = os.path.join(output_dir, filename)
-                counter += 1
-
-            self.output_path = test_path
-            return
-
-        name_parts = []
-        if config.get('def_output_steps'):
-            steps_val = self._get_param('in_steps')
-            if steps_val:
-                name_parts.append(f"{steps_val}_steps")
-
-        if config.get('def_output_quant'):
-            quant_val = self._get_param('in_model_type')
-            if quant_val and quant_val != "Default":
-                name_parts.append(str(quant_val))
-
-        self.output_path = generate_output_filename(
-            output_dir, output_scheme, extension,
-            name_parts, subctrl_id
-        )
-
-    def _resolve_paths(self):
-        """Resolves all model and directory paths from the config."""
-        path_mappings = {
-            'ckpt_dir': ['in_ckpt_model'],
-            'vae_dir': ['in_ckpt_vae', 'in_unet_vae'],
-            'unet_dir': ['in_unet_model', 'in_high_noise_model'],
-            'txt_enc_dir': [
-                'in_clip_g', 'in_clip_l', 'in_t5xxl', 'in_llm',
-                'in_umt5_xxl', 'in_clip_vision_h'
-            ],
-            'taesd_dir': ['in_taesd'],
-            'phtmkr_dir': ['in_phtmkr'],
-            'upscl_dir': ['in_upscl'],
-            'cnnet_dir': ['in_cnnet']
-        }
-        for dir_key, param_keys in path_mappings.items():
-            for param_key in param_keys:
-                if param_key in self.params:
-                    full_path_key = f"f_{param_key.replace('in_', '')}"
-                    self.params[full_path_key] = get_path(
-                        config.get(dir_key), self.params.get(param_key)
-                    )
 
     def _extract_loras(self, text: str) -> tuple:
         """
@@ -108,9 +47,7 @@ class ApiTaskRunner:
 
         extracted_loras = []
         # Regex matches <lora:filename:multiplier>
-        pattern = r'<lora:([^:]+):([^>]+)>'
-
-        matches = re.findall(pattern, text)
+        matches = LORA_TAG_PATTERN.findall(text)
         needs_refresh = False
 
         for name, _ in matches:
@@ -155,12 +92,9 @@ class ApiTaskRunner:
             })
             return ""
 
-        cleaned_text = re.sub(pattern, match_handler, text)
+        cleaned_text = LORA_TAG_PATTERN.sub(match_handler, text)
 
         return cleaned_text, extracted_loras
-
-    def _get_param(self, key: str, default: Any = None) -> Any:
-        return self.params.get(key, default)
 
     def _get_extra_args_string(self) -> str:
         """Helper to build the <sd_cpp_extra_args> tag for the prompt."""
@@ -328,13 +262,10 @@ class Img2ImgApiRunner(ApiTaskRunner):
 
     def _build_payload(self) -> dict:
         payload = super()._build_payload()
-        init_img = self._get_param('in_img_inp') or self._get_param('in_first_frame_inp')
+        init_img = image_to_pil(
+            self._get_param('in_img_inp') or self._get_param('in_first_frame_inp')
+        )
         if init_img is not None:
-            if isinstance(init_img, str):
-                init_img = Image.open(init_img)
-            elif not isinstance(init_img, Image.Image):
-                init_img = Image.fromarray(init_img)
-
             buf = io.BytesIO()
             init_img.save(buf, format="PNG")
             payload["init_images"] = [base64.b64encode(buf.getvalue()).decode('utf-8')]
@@ -377,19 +308,9 @@ class ImgEditApiRunner(ApiTaskRunner):
                 init_imgs = [init_imgs]
 
             for idx, img_item in enumerate(init_imgs):
-                if isinstance(img_item, tuple):
-                    img_val = img_item[0]
-                elif isinstance(img_item, dict) and "name" in img_item:
-                    img_val = img_item["name"]
-                else:
-                    img_val = img_item
-
-                if isinstance(img_val, str):
-                    img_obj = Image.open(img_val)
-                elif isinstance(img_val, Image.Image):
-                    img_obj = img_val
-                else:
-                    img_obj = Image.fromarray(img_val)
+                img_obj = image_to_pil(img_item)
+                if img_obj is None:
+                    continue
 
                 buf = io.BytesIO()
                 img_obj.save(buf, format="PNG")

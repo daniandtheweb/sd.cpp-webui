@@ -9,9 +9,8 @@ from typing import Dict, Any, Generator
 import gradio as gr
 
 from modules.core.common.sd_common import (
-    DiffusionMode, CommonRunner, process_editor_mask
+    CommonRunner, LORA_TAG_PATTERN, process_editor_mask
 )
-from modules.utils.sdcpp_utils import generate_output_filename
 from modules.shared_instance import (
     config, subprocess_manager, SD_CLI
 )
@@ -137,43 +136,6 @@ class CommandRunner(CommonRunner):
 
         return ",".join(parts) if parts else None
 
-    def _set_output_path(self, dir_key: str, subctrl_id: int, extension: str):
-        """Determines and sets the output path for the command."""
-        output_dir = config.get(dir_key)
-        filename_override = self._get_param('in_output')
-        output_scheme = config.get('def_output_scheme')
-
-        if filename_override and str(filename_override).strip():
-            base_name = str(filename_override).strip()
-            filename = f"{base_name}.{extension}"
-            test_path = os.path.join(output_dir, filename)
-
-            counter = 1
-            while os.path.exists(test_path):
-                filename = f"{base_name}_{counter}.{extension}"
-                test_path = os.path.join(output_dir, filename)
-                counter += 1
-
-            self.output_path = self._make_relative(test_path)
-            return
-
-        name_parts = []
-
-        if config.get('def_output_steps'):
-            steps_val = self._get_param('in_steps')
-            if steps_val:
-                name_parts.append(f"{steps_val}_steps")
-
-        if config.get('def_output_quant'):
-            quant_val = self._get_param('in_model_type')
-            if quant_val and quant_val != "Default":
-                name_parts.append(str(quant_val))
-
-        self.output_path = self._make_relative(generate_output_filename(
-            output_dir, output_scheme, extension,
-            name_parts, subctrl_id
-        ))
-
     def _add_base_args(self):
         """Adds arguments common to all modes."""
         self.command.extend([
@@ -221,7 +183,7 @@ class CommandRunner(CommonRunner):
         # Only add LoRA arguments if prompts contain <lora:name:strength> tags
         pp_text = str(self._get_param('in_pprompt', "")).strip()
         np_text = str(self._get_param('in_nprompt', "")).strip()
-        if re.search(r'<lora:[^:]+:[^>]+>', f"{pp_text} {np_text}"):
+        if LORA_TAG_PATTERN.search(f"{pp_text} {np_text}"):
             self.command.extend([
                 '--lora-model-dir', self._make_relative(config.get('lora_dir')),
                 '--lora-apply-mode', str(self._get_param('in_lora_apply'))
@@ -322,27 +284,6 @@ class CommandRunner(CommonRunner):
 class ImageGenerationRunner(CommandRunner):
     """A common base for txt2img, img2img, and imgedit runners."""
 
-    def _get_model_options(self) -> Dict[str, Any]:
-        """Builds and returns a dictionary of model and VAE options."""
-        options = {}
-        diffusion_mode = self._get_param('in_diffusion_mode')
-
-        if diffusion_mode == DiffusionMode.CHECKPOINT:
-            options['--model'] = self._make_relative(self._get_param('f_ckpt_model'))
-            options['--vae'] = self._make_relative(self._get_param('f_ckpt_vae'))
-        elif diffusion_mode == DiffusionMode.UNET:
-            options['--diffusion-model'] = self._make_relative(self._get_param('f_unet_model'))
-            options['--vae'] = self._make_relative(self._get_param('f_unet_vae'))
-            options['--uncond-diffusion-model'] = self._make_relative(self._get_param('f_uncond_unet_model'))
-            options['--clip_g'] = self._make_relative(self._get_param('f_clip_g'))
-            options['--clip_l'] = self._make_relative(self._get_param('f_clip_l'))
-            options['--t5xxl'] = self._make_relative(self._get_param('f_t5xxl'))
-            options['--llm'] = self._make_relative(self._get_param('f_llm'))
-            options['--llm_vision'] = self._make_relative(self._get_param('f_llm_vision'))
-
-        # Filter out any keys that have a None value before returning
-        return {k: v for k, v in options.items() if v is not None}
-
     def build_command(self, output_dir_key: str, subctrl_id: int):
         """Builds the common command for image generation."""
         self._resolve_paths()
@@ -363,7 +304,7 @@ class ImageGenerationRunner(CommandRunner):
 
         options = {
             # Models
-            **self._get_model_options(),
+            **self._get_common_model_options(),
             # Weight type
             '--type': (self._get_param('in_model_type')
                        if self._get_param('in_model_type') != "Default"

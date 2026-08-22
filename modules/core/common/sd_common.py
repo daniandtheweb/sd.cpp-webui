@@ -1,14 +1,32 @@
 """sd.cpp-webui - core - stable-diffusion.cpp common"""
 
 import os
+import re
 from PIL import Image
 from enum import IntEnum
 from typing import Dict, Any
 
 from modules.utils.file_utils import get_path
-from modules.utils.sdcpp_utils import extract_env_vars
+from modules.utils.sdcpp_utils import extract_env_vars, generate_output_filename
 from modules.shared_instance import config
 from modules.ui.constants import CIRCULAR_PADDING
+
+LORA_TAG_PATTERN = re.compile(r'<lora:([^:]+):([^>]+)>')
+
+
+def image_to_pil(value):
+    """Coerces a gradio image value into a PIL Image."""
+    if value is None:
+        return None
+    if isinstance(value, (tuple, list)):
+        value = value[0]
+    if isinstance(value, dict):
+        value = value.get('path') or value.get('name')
+    if isinstance(value, Image.Image):
+        return value
+    if isinstance(value, str):
+        return Image.open(value)
+    return Image.fromarray(value)
 
 
 def process_editor_mask(mask_input: Any) -> Image.Image | None:
@@ -72,6 +90,47 @@ class CommonRunner():
         """
         return self.params.get(key, default)
 
+    def _make_relative(self, path):
+        """Returns the path unchanged. Overridden by the CLI runner."""
+        return path
+
+    def _set_output_path(self, dir_key: str, subctrl_id: int, extension: str):
+        """Determines and sets the output path for the command."""
+        output_dir = config.get(dir_key)
+        filename_override = self._get_param('in_output')
+        output_scheme = config.get('def_output_scheme')
+
+        if filename_override and str(filename_override).strip():
+            base_name = str(filename_override).strip()
+            filename = f"{base_name}.{extension}"
+            test_path = os.path.join(output_dir, filename)
+
+            counter = 1
+            while os.path.exists(test_path):
+                filename = f"{base_name}_{counter}.{extension}"
+                test_path = os.path.join(output_dir, filename)
+                counter += 1
+
+            self.output_path = self._make_relative(test_path)
+            return
+
+        name_parts = []
+
+        if config.get('def_output_steps'):
+            steps_val = self._get_param('in_steps')
+            if steps_val:
+                name_parts.append(f"{steps_val}_steps")
+
+        if config.get('def_output_quant'):
+            quant_val = self._get_param('in_model_type')
+            if quant_val and quant_val != "Default":
+                name_parts.append(str(quant_val))
+
+        self.output_path = self._make_relative(generate_output_filename(
+            output_dir, output_scheme, extension,
+            name_parts, subctrl_id
+        ))
+
     def _resolve_paths(self):
         """
         Resolves all model and directory paths from the config.
@@ -79,7 +138,7 @@ class CommonRunner():
         path_mappings = {
             'ckpt_dir': ['in_ckpt_model'],
             'vae_dir': ['in_ckpt_vae', 'in_unet_vae', 'in_audio_vae'],
-            'unet_dir': ['in_unet_model', 'in_high_noise_model'],
+            'unet_dir': ['in_unet_model', 'in_high_noise_model', 'in_uncond_unet_model'],
             'txt_enc_dir': [
                 'in_clip_g', 'in_clip_l', 'in_t5xxl', 'in_llm',
                 'in_umt5_xxl', 'in_clip_vision_h', 'in_emb_connect'
@@ -120,16 +179,17 @@ class CommonRunner():
         diffusion_mode = self._get_param('in_diffusion_mode')
 
         if diffusion_mode == DiffusionMode.CHECKPOINT:
-            options['--model'] = self._get_param('f_ckpt_model')
-            options['--vae'] = self._get_param('f_ckpt_vae')
+            options['--model'] = self._make_relative(self._get_param('f_ckpt_model'))
+            options['--vae'] = self._make_relative(self._get_param('f_ckpt_vae'))
         elif diffusion_mode == DiffusionMode.UNET:
-            options['--diffusion-model'] = self._get_param('f_unet_model')
-            options['--vae'] = self._get_param('f_unet_vae')
-            options['--clip_g'] = self._get_param('f_clip_g')
-            options['--clip_l'] = self._get_param('f_clip_l')
-            options['--t5xxl'] = self._get_param('f_t5xxl')
-            options['--llm'] = self._get_param('f_llm')
-            options['--llm_vision'] = self._get_param('f_llm_vision')
+            options['--diffusion-model'] = self._make_relative(self._get_param('f_unet_model'))
+            options['--vae'] = self._make_relative(self._get_param('f_unet_vae'))
+            options['--uncond-diffusion-model'] = self._make_relative(self._get_param('f_uncond_unet_model'))
+            options['--clip_g'] = self._make_relative(self._get_param('f_clip_g'))
+            options['--clip_l'] = self._make_relative(self._get_param('f_clip_l'))
+            options['--t5xxl'] = self._make_relative(self._get_param('f_t5xxl'))
+            options['--llm'] = self._make_relative(self._get_param('f_llm'))
+            options['--llm_vision'] = self._make_relative(self._get_param('f_llm_vision'))
 
         return {k: v for k, v in options.items() if v is not None}
 
