@@ -8,7 +8,13 @@ from modules.utils.math_utils import random_seed
 from modules.shared_instance import config
 from modules.utils.ui_state import update_session_cache
 from modules.utils.ui_events import update_interactivity
-from modules.utils.image_utils import switch_sizes
+from modules.utils.image_utils import (
+    RATIO_OPTIONS, apply_ratio,
+    switch_sizes_and_ratio,
+    sync_height_from_width,
+    sync_width_from_height
+)
+from .resolutions import create_resolutions_ui
 from .constants import (
     QUANTS, SAMPLERS, SCHEDULERS,
     SWITCH_V_SYMBOL, RANDOM_SYMBOL
@@ -83,13 +89,59 @@ def create_generation_settings_ui(unet_mode: bool = False):
                 switch_size = gr.Button(
                     value=SWITCH_V_SYMBOL, scale=1
                 )
-                switch_size.click(
-                    switch_sizes,
-                    inputs=[height,
-                            width],
-                    outputs=[height,
-                             width]
+                ratio = gr.Dropdown(
+                    label="Aspect ratio",
+                    choices=RATIO_OPTIONS,
+                    value='Free',
+                    interactive=True,
+                    allow_custom_value=False
                 )
+                switch_size.click(
+                    switch_sizes_and_ratio,
+                    inputs=[height,
+                            width,
+                            ratio],
+                    outputs=[height,
+                             width,
+                             ratio]
+                )
+
+                last_sync = gr.State(value=None)
+                ratio.change(
+                    apply_ratio,
+                    inputs=[ratio,
+                            width,
+                            height],
+                    outputs=[width,
+                             height]
+                )
+                # preprocess=False: partial values typed into the
+                # sliders (e.g. '51' while typing '512') must not
+                # raise out-of-bounds errors; the handlers ignore
+                # any value outside the slider bounds.
+                width.change(
+                    sync_height_from_width,
+                    inputs=[width,
+                            ratio,
+                            last_sync],
+                    outputs=[height,
+                             last_sync],
+                    preprocess=False
+                )
+                height.change(
+                    sync_width_from_height,
+                    inputs=[height,
+                            ratio,
+                            last_sync],
+                    outputs=[width,
+                             last_sync],
+                    preprocess=False
+                )
+
+                # Resolution Presets
+                create_resolutions_ui(width, height)
+
+
         with gr.Column():
             with gr.Row():
                 steps = gr.Slider(

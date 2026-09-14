@@ -12,6 +12,7 @@ import modules.utils.queue as queue_manager
 from modules.utils.ui_state import ModelState
 from modules.utils.prompt_manager import PromptManager
 from modules.utils.preset_manager import PresetManager
+from modules.utils.resolution_manager import ResolutionManager
 
 
 SD_CLI = exe_name("cli")
@@ -48,3 +49,5 @@ model_state = ModelState()
 prompt_manager = PromptManager()
 
 preset_manager = PresetManager()
+
+resolution_manager = ResolutionManager()
