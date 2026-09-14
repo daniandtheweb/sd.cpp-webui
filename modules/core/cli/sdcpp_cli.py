@@ -533,8 +533,9 @@ class Any2VideoRunner(CommandRunner):
 
         # Save prompts to synced sequential files
         pp_path, np_path = self._save_prompts()
-        self.command.extend(['--prompt-file', pp_path])
-        if self._get_param('in_nprompt', "").strip():
+        if pp_path:
+            self.command.extend(['--prompt-file', pp_path])
+        if np_path:
             self.command.extend(['--negative-prompt-file', np_path])
 
         self._add_base_args()
