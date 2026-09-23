@@ -121,6 +121,7 @@ class ConfigManager:
         'def_umt5_xxl': 'txt_enc_dir',
         'def_emb_connect': 'txt_enc_dir',
         'def_llm': 'txt_enc_dir',
+        'def_llm_vision': 'txt_enc_dir',
     }
 
     def __init__(self, config_path: str = None):

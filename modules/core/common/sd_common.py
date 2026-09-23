@@ -141,7 +141,8 @@ class CommonRunner():
             'unet_dir': ['in_unet_model', 'in_high_noise_model', 'in_uncond_unet_model'],
             'txt_enc_dir': [
                 'in_clip_g', 'in_clip_l', 'in_t5xxl', 'in_llm',
-                'in_umt5_xxl', 'in_clip_vision_h', 'in_emb_connect'
+                'in_llm_vision', 'in_umt5_xxl', 'in_clip_vision_h',
+                'in_emb_connect'
             ],
             'taesd_dir': ['in_taesd'],
             'phtmkr_dir': ['in_phtmkr'],
