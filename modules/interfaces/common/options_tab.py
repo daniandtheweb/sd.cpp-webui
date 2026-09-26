@@ -200,6 +200,12 @@ with gr.Blocks() as options_block:
                     dir_key='txt_enc_dir',
                     option_key='def_llm')
                 )
+            registry.register(
+                'def_llm_vision', create_model_widget(
+                    label="llm_vision",
+                    dir_key='txt_enc_dir',
+                    option_key='def_llm_vision')
+                )
 
         quant_ui = create_quant_ui()
         for k, v in quant_ui.items():
