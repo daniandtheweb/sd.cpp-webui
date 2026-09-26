@@ -168,6 +168,7 @@ def unet_tab_switch(*args):
         gr.update(value=model_state.bak_clip_l),                           # + clip_l
         gr.update(value=model_state.bak_t5xxl),                            # + t5xxl
         gr.update(value=model_state.bak_llm),                              # + llm
+        gr.update(value=model_state.bak_llm_vision),                       # + llm_vision
         gr.update(value=model_state.bak_guidance_bool, visible=True),      # + guidance_bool
         gr.update(visible=True),                                           # + guidance
         gr.update(value=model_state.bak_flow_shift_bool, visible=True),    # + flow_shift_bool
@@ -187,6 +188,7 @@ def ckpt_tab_switch(*args):
         gr.update(value=None),                          # - clip_l
         gr.update(value=None),                          # - t5xxl
         gr.update(value=None),                          # - llm
+        gr.update(value=None),                          # - llm_vision
         gr.update(value=False, visible=False),          # - guidance_bool
         gr.update(visible=False),                       # - guidance
         gr.update(value=False, visible=False),          # - flow_shift_bool
