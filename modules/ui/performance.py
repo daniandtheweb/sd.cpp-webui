@@ -79,12 +79,14 @@ def create_performance_ui():
             linear_scale = gr.Number(
                 label="Linear input scale override (0 = model default)",
                 value=config.get('def_linear_scale'),
-                precision=None
+                precision=None,
+                minimum=0
             )
             attn_scale = gr.Number(
                 label="FA K/V scale override (0 = model default, requires FA)",
                 value=config.get('def_attn_scale'),
-                precision=None
+                precision=None,
+                minimum=0
             )
 
     return {

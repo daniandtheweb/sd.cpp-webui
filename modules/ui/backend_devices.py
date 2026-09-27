@@ -227,7 +227,8 @@ def create_max_vram_accordion():
         default_budget = gr.Number(
             label="All devices (GiB)",
             value=saved.get('*'),
-            precision=1
+            precision=1,
+            minimum=0
         )
         budget_inputs = []
         for i in range(0, len(devices), 2):
