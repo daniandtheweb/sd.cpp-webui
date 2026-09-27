@@ -303,12 +303,12 @@ with gr.Blocks()as img2img_block:
     # Interactive Bindings
     def safe_ckpt_tab_switch(is_loading):
         if is_loading:
-            return [gr.skip()] * 13 + [False]
+            return [gr.skip()] * 14 + [False]
         return list(ckpt_tab_switch()) + [False]
 
     def safe_unet_tab_switch(is_loading):
         if is_loading:
-            return [gr.skip()] * 13 + [False]
+            return [gr.skip()] * 14 + [False]
         return list(unet_tab_switch()) + [False]
 
     model_ui['components']['ckpt_tab'].select(
@@ -324,6 +324,7 @@ with gr.Blocks()as img2img_block:
             model_ui['inputs']['in_clip_l'],
             model_ui['inputs']['in_t5xxl'],
             model_ui['inputs']['in_llm'],
+            model_ui['inputs']['in_llm_vision'],
             generation_settings_ui['in_guidance_bool'],
             generation_settings_ui['in_guidance'],
             generation_settings_ui['in_flow_shift_bool'],
@@ -345,6 +346,7 @@ with gr.Blocks()as img2img_block:
             model_ui['inputs']['in_clip_l'],
             model_ui['inputs']['in_t5xxl'],
             model_ui['inputs']['in_llm'],
+            model_ui['inputs']['in_llm_vision'],
             generation_settings_ui['in_guidance_bool'],
             generation_settings_ui['in_guidance'],
             generation_settings_ui['in_flow_shift_bool'],
