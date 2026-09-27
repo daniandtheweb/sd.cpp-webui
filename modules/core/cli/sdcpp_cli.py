@@ -1,5 +1,6 @@
 """sd.cpp-webui - core - stable-diffusion.cpp cli"""
 
+import math
 import os
 import re
 import sys
@@ -92,10 +93,35 @@ class CommandRunner(CommonRunner):
         with open(cmd_path, 'w', encoding='utf-8') as f:
             f.write(self.fcommand)
 
-    def _parse_backend_table(self, param_key: str = 'in_backend_table') -> str | None:
+    # Canonical module names and the aliases the CLI accepts for them
+    _BACKEND_MODULES = {
+        'diffusion': {'diffusion', 'model', 'unet', 'dit'},
+        'te': {'te', 'clip', 'text', 'textencoder', 'textencoders',
+               'conditioner', 'cond', 'llm', 't5', 't5xxl'},
+        'clip_vision': {'clip_vision', 'clipvision', 'vision'},
+        'vae': {'vae', 'firststage', 'autoencoder', 'tae'},
+        'controlnet': {'controlnet', 'control'},
+        'photomaker': {'photomaker', 'photomakerid', 'pmid', 'photo'},
+        'upscaler': {'upscaler', 'esrgan', 'hires'},
+        'detector': {'detector', 'adetailer', 'yolo'},
+        'audio_encoder': {'audio_encoder', 'audioencoder', 'audio'},
+    }
+    _BACKEND_ALIAS_MAP = {
+        alias.replace('-', '').replace('_', ''): module
+        for module, aliases in _BACKEND_MODULES.items()
+        for alias in aliases
+    }
+    _DEFAULT_ALIASES = {'*', 'primary', 'all', 'default'}
+
+    @staticmethod
+    def _norm_name(name: str) -> str:
+        return str(name).strip().lower().replace('-', '').replace('_', '')
+
+    def _parse_backend_table(self, param_key: str = 'in_backend_table',
+                             params_backend: bool = False) -> str | None:
         """
-        Parses the 2D list from Gradio into a valid sd.cpp backend string.
-        Example output: "cuda0,te=cpu,vae=vulkan0"
+        Parses the backend table rows into a valid sd.cpp backend string.
+        Example output: "vulkan0,diffusion=vulkan0&vulkan1,vae=cpu"
         """
         backend_table = self._get_param(param_key)
 
@@ -104,36 +130,90 @@ class CommandRunner(CommonRunner):
             return None
 
         parts = []
+        default_device = None
 
-        # 1. Find and append the primary backend first
         for row in backend_table:
             if len(row) < 2:
                 continue
-            component = str(row[0]).strip().lower()
+            component = self._norm_name(row[0])
             device = str(row[1]).strip().lower()
 
-            if component == "primary":
-                if device and device != "default":
-                    parts.append(device)
-                break
-
-        # 2. Process component overrides
-        for row in backend_table:
-            if len(row) < 2:
+            # Skip invalid/default rows
+            if not device or device in ('default', 'auto', ''):
                 continue
-            component = str(row[0]).strip().lower()
-            device = str(row[1]).strip().lower()
-
-            # Skip invalid/default rows and the primary row we already handled
-            if not component or component == "primary" or not device or device == "default":
+            # 'disk' is a parameter residency mode, not a compute backend
+            if not params_backend and device == 'disk':
                 continue
 
-            # Map Gradio friendly names to CLI args
-            if component == "clip":
-                component = "te"
+            if component in self._DEFAULT_ALIASES:
+                default_device = device
+                continue
 
-            parts.append(f"{component}={device}")
+            module = self._BACKEND_ALIAS_MAP.get(component)
+            if not module:
+                continue
+            parts.append(f"{module}={device}")
 
+        # Default entry first, per-module assignments override it
+        if default_device:
+            entry = (f"*={default_device}"
+                     if params_backend else default_device)
+            parts.insert(0, entry)
+
+        return ",".join(parts) if parts else None
+
+    # Only these modules support layer/row splitting of their compute
+    _SPLIT_MODULES = {'diffusion', 'te'}
+
+    def _parse_split_modes(self) -> str | None:
+        """
+        Parses the per-module split mode rows into a '--split-mode'
+        value. Example output: "diffusion=row,te=layer"
+        """
+        rows = self._get_param('in_split_modes')
+        if not rows or not isinstance(rows, list):
+            return None
+
+        parts = []
+        for row in rows:
+            if not row or len(row) < 2:
+                continue
+            module = str(row[0]).strip().lower()
+            mode = str(row[1]).strip().lower()
+            if module in self._SPLIT_MODULES and mode in ('layer', 'row'):
+                parts.append(f"{module}={mode}")
+        return ",".join(parts) if parts else None
+
+    # Budget keys the CLI accepts in place of a device name
+    _MAX_VRAM_DEFAULT_KEYS = {'', 'default', 'all', '*'}
+
+    def _parse_max_vram_table(self) -> str | None:
+        """
+        Parses the max-vram table rows into a valid sd.cpp budget string.
+        Example output: "cuda0=6,vulkan0=2"
+        """
+        rows = self._get_param('in_max_vram_table')
+        if not rows or not isinstance(rows, list):
+            return None
+
+        parts = []
+        for row in rows:
+            if not isinstance(row, (list, tuple)) or len(row) < 2:
+                continue
+            device = str(row[0] or '').strip()
+            value = str(row[1] or '').strip()
+            if not value or device.lower() == 'disk':
+                continue
+            try:
+                budget = float(value)
+            except ValueError:
+                continue
+            if not math.isfinite(budget):
+                continue
+            if device.lower() in self._MAX_VRAM_DEFAULT_KEYS:
+                parts.append(value)
+            else:
+                parts.append(f"{device}={value}")
         return ",".join(parts) if parts else None
 
     def _add_base_args(self):
@@ -359,10 +439,6 @@ class ImageGenerationRunner(CommandRunner):
                 '--control-image': self._make_relative(self._get_param('in_control_img')),
                 '--control-strength': self._get_param('in_control_strength')
             } if self._get_param('in_cnnet_bool') else {}),
-            # Chroma
-            '--chroma-t5-mask-pad': (self._get_param('in_t5_mask_pad')
-                                     if self._get_param('in_enable_t5_mask')
-                                     else None),
             # Skip Layer Guidance (SLG)
             **({
                 '--slg-scale': self._get_param('in_slg_scale'),
@@ -373,11 +449,12 @@ class ImageGenerationRunner(CommandRunner):
                                   else None),
             } if self._get_param('in_slg_bool') else {}),
             # Performance
-            '--max-vram': (self._get_param('in_max_vram')
-                           if self._get_param('in_max_vram') != 0
-                           else None),
+            '--max-vram': self._parse_max_vram_table(),
             '--backend': self._parse_backend_table('in_backend_table'),
-            '--params-backend': self._parse_backend_table('in_params_backend_table'),
+            '--params-backend': self._parse_backend_table(
+                'in_params_backend_table', params_backend=True
+            ),
+            '--split-mode': self._parse_split_modes(),
             # VAE Tiling
             **({
                 '--vae-tile-overlap': self._get_param('in_vae_tile_overlap'),
@@ -419,7 +496,9 @@ class ImageGenerationRunner(CommandRunner):
                 '--preview': self._get_param('in_preview_mode'),
                 '--preview-path': self._make_relative(self.preview_path),
                 '--preview-interval': self._get_param('in_preview_interval'),
-            } if self._get_param('in_preview_bool') else {})
+            } if self._get_param('in_preview_bool') else {}),
+            # Common runtime options (auto-fit, split-mode, rpc, scales, ...)
+            **self._get_common_options()
         }
         self._add_options(options)
 
@@ -655,11 +734,14 @@ class Any2VideoRunner(CommandRunner):
                              if self._get_param('in_predict') != "Default"
                              else None),
             # Performance
-            '--max-vram': (self._get_param('in_max_vram')
-                           if self._get_param('in_max_vram') != 0
-                           else None),
+            '--max-vram': self._parse_max_vram_table(),
             '--backend': self._parse_backend_table('in_backend_table'),
-            '--params-backend': self._parse_backend_table('in_params_backend_table'),
+            '--params-backend': self._parse_backend_table(
+                'in_params_backend_table', params_backend=True
+            ),
+            '--split-mode': self._parse_split_modes(),
+            # Common runtime options (auto-fit, rpc, scales, ...)
+            **self._get_common_options()
         }
         self._add_options(options)
 
@@ -694,6 +776,8 @@ class UpscaleRunner(CommandRunner):
             '--upscale-repeats': self._get_param('in_upscl_rep'),
             '--upscale-tile-size': self._get_param('in_upscl_tile_size'),
             '-o': self.output_path,
+            # Common runtime options (auto-fit, rpc, scales, ...)
+            **self._get_common_options()
         }
         self._add_options(options)
 

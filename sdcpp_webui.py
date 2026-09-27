@@ -47,6 +47,7 @@ from modules.interfaces.common.options_tab import (
 )
 from modules.config import ConfigManager
 from modules.ui.constants import FIELDS, SAMPLERS, SCHEDULERS
+from modules.utils.sdcpp_utils import restart_server
 
 
 DARK_MODE_JS = """
@@ -236,17 +237,6 @@ def render_cli_ui():
             options_block.render()
 
     return tabs, gallery_tab
-
-
-def restart_server():
-    """
-    Restarts the sdcpp-webui.
-    """
-    print("\nRestarting server...")
-    os.environ['SDCPP_IS_RESTART'] = 'true'
-    python = sys.executable
-    new_args = [arg for arg in sys.argv if arg != '--autostart']
-    os.execv(python, [python] + new_args)
 
 
 def bind_ui_events(server: bool, tabs, gallery_tab, gallery_loaded_state):

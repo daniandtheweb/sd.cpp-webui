@@ -16,6 +16,7 @@ from modules.ui.generation_settings import (
 )
 from modules.ui.folder_settings import create_folders_opt_ui
 from modules.ui.performance import create_performance_ui
+from modules.ui.deprecated import create_deprecated_ui
 from modules.ui.taesd import create_taesd_ui
 from modules.ui.vae_tiling import create_vae_tiling_ui
 from modules.ui.cache import create_cache_ui
@@ -69,16 +70,28 @@ OPTION_KEY_MAP = {
 
     # Performance
     'in_threads': 'def_threads',
-    'in_max_vram': 'def_max_vram',
+    'in_max_vram_table': 'def_max_vram_table',
     'in_backend_table': 'def_backend_table',
     'in_params_backend_table': 'def_params_backend_table',
-    'in_stream_layers': 'def_stream_layers',
     'in_eager_load': 'def_eager_load',
     'in_flash_attn': 'def_flash_attn',
     'in_diffusion_fa': 'def_diffusion_fa',
     'in_diffusion_conv_direct': 'def_diffusion_conv_direct',
     'in_vae_conv_direct': 'def_vae_conv_direct',
     'in_force_sdxl_vae_conv_scale': 'def_force_sdxl_vae_conv_scale',
+    'in_auto_fit': 'def_auto_fit',
+    'in_sage_attn': 'def_sage_attn',
+    'in_split_modes': 'def_split_modes',
+    'in_rpc_servers': 'def_rpc_servers',
+    'in_conditioning_cache_size': 'def_conditioning_cache_size',
+    'in_disable_prefetch': 'def_disable_prefetch',
+    'in_disable_segmented_compute': 'def_disable_segmented_compute',
+    'in_offload_to_cpu': 'def_offload_to_cpu',
+    'in_clip_on_cpu': 'def_clip_on_cpu',
+    'in_vae_on_cpu': 'def_vae_on_cpu',
+    'in_control_net_cpu': 'def_control_net_cpu',
+    'in_linear_scale': 'def_linear_scale',
+    'in_attn_scale': 'def_attn_scale',
 
     # Environment
     'env_vk_visible_override': 'def_env_vk_visible_override',
@@ -259,7 +272,8 @@ with gr.Blocks() as options_block:
             ('extras', create_extras_ui()),
             ('preview', create_preview_ui()),
             ('performance', create_performance_ui()),
-            ('env', create_env_ui())
+            ('env', create_env_ui()),
+            ('deprecated', create_deprecated_ui())
         ]:
             for k, v in ui_dict.items():
                 registry.register(resolve_option_key(k), v)
