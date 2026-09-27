@@ -433,6 +433,28 @@ class ImageGenerationRunner(CommandRunner):
                 '--upscale-tile-size': self._get_param('in_upscl_tile_size'),
 
             } if self._get_param('in_upscl_bool') else {}),
+            # HiRes Fix
+            **({
+                '--hires-upscaler': os.path.splitext(
+                    self._get_param('in_hires_upscaler') or 'Latent'
+                )[0],
+                '--hires-upscalers-dir': self._make_relative(
+                    config.get('upscl_dir')
+                ),
+                '--hires-scale': self._get_param('in_hires_scale'),
+                '--hires-width': self._get_param('in_hires_width'),
+                '--hires-height': self._get_param('in_hires_height'),
+                '--hires-steps': self._get_param('in_hires_steps'),
+                '--hires-denoising-strength': self._get_param(
+                    'in_hires_denoising_strength'
+                ),
+                '--hires-upscale-tile-size': self._get_param(
+                    'in_hires_upscale_tile_size'
+                ),
+                '--hires-sigmas': (self._get_param('in_hires_sigmas')
+                                   if self._get_param('in_hires_sigmas') != ""
+                                   else None),
+            } if self._get_param('in_hires_bool') else {}),
             # ControlNet
             **({
                 '--control-net': self._make_relative(self._get_param('f_cnnet')),
@@ -514,6 +536,7 @@ class ImageGenerationRunner(CommandRunner):
             '--disable-auto-resize-ref-image': self._get_param(
                 'in_disable_auto_resize_ref_image'
             ),
+            '--hires': self._get_param('in_hires_bool'),
         })
         self._add_flags(flags)
 

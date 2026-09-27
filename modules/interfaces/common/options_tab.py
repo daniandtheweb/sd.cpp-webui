@@ -93,6 +93,16 @@ OPTION_KEY_MAP = {
     'in_linear_scale': 'def_linear_scale',
     'in_attn_scale': 'def_attn_scale',
 
+    # HiRes
+    'in_hires_upscaler': 'def_hires_upscaler',
+    'in_hires_scale': 'def_hires_scale',
+    'in_hires_width': 'def_hires_width',
+    'in_hires_height': 'def_hires_height',
+    'in_hires_steps': 'def_hires_steps',
+    'in_hires_denoising_strength': 'def_hires_denoising_strength',
+    'in_hires_sigmas': 'def_hires_sigmas',
+    'in_hires_upscale_tile_size': 'def_hires_upscale_tile_size',
+
     # Environment
     'env_vk_visible_override': 'def_env_vk_visible_override',
     'env_GGML_VK_VISIBLE_DEVICES': 'def_env_GGML_VK_VISIBLE_DEVICES',

@@ -27,6 +27,7 @@ from modules.ui.generation_settings import (
     create_bottom_generation_settings_ui
 )
 from modules.ui.upscale import create_upscl_ui
+from modules.ui.hires import create_hires_ui
 from modules.ui.controlnet import create_cnnet_ui
 from modules.ui.slg import create_slg_ui
 # from modules.ui.chroma import create_chroma_ui
@@ -121,6 +122,10 @@ with gr.Blocks()as img2img_block:
                 # Upscale
                 upscl_ui = create_upscl_ui()
                 inputs_map.update(upscl_ui)
+
+                # HiRes Fix
+                hires_ui = create_hires_ui()
+                inputs_map.update(hires_ui)
 
                 # ControlNet
                 cnnet_ui = create_cnnet_ui()

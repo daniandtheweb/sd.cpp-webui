@@ -17,6 +17,11 @@ MODELS = [
     "Checkpoint", "UNET", "VAE", "clip_g", "clip_l", "t5xxl", "llm",
     "TAESD", "Lora", "Embeddings", "Upscaler", "ControlNet"
 ]
+BUILTIN_UPSCALERS = [
+    "Lanczos", "Nearest", "Latent", "Latent (nearest)",
+    "Latent (nearest-exact)", "Latent (antialiased)",
+    "Latent (bicubic)", "Latent (bicubic antialiased)"
+]
 CIRCULAR_PADDING = ["None", "Circular", "Circular X", "Circular Y"]
 RNG = ['Default'] + sd_options.get_opt("rng")
 SAMPLER_RNG = ['Default'] + sd_options.get_opt("sampler_rng")
