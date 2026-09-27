@@ -1,11 +1,75 @@
 """sd.cpp-webui - sdcpp.py utility module"""
 
-import os
-import time
 import datetime
-from typing import Dict, Any
+import json
+import os
+import subprocess
+import sys
+import time
+from typing import Any, Dict, List
 
 from modules.gallery import get_next_media
+from modules.shared_instance import SD_CLI
+
+DEVICES_CACHE_PATH = os.path.join('user_data', 'devices_cache.json')
+
+
+def list_devices(timeout: int = 10) -> List[str]:
+    """
+    Runs `sd-cli --list-devices` and returns the detected device names
+    (one per 'name<TAB>description' line). Returns [] on any failure.
+    """
+    try:
+        result = subprocess.run(
+            [SD_CLI, '--list-devices'],
+            capture_output=True, text=True, timeout=timeout
+        )
+    except (subprocess.SubprocessError, OSError):
+        return []
+
+    devices = []
+    for line in (result.stdout or '').splitlines():
+        if '\t' not in line:
+            continue
+        name = line.split('\t', 1)[0].strip()
+        if name:
+            devices.append(name)
+    return devices
+
+
+def restart_server():
+    """
+    Restarts the sdcpp-webui.
+    """
+    print("\nRestarting server...")
+    os.environ['SDCPP_IS_RESTART'] = 'true'
+    new_args = [arg for arg in sys.argv if arg != '--autostart']
+    os.execv(sys.executable, [sys.executable] + new_args)
+
+
+def get_cached_devices() -> List[str]:
+    """Returns the cached device list (empty list if no valid cache)."""
+    try:
+        with open(DEVICES_CACHE_PATH, encoding='utf-8') as f:
+            data = json.load(f)
+        if isinstance(data, list):
+            return [str(d) for d in data]
+    except (OSError, json.JSONDecodeError):
+        pass
+    return []
+
+
+def refresh_device_cache() -> List[str]:
+    """
+    Detects devices and overwrites the cache only on a successful
+    detection (a failed run keeps the previous cache intact).
+    """
+    devices = list_devices()
+    if devices:
+        os.makedirs(os.path.dirname(DEVICES_CACHE_PATH), exist_ok=True)
+        with open(DEVICES_CACHE_PATH, 'w', encoding='utf-8') as f:
+            json.dump(devices, f)
+    return devices
 
 
 def extract_env_vars(params: Dict[str, Any]) -> Dict[str, str]:
@@ -77,3 +141,11 @@ def generate_output_filename(
         counter += 1
 
     return test_path
+
+
+def build_device_choices() -> List[str]:
+    """
+    Returns the device dropdown choices: the 'default' sentinel first,
+    followed by the cached detected devices.
+    """
+    return ['default'] + [d for d in get_cached_devices() if d != 'default']

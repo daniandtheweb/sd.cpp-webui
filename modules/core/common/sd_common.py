@@ -194,18 +194,47 @@ class CommonRunner():
 
         return {k: v for k, v in options.items() if v is not None}
 
+    def _get_common_options(self) -> Dict[str, Any]:
+        """
+        Returns the runtime options shared by almost all commands.
+        """
+        rpc_servers = str(self._get_param('in_rpc_servers') or "").strip()
+        cache_size = self._get_param('in_conditioning_cache_size')
+        linear_scale = self._get_param('in_linear_scale')
+        attn_scale = self._get_param('in_attn_scale')
+
+        return {
+            '--auto-fit': ('off' if self._get_param('in_auto_fit') == 'off'
+                           else None),
+            '--rpc-servers': (rpc_servers if rpc_servers else None),
+            '--conditioning-cache-size': (cache_size
+                                          if cache_size not in (None, 0)
+                                          else None),
+            '--linear-scale': (linear_scale
+                               if linear_scale not in (None, 0, 0.0)
+                               else None),
+            '--attn-scale': (attn_scale
+                             if attn_scale not in (None, 0, 0.0)
+                             else None),
+        }
+
     def _get_common_flags(self) -> Dict[str, bool]:
         """
         Returns the execution flags shared by almost all commands.
         """
         return {
-            '--stream-layers': self._get_param('in_stream_layers'),
             '--eager-load': self._get_param('in_eager_load'),
+            '--sage-attn': self._get_param('in_sage_attn'),
+            '--disable-prefetch': self._get_param('in_disable_prefetch'),
+            '--disable-segmented-compute': (
+                self._get_param('in_disable_segmented_compute')
+            ),
+            '--offload-to-cpu': self._get_param('in_offload_to_cpu'),
+            # Deprecated placement compatibility flags
+            '--clip-on-cpu': self._get_param('in_clip_on_cpu'),
+            '--vae-on-cpu': self._get_param('in_vae_on_cpu'),
+            '--control-net-cpu': self._get_param('in_control_net_cpu'),
             '--vae-tiling': self._get_param('in_vae_tiling'),
-            '--canny': self._get_param('in_canny'),
-            '--chroma-disable-dit-mask': self._get_param('in_disable_dit_mask'),
-            '--chroma-enable-t5-mask': self._get_param('in_enable_t5_mask'),
-            '--qwen-image-zero-cond-t': self._get_param('in_enable_zero_cond_t'),
             '--circular': self._get_param('in_circular_padding') == CIRCULAR_PADDING[1],
             '--circularx': self._get_param('in_circular_padding') == CIRCULAR_PADDING[2],
             '--circulary': self._get_param('in_circular_padding') == CIRCULAR_PADDING[3],

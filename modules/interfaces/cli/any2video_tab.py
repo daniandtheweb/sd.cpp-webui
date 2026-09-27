@@ -37,6 +37,7 @@ from modules.ui.cache import create_cache_ui
 from modules.ui.extra import create_extras_ui
 from modules.ui.preview import create_preview_ui
 from modules.ui.performance import create_performance_ui
+from modules.ui.deprecated import create_deprecated_ui
 from modules.ui.environment import create_env_ui
 # from modules.ui.experimental import create_experimental_ui
 
@@ -209,6 +210,10 @@ with gr.Blocks() as any2video_block:
                 # Environment Variables
                 env_ui = create_env_ui()
                 inputs_map.update(env_ui)
+
+                # Deprecated placement flags
+                deprecated_ui = create_deprecated_ui()
+                inputs_map.update(deprecated_ui)
 
             # Experimental
             # experimental_ui = create_experimental_ui()

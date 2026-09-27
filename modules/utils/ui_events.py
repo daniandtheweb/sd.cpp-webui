@@ -8,6 +8,13 @@ import modules.utils.queue as queue_manager
 from modules.shared_instance import (
     sd_options, model_state
 )
+from modules.utils.sdcpp_utils import (
+    get_cached_devices, refresh_device_cache
+)
+
+# Populate the device cache on the first launch (mirrors sd_options)
+if not get_cached_devices():
+    refresh_device_cache()
 
 
 _polling_configs = []
@@ -208,6 +215,7 @@ def update_interactivity(count, checkbox_value):
 
 def refresh_all_options():
     sd_options.refresh()
+    refresh_device_cache()
     return [
         gr.update(choices=sd_options.get_opt("samplers")),
         gr.update(choices=sd_options.get_opt("schedulers")),

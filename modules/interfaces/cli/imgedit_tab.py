@@ -27,7 +27,7 @@ from modules.ui.upscale import create_upscl_ui
 from modules.ui.controlnet import create_cnnet_ui
 from modules.ui.ref_img import create_ref_img_ui
 from modules.ui.slg import create_slg_ui
-from modules.ui.qwen import create_qwen_ui
+# from modules.ui.qwen import create_qwen_ui
 from modules.ui.circular import create_circular_ui
 from modules.ui.photomaker import create_photomaker_ui
 from modules.ui.eta import create_eta_ui
@@ -37,6 +37,7 @@ from modules.ui.cache import create_cache_ui
 from modules.ui.extra import create_extras_ui
 from modules.ui.preview import create_preview_ui
 from modules.ui.performance import create_performance_ui
+from modules.ui.deprecated import create_deprecated_ui
 from modules.ui.environment import create_env_ui
 # from modules.ui.experimental import create_experimental_ui
 
@@ -103,8 +104,8 @@ with gr.Blocks() as imgedit_block:
                 inputs_map.update(slg_ui)
 
                 # Qwen
-                qwen_ui = create_qwen_ui()
-                inputs_map.update(qwen_ui)
+                # qwen_ui = create_qwen_ui()
+                # inputs_map.update(qwen_ui)
 
                 # Circular padding
                 circular_ui = create_circular_ui()
@@ -147,6 +148,10 @@ with gr.Blocks() as imgedit_block:
                 # Environment Variables
                 env_ui = create_env_ui()
                 inputs_map.update(env_ui)
+
+                # Deprecated placement flags
+                deprecated_ui = create_deprecated_ui()
+                inputs_map.update(deprecated_ui)
 
             # Experimental
             # experimental_ui = create_experimental_ui()
