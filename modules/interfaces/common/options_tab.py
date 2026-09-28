@@ -58,6 +58,7 @@ OPTION_KEY_MAP = {
     'in_lora_apply': 'def_lora_apply',
     'in_output': 'def_output',
     'in_disable_img_metadata': 'def_disable_img_metadata',
+    'in_compression_quality': 'def_compression_quality',
     'in_mmap': 'def_mmap',
     'in_color': 'def_color',
     'in_log_level': 'def_log_level',

@@ -46,6 +46,7 @@ DEFAULT_SETTINGS = {
     'def_lora_apply': "auto",
     'def_output': "",
     'def_disable_img_metadata': False,
+    'def_compression_quality': 90,
     'def_mmap': True,
     'def_color': True,
     'def_log_level': "info",

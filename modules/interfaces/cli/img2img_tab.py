@@ -40,6 +40,7 @@ from modules.ui.taesd import create_taesd_ui
 from modules.ui.vae_tiling import create_vae_tiling_ui
 from modules.ui.cache import create_cache_ui
 from modules.ui.extra import create_extras_ui
+from modules.ui.output import create_output_ui
 from modules.ui.preview import create_preview_ui
 from modules.ui.performance import create_performance_ui
 from modules.ui.deprecated import create_deprecated_ui
@@ -171,6 +172,10 @@ with gr.Blocks()as img2img_block:
                 # Cache
                 cache_ui = create_cache_ui()
                 inputs_map.update(cache_ui)
+
+                # Output
+                output_ui = create_output_ui()
+                inputs_map.update(output_ui)
 
                 # Extra Settings
                 extras_ui = create_extras_ui()

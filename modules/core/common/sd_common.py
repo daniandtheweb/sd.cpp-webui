@@ -203,6 +203,9 @@ class CommonRunner():
         linear_scale = self._get_param('in_linear_scale')
         attn_scale = self._get_param('in_attn_scale')
         log_level = self._get_param('in_log_level')
+        compression_quality = self._get_param(
+            'in_compression_quality'
+        )
 
         return {
             '--auto-fit': ('off' if self._get_param('in_auto_fit') == 'off'
@@ -220,6 +223,9 @@ class CommonRunner():
             '--log-level': (log_level
                             if log_level != "info"
                             else None),
+            '--compression-quality': (compression_quality
+                                      if compression_quality != 90
+                                      else None),
         }
 
     def _get_common_flags(self) -> Dict[str, bool]:

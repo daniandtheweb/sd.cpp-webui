@@ -40,14 +40,6 @@ def create_extras_ui():
             choices=["auto", "immediately", "at_runtime"],
             value=config.get('def_lora_apply')
         )
-        output = gr.Textbox(
-            label="Output Name (optional)",
-            value=config.get('def_output')
-        )
-        disable_img_metadata = gr.Checkbox(
-            label="Disable image metadata",
-            value=config.get('def_disable_img_metadata')
-        )
         mmap = gr.Checkbox(
             label="MMAP",
             value=config.get('def_mmap')
@@ -68,8 +60,6 @@ def create_extras_ui():
         'in_sampler_rng': sampler_rng,
         'in_predict': predict,
         'in_lora_apply': lora_apply,
-        'in_output': output,
-        'in_disable_img_metadata': disable_img_metadata,
         'in_mmap': mmap,
         'in_color': color,
         'in_log_level': log_level

@@ -109,6 +109,13 @@ with gr.Blocks() as upscale_block:
                         label="Disable image metadata",
                         value=config.get('def_disable_img_metadata')
                     )
+                    compression_quality = gr.Slider(
+                        label="Compression quality",
+                        minimum=1,
+                        maximum=100,
+                        step=1,
+                        value=config.get('def_compression_quality')
+                    )
                     flash_attn = gr.Checkbox(
                         label="Flash Attention", value=config.get('def_flash_attn')
                     )
@@ -193,6 +200,7 @@ with gr.Blocks() as upscale_block:
         'in_diffusion_conv_direct': diffusion_conv_direct,
         'in_color': color,
         'in_disable_img_metadata': disable_img_metadata,
+        'in_compression_quality': compression_quality,
         'in_log_level': log_level,
         **env_ui
     }
