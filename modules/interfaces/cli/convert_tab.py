@@ -11,7 +11,7 @@ from modules.loader import (
     get_models, reload_models, model_choice
 )
 from modules.ui.constants import (
-    MODELS, QUANTS, RELOAD_SYMBOL
+    MODELS, QUANTS, RELOAD_SYMBOL, LOG_LEVEL
 )
 
 
@@ -106,8 +106,12 @@ with gr.Blocks() as convert_block:
             )
             inputs_map['in_color'] = color
 
-            verbose = gr.Checkbox(label="Verbose")
-            inputs_map['in_verbose'] = verbose
+            log_level = gr.Dropdown(
+                label="Log Level",
+                choices=LOG_LEVEL,
+                value=config.get('def_log_level')
+            )
+            inputs_map['in_log_level'] = log_level
 
         with gr.Column():
             with gr.Group():

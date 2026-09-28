@@ -59,7 +59,7 @@ OPTION_KEY_MAP = {
     'in_output': 'def_output',
     'in_mmap': 'def_mmap',
     'in_color': 'def_color',
-    'in_verbose': 'def_verbose',
+    'in_log_level': 'def_log_level',
 
     # Preview
     'in_preview_bool': 'def_preview_bool',

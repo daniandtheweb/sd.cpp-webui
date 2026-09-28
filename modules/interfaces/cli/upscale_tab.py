@@ -18,7 +18,7 @@ from modules.loader import (
     get_models, reload_models
 )
 from modules.ui.environment import create_env_ui
-from modules.ui.constants import RELOAD_SYMBOL, SWITCH_V_SYMBOL
+from modules.ui.constants import RELOAD_SYMBOL, SWITCH_V_SYMBOL, LOG_LEVEL
 
 
 with gr.Blocks() as upscale_block:
@@ -115,7 +115,11 @@ with gr.Blocks() as upscale_block:
                     color = gr.Checkbox(
                         label="Color", value=True
                     )
-                    verbose = gr.Checkbox(label="Verbose")
+                    log_level = gr.Dropdown(
+                        label="Log Level",
+                        choices=LOG_LEVEL,
+                        value=config.get('def_log_level')
+                    )
 
             # Environment Variables
             env_ui = create_env_ui()
@@ -184,7 +188,7 @@ with gr.Blocks() as upscale_block:
         'in_flash_attn': flash_attn,
         'in_diffusion_conv_direct': diffusion_conv_direct,
         'in_color': color,
-        'in_verbose': verbose,
+        'in_log_level': log_level,
         **env_ui
     }
 

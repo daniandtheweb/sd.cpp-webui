@@ -5,7 +5,7 @@ import gradio as gr
 from modules.shared_instance import config
 
 from modules.ui.constants import (
-    RNG, SAMPLER_RNG, PREDICTION
+    RNG, SAMPLER_RNG, PREDICTION, LOG_LEVEL
 )
 
 
@@ -52,9 +52,10 @@ def create_extras_ui():
             label="Color",
             value=config.get('def_color')
         )
-        verbose = gr.Checkbox(
-            label="Verbose",
-            value=config.get('def_verbose')
+        log_level = gr.Dropdown(
+            label="Log Level",
+            choices=LOG_LEVEL,
+            value=config.get('def_log_level')
         )
 
     return {
@@ -66,5 +67,5 @@ def create_extras_ui():
         'in_output': output,
         'in_mmap': mmap,
         'in_color': color,
-        'in_verbose': verbose
+        'in_log_level': log_level
     }

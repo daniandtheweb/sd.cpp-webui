@@ -854,7 +854,7 @@ def convert(params: dict):
     in_convert_name = params.get('in_convert_name', False)
     in_gguf_name = params.get('in_gguf_name')
     in_color = params.get('in_color', True)
-    in_verbose = params.get('in_verbose', False)
+    in_log_level = params.get('in_log_level')
 
     exe_dir = os.path.dirname(os.path.abspath(SD_CLI))
 
@@ -883,8 +883,8 @@ def convert(params: dict):
         command.append('--convert-name')
     if in_color:
         command.append('--color')
-    if in_verbose:
-        command.append('-v')
+    if in_log_level and in_log_level != "info":
+        command.extend(['--log-level', in_log_level])
 
     fcommand = ' '.join(command)
     print(f"\n\n{fcommand}\n\n")

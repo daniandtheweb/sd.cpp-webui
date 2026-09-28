@@ -47,7 +47,7 @@ DEFAULT_SETTINGS = {
     'def_output': "",
     'def_mmap': True,
     'def_color': True,
-    'def_verbose': False,
+    'def_log_level': "info",
     'def_preview_bool': False,
     'def_preview_mode': "none",
     'def_preview_interval': 1,

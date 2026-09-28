@@ -32,6 +32,11 @@ CACHE_MODE = [
     "taylorseer", "cache-dit", "spectrum"
 ]
 SCM_POLICY = ["none", "dynamic", "static"]
+LOG_LEVEL = [
+    "debug", "verbose", "info",
+    "warn", "error"
+]
+
 RELOAD_SYMBOL = '\U0001F504'
 RANDOM_SYMBOL = '\U0001F3B2'
 SWITCH_V_SYMBOL = '\u2195'

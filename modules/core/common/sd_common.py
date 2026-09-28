@@ -202,6 +202,7 @@ class CommonRunner():
         cache_size = self._get_param('in_conditioning_cache_size')
         linear_scale = self._get_param('in_linear_scale')
         attn_scale = self._get_param('in_attn_scale')
+        log_level = self._get_param('in_log_level')
 
         return {
             '--auto-fit': ('off' if self._get_param('in_auto_fit') == 'off'
@@ -216,6 +217,9 @@ class CommonRunner():
             '--attn-scale': (attn_scale
                              if attn_scale not in (None, 0, 0.0)
                              else None),
+            '--log-level': (log_level
+                            if log_level != "info"
+                            else None),
         }
 
     def _get_common_flags(self) -> Dict[str, bool]:
@@ -244,8 +248,7 @@ class CommonRunner():
             '--vae-conv-direct': self._get_param('in_vae_conv_direct'),
             '--force-sdxl-vae-conv-scale': self._get_param('in_force_sdxl_vae_conv_scale'),
             '--mmap': self._get_param('in_mmap'),
-            '--color': self._get_param('in_color'),
-            '-v': self._get_param('in_verbose')
+            '--color': self._get_param('in_color')
         }
 
     def _build_process_env(self) -> dict:
