@@ -105,6 +105,10 @@ with gr.Blocks() as upscale_block:
                     output = gr.Textbox(
                         label="Output Name (optional)", value=""
                     )
+                    disable_img_metadata = gr.Checkbox(
+                        label="Disable image metadata",
+                        value=config.get('def_disable_img_metadata')
+                    )
                     flash_attn = gr.Checkbox(
                         label="Flash Attention", value=config.get('def_flash_attn')
                     )
@@ -188,6 +192,7 @@ with gr.Blocks() as upscale_block:
         'in_flash_attn': flash_attn,
         'in_diffusion_conv_direct': diffusion_conv_direct,
         'in_color': color,
+        'in_disable_img_metadata': disable_img_metadata,
         'in_log_level': log_level,
         **env_ui
     }

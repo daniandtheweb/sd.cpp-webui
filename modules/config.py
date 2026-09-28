@@ -45,6 +45,7 @@ DEFAULT_SETTINGS = {
     'def_predict': "Default",
     'def_lora_apply': "auto",
     'def_output': "",
+    'def_disable_img_metadata': False,
     'def_mmap': True,
     'def_color': True,
     'def_log_level': "info",

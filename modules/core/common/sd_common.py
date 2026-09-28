@@ -247,6 +247,7 @@ class CommonRunner():
             '--diffusion-conv-direct': self._get_param('in_diffusion_conv_direct'),
             '--vae-conv-direct': self._get_param('in_vae_conv_direct'),
             '--force-sdxl-vae-conv-scale': self._get_param('in_force_sdxl_vae_conv_scale'),
+            '--disable-image-metadata': self._get_param('in_disable_img_metadata'),
             '--mmap': self._get_param('in_mmap'),
             '--color': self._get_param('in_color')
         }
