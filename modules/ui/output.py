@@ -14,6 +14,13 @@ def create_output_ui():
             label="Output Name (optional)",
             value=config.get('def_output')
         )
+        output_begin_idx = gr.Number(
+            label="Output Begin Index",
+            minimum=0,
+            precision=0,
+            step=1,
+            value=config.get('def_output_begin_idx')
+        )
         disable_img_metadata = gr.Checkbox(
             label="Disable image metadata",
             value=config.get('def_disable_img_metadata')
@@ -28,6 +35,7 @@ def create_output_ui():
 
     return {
         'in_output': output,
+        'in_output_begin_idx': output_begin_idx,
         'in_disable_img_metadata': disable_img_metadata,
         'in_compression_quality': compression_quality
     }

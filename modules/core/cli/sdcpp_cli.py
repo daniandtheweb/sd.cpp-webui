@@ -16,6 +16,9 @@ from modules.shared_instance import (
     config, subprocess_manager, SD_CLI
 )
 
+# Matches %d / %Nd frame index specifiers in output paths (%% is an escaped %)
+format_specifier_regex = re.compile(r"(?:[^%]|^)(?:%%)*(%\d{0,3}d)")
+
 
 class CommandRunner(CommonRunner):
     """Builds and runs stable-diffusion.cpp commands and yields UI updates."""
@@ -226,11 +229,19 @@ class CommandRunner(CommonRunner):
             '--cfg-scale', str(self._get_param('in_cfg')),
             '-s', str(self._get_param('in_seed')),
             '-o', self.output_path
-            # --output-begin-idx - to implement
         ])
 
-        # Only add -b if batch count differs from default (1)
         batch_count = self._get_param('in_batch_count')
+        multi_output = batch_count is not None and float(batch_count) > 1
+        has_index_spec = format_specifier_regex.search(self.output_path)
+
+        # Only add --output-begin-idx when generating sequenced outputs
+        output_begin_idx = self._get_param('in_output_begin_idx')
+        if (output_begin_idx and float(output_begin_idx) != 0
+                and (multi_output or has_index_spec)):
+            self.command.extend(['--output-begin-idx', str(output_begin_idx)])
+
+        # Only add -b if batch count differs from default (1)
         if batch_count and str(batch_count) != "1":
             self.command.extend(['-b', str(batch_count)])
 
