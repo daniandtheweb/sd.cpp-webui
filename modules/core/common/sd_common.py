@@ -1,5 +1,6 @@
 """sd.cpp-webui - core - stable-diffusion.cpp common"""
 
+import math
 import os
 import re
 from PIL import Image
@@ -8,7 +9,7 @@ from typing import Dict, Any
 
 from modules.utils.file_utils import get_path
 from modules.utils.sdcpp_utils import extract_env_vars, generate_output_filename
-from modules.shared_instance import config
+from modules.shared_instance import config, SD_CLI
 from modules.ui.constants import CIRCULAR_PADDING
 
 LORA_TAG_PATTERN = re.compile(r'<lora:([^:]+):([^>]+)>')
@@ -90,8 +91,142 @@ class CommonRunner():
         """
         return self.params.get(key, default)
 
+    # Canonical module names and the aliases the CLI accepts for them
+    _BACKEND_MODULES = {
+        'diffusion': {'diffusion', 'model', 'unet', 'dit'},
+        'te': {'te', 'clip', 'text', 'textencoder', 'textencoders',
+               'conditioner', 'cond', 'llm', 't5', 't5xxl'},
+        'clip_vision': {'clip_vision', 'clipvision', 'vision'},
+        'vae': {'vae', 'firststage', 'autoencoder', 'tae'},
+        'controlnet': {'controlnet', 'control'},
+        'photomaker': {'photomaker', 'photomakerid', 'pmid', 'photo'},
+        'upscaler': {'upscaler', 'esrgan', 'hires'},
+        'detector': {'detector', 'adetailer', 'yolo'},
+        'audio_encoder': {'audio_encoder', 'audioencoder', 'audio'},
+    }
+    _BACKEND_ALIAS_MAP = {
+        alias.replace('-', '').replace('_', ''): module
+        for module, aliases in _BACKEND_MODULES.items()
+        for alias in aliases
+    }
+    _DEFAULT_ALIASES = {'*', 'primary', 'all', 'default'}
+
+    @staticmethod
+    def _norm_name(name: str) -> str:
+        return str(name).strip().lower().replace('-', '').replace('_', '')
+
+    def _parse_backend_table(self, param_key: str = 'in_backend_table',
+                             params_backend: bool = False) -> str | None:
+        """
+        Parses the backend table rows into a valid sd.cpp backend string.
+        Example output: "vulkan0,diffusion=vulkan0&vulkan1,vae=cpu"
+        """
+        backend_table = self._get_param(param_key)
+
+        # If UI didn't pass it or it's empty, return None
+        if not backend_table or not isinstance(backend_table, list):
+            return None
+
+        parts = []
+        default_device = None
+
+        for row in backend_table:
+            if len(row) < 2:
+                continue
+            component = self._norm_name(row[0])
+            device = str(row[1]).strip().lower()
+
+            # Skip invalid/default rows
+            if not device or device in ('default', 'auto', ''):
+                continue
+            # 'disk' is a parameter residency mode, not a compute backend
+            if not params_backend and device == 'disk':
+                continue
+
+            if component in self._DEFAULT_ALIASES:
+                default_device = device
+                continue
+
+            module = self._BACKEND_ALIAS_MAP.get(component)
+            if not module:
+                continue
+            parts.append(f"{module}={device}")
+
+        # Default entry first, per-module assignments override it
+        if default_device:
+            entry = (f"*={default_device}"
+                     if params_backend else default_device)
+            parts.insert(0, entry)
+
+        return ",".join(parts) if parts else None
+
+    # Only these modules support layer/row splitting of their compute
+    _SPLIT_MODULES = {'diffusion', 'te'}
+
+    def _parse_split_modes(self) -> str | None:
+        """
+        Parses the per-module split mode rows into a '--split-mode'
+        value. Example output: "diffusion=row,te=layer"
+        """
+        rows = self._get_param('in_split_modes')
+        if not rows or not isinstance(rows, list):
+            return None
+
+        parts = []
+        for row in rows:
+            if not row or len(row) < 2:
+                continue
+            module = str(row[0]).strip().lower()
+            mode = str(row[1]).strip().lower()
+            if module in self._SPLIT_MODULES and mode in ('layer', 'row'):
+                parts.append(f"{module}={mode}")
+        return ",".join(parts) if parts else None
+
+    # Budget keys the CLI accepts in place of a device name
+    _MAX_VRAM_DEFAULT_KEYS = {'', 'default', 'all', '*'}
+
+    def _parse_max_vram_table(self) -> str | None:
+        """
+        Parses the max-vram table rows into a valid sd.cpp budget string.
+        Example output: "cuda0=6,vulkan0=2"
+        """
+        rows = self._get_param('in_max_vram_table')
+        if not rows or not isinstance(rows, list):
+            return None
+
+        parts = []
+        for row in rows:
+            if not isinstance(row, (list, tuple)) or len(row) < 2:
+                continue
+            device = str(row[0] or '').strip()
+            value = str(row[1] or '').strip()
+            if not value or device.lower() == 'disk':
+                continue
+            try:
+                budget = float(value)
+            except ValueError:
+                continue
+            if not math.isfinite(budget):
+                continue
+            if device.lower() in self._MAX_VRAM_DEFAULT_KEYS:
+                parts.append(value)
+            else:
+                parts.append(f"{device}={value}")
+        return ",".join(parts) if parts else None
+
     def _make_relative(self, path):
-        """Returns the path unchanged. Overridden by the CLI runner."""
+        """Converts paths inside the exe directory to relative form."""
+        if not path or not os.path.isabs(str(path)):
+            return path
+        try:
+            exe_dir = os.path.dirname(os.path.abspath(SD_CLI))
+            rel = os.path.relpath(str(path), start=exe_dir)
+            # Paths outside the exe directory stay absolute
+            if not rel.startswith('..'):
+                return rel
+        except ValueError:
+            # Fallback for cross-drive paths on Windows
+            pass
         return path
 
     def _set_output_path(self, dir_key: str, subctrl_id: int, extension: str):
@@ -193,6 +328,69 @@ class CommonRunner():
             options['--llm_vision'] = self._make_relative(self._get_param('f_llm_vision'))
 
         return {k: v for k, v in options.items() if v is not None}
+
+    def _get_quant_options(self) -> Dict[str, Any]:
+        """
+        Returns the quantization options shared by CLI and server runners.
+        """
+        return {
+            '--type': (self._get_param('in_model_type')
+                       if self._get_param('in_model_type') != "Default"
+                       else None),
+            '--tensor-type-rules': (
+                self._get_param('in_tensor_type_rules')
+                if self._get_param('in_tensor_type_rules') != ""
+                else None
+            ),
+        }
+
+    def _get_component_options(self) -> Dict[str, Any]:
+        """
+        Returns the model component options shared by CLI and server runners.
+        """
+        threads = self._get_param('in_threads')
+        return {
+            '-t': (threads
+                   if threads and str(threads) != "0"
+                   else None),
+            '--taesd': self._make_relative(self._get_param('f_taesd')),
+            '--photo-maker': (self._make_relative(self._get_param('f_phtmkr'))
+                              if self._get_param('in_phtmkr_bool')
+                              else None),
+            '--pm-id-images-dir': (
+                self._make_relative(self._get_param('in_phtmkr_id'))
+                if self._get_param('in_phtmkr_bool')
+                else None
+            ),
+            '--pm-id-embed-path': (
+                self._make_relative(self._get_param('in_phtmkr_emb'))
+                if self._get_param('in_phtmkr_bool')
+                else None
+            ),
+            '--upscale-model': (self._make_relative(self._get_param('f_upscl'))
+                                if self._get_param('in_upscl_bool')
+                                else None),
+            '--control-net': (self._make_relative(self._get_param('f_cnnet'))
+                              if self._get_param('in_cnnet_bool')
+                              else None),
+            '--embd-dir': self._make_relative(config.get('emb_dir')),
+            '--prediction': (self._get_param('in_predict')
+                             if self._get_param('in_predict') != "Default"
+                             else None),
+        }
+
+    def _get_performance_options(self) -> Dict[str, Any]:
+        """
+        Returns the performance/device options shared by CLI and server runners.
+        """
+        return {
+            '--max-vram': self._parse_max_vram_table(),
+            '--backend': self._parse_backend_table('in_backend_table'),
+            '--params-backend': self._parse_backend_table(
+                'in_params_backend_table', params_backend=True
+            ),
+            '--split-mode': self._parse_split_modes(),
+        }
 
     def _get_common_options(self) -> Dict[str, Any]:
         """

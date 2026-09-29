@@ -34,28 +34,19 @@ class ServerRunner(CommonRunner):
 
         options = self._get_common_model_options()
 
-        # Quantization
-        options.update({
-            '--type': (self._get_param('in_model_type')
-                       if self._get_param('in_model_type') != "Default"
-                       else None),
-            '--tensor-type-rules': (
-                self._get_param('in_tensor_type_rules')
-                if self._get_param('in_tensor_type_rules') != ""
-                else None
-            ),
-        })
+        # Shared options (quantization, components, performance)
+        options.update(self._get_quant_options())
+        options.update(self._get_component_options())
+        options.update(self._get_performance_options())
 
-        # Additional Components
+        # Server-specific options
         options.update({
-            '--threads': self._get_param('in_threads'),
-            '--cache-mode': self._get_param('in_cache_mode'),
-            '--taesd': self._get_param('f_taesd'),
-            '--photo-maker': self._get_param('f_phtmkr'),
-            '--upscale-model': self._get_param('f_upscl'),
-            '--control-net': self._get_param('f_cnnet'),
-            '--embd-dir': config.get('emb_dir'),
-            '--lora-model-dir': config.get('lora_dir'),
+            '--cache-mode': (self._get_param('in_cache_mode')
+                             if self._get_param('in_cache_bool')
+                             else None),
+            '--lora-model-dir': self._make_relative(config.get('lora_dir')),
+            # Common runtime options (auto-fit, rpc, scales, ...)
+            **self._get_common_options(),
         })
 
         self._add_options(options)
