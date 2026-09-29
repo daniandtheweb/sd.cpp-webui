@@ -30,7 +30,7 @@ def create_quant_ui():
             model_type = gr.Dropdown(
                 label="Quantization type",
                 choices=QUANTS,
-                value=config.get('def_type'),
+                value=config.get('def_model_type'),
                 interactive=True
             )
         with gr.Row():

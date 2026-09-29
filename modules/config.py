@@ -24,7 +24,7 @@ DEFAULT_SETTINGS = {
     'imgedit_dir': os.path.join(CURRENT_DIR, "outputs/imgedit/"),
     'any2video_dir': os.path.join(CURRENT_DIR, "outputs/any2video/"),
     'upscale_dir': os.path.join(CURRENT_DIR, "outputs/upscale/"),
-    'def_type': "Default",
+    'def_model_type': "Default",
     'def_model_tab': "checkpoint",
     'def_lora_strength': 1.0,
     'def_sampling': "euler_a",
