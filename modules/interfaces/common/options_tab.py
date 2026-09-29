@@ -362,7 +362,7 @@ with gr.Blocks() as options_block:
             # Theme options
             registry.register(
                 'def_theme', gr.Dropdown(
-                    label="Theme:",
+                    label="Theme",
                     choices=THEMES,
                     value=config.get('def_theme'),
                     interactive=True

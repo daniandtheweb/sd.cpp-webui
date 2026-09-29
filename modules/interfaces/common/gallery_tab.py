@@ -66,7 +66,7 @@ with gr.Blocks() as gallery_block:
         first_btn = gr.Button(value="First page")
         with gr.Group():
             page_num_select = gr.Number(
-                label="Page:",
+                label="Page",
                 value=1,
                 interactive=True,
                 scale=7
@@ -103,7 +103,7 @@ with gr.Blocks() as gallery_block:
         with gr.Column():
             # Positive prompts
             info_params['pprompt'] = gr.Textbox(
-                label="Positive prompt:",
+                label="Positive prompt",
                 value="",
                 interactive=False,
                 scale=1,
@@ -113,7 +113,7 @@ with gr.Blocks() as gallery_block:
             )
             # Negative prompts
             info_params['nprompt'] = gr.Textbox(
-                label="Negative prompt:",
+                label="Negative prompt",
                 value="",
                 interactive=False,
                 scale=1,
