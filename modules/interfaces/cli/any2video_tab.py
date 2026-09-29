@@ -379,13 +379,13 @@ with gr.Blocks() as any2video_block:
     )
 
     moe_boundary_bool.change(
-        partial(update_interactivity, moe_boundary),
+        partial(update_interactivity, 1),
         inputs=moe_boundary_bool,
         outputs=moe_boundary
     )
 
     vace_strength_bool.change(
-        partial(update_interactivity, vace_strength),
+        partial(update_interactivity, 1),
         inputs=vace_strength_bool,
         outputs=vace_strength
     )

@@ -33,7 +33,7 @@ def create_high_noise_generation_settings_ui():
         high_noise_sampling = gr.Dropdown(
             label="High Noise Sampling Method",
             choices=SAMPLERS,
-            value=config.get('def_sampler'),
+            value=config.get('def_sampling'),
             allow_custom_value=True,
             interactive=False
         )
