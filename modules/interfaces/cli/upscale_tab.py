@@ -124,7 +124,7 @@ with gr.Blocks() as upscale_block:
                         value=config.get('def_diffusion_conv_direct')
                     )
                     color = gr.Checkbox(
-                        label="Color", value=True
+                        label="Color", value=config.get('def_color')
                     )
                     log_level = gr.Dropdown(
                         label="Log Level",

@@ -102,7 +102,7 @@ with gr.Blocks() as convert_block:
                 inputs_map['in_convert_name'] = convert_name
 
             color = gr.Checkbox(
-                label="Color", value=True
+                label="Color", value=config.get('def_color')
             )
             inputs_map['in_color'] = color
 
