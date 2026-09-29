@@ -18,7 +18,9 @@ FOLDER_CONFIG = {
     'cnnet_dir': "ControlNet folder",
     'txt2img_dir': "txt2img outputs folder",
     'img2img_dir': "img2img outputs folder",
-    'any2video_dir': "any2video output folder",
+    'imgedit_dir': "imgedit outputs folder",
+    'any2video_dir': "any2video outputs folder",
+    'upscale_dir': "upscale outputs folder",
 }
 
 
