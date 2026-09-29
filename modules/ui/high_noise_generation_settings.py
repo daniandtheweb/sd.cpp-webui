@@ -18,6 +18,7 @@ def create_high_noise_generation_settings_ui():
         high_noise_steps = gr.Slider(
             label="High Noise Steps",
             minimum=1,
+            maximum=100,
             value=8,
             step=1,
             interactive=False
@@ -25,6 +26,7 @@ def create_high_noise_generation_settings_ui():
         high_noise_cfg = gr.Slider(
             label="High Noise CFG Scale",
             minimum=0.0,
+            maximum=30,
             value=3.5,
             step=0.1,
             interactive=False
