@@ -158,7 +158,7 @@ with gr.Blocks() as upscale_block:
                     )
                 with gr.Row():
                     progress_textbox = gr.Textbox(
-                        label="Progress:",
+                        label="Status:",
                         visible=False,
                         interactive=False
                     )
