@@ -30,6 +30,7 @@ from modules.ui.high_noise_generation_settings import (
 from modules.ui.upscale import create_upscl_ui
 from modules.ui.controlnet import create_cnnet_ui
 from modules.ui.slg import create_slg_ui
+from modules.ui.model_args import create_model_args_ui
 from modules.ui.eta import create_eta_ui
 from modules.ui.taesd import create_taesd_ui
 from modules.ui.vae_tiling import create_vae_tiling_ui
@@ -181,6 +182,10 @@ with gr.Blocks() as any2video_block:
                 # ETA
                 eta_ui = create_eta_ui()
                 inputs_map.update(eta_ui)
+
+            with gr.Tab("Model Arguments"):
+                model_args_ui = create_model_args_ui()
+                inputs_map.update(model_args_ui)
 
             with gr.Tab("Advanced Settings"):
 

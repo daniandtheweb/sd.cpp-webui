@@ -219,6 +219,51 @@ class CommandRunner(CommonRunner):
                 parts.append(f"{device}={value}")
         return ",".join(parts) if parts else None
 
+    def _build_model_args(self) -> str:
+        """
+        Assembles the --model-args key=value string from
+        the Model Arguments tab values.
+        """
+        args = []
+        if not self._get_param('in_chroma_use_dit_mask', True):
+            args.append('chroma_use_dit_mask=false')
+        if self._get_param('in_chroma_use_t5_mask'):
+            args.append('chroma_use_t5_mask=true')
+        t5_mask_pad = self._get_param('in_chroma_t5_mask_pad')
+        if t5_mask_pad and float(t5_mask_pad) != 0:
+            args.append(f'chroma_t5_mask_pad={int(t5_mask_pad)}')
+        if self._get_param('in_qwen_image_zero_cond_t'):
+            args.append('qwen_image_zero_cond_t=true')
+        if self._get_param('in_qwen_image_2_1_prefix_cache'):
+            args.append('qwen_image_2_1_prefix_cache=true')
+        prefix_cache_type = self._get_param(
+            'in_qwen_image_2_1_prefix_cache_type'
+        )
+        if prefix_cache_type and prefix_cache_type != "auto":
+            args.append(
+                f'qwen_image_2_1_prefix_cache_type={prefix_cache_type}'
+            )
+        pixart_pos_embed_base_size = self._get_param(
+            'in_pixart_pos_embed_base_size'
+        )
+        if (pixart_pos_embed_base_size
+                and float(pixart_pos_embed_base_size) != 0):
+            args.append(
+                f'pixart_pos_embed_base_size={int(pixart_pos_embed_base_size)}'
+            )
+        pixart_interpolation_scale = self._get_param(
+            'in_pixart_interpolation_scale'
+        )
+        if (pixart_interpolation_scale
+                and float(pixart_interpolation_scale) != 0):
+            args.append(
+                f'pixart_interpolation_scale={pixart_interpolation_scale}'
+            )
+        pixart_vae_scale_factor = self._get_param('in_pixart_vae_scale_factor')
+        if pixart_vae_scale_factor and float(pixart_vae_scale_factor) != 0:
+            args.append(f'pixart_vae_scale_factor={pixart_vae_scale_factor}')
+        return ",".join(args)
+
     def _add_base_args(self):
         """Adds arguments common to all modes."""
         self.command.extend([
@@ -240,6 +285,11 @@ class CommandRunner(CommonRunner):
         if (output_begin_idx and float(output_begin_idx) != 0
                 and (multi_output or has_index_spec)):
             self.command.extend(['--output-begin-idx', str(output_begin_idx)])
+
+        # Only add --model-args when there are non-default model args
+        model_args = self._build_model_args()
+        if model_args:
+            self.command.extend(['--model-args', model_args])
 
         # Only add -b if batch count differs from default (1)
         if batch_count and str(batch_count) != "1":

@@ -106,6 +106,17 @@ OPTION_KEY_MAP = {
     'in_hires_sigmas': 'def_hires_sigmas',
     'in_hires_upscale_tile_size': 'def_hires_upscale_tile_size',
 
+    # Model Arguments
+    'in_chroma_use_dit_mask': 'def_chroma_use_dit_mask',
+    'in_chroma_use_t5_mask': 'def_chroma_use_t5_mask',
+    'in_chroma_t5_mask_pad': 'def_chroma_t5_mask_pad',
+    'in_qwen_image_zero_cond_t': 'def_qwen_image_zero_cond_t',
+    'in_qwen_image_2_1_prefix_cache': 'def_qwen_image_2_1_prefix_cache',
+    'in_qwen_image_2_1_prefix_cache_type': 'def_qwen_image_2_1_prefix_cache_type',
+    'in_pixart_pos_embed_base_size': 'def_pixart_pos_embed_base_size',
+    'in_pixart_interpolation_scale': 'def_pixart_interpolation_scale',
+    'in_pixart_vae_scale_factor': 'def_pixart_vae_scale_factor',
+
     # Environment
     'env_vk_visible_override': 'def_env_vk_visible_override',
     'env_GGML_VK_VISIBLE_DEVICES': 'def_env_GGML_VK_VISIBLE_DEVICES',

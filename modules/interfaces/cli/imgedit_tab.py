@@ -29,6 +29,7 @@ from modules.ui.controlnet import create_cnnet_ui
 from modules.ui.ref_img import create_ref_img_ui
 from modules.ui.slg import create_slg_ui
 # from modules.ui.qwen import create_qwen_ui
+from modules.ui.model_args import create_model_args_ui
 from modules.ui.circular import create_circular_ui
 from modules.ui.photomaker import create_photomaker_ui
 from modules.ui.eta import create_eta_ui
@@ -124,6 +125,10 @@ with gr.Blocks() as imgedit_block:
                 # ETA
                 eta_ui = create_eta_ui()
                 inputs_map.update(eta_ui)
+
+            with gr.Tab("Model Arguments"):
+                model_args_ui = create_model_args_ui()
+                inputs_map.update(model_args_ui)
 
             with gr.Tab("Advanced Settings"):
 
