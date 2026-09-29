@@ -117,6 +117,9 @@ OPTION_KEY_MAP = {
     'in_pixart_interpolation_scale': 'def_pixart_interpolation_scale',
     'in_pixart_vae_scale_factor': 'def_pixart_vae_scale_factor',
 
+    # Image preprocessing
+    'in_img_preprocess': 'def_img_preprocess',
+
     # Environment
     'env_vk_visible_override': 'def_env_vk_visible_override',
     'env_GGML_VK_VISIBLE_DEVICES': 'def_env_GGML_VK_VISIBLE_DEVICES',

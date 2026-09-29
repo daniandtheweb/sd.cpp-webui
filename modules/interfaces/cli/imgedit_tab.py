@@ -26,6 +26,7 @@ from modules.ui.generation_settings import (
 from modules.ui.upscale import create_upscl_ui
 from modules.ui.hires import create_hires_ui
 from modules.ui.controlnet import create_cnnet_ui
+from modules.ui.img_preprocess import create_img_preprocess_ui
 from modules.ui.ref_img import create_ref_img_ui
 from modules.ui.slg import create_slg_ui
 # from modules.ui.qwen import create_qwen_ui
@@ -101,6 +102,10 @@ with gr.Blocks() as imgedit_block:
                 # ControlNet
                 cnnet_ui = create_cnnet_ui()
                 inputs_map.update(cnnet_ui)
+
+                # Image Preprocessing
+                img_preprocess_ui = create_img_preprocess_ui()
+                inputs_map.update(img_preprocess_ui)
 
                 # Reference Image Settings
                 ref_img_ui = create_ref_img_ui()

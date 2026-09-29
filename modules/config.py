@@ -57,6 +57,7 @@ DEFAULT_SETTINGS = {
     'def_output_begin_idx': 0,
     'def_disable_img_metadata': False,
     'def_compression_quality': 90,
+    'def_img_preprocess': "",
     'def_mmap': True,
     'def_color': True,
     'def_log_level': "info",

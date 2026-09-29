@@ -29,6 +29,7 @@ from modules.ui.high_noise_generation_settings import (
 )
 from modules.ui.upscale import create_upscl_ui
 from modules.ui.controlnet import create_cnnet_ui
+from modules.ui.img_preprocess import create_img_preprocess_ui
 from modules.ui.slg import create_slg_ui
 from modules.ui.model_args import create_model_args_ui
 from modules.ui.eta import create_eta_ui
@@ -174,6 +175,10 @@ with gr.Blocks() as any2video_block:
                 # ControlNet
                 cnnet_ui = create_cnnet_ui()
                 inputs_map.update(cnnet_ui)
+
+                # Image Preprocessing
+                img_preprocess_ui = create_img_preprocess_ui()
+                inputs_map.update(img_preprocess_ui)
 
                 # Skip Layer Guidance
                 slg_ui = create_slg_ui()

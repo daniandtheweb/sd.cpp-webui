@@ -522,6 +522,10 @@ class ImageGenerationRunner(CommandRunner):
                 '--control-image': self._make_relative(self._get_param('in_control_img')),
                 '--control-strength': self._get_param('in_control_strength')
             } if self._get_param('in_cnnet_bool') else {}),
+            # Image Preprocessing
+            '--image-preprocess': (self._get_param('in_img_preprocess')
+                                   if self._get_param('in_img_preprocess')
+                                   else None),
             # Skip Layer Guidance (SLG)
             **({
                 '--slg-scale': self._get_param('in_slg_scale'),
@@ -813,6 +817,10 @@ class Any2VideoRunner(CommandRunner):
                                 else None),
             '--control-strength': (self._get_param('in_control_strength')
                                    if self._get_param('in_cnnet_bool')
+                                   else None),
+            # Image Preprocessing
+            '--image-preprocess': (self._get_param('in_img_preprocess')
+                                   if self._get_param('in_img_preprocess')
                                    else None),
             '--prediction': (self._get_param('in_predict')
                              if self._get_param('in_predict') != "Default"
