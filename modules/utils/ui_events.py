@@ -221,6 +221,6 @@ def refresh_all_options():
     return [
         gr.update(choices=sd_options.get_opt("samplers")),
         gr.update(choices=sd_options.get_opt("schedulers")),
-        gr.update(choices=["none"] + sd_options.get_opt("previews")),
+        gr.update(choices=sd_options.get_opt("previews")),
         gr.update(choices=["Default"] + sd_options.get_opt("prediction"))
     ]
