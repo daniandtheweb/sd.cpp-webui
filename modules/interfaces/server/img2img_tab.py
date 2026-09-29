@@ -202,7 +202,7 @@ with gr.Blocks()as img2img_server_block:
                         label="Image CFG (inpaint or instruct-pix2pix models)",
                         minimum=1,
                         maximum=30,
-                        value=7.0,
+                        value=config.get('def_img_cfg'),
                         step=0.1,
                         interactive=False
                     )
@@ -216,7 +216,7 @@ with gr.Blocks()as img2img_server_block:
                         minimum=0,
                         maximum=1,
                         step=0.01,
-                        value=0.75
+                        value=config.get('def_strength')
                     )
                     inputs_map['in_strength'] = strength
 

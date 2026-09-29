@@ -40,6 +40,8 @@ DEFAULT_SETTINGS = {
     'def_seed': -1,
     'def_clip_skip': -1,
     'def_batch_count': 1,
+    'def_img_cfg': 7.0,
+    'def_strength': 0.75,
     'def_rng': "Default",
     'def_sampler_rng': "Default",
     'def_predict': "Default",
