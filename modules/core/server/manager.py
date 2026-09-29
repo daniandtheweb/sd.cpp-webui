@@ -34,6 +34,18 @@ class ServerRunner(CommonRunner):
 
         options = self._get_common_model_options()
 
+        # Quantization
+        options.update({
+            '--type': (self._get_param('in_model_type')
+                       if self._get_param('in_model_type') != "Default"
+                       else None),
+            '--tensor-type-rules': (
+                self._get_param('in_tensor_type_rules')
+                if self._get_param('in_tensor_type_rules') != ""
+                else None
+            ),
+        })
+
         # Additional Components
         options.update({
             '--threads': self._get_param('in_threads'),
