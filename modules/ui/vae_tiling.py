@@ -23,7 +23,7 @@ def create_vae_tiling_ui():
             maximum=1,
             step=0.01,
             value=config.get('def_vae_tile_overlap'),
-            interactive=False
+            interactive=config.get('def_vae_tiling')
         )
         vae_tile_size = gr.Number(
             label="VAE Tile size",
@@ -31,12 +31,12 @@ def create_vae_tiling_ui():
             maximum=1024,
             step=1,
             value=config.get('def_vae_tile_size'),
-            interactive=False
+            interactive=config.get('def_vae_tiling')
         )
         vae_relative_bool = gr.Checkbox(
             label="Enable VAE relative tile size",
             value=config.get('def_vae_relative_bool'),
-            interactive=False
+            interactive=config.get('def_vae_tiling')
         )
         vae_relative_tile_size = gr.Number(
             label="VAE relative tile size",
@@ -44,7 +44,7 @@ def create_vae_tiling_ui():
             maximum=1024,
             step=0.01,
             value=config.get('def_vae_relative_tile_size'),
-            interactive=False
+            interactive=config.get('def_vae_relative_bool')
         )
         temporal_tiling = gr.Checkbox(
             label="Temporal tiling for LTX video VAE decode",
