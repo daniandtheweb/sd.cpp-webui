@@ -17,9 +17,9 @@ def test_extract_env_vars_preserves_value_types():
 
     env = extract_env_vars(params)
 
+    # The integer-dot flag is False, so it must be omitted (only-if-true).
     assert env == {
         'GGML_VK_DISABLE_COOPMAT': True,
-        'GGML_VK_DISABLE_INTEGER_DOT_PRODUCT': False,
         'GGML_VK_VISIBLE_DEVICES': 0.0,
     }
 
@@ -58,6 +58,7 @@ def test_build_process_env_injects_env_vars():
     env = runner._build_process_env()
 
     assert env['GGML_VK_DISABLE_COOPMAT'] == '1'
-    assert env['GGML_VK_DISABLE_INTEGER_DOT_PRODUCT'] == '0'
+    # The integer-dot flag is False, so it must not be set at all.
+    assert 'GGML_VK_DISABLE_INTEGER_DOT_PRODUCT' not in env
     assert env['GGML_VK_VISIBLE_DEVICES'] == '1'
     assert env['CUDA_VISIBLE_DEVICES'] == '2'

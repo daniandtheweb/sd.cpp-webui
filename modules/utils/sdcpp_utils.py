@@ -84,11 +84,20 @@ def extract_env_vars(params: Dict[str, Any]) -> Dict[str, str]:
     is_cuda_override_true = params.pop('env_cuda_visible_override', False)
     cuda_device_id = params.pop('env_CUDA_VISIBLE_DEVICES', None)
 
+    # Boolean "disable" flags: emitting them as 0 is a no-op, so only
+    # include them when enabled (True).
+    only_if_true = {
+        'GGML_VK_DISABLE_COOPMAT',
+        'GGML_VK_DISABLE_INTEGER_DOT_PRODUCT',
+    }
+
     for key in list(params.keys()):
         if key.startswith("env_"):
             env_key = key[4:]
             value = params.pop(key)
             if env_key not in env_vars:
+                if env_key in only_if_true and not value:
+                    continue
                 env_vars[env_key] = value
 
     if is_vk_override_true and vk_device_id is not None:
