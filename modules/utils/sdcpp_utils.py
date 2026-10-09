@@ -89,7 +89,7 @@ def extract_env_vars(params: Dict[str, Any]) -> Dict[str, str]:
             env_key = key[4:]
             value = params.pop(key)
             if env_key not in env_vars:
-                env_vars[env_key] = str(value)
+                env_vars[env_key] = value
 
     if is_vk_override_true and vk_device_id is not None:
         env_vars['GGML_VK_VISIBLE_DEVICES'] = vk_device_id

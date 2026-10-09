@@ -467,13 +467,12 @@ class CommonRunner():
             settings_to_print = []
             for key, value in self.env_vars.items():
                 if isinstance(value, bool):
-                    if value is True:
-                        process_env[key] = "1"
-                        settings_to_print.append(f"{key}=1")
-                elif isinstance(value, int):
+                    process_env[key] = "1" if value else "0"
+                elif isinstance(value, float) and value.is_integer():
+                    process_env[key] = str(int(value))
+                else:
                     process_env[key] = str(value)
-                    settings_to_print.append(f"{key}={str(value)}")
-            if settings_to_print:
-                full_line = " ".join(settings_to_print)
-                print(f"  SET: {full_line}\n\n")
+                settings_to_print.append(f"{key}={process_env[key]}")
+            full_line = " ".join(settings_to_print)
+            print(f"  SET: {full_line}\n\n")
         return process_env
