@@ -16,8 +16,8 @@ from modules.ui.loras import (
     create_lora_sel_ui, bind_lora_events
 )
 from modules.ui.prompts import create_prompts_ui
-from modules.ui.presets import (
-    create_presets_ui, bind_presets_events
+from modules.ui.model_presets import (
+    create_model_presets_ui, bind_model_presets_events
 )
 from modules.ui.generation_settings import (
     create_quant_ui, create_generation_settings_ui,
@@ -67,6 +67,9 @@ with gr.Blocks() as imgedit_block:
         quant_ui = create_quant_ui()
         inputs_map.update(quant_ui)
 
+        # Model Presets
+        model_presets_ui = create_model_presets_ui()
+
     # Loras
     lora_ui = create_lora_sel_ui()
     inputs_map.update(lora_ui)
@@ -78,8 +81,6 @@ with gr.Blocks() as imgedit_block:
     # Settings
     with gr.Row():
         with gr.Column(scale=1):
-
-            presets_ui = create_presets_ui()
 
             with gr.Tab("Generation Settings"):
 
@@ -254,8 +255,8 @@ with gr.Blocks() as imgedit_block:
 
     is_loading_preset = gr.State(value=False)
 
-    bind_presets_events(
-        presets_ui, generation_settings_ui, model_ui,
+    bind_model_presets_events(
+        model_presets_ui, model_ui, generation_settings_ui,
         preset_flag=is_loading_preset
     )
 

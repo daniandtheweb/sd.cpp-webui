@@ -21,8 +21,8 @@ from modules.ui.loras import (
     create_lora_sel_ui, bind_lora_events
 )
 from modules.ui.prompts import create_prompts_ui
-from modules.ui.presets import (
-    create_presets_ui, bind_presets_events
+from modules.ui.model_presets import (
+    create_model_presets_ui, bind_model_presets_events
 )
 from modules.ui.generation_settings import (
     create_quant_ui, create_generation_settings_ui,
@@ -71,6 +71,9 @@ with gr.Blocks()as img2img_server_block:
             # Model Type Selection
             quant_ui = create_quant_ui()
             inputs_map.update(quant_ui)
+
+            # Model Presets
+            model_presets_ui = create_model_presets_ui()
 
         with gr.Accordion(
             label="Server Settings", open=False
@@ -185,8 +188,6 @@ with gr.Blocks()as img2img_server_block:
     # Settings
     with gr.Row():
         with gr.Column(scale=1):
-
-            presets_ui = create_presets_ui()
 
             with gr.Tab("Generation Settings"):
 
@@ -336,7 +337,13 @@ with gr.Blocks()as img2img_server_block:
 
     bind_lora_events(lora_ui, prompts_ui)
 
-    bind_presets_events(presets_ui, generation_settings_ui)
+    is_loading_preset = gr.State(value=False)
+
+    bind_model_presets_events(
+        model_presets_ui, model_ui['inputs'], generation_settings_ui,
+        model_tabs=model_ui['components']['model_tabs'],
+        preset_flag=is_loading_preset
+    )
 
     timer = gr.Timer(value=0.1, active=False)
 
@@ -356,9 +363,19 @@ with gr.Blocks()as img2img_server_block:
     )
 
     # Interactive Bindings
+    def safe_ckpt_tab_switch(is_loading):
+        if is_loading:
+            return [gr.skip()] * 14 + [False]
+        return list(ckpt_tab_switch()) + [False]
+
+    def safe_unet_tab_switch(is_loading):
+        if is_loading:
+            return [gr.skip()] * 14 + [False]
+        return list(unet_tab_switch()) + [False]
+
     model_ui['components']['ckpt_tab'].select(
-        ckpt_tab_switch,
-        inputs=[],
+        safe_ckpt_tab_switch,
+        inputs=[is_loading_preset],
         outputs=[
             model_ui['inputs']['in_diffusion_mode'],
             model_ui['inputs']['in_ckpt_model'],
@@ -373,12 +390,13 @@ with gr.Blocks()as img2img_server_block:
             generation_settings_ui['in_guidance_bool'],
             generation_settings_ui['in_guidance'],
             generation_settings_ui['in_flow_shift_bool'],
-            generation_settings_ui['in_flow_shift']
+            generation_settings_ui['in_flow_shift'],
+            is_loading_preset
         ]
     )
     model_ui['components']['unet_tab'].select(
-        unet_tab_switch,
-        inputs=[],
+        safe_unet_tab_switch,
+        inputs=[is_loading_preset],
         outputs=[
             model_ui['inputs']['in_diffusion_mode'],
             model_ui['inputs']['in_ckpt_model'],
@@ -393,7 +411,8 @@ with gr.Blocks()as img2img_server_block:
             generation_settings_ui['in_guidance_bool'],
             generation_settings_ui['in_guidance'],
             generation_settings_ui['in_flow_shift_bool'],
-            generation_settings_ui['in_flow_shift']
+            generation_settings_ui['in_flow_shift'],
+            is_loading_preset
         ]
     )
 
