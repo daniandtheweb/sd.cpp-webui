@@ -368,6 +368,14 @@ with gr.Blocks() as options_block:
                     interactive=True
                 )
             )
+            registry.register(
+                'def_color_scheme', gr.Dropdown(
+                    label="Color scheme",
+                    choices=["System", "Light", "Dark"],
+                    value=(config.get('def_color_scheme') or 'System').title(),
+                    interactive=True
+                )
+            )
 
     with gr.Row():
         refresh_opt = gr.Button(

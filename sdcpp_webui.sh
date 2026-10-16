@@ -14,7 +14,6 @@ Options:
     --server                 Enable stable-diffusion.cpp's server mode
     --listen:                Share sd.cpp-webui on your local network
     --autostart:             Open the UI automatically
-    --darkmode:              Forces the UI to launch in dark mode
     --credentials:           Enable password protection using credentials.json
                              Expected format: {"username1": "password1", "username2": "password2"}
     --allow-insecure-dir:    Allows the usage of external or linked directories based on config.json
@@ -31,7 +30,7 @@ for arg in "$@"; do
     --server)
       SERVER_MODE=1
       ;;
-    --listen|--autostart|--darkmode|--credentials|--allow-insecure-dir)
+    --listen|--autostart|--credentials|--allow-insecure-dir)
       ;;
     *)
       printf "Error: Unknown command parameter: %s\n" "$arg" >&2

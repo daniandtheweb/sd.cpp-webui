@@ -50,16 +50,18 @@ from modules.ui.constants import FIELDS, SAMPLERS, SCHEDULERS
 from modules.utils.sdcpp_utils import restart_server
 
 
-DARK_MODE_JS = """
-function refresh() {
-    const url = new URL(window.location);
-
-    if (url.searchParams.get('__theme') !== 'dark') {
-        url.searchParams.set('__theme', 'dark');
-        window.location.href = url.href;
-    }
-}
-"""
+def build_color_scheme_js(scheme: str):
+    """On-page-load JS forcing a color scheme. Gradio dark mode is a 'dark'
+    class on <body> (light/dark CSS vars are both served), so no reload is
+    needed. Returns None for system."""
+    scheme = str(scheme or 'system').lower()
+    if scheme == 'dark':
+        action = "document.body.classList.add('dark')"
+    elif scheme == 'light':
+        action = "document.body.classList.remove('dark')"
+    else:
+        return None
+    return f"function refresh() {{\n    {action};\n}}"
 
 warnings.filterwarnings("ignore", message=".*HTTP_422_UNPROCESSABLE_ENTITY.*")
 
@@ -297,12 +299,12 @@ def bind_ui_events(server: bool, tabs, gallery_tab, gallery_loaded_state):
 
 def sdcpp_launch(
     server: bool = False, listen: bool = False,
-    autostart: bool = False, darkmode: bool = False,
+    autostart: bool = False,
     credentials: bool = False, insecure_dir: bool = False
 ):
     """Logic for launching sdcpp based on arguments"""
     launch_args = build_launch_args(listen, autostart, credentials)
-    dark_js = DARK_MODE_JS if darkmode else None
+    color_js = build_color_scheme_js(config.get('def_color_scheme'))
 
     if insecure_dir:
         launch_args["allowed_paths"] = get_allowed_paths(
@@ -325,7 +327,7 @@ def sdcpp_launch(
     # Pass the arguments to sdcpp.launch with argument unpacking
     sdcpp.launch(
         css="footer {visibility: hidden}",
-        theme="default", js=dark_js,
+        theme="default", js=color_js,
         **launch_args
     )
 
@@ -357,11 +359,6 @@ def main():
         help='Automatically launch in a new browser tab'
     )
     parser.add_argument(
-        '--darkmode',
-        action='store_true',
-        help='Enable dark mode for the web interface'
-    )
-    parser.add_argument(
         '--credentials',
         action='store_true',
         help='Enable password protection using credentials.json'
@@ -374,7 +371,7 @@ def main():
     args = parser.parse_args()
 
     sdcpp_launch(
-        args.server, args.listen, args.autostart, args.darkmode,
+        args.server, args.listen, args.autostart,
         args.credentials, args.allow_insecure_dir
     )
 
