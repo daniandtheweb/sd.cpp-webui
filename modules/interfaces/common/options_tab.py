@@ -246,6 +246,13 @@ with gr.Blocks() as options_block:
                     dir_key='txt_enc_dir',
                     option_key='def_llm_vision')
                 )
+        with gr.Row():
+            registry.register(
+                'def_tokenizer', create_model_widget(
+                    label="tokenizer",
+                    dir_key='tokenizer_dir',
+                    option_key='def_tokenizer')
+                )
 
         quant_ui = create_quant_ui()
         for k, v in quant_ui.items():

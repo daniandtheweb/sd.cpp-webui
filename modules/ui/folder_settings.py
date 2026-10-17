@@ -10,6 +10,7 @@ FOLDER_CONFIG = {
     'unet_dir': "UNET folder",
     'vae_dir': "VAE folder",
     'txt_enc_dir': "Text encoders folder",
+    'tokenizer_dir': "Tokenizer folder",
     'emb_dir': "Embeddings folder",
     'lora_dir': "Lora folder",
     'taesd_dir': "TAESD folder",

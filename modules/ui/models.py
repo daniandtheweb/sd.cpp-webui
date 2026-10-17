@@ -7,7 +7,7 @@ import gradio as gr
 from modules.shared_instance import config
 from modules.loader import (
     get_models, reload_models,
-    get_loras
+    get_loras, SUPPORTED_EXTENSIONS
 )
 from modules.utils.ui_state import (
     get_session_value, update_session_cache
@@ -54,10 +54,13 @@ def create_model_widget(
 
     current_value = get_session_value(option_key)
 
+    # Tokenizers are JSON files, not the usual weight formats.
+    extensions = (".json",) if dir_key == 'tokenizer_dir' else SUPPORTED_EXTENSIONS
+
     if dir_key == 'lora_dir':
         choices = list(get_loras())
     else:
-        choices = list(get_models(full_path)) if full_path else []
+        choices = list(get_models(full_path, extensions)) if full_path else []
 
     with gr.Group():
         path_component_txt = gr.Textbox(value=full_path, visible=False)
@@ -92,8 +95,13 @@ def create_model_widget(
                     outputs=[dropdown]
                 )
             else:
+                reload_fn = (
+                    (lambda folder: reload_models(folder, extensions))
+                    if extensions != SUPPORTED_EXTENSIONS
+                    else reload_models
+                )
                 reload_btn.click(
-                    fn=reload_models,
+                    fn=reload_fn,
                     inputs=[path_component_txt],
                     outputs=[dropdown]
                 )
@@ -189,6 +197,12 @@ def create_unet_model_sel_ui():
                 dir_key='txt_enc_dir',
                 option_key='def_llm_vision',
             )
+    with gr.Row():
+        tokenizer = create_model_widget(
+            label="tokenizer",
+            dir_key='tokenizer_dir',
+            option_key='def_tokenizer',
+        )
 
     return {
         'in_unet_model': unet_model,
@@ -198,7 +212,8 @@ def create_unet_model_sel_ui():
         'in_clip_l': clip_l,
         'in_t5xxl': t5xxl,
         'in_llm': llm,
-        'in_llm_vision': llm_vision
+        'in_llm_vision': llm_vision,
+        'in_tokenizer': tokenizer
     }
 
 

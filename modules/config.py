@@ -14,6 +14,7 @@ DEFAULT_SETTINGS = {
     'unet_dir': os.path.join(CURRENT_DIR, "models/unet/"),
     'vae_dir': os.path.join(CURRENT_DIR, "models/vae/"),
     'txt_enc_dir': os.path.join(CURRENT_DIR, "models/text_encoders/"),
+    'tokenizer_dir': os.path.join(CURRENT_DIR, "models/tokenizers/"),
     'emb_dir': os.path.join(CURRENT_DIR, "models/embeddings/"),
     'lora_dir': os.path.join(CURRENT_DIR, "models/loras/"),
     'taesd_dir': os.path.join(CURRENT_DIR, "models/taesd/"),
@@ -172,6 +173,7 @@ class ConfigManager:
         'def_emb_connect': 'txt_enc_dir',
         'def_llm': 'txt_enc_dir',
         'def_llm_vision': 'txt_enc_dir',
+        'def_tokenizer': 'tokenizer_dir',
     }
 
     def __init__(self, config_path: str = None):

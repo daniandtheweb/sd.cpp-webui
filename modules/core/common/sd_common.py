@@ -282,7 +282,8 @@ class CommonRunner():
             'taesd_dir': ['in_taesd'],
             'phtmkr_dir': ['in_phtmkr'],
             'upscl_dir': ['in_upscl'],
-            'cnnet_dir': ['in_cnnet']
+            'cnnet_dir': ['in_cnnet'],
+            'tokenizer_dir': ['in_tokenizer']
         }
         for dir_key, param_keys in path_mappings.items():
             for param_key in param_keys:
@@ -326,6 +327,7 @@ class CommonRunner():
             options['--t5xxl'] = self._make_relative(self._get_param('f_t5xxl'))
             options['--llm'] = self._make_relative(self._get_param('f_llm'))
             options['--llm_vision'] = self._make_relative(self._get_param('f_llm_vision'))
+            options['--tokenizer'] = self._make_relative(self._get_param('f_tokenizer'))
 
         return {k: v for k, v in options.items() if v is not None}
 

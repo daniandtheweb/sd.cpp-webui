@@ -15,7 +15,7 @@ SAMPLERS = sd_options.get_opt("samplers")
 SCHEDULERS = sd_options.get_opt("schedulers")
 MODELS = [
     "Checkpoint", "UNET", "VAE", "clip_g", "clip_l", "t5xxl", "llm",
-    "TAESD", "Lora", "Embeddings", "Upscaler", "ControlNet"
+    "tokenizer", "TAESD", "Lora", "Embeddings", "Upscaler", "ControlNet"
 ]
 BUILTIN_UPSCALERS = [
     "Lanczos", "Nearest", "Latent", "Latent (nearest)",

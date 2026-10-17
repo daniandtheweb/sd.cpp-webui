@@ -38,6 +38,7 @@ class ModelState:
         bak_t5xxl: The backup T5-XXL model.
         bak_llm: The backup LLM model.
         bak_llm_vision: The backup LLM vision model.
+        bak_tokenizer: The backup tokenizer model.
     """
     @property
     def bak_ckpt_model(self): return get_session_value('def_ckpt')
@@ -65,6 +66,9 @@ class ModelState:
 
     @property
     def bak_llm_vision(self): return get_session_value('def_llm_vision')
+
+    @property
+    def bak_tokenizer(self): return get_session_value('def_tokenizer')
 
     @property
     def bak_guidance_bool(self):

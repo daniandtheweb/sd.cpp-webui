@@ -20,6 +20,7 @@ MODEL_DIR_MAP = {
     "clip_l": config.get('txt_enc_dir'),
     "t5xxl": config.get('txt_enc_dir'),
     "llm": config.get('txt_enc_dir'),
+    "tokenizer": config.get('tokenizer_dir'),
     "taesd": config.get('taesd_dir'),
     "Lora": config.get('lora_dir'),
     "Embeddings": config.get('emb_dir'),
@@ -28,12 +29,13 @@ MODEL_DIR_MAP = {
 }
 
 
-def get_models(models_folder: str) -> List[str]:
+def get_models(models_folder: str, extensions=SUPPORTED_EXTENSIONS) -> List[str]:
     """
     Lists all supported models in a folder.
 
     Args:
         models_folder (str): The path to the directory to scan.
+        extensions (tuple): Allowed file extensions. Defaults to SUPPORTED_EXTENSIONS.
 
     Returns:
         List[str]: A list of model filenames or an empty list.
@@ -46,7 +48,7 @@ def get_models(models_folder: str) -> List[str]:
     try:
         for root, _, files in os.walk(models_folder):
             for file in files:
-                if file.endswith(SUPPORTED_EXTENSIONS):
+                if file.endswith(extensions):
                     full_path = os.path.join(root, file)
 
                     rel_path = os.path.relpath(full_path, models_folder)
@@ -61,17 +63,18 @@ def get_models(models_folder: str) -> List[str]:
         return []
 
 
-def reload_models(models_folder: str) -> gr.Dropdown:
+def reload_models(models_folder: str, extensions=SUPPORTED_EXTENSIONS) -> gr.Dropdown:
     """
     Creates a Gradio update object to refresh a model dropdown.
 
     Args:
         models_folder (str): The directory containing the models to list.
+        extensions (tuple): Allowed file extensions. Defaults to SUPPORTED_EXTENSIONS.
 
     Returns:
         gr.Dropdown: A Gradio update object with the new list of models.
     """
-    return gr.update(choices=get_models(models_folder))
+    return gr.update(choices=get_models(models_folder, extensions))
 
 
 def get_loras() -> List[str]:
