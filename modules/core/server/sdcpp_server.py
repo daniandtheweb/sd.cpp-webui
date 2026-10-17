@@ -5,6 +5,7 @@ import io
 import json
 import time
 import base64
+import re
 import httpx
 from PIL import Image
 from typing import Dict, Any, Generator
@@ -97,34 +98,113 @@ class ApiTaskRunner(CommonRunner):
 
         return cleaned_text, extracted_loras
 
+    _EXTRA_ARGS_TAG_RE = re.compile(r"<sd_cpp_extra_args>(.*?)</sd_cpp_extra_args>")
+
+    # Legacy SD-API-style sampler names -> raw sd.cpp sample_method names
+    # accepted by SDGenerationParams::from_json_str (tag path has no alias map).
+    # WebUI dropdown values are already raw names (parsed from the server
+    # --help text); these aliases only cover old SD-API-style presets.
+    _SAMPLER_TAG_ALIASES = {
+        'euler a': 'euler_a',
+        'euler': 'euler',
+        'ddim': 'ddim_trailing',
+        'res multistep': 'res_multistep',
+        'res 2s': 'res_2s',
+    }
+
+    @classmethod
+    def _to_tag_sampler(cls, name: str) -> str:
+        n = str(name).strip().lower()
+        if n.startswith('k_'):
+            n = n[2:]
+        return cls._SAMPLER_TAG_ALIASES.get(n, n)
+
     def _get_extra_args_string(self) -> str:
-        """Helper to build the <sd_cpp_extra_args> tag for the prompt."""
-        mapping = {
-            'in_steps': ('steps', int, None),
-            'in_seed': ('seed', int, None),
-            'in_cfg': ('cfg_scale', float, None),
-            'in_strength': ('denoising_strength', float, None),
-            'in_flow_shift': ('flow_shift', float, 'in_flow_shift_bool'),
-            'in_guidance': ('guidance', float, 'in_guidance_bool'),
-            'in_clip_skip': ('clip_skip', int, None),
-            'in_eta': ('eta', float, 'in_eta_bool'),
-            'in_timestep_shift': ('timestep_shift', float, 'in_timestep_shift_bool'),
-            'in_sampling': ('sampler_name', str, None),
-            'in_scheduler': ('scheduler', str, None),
-        }
-
-        extra_args = {}
-        for p_key, (a_key, cast_type, cond_key) in mapping.items():
-            if cond_key and not self._get_param(cond_key, False):
-                continue
+        """Build the <sd_cpp_extra_args> tag using the NESTED sdcpp schema
+        accepted by SDGenerationParams::from_json_str (docs/api.md:540-575).
+        The server silently skips unknown/flat keys, so only nested keys go
+        in here."""
+        def _num(p_key, cast, cond_key=None):
+            if cond_key is not None and not self._get_param(cond_key, False):
+                return None
             val = self._get_param(p_key)
-            if val is not None and str(val).strip() != "":
-                try:
-                    extra_args[a_key] = cast_type(val)
-                except (ValueError, TypeError):
-                    continue
+            if val in (None, ''):
+                return None
+            try:
+                return cast(val)
+            except (ValueError, TypeError):
+                return None
 
-        return f"<sd_cpp_extra_args>{json.dumps(extra_args)}</sd_cpp_extra_args>" if extra_args else ""
+        sample_params = {}
+        guidance = {}
+
+        v = _num('in_steps', int)
+        if v is not None:
+            sample_params['sample_steps'] = v
+        v = _num('in_cfg', float)
+        if v is not None:
+            guidance['txt_cfg'] = v
+        v = _num('in_guidance', float, 'in_guidance_bool')
+        if v is not None:
+            guidance['distilled_guidance'] = v
+        v = _num('in_flow_shift', float, 'in_flow_shift_bool')
+        if v is not None:
+            sample_params['flow_shift'] = v
+        v = _num('in_eta', float, 'in_eta_bool')
+        if v is not None:
+            sample_params['eta'] = v
+        v = _num('in_timestep_shift', int, 'in_timestep_shift_bool')
+        if v is not None:
+            sample_params['shifted_timestep'] = v
+
+        val = self._get_param('in_sampling')
+        if val is not None and str(val).strip() != "":
+            sample_params['sample_method'] = self._to_tag_sampler(val)
+        val = self._get_param('in_scheduler')
+        if val is not None and str(val).strip() != "":
+            s = str(val).strip().lower()
+            sample_params['scheduler'] = 'discrete' if s == 'normal' else s
+
+        if guidance:
+            sample_params['guidance'] = guidance
+        extra_args = {}
+        if sample_params:
+            extra_args['sample_params'] = sample_params
+
+        v = _num('in_seed', int)
+        if v is not None:
+            extra_args['seed'] = v
+        v = _num('in_clip_skip', int)
+        if v is not None:
+            extra_args['clip_skip'] = v
+        v = _num('in_strength', float)
+        if v is not None:
+            extra_args['strength'] = v
+
+        return (f"<sd_cpp_extra_args>{json.dumps(extra_args)}</sd_cpp_extra_args>"
+                if extra_args else "")
+
+    def _merge_extra_args(self, prompt: str, extra: dict) -> str:
+        """Merge `extra` into an existing tag (the server only extracts the
+        FIRST tag per prompt) or append a new one."""
+        m = self._EXTRA_ARGS_TAG_RE.search(prompt or "")
+        if m:
+            try:
+                data = json.loads(m.group(1))
+            except json.JSONDecodeError:
+                data = {}
+            sp = data.setdefault('sample_params', {})
+            for k, val in extra.get('sample_params', {}).items():
+                if k == 'guidance':
+                    sp.setdefault('guidance', {}).update(val)
+                else:
+                    sp[k] = val
+            for k, val in extra.items():
+                if k != 'sample_params':
+                    data[k] = val
+            tag = f"<sd_cpp_extra_args>{json.dumps(data)}</sd_cpp_extra_args>"
+            return prompt[:m.start()] + tag + prompt[m.end():]
+        return (prompt or "") + f" <sd_cpp_extra_args>{json.dumps(extra)}</sd_cpp_extra_args>"
 
     def _build_payload(self) -> dict:
         """Constructs the JSON payload for sdapi endpoints."""
@@ -152,6 +232,10 @@ class ApiTaskRunner(CommonRunner):
         if loras:
             unique_loras = {lora['path']: lora for lora in loras}.values()
             payload["lora"] = list(unique_loras)
+
+        tag = self._get_extra_args_string()
+        if tag:
+            payload["prompt"] = payload["prompt"] + f" {tag}"
 
         return payload
 
@@ -304,10 +388,9 @@ class Img2ImgApiRunner(ApiTaskRunner):
             except (TypeError, ValueError):
                 img_cfg = None
             if img_cfg is not None:
-                tag = json.dumps({"sample_params": {"guidance": {"img_cfg": img_cfg}}})
-                payload["prompt"] = (
-                    payload["prompt"]
-                    + f" <sd_cpp_extra_args>{tag}</sd_cpp_extra_args>"
+                payload["prompt"] = self._merge_extra_args(
+                    payload["prompt"],
+                    {"sample_params": {"guidance": {"img_cfg": img_cfg}}},
                 )
         return payload
 
@@ -327,8 +410,6 @@ class ImgEditApiRunner(ApiTaskRunner):
             "n": str(self._int_param('in_batch_count', 1)),
             "size": (f"{self._int_param('in_width', 512)}x"
                     f"{self._int_param('in_height', 512)}"),
-            "sampler_name": self._get_param('in_sampling', 'Euler a'),
-            "scheduler": self._get_param('in_scheduler', 'discrete'),
             "output_format": "png"
         }
 
