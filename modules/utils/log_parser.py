@@ -15,16 +15,28 @@ class LogParser:
         self.ETA_REGEX = re.compile(r'(\d+)/(\d+)\s*-\s*([\d.]+)(s/it|it/s)')
         self.SIMPLE_REGEX = re.compile(r'(\d+)/(\d+)')
         self.SEED_REGEX = re.compile(r"generating image:.*?seed\s+(\d+)")
+        self.PROGRESS_LINE_REGEX = re.compile(
+            r'^\s*\|[^|]*\|\s*(\d+)/(\d+)(?:\s*-\s*.*)?$'
+        )
+        self.PROGRESS_NOISE_REGEXES = [
+            re.compile(r'\bexecuting segment \d+/\d+\b'),
+        ]
+        self.ANSI_REGEX = re.compile(r'\x1b\[[0-9;]*m')
+        self._last_bar_total = None
 
-    def _is_progress_line(self, line, phase):
+    def _is_progress_line(self, line, phase=None):
         """
         Checks if a line is a progress bar line.
         """
-        return (
-            phase in ["Loading Model", "Sampling", "Upscaling"] and
-            "|" in line and
-            "/" in line
+        return bool(
+            self.PROGRESS_LINE_REGEX.match(self.ANSI_REGEX.sub('', line))
         )
+
+    def _is_progress_noise(self, line):
+        """
+        Checks if a line is repeating per-step debug output.
+        """
+        return any(regex.search(line) for regex in self.PROGRESS_NOISE_REGEXES)
 
     def _parse_final_stats(self, line, final_stats):
         """
@@ -56,7 +68,7 @@ class LogParser:
     def _parse_progress_update(self, line, final_stats):
         """Parses a progress bar line and returns a dictionary for the UI."""
         eta_match = self.ETA_REGEX.search(line)
-        if eta_match:
+        if eta_match and int(eta_match.group(2)) > 0:
             (current_step, total_steps,
              speed_value, speed_unit) = eta_match.groups()
             final_stats['last_speed'] = (
@@ -99,11 +111,12 @@ class LogParser:
         simple_match = self.SIMPLE_REGEX.search(line)
         if simple_match:
             current_step, total_steps = map(int, simple_match.groups())
-            phase_fraction = current_step / total_steps
-            return {
-                "percent": int(phase_fraction * 100),
-                "status": f"Step: {current_step}/{total_steps}"
-            }
+            if total_steps > 0:
+                phase_fraction = current_step / total_steps
+                return {
+                    "percent": int(phase_fraction * 100),
+                    "status": f"Step: {current_step}/{total_steps}"
+                }
         return {}
 
     def process_line(self, raw_line, clean_line, phase,
@@ -117,27 +130,40 @@ class LogParser:
         if not display_line:
             return None, last_was_progress
 
-        is_progress = self._is_progress_line(clean_line, phase)
+        clean_probe = self.ANSI_REGEX.sub('', clean_line)
+        bar_match = self.PROGRESS_LINE_REGEX.match(clean_probe)
 
-        if is_progress:
-            if not last_was_progress:
+        if bar_match:
+            current_total = int(bar_match.group(2))
+            new_sequence = (
+                not last_was_progress or
+                (self._last_bar_total is not None and
+                 current_total != self._last_bar_total)
+            )
+            if new_sequence:
                 sys.stdout.write("\n")
+            self._last_bar_total = current_total
 
-            update_data = self._parse_progress_update(clean_line, final_stats)
+            update_data = self._parse_progress_update(clean_probe, final_stats)
             if update_data:
                 sys.stdout.write(f"\r{display_line}")
                 sys.stdout.flush()
                 return update_data, True
-        else:
-            if last_was_progress:
-                sys.stdout.write("\n\n")
 
-            print(display_line)
-            if 'generate_image completed' in clean_line:
-                return {"final_stats": dict(final_stats)}, False
-            return None, False
+            return None, last_was_progress
 
-        return None, last_was_progress
+        # Keep the bar running instead of breaking it
+        if last_was_progress and self._is_progress_noise(clean_probe):
+            return None, True
+
+        if last_was_progress:
+            sys.stdout.write("\n\n")
+        self._last_bar_total = None
+
+        print(display_line)
+        if 'generate_image completed' in clean_line:
+            return {"final_stats": dict(final_stats)}, False
+        return None, False
 
     def determine_phase(self, line):
         """
