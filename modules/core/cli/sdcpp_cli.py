@@ -133,21 +133,23 @@ class CommandRunner(CommonRunner):
         """Adds arguments common to all modes."""
         self.command.extend([
             '--sampling-method', str(self._get_param('in_sampling')),
-            '--steps', str(self._get_param('in_steps')),
-            '-W', str(self._get_param('in_width')),
-            '-H', str(self._get_param('in_height')),
+            '--steps', str(self._int_param('in_steps')),
+            '-W', str(self._int_param('in_width')),
+            '-H', str(self._int_param('in_height')),
             '--cfg-scale', str(self._get_param('in_cfg')),
-            '-s', str(self._get_param('in_seed')),
+            '-s', str(self._int_param('in_seed')),
             '-o', self.output_path
         ])
 
         batch_count = self._get_param('in_batch_count')
-        multi_output = batch_count is not None and float(batch_count) > 1
+        if batch_count is not None:
+            batch_count = int(float(batch_count))
+        multi_output = batch_count is not None and batch_count > 1
         has_index_spec = format_specifier_regex.search(self.output_path)
 
         # Only add --output-begin-idx when generating sequenced outputs
-        output_begin_idx = self._get_param('in_output_begin_idx')
-        if (output_begin_idx and float(output_begin_idx) != 0
+        output_begin_idx = self._int_param('in_output_begin_idx')
+        if (output_begin_idx and output_begin_idx != 0
                 and (multi_output or has_index_spec)):
             self.command.extend(['--output-begin-idx', str(output_begin_idx)])
 
@@ -161,8 +163,8 @@ class CommandRunner(CommonRunner):
             self.command.extend(['-b', str(batch_count)])
 
         # Only add --clip-skip if it differs from default (-1)
-        clip_skip = self._get_param('in_clip_skip')
-        if clip_skip and str(clip_skip) != "-1":
+        clip_skip = self._int_param('in_clip_skip')
+        if clip_skip is not None and clip_skip != -1:
             self.command.extend(['--clip-skip', str(clip_skip)])
 
         rng = str(self._get_param('in_rng'))
@@ -194,13 +196,15 @@ class CommandRunner(CommonRunner):
         cmd_print = self.command.copy()
         self.fcommand = ' '.join(map(str, cmd_print))
 
-        # Compute all output filenames
-        batch_count = self._get_param('in_batch_count', 1)
-        if batch_count == 1:
+        # Compute all output filenames. The Gradio slider yields floats, so
+        # normalize to int. With batch > 1, sd-cli writes only the suffixed
+        # files (<base>_<i>.png, i in 0..batch-1) — no unsuffixed file.
+        batch_count = int(float(self._get_param('in_batch_count', 1) or 1))
+        if batch_count <= 1:
             self.outputs = [self.output_path]
         else:
             base, ext = os.path.splitext(self.output_path)
-            self.outputs = [self.output_path] + [
+            self.outputs = [
                 f"{base}_{i}{ext}" for i in range(batch_count)
             ]
 
@@ -314,7 +318,7 @@ class ImageGenerationRunner(CommandRunner):
                          else None),
             # PhotoMaker
             **({
-                '--pm-style-strength': self._get_param('in_phtmkr_strength')
+                '--pm-style-strength': self._int_param('in_phtmkr_strength')
             } if self._get_param('in_phtmkr_bool') else {}),
             # Guidance
             '--guidance': (self._get_param('in_guidance')
@@ -334,8 +338,8 @@ class ImageGenerationRunner(CommandRunner):
                       else None),
             # Upscale
             **({
-                '--upscale-repeats': self._get_param('in_upscl_rep'),
-                '--upscale-tile-size': self._get_param('in_upscl_tile_size'),
+                '--upscale-repeats': self._int_param('in_upscl_rep'),
+                '--upscale-tile-size': self._int_param('in_upscl_tile_size'),
 
             } if self._get_param('in_upscl_bool') else {}),
             # HiRes Fix
@@ -347,13 +351,13 @@ class ImageGenerationRunner(CommandRunner):
                     config.get('upscl_dir')
                 ),
                 '--hires-scale': self._get_param('in_hires_scale'),
-                '--hires-width': self._get_param('in_hires_width'),
-                '--hires-height': self._get_param('in_hires_height'),
-                '--hires-steps': self._get_param('in_hires_steps'),
+                '--hires-width': self._int_param('in_hires_width'),
+                '--hires-height': self._int_param('in_hires_height'),
+                '--hires-steps': self._int_param('in_hires_steps'),
                 '--hires-denoising-strength': self._get_param(
                     'in_hires_denoising_strength'
                 ),
-                '--hires-upscale-tile-size': self._get_param(
+                '--hires-upscale-tile-size': self._int_param(
                     'in_hires_upscale_tile_size'
                 ),
                 '--hires-sigmas': (self._get_param('in_hires_sigmas')
@@ -385,14 +389,14 @@ class ImageGenerationRunner(CommandRunner):
                 '--vae-tile-overlap': self._get_param('in_vae_tile_overlap'),
                 '--vae-tile-size': (
                     f"{size}x{size}"
-                    if (size := self._get_param('in_vae_tile_size'))
+                    if (size := self._int_param('in_vae_tile_size'))
                     else None
                 ),
                 '--vae-relative-tile-size': (
                     f"{size}x{size}"
                     if (
                         self._get_param('in_vae_relative_bool') and
-                        (size := self._get_param('in_vae_relative_tile_size'))
+                        (size := self._int_param('in_vae_relative_tile_size'))
                     )
                     else None
                 ),
@@ -416,7 +420,7 @@ class ImageGenerationRunner(CommandRunner):
             **({
                 '--preview': self._get_param('in_preview_mode'),
                 '--preview-path': self._make_relative(self.preview_path),
-                '--preview-interval': self._get_param('in_preview_interval'),
+                '--preview-interval': self._int_param('in_preview_interval'),
             } if self._get_param('in_preview_bool') else {}),
             # Common runtime options (auto-fit, split-mode, rpc, scales, ...)
             **self._get_common_options()
@@ -524,7 +528,7 @@ class Any2VideoRunner(CommandRunner):
         super()._add_base_args()
 
         self.command.extend([
-            '--video-frames', str(self._get_param('in_frames')),
+            '--video-frames', str(self._int_param('in_frames')),
             '--fps', str(self._get_param('in_fps')),
         ])
 
@@ -681,10 +685,10 @@ class UpscaleRunner(CommandRunner):
         options = {
             '--init-img': self._make_relative(init_img),
             '--upscale-model': self._make_relative(self._get_param('f_upscl')),
-            '-W': self._get_param('in_init_width'),
-            '-H': self._get_param('in_init_height'),
-            '--upscale-repeats': self._get_param('in_upscl_rep'),
-            '--upscale-tile-size': self._get_param('in_upscl_tile_size'),
+            '-W': self._int_param('in_init_width'),
+            '-H': self._int_param('in_init_height'),
+            '--upscale-repeats': self._int_param('in_upscl_rep'),
+            '--upscale-tile-size': self._int_param('in_upscl_tile_size'),
             '-o': self.output_path,
             # Common runtime options (auto-fit, rpc, scales, ...)
             **self._get_common_options()

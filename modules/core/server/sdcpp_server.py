@@ -293,8 +293,9 @@ class ImgEditApiRunner(ApiTaskRunner):
 
         form_data = {
             "prompt": prompt,
-            "n": str(self._get_param('in_batch_count', 1)),
-            "size": f"{self._get_param('in_width')}x{self._get_param('in_height')}",
+            "n": str(self._int_param('in_batch_count', 1)),
+            "size": (f"{self._int_param('in_width', 512)}x"
+                    f"{self._int_param('in_height', 512)}"),
             "sampler_name": self._get_param('in_sampling', 'Euler a'),
             "scheduler": self._get_param('in_scheduler', 'discrete'),
             "output_format": "png"

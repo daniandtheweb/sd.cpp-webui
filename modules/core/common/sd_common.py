@@ -91,6 +91,19 @@ class CommonRunner():
         """
         return self.params.get(key, default)
 
+    def _int_param(self, key: str, default: Any = None) -> Any:
+        """
+        Helper to get a parameter that must be an integer.
+
+        Gradio Number/Slider widgets always yield floats (e.g. 512.0);
+        normalize to int before embedding in CLI args or filenames.
+        Returns default (possibly None) when the key is missing.
+        """
+        val = self.params.get(key, default)
+        if val is None:
+            return None
+        return int(float(val))
+
     # Canonical module names and the aliases the CLI accepts for them
     _BACKEND_MODULES = {
         'diffusion': {'diffusion', 'model', 'unet', 'dit'},
@@ -252,7 +265,7 @@ class CommonRunner():
         name_parts = []
 
         if config.get('def_output_steps'):
-            steps_val = self._get_param('in_steps')
+            steps_val = self._int_param('in_steps')
             if steps_val:
                 name_parts.append(f"{steps_val}_steps")
 
