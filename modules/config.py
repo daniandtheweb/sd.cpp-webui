@@ -2,6 +2,7 @@
 
 import os
 import json
+from copy import deepcopy
 from typing import Any, Dict
 
 
@@ -260,6 +261,6 @@ class ConfigManager:
 
     def reset_defaults(self):
         """Resets the configuration to factory defaults."""
-        self.data = DEFAULT_SETTINGS.copy()
+        self.data = deepcopy(DEFAULT_SETTINGS)
         self.save_config()
         print("Reset defaults completed.")

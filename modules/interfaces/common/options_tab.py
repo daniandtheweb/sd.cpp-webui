@@ -153,9 +153,16 @@ class SettingsRegistry:
         self.config.update_settings(params)
         return "✅ Settings saved successfully."
 
-    def reset(self) -> str:
+    def reset(self) -> tuple:
         self.config.reset_defaults()
-        return "🔄 Defaults restored."
+        status = "🔄 Defaults restored."
+        # Refresh every registered widget with the restored defaults,
+        # otherwise stale values are re-saved on the next "Set new options".
+        updates = [
+            gr.update(value=self.config.get(key))
+            for key in self.ordered_keys
+        ]
+        return (status, *updates)
 
 
 # Initialize registry
@@ -421,7 +428,7 @@ with gr.Blocks() as options_block:
     restore_btn.click(
         registry.reset,
         inputs=[],
-        outputs=[status_textbox]
+        outputs=[status_textbox] + ordered_components
     )
 
     # Safely collect refresh targets

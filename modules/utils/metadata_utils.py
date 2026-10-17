@@ -6,8 +6,6 @@ import json
 from typing import Any, Dict, Optional
 from PIL import Image, PngImagePlugin
 
-from modules.shared_instance import server_state
-
 
 def build_a1111_metadata(
     params: Dict[str, Any], seed: int, default_vae: str = 'unknown'
@@ -19,7 +17,6 @@ def build_a1111_metadata(
     nprompt = params.get('in_nprompt', '')
     steps = params.get('in_steps', 20)
     cfg = params.get('in_cfg', 7.0)
-    seed = server_state.seed
     width = params.get('in_width', 512)
     height = params.get('in_height', 512)
     sampler = params.get('in_sampling', 'Euler a')

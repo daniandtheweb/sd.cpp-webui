@@ -3,6 +3,7 @@
 import os
 import io
 import json
+import time
 import base64
 import httpx
 from PIL import Image
@@ -168,7 +169,9 @@ class ApiTaskRunner(CommonRunner):
             image = Image.open(io.BytesIO(image_bytes))
             target_path = self.output_path if i == 0 else f"{base}_{i + 1}{ext}"
             if ext.lower() == '.png':
-                meta_string = build_a1111_metadata(self.params, server_state.seed)
+                meta_string = build_a1111_metadata(
+                    self.params, self._get_param('in_seed', -1)
+                )
                 save_image_with_metadata(image, target_path, meta_string)
             else:
                 image.save(target_path)
@@ -198,6 +201,8 @@ class ApiTaskRunner(CommonRunner):
             None
         )
 
+        prev_stats = server_state.last_generation_stats
+
         try:
             if isinstance(payload_or_files, tuple):
                 data, files = payload_or_files
@@ -211,9 +216,19 @@ class ApiTaskRunner(CommonRunner):
 
             if response.status_code == 200:
                 self._process_response(response.json())
-                gen_stats = getattr(
-                    server_state, "last_generation_stats", "No stats recorded."
-                )
+                gen_stats = server_state.last_generation_stats
+                if gen_stats == prev_stats and server_state.running:
+                    # Log-parser output can arrive slightly after the
+                    # HTTP response; wait briefly for fresh stats.
+                    deadline = time.time() + 1.5
+                    while (
+                        server_state.last_generation_stats == prev_stats
+                        and time.time() < deadline
+                    ):
+                        time.sleep(0.1)
+                    gen_stats = server_state.last_generation_stats
+                if not gen_stats:
+                    gen_stats = "No stats recorded."
 
                 yield (
                     self.fcommand,
