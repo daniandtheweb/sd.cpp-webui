@@ -105,6 +105,7 @@ with gr.Blocks()as img2img_block:
                         interactive=False
                     )
                     inputs_map['in_img_cfg'] = img_cfg
+                    inputs_map['in_img_cfg_bool'] = img_cfg_bool
 
                     cfg_comp = [img_cfg]
 

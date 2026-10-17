@@ -278,6 +278,22 @@ class Img2ImgApiRunner(ApiTaskRunner):
             mask_img.save(m_buf, format="PNG")
             payload["mask"] = base64.b64encode(m_buf.getvalue()).decode('utf-8')
             payload["inpainting_mask_invert"] = self._get_param('in_invert_mask', False)
+
+        strength = self._get_param('in_strength', 0.75)
+        if strength not in (None, ''):
+            payload["denoising_strength"] = float(strength)
+
+        if self._get_param('in_img_cfg_bool'):
+            try:
+                img_cfg = float(self._get_param('in_img_cfg'))
+            except (TypeError, ValueError):
+                img_cfg = None
+            if img_cfg is not None:
+                tag = json.dumps({"sample_params": {"guidance": {"img_cfg": img_cfg}}})
+                payload["prompt"] = (
+                    payload["prompt"]
+                    + f" <sd_cpp_extra_args>{tag}</sd_cpp_extra_args>"
+                )
         return payload
 
 
