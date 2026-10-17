@@ -325,21 +325,25 @@ class ApiTaskRunner(CommonRunner):
                 # SAFEGUARD: The API rejected the request (missing lora?).
                 #            Wipe lora cache.
                 ApiTaskRunner._lora_lookup_cache.clear()
+                body = (response.text or "").strip()
+                detail = f" {body[:200]}" if body else ""
                 yield (
                     self.fcommand,
                     gr.skip(),
                     gr.skip(),
-                    gr.skip(),
+                    gr.update(
+                        value=f"Error: server returned HTTP {response.status_code}{detail}"
+                    ),
                     None
                 )
-        except Exception:
+        except Exception as exc:
             # SAFEGUARD: Hard crash. Wipe lora cache.
             ApiTaskRunner._lora_lookup_cache.clear()
             yield (
                 self.fcommand,
                 gr.skip(),
                 gr.skip(),
-                gr.skip(),
+                gr.update(value=f"Error: {type(exc).__name__}: {exc}"),
                 None
             )
 

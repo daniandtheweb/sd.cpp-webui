@@ -46,7 +46,10 @@ def get_active_model_name(ip, port):
                 return v1_data["data"][0].get("id", "Unknown")
 
     except httpx.RequestError:
-        return "Loading weights..."
+        # Connection refused/DNS failure: the HTTP server itself is not
+        # reachable (still starting up, or crashed). Distinct from a
+        # reachable server that is loading model weights.
+        return "Offline"
     except Exception:
         return "Checking status..."
 
@@ -70,6 +73,7 @@ def server_status_monitor_wrapper(ip, port):
         )
     model_name = get_active_model_name(ip, port)
     is_loading_model = model_name in ["Loading weights...", "Checking status..."]
+    is_offline = model_name == "Offline"
 
     job = queue_manager.get_status()
     latest = server_state.latest_update
@@ -100,8 +104,10 @@ def server_status_monitor_wrapper(ip, port):
         text_update = gr.update(visible=False)
         server_state.latest_update = {}
 
-    model_name = get_active_model_name(ip, port)
-    if is_loading_model or model_name == "None":
+    if is_offline:
+        combined_status = "Server unreachable (starting or crashed)"
+        btn_interactive = False
+    elif is_loading_model or model_name == "None":
         combined_status = "Loading (Model initializing...)"
         btn_interactive = False
     else:
