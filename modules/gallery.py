@@ -337,10 +337,7 @@ def get_next_media(subctrl: int) -> str:
         4: 'upscale_dir'
     }
     dir_key = dir_map.get(subctrl, 'txt2img_dir')
-    media_out_dir = config.get(dir_key)
-
-    if not os.path.isdir(media_out_dir):
-        os.makedirs(media_out_dir, exist_ok=True)
+    media_out_dir = config.get_or_create_dir(dir_key)
 
     try:
         numbers = []

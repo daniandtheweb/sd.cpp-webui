@@ -1,40 +1,40 @@
-import pytest
 import os
+import shutil
+import tempfile
+from pathlib import Path
 
-from modules.config import ConfigManager
+# IMPORTANT: all isolation happens at MODULE level, before any app module
+# is imported. modules/shared_instance.py builds `config = ConfigManager()`
+# at import time. Depending on how a test module imports app code, that
+# import can happen during collection (module-level import) or at first
+# fixture use (function-level import). In BOTH cases the env vars and the
+# config file must already exist, or the singleton loads from (or binds to)
+# the user's real user_data/config.json and tests can corrupt it.
+_TEST_ROOT = Path(tempfile.mkdtemp(prefix="sdcpp-webui-test-"))
+
+for _sub in ("txt2img", "img2img"):
+    (_TEST_ROOT / _sub).mkdir()
+
+os.environ['SD_WEBUI_CONFIG_PATH'] = str(_TEST_ROOT / "config.json")
+os.environ['SD_WEBUI_PROMPTS_PATH'] = str(_TEST_ROOT / "prompts.json")
+
+import pytest  # noqa: E402
+
+from modules.config import ConfigManager  # noqa: E402
+
+# Seed the config file with the isolated output dirs so that however and
+# whenever the shared singleton is constructed, it loads these values.
+ConfigManager(os.environ['SD_WEBUI_CONFIG_PATH']).update_settings({
+    "txt2img_dir": str(_TEST_ROOT / "txt2img"),
+    "img2img_dir": str(_TEST_ROOT / "img2img"),
+})
 
 
 @pytest.fixture(autouse=True, scope="session")
-def app_root(tmp_path_factory):
-    """
-    Set up a temporary application root with
-    config files and output directories.
-    """
-    tmp_path = tmp_path_factory.mktemp("sdcpp-webui")
-    config_path = tmp_path / "config.json"
-    prompts_path = tmp_path / "prompts.json"
-
-    # output directories
-    txt2img_dir = tmp_path / "txt2img"
-    txt2img_dir.mkdir()
-    img2img_dir = tmp_path / "img2img"
-    img2img_dir.mkdir()
-
-    # Initialize default config files
-    config = ConfigManager(config_path)
-    config.update_settings({
-        "txt2img_dir": str(txt2img_dir),
-        "img2img_dir": str(img2img_dir),
-    })
-
-    # Export environment variables for the application to use
-    os.environ['SD_WEBUI_CONFIG_PATH'] = str(config_path)
-    os.environ['SD_WEBUI_PROMPTS_PATH'] = str(prompts_path)
-
-    yield tmp_path
-
-    del os.environ['SD_WEBUI_CONFIG_PATH']
-    del os.environ['SD_WEBUI_PROMPTS_PATH']
+def app_root():
+    """Temporary application root (created at module level, see above)."""
+    yield _TEST_ROOT
+    shutil.rmtree(_TEST_ROOT, ignore_errors=True)
 
 
 @pytest.fixture(autouse=True)

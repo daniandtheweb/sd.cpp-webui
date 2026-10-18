@@ -293,7 +293,7 @@ class CommonRunner():
 
     def _set_output_path(self, dir_key: str, subctrl_id: int, extension: str):
         """Determines and sets the output path for the command."""
-        output_dir = config.get(dir_key)
+        output_dir = config.get_or_create_dir(dir_key)
         filename_override = self._get_param('in_output')
         output_scheme = config.get('def_output_scheme')
 

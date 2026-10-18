@@ -482,7 +482,7 @@ class Img2ImgRunner(ImageGenerationRunner):
 
         if mask_img is not None:
             # The CLI requires a file path, so we save the PIL Image to disk
-            output_dir = config.get('img2img_dir')
+            output_dir = config.get_or_create_dir('img2img_dir')
             final_mask_path = os.path.join(output_dir, "sdcpp_temp_mask.png")
 
             try:

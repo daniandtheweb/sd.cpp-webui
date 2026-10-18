@@ -249,6 +249,23 @@ class ConfigManager:
 
         return value
 
+    def get_or_create_dir(self, key: str) -> str:
+        """Get an output directory setting, creating it if missing.
+
+        Unlike :meth:`get` this never returns ``None`` for a valid
+        directory key: a stale/invalid value falls back to
+        ``DEFAULT_SETTINGS`` and the directory is created on demand.
+        Use this for paths that get files written into, so a corrupt
+        config cannot break generation.
+        """
+        value = self.data.get(key)
+        if not isinstance(value, str) or not value:
+            value = DEFAULT_SETTINGS.get(key)
+        if not isinstance(value, str) or not value:
+            raise ValueError(f"No configured or default value for directory key '{key}'")
+        os.makedirs(value, exist_ok=True)
+        return value
+
     def save_config(self):
         """Saves the current configuration."""
         self._save_json(self.config_path, self.data)
