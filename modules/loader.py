@@ -40,7 +40,7 @@ def get_models(models_folder: str, extensions=SUPPORTED_EXTENSIONS) -> List[str]
     Returns:
         List[str]: A list of model filenames or an empty list.
     """
-    if not os.path.isdir(models_folder):
+    if not models_folder or not os.path.isdir(models_folder):
         print(f"The {models_folder} folder does not exist.")
         return []
 
