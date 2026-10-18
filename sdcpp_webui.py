@@ -50,6 +50,41 @@ from modules.ui.constants import FIELDS, SAMPLERS, SCHEDULERS
 from modules.utils.sdcpp_utils import restart_server
 
 
+def _is_within(real_path: str, base_real_path: str) -> bool:
+    """Return True iff `real_path` equals or is a descendant of `base_real_path`.
+
+    Compares inode identity (st_dev, st_ino) of each ancestor rather than
+    string prefixes, so it is correct on case-insensitive filesystems
+    (macOS APFS, Windows NTFS), case-sensitive filesystems (Linux ext4,
+    case-sensitive APFS), across Unicode NFD/NFC differences, through
+    symlinks, across bind mounts and mount points, across Windows drive
+    letters, with trailing separators, and with non-existent suffixes.
+
+    `real_path` and `base_real_path` are expected to be absolute and
+    already passed through os.path.realpath.
+    """
+    try:
+        base_stat = os.stat(base_real_path)
+    except OSError:
+        # Base does not exist: nothing can be within it.
+        return False
+
+    current = real_path
+    while True:
+        try:
+            if os.path.samestat(os.stat(current), base_stat):
+                return True
+        except OSError:
+            # Component absent or unreadable; keep walking upward —
+            # a shallower ancestor may still match.
+            pass
+
+        parent = os.path.dirname(current)
+        if parent == current:          # reached the root / drive root
+            return False
+        current = parent
+
+
 def build_color_scheme_js(scheme: str):
     """On-page-load JS forcing a color scheme. Gradio dark mode is a 'dark'
     class on <body> (light/dark CSS vars are both served), so no reload is
@@ -62,6 +97,7 @@ def build_color_scheme_js(scheme: str):
     else:
         return None
     return f"function refresh() {{\n    {action};\n}}"
+
 
 warnings.filterwarnings("ignore", message=".*HTTP_422_UNPROCESSABLE_ENTITY.*")
 
@@ -119,40 +155,33 @@ def get_allowed_paths(config_data, base_path: str) -> list:
     """Parses config to find allowed external or linked directories."""
     allowed_paths = []
     dirs = [
-        val for key, val in config.data.items()
+        val for key, val in config_data.items()
         if key.endswith('_dir') and isinstance(val, str) and val
     ]
 
-    for path in dirs:
-        # Expand user tildes
-        expanded_path = os.path.expanduser(path)
+    base_real_path = os.path.realpath(base_path)
 
+    for path in dirs:
+        expanded_path = os.path.expanduser(path)
         abs_path = os.path.abspath(expanded_path)
 
-        # Check if it's a symlink (STRIP TRAILING SLASHES)
-        # os.path.islink() returns False if the path ends with a separator
+        # STRIP TRAILING SLASHES: islink() is False for paths ending in a separator
         is_link = os.path.islink(abs_path.rstrip(os.sep))
 
-        # Check if it is physically outside the base path
         real_path = os.path.realpath(abs_path)
-        is_external = not real_path.startswith(base_path)
+        is_external = not _is_within(real_path, base_real_path)
 
         if is_link or is_external:
-            if is_link:
+            allowed_paths.append(abs_path)
+            if real_path != abs_path:
                 allowed_paths.append(real_path)
-            if abs_path != real_path:
-                allowed_paths.append(abs_path)
-            elif not is_link:
-                allowed_paths.append(abs_path)
 
     unique_paths = list(set(allowed_paths))
-
     if unique_paths:
         print("Allowing external/linked directories:")
-        for path in unique_paths:
-            print(f" - {path}")
+        for p in unique_paths:
+            print(f" - {p}")
         print()
-
     return unique_paths
 
 
