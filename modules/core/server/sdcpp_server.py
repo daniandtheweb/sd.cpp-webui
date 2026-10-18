@@ -13,7 +13,8 @@ from typing import Dict, Any, Generator
 import gradio as gr
 
 from modules.core.common.sd_common import (
-    CommonRunner, LORA_TAG_PATTERN, image_to_pil, process_editor_mask
+    CommonRunner, LORA_TAG_PATTERN, image_to_pil, process_editor_mask,
+    has_output_index_spec, expand_output_index
 )
 from modules.loader import get_loras
 from modules.utils.metadata_utils import (
@@ -80,7 +81,7 @@ class ApiTaskRunner(CommonRunner):
             if parsed_name in ApiTaskRunner._lora_lookup_cache:
                 parsed_name = ApiTaskRunner._lora_lookup_cache[parsed_name]
             else:
-                print(f"Warning: LoRA '{parsed_name} wasn't found.")
+                print(f"Warning: LoRA '{parsed_name}' wasn't found.")
 
             try:
                 multiplier = float(match.group(2).strip())
@@ -241,6 +242,12 @@ class ApiTaskRunner(CommonRunner):
 
     def _process_response(self, data: dict):
         base, ext = os.path.splitext(self.output_path)
+        # The Gradio slider yields floats, so normalize to int. Target names
+        # mirror sd-cli: %d/%Nd specifiers are expanded with the image index
+        # (offset by the output begin index); otherwise index 0 uses the
+        # exact path and later images get <base>_<begin+i>.ext (0-based).
+        # sd-cli clamps negative begin indices to 0 (main.cpp:482)
+        begin_idx = max(0, self._int_param('in_output_begin_idx') or 0)
         images_list = data.get("images", []) or [item.get("b64_json") for item in data.get("data", []) if "b64_json" in item]
 
         for i, b64_data in enumerate(images_list):
@@ -251,7 +258,12 @@ class ApiTaskRunner(CommonRunner):
 
             image_bytes = base64.b64decode(b64_data)
             image = Image.open(io.BytesIO(image_bytes))
-            target_path = self.output_path if i == 0 else f"{base}_{i + 1}{ext}"
+            if has_output_index_spec(self.output_path):
+                target_path = expand_output_index(self.output_path, begin_idx + i)
+            elif i == 0:
+                target_path = self.output_path
+            else:
+                target_path = f"{base}_{begin_idx + i}{ext}"
             if ext.lower() == '.png':
                 meta_string = build_a1111_metadata(
                     self.params, self._get_param('in_seed', -1)

@@ -9,14 +9,12 @@ from typing import Dict, Any, Generator
 import gradio as gr
 
 from modules.core.common.sd_common import (
-    CommonRunner, LORA_TAG_PATTERN, process_editor_mask
+    CommonRunner, LORA_TAG_PATTERN, process_editor_mask,
+    has_output_index_spec, expand_output_index
 )
 from modules.shared_instance import (
     config, subprocess_manager, SD_CLI
 )
-
-# Matches %d / %Nd frame index specifiers in output paths (%% is an escaped %)
-format_specifier_regex = re.compile(r"(?:[^%]|^)(?:%%)*(%\d{0,3}d)")
 
 
 class CommandRunner(CommonRunner):
@@ -145,7 +143,7 @@ class CommandRunner(CommonRunner):
         if batch_count is not None:
             batch_count = int(float(batch_count))
         multi_output = batch_count is not None and batch_count > 1
-        has_index_spec = format_specifier_regex.search(self.output_path)
+        has_index_spec = has_output_index_spec(self.output_path)
 
         # Only add --output-begin-idx when generating sequenced outputs
         output_begin_idx = self._int_param('in_output_begin_idx')
@@ -197,15 +195,25 @@ class CommandRunner(CommonRunner):
         self.fcommand = ' '.join(map(str, cmd_print))
 
         # Compute all output filenames. The Gradio slider yields floats, so
-        # normalize to int. With batch > 1, sd-cli writes only the suffixed
-        # files (<base>_<i>.png, i in 0..batch-1) — no unsuffixed file.
+        # normalize to int. Mirrors sd-cli (stable-diffusion.cpp
+        # examples/cli/main.cpp): with a %d/%Nd specifier in the path, each
+        # output is the path expanded with the batch index (offset by the
+        # output begin index). Without one, batch > 1 writes suffixed files
+        # (<base>_<begin+i>.png, 0-based) — no unsuffixed file.
         batch_count = int(float(self._get_param('in_batch_count', 1) or 1))
-        if batch_count <= 1:
+        # sd-cli clamps negative begin indices to 0 (main.cpp:482)
+        begin_idx = max(0, self._int_param('in_output_begin_idx') or 0)
+        if has_output_index_spec(self.output_path):
+            self.outputs = [
+                expand_output_index(self.output_path, begin_idx + i)
+                for i in range(batch_count)
+            ]
+        elif batch_count <= 1:
             self.outputs = [self.output_path]
         else:
             base, ext = os.path.splitext(self.output_path)
             self.outputs = [
-                f"{base}_{i}{ext}" for i in range(batch_count)
+                f"{base}_{begin_idx + i}{ext}" for i in range(batch_count)
             ]
 
     def build_command(self):
@@ -747,6 +755,23 @@ def convert(params: dict):
     in_color = params.get('in_color', True)
     in_log_level = params.get('in_log_level')
 
+    # Validate required inputs up front: a missing model dir in the
+    # config (ConfigManager returns None) or an empty model selection
+    # would otherwise crash os.path.join, and a missing quant type
+    # would emit `--type None`.
+    if not in_model_dir or not in_orig_model or not in_quant_type:
+        error = ("Conversion failed: model directory, model and "
+                 "quantization type are all required. Make sure the "
+                 "model folder exists in your config and a model is "
+                 "selected.")
+        print(f"\nError: {error}\n")
+        yield (
+            "",
+            gr.Slider(visible=False),
+            gr.Textbox(value=f"Error: {error}"),
+        )
+        return
+
     exe_dir = os.path.dirname(os.path.abspath(SD_CLI))
 
     orig_model_path = os.path.relpath(os.path.join(in_model_dir, in_orig_model), start=exe_dir)
@@ -780,7 +805,10 @@ def convert(params: dict):
     fcommand = ' '.join(command)
     print(f"\n\n{fcommand}\n\n")
 
-    progress_regex = re.compile(r'(\d+)/(\d+)')
+    # Only sd.cpp's real convert progress lines look like
+    # `loading 123/456 tensors from ...`; a bare N/M match would
+    # swallow unrelated log lines (resolutions, step counters, ...).
+    progress_regex = re.compile(r'\b(\d+)/(\d+)\s+tensors\b')
 
     yield (
         fcommand,
@@ -808,7 +836,7 @@ def convert(params: dict):
 
                 match = progress_regex.search(output_line)
 
-                if match:
+                if match and int(match.group(1)) <= int(match.group(2)):
                     current, total = map(int, match.groups())
                     percent = (current / total) * 100 if total > 0 else 0
 

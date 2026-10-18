@@ -14,6 +14,55 @@ from modules.ui.constants import CIRCULAR_PADDING
 
 LORA_TAG_PATTERN = re.compile(r'<lora:([^:]+):([^>]+)>')
 
+# Matches %d / %Nd frame index specifiers in output paths (%% is an escaped %).
+# Same pattern as sd-cli (stable-diffusion.cpp src/util/image_util.h).
+OUTPUT_INDEX_SPECIFIER_REGEX = re.compile(r"(?:[^%]|^)(?:%%)*(%\d{0,3}d)")
+
+
+def has_output_index_spec(path: str) -> bool:
+    """True if the path contains a %d/%Nd frame index specifier (not a %% escape)."""
+    return bool(OUTPUT_INDEX_SPECIFIER_REGEX.search(path or ""))
+
+
+def _printf_index(fmt: str, index: int) -> str:
+    """Formats index with a printf-style specifier (%d, %03d, %2d, ...).
+
+    Mirrors snprintf(specifier, frame_idx) for non-negative ints:
+    a leading '0' digit is the zero-pad flag (not part of the width),
+    the remaining digits are the field width.
+    """
+    rest = fmt[1:]  # strip the leading '%'
+    i = 0
+    zero_pad = False
+    if rest[0] == '0' and len(rest) > 2 and rest[1].isdigit():
+        zero_pad = True
+        i = 1
+    width = 0
+    while i < len(rest) - 1 and rest[i].isdigit():
+        width = width * 10 + int(rest[i])
+        i += 1
+    text = str(index)
+    if zero_pad and width > len(text):
+        return text.zfill(width)
+    return text.rjust(width)
+
+
+def expand_output_index(path: str, index: int) -> str:
+    """
+    Expands %d/%Nd frame index specifiers in a path, mirroring sd-cli's
+    format_frame_idx(): printf-style padding per specifier (%03d -> zfill,
+    %3d -> space pad), then all remaining %% become a literal %.
+    """
+    result = path or ""
+    match = OUTPUT_INDEX_SPECIFIER_REGEX.search(result)
+    while match:
+        replacement = _printf_index(match.group(1), index)
+        # Replace only the specifier (group 1), not the full match, which
+        # includes the leading [^%] char — same as C++ (position(1)/length(1)).
+        result = result[:match.start(1)] + replacement + result[match.end(1):]
+        match = OUTPUT_INDEX_SPECIFIER_REGEX.search(result)
+    return result.replace('%%', '%')
+
 
 def image_to_pil(value):
     """Coerces a gradio image value into a PIL Image."""

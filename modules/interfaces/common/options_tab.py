@@ -442,7 +442,7 @@ with gr.Blocks() as options_block:
     # Remove any missing components to prevent Gradio initialization crash
     missing_refresh_outputs = [
         name for name, component in zip(
-            ['def_sampling', 'def_scheduler', 'def_preview_mode', 'predict'],
+            ['def_sampling', 'def_scheduler', 'def_preview_mode', 'def_predict'],
             refresh_outputs
         )
         if component is None
