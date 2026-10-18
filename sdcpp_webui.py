@@ -31,7 +31,7 @@ from modules.interfaces.server.imgedit_tab import (
     height_imgedit_server, ref_img_imgedit_server
 )
 from modules.interfaces.cli.any2video_tab import (
-    any2video_block, any2video_params
+    any2video_block, any2video_params, img_inp_any2video
 )
 from modules.interfaces.cli.upscale_tab import (
     upscale_block, img_inp_upscale
@@ -311,9 +311,10 @@ def bind_ui_events(server: bool, tabs, gallery_tab, gallery_loaded_state):
     if not server:
         # Copy data from gallery image to any2video.
         cpy_2_any2video_btn.click(
-            create_copy_fn("any2video", FIELDS),
+            create_copy_fn("any2video", FIELDS + ['input_image']),
             inputs=common_inputs + [path_info],
             outputs=[tabs] + [any2video_params[f] for f in FIELDS]
+                + [img_inp_any2video]
         )
         cpy_2_upscale_btn.click(
             create_copy_fn("upscale"),
