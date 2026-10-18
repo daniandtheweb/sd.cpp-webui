@@ -303,6 +303,21 @@ class CommonRunner():
             pass
         return path
 
+    @staticmethod
+    def _sanitize_output_name(value):
+        """Reduces a user-supplied output filename to a safe bare basename.
+
+        Path separators (both OS conventions) and NUL bytes are stripped and
+        empty / '.' / '..' results are rejected, so an ``in_output`` value can
+        never point outside the output directory. Returns '' when the value
+        carries no usable name.
+        """
+        name = str(value).strip().replace('\\', '/').replace('\x00', '/')
+        name = os.path.basename(name)
+        if name in ('', '.', '..'):
+            return ''
+        return name
+
     def _set_output_path(self, dir_key: str, subctrl_id: int, extension: str):
         """Determines and sets the output path for the command."""
         output_dir = config.get_or_create_dir(dir_key)
@@ -310,18 +325,30 @@ class CommonRunner():
         output_scheme = config.get('def_output_scheme')
 
         if filename_override and str(filename_override).strip():
-            base_name = str(filename_override).strip()
-            filename = f"{base_name}.{extension}"
-            test_path = os.path.join(output_dir, filename)
-
-            counter = 1
-            while os.path.exists(test_path):
-                filename = f"{base_name}_{counter}.{extension}"
+            base_name = self._sanitize_output_name(filename_override)
+            if not base_name:
+                print(f"Warning: output filename {str(filename_override)!r} is "
+                      f"not a valid name; using generated filename instead.")
+            else:
+                filename = f"{base_name}.{extension}"
                 test_path = os.path.join(output_dir, filename)
-                counter += 1
 
-            self.output_path = self._make_relative(test_path)
-            return
+                counter = 1
+                while os.path.exists(test_path):
+                    filename = f"{base_name}_{counter}.{extension}"
+                    test_path = os.path.join(output_dir, filename)
+                    counter += 1
+
+                # Defense in depth: refuse to point outside the output dir
+                # even if sanitization were ever weakened again.
+                out_root = os.path.realpath(output_dir)
+                if not os.path.realpath(test_path).startswith(out_root + os.sep):
+                    print(f"Warning: output path {test_path!r} escapes the "
+                          f"output directory {out_root!r}; using generated "
+                          f"filename instead.")
+                else:
+                    self.output_path = self._make_relative(test_path)
+                    return
 
         name_parts = []
 
