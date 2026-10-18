@@ -101,7 +101,7 @@ def start_server(params):
     """Start the sd-server subprocess with validated paths."""
 
     if server_state.running:
-        return "Running", gr.skip()
+        return "Running", gr.update(active=True), gr.update(interactive=True)
 
     try:
         runner = ServerRunner(params)
@@ -109,13 +109,13 @@ def start_server(params):
         return runner.run()
 
     except Exception as e:
-        return f"Error: {e}", gr.update(interactive=False)
+        return f"Error: {e}", gr.update(active=False), gr.update(interactive=False)
 
 
 def stop_server():
     """Stop the sd-server subprocess."""
     if not server_state.running:
-        return "Stopped", gr.update(interactive=False)
+        return "Stopped", gr.update(active=False), gr.update(interactive=False)
 
     try:
         # Use the manager to kill the process
