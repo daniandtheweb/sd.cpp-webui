@@ -21,8 +21,10 @@ def create_prompts_ui(nprompt_support=True):
         if not name:
             gr.Warning("Please select a prompt to delete.")
             return gr.skip()
-        prompt_manager.delete_prompt(name)
-        gr.Info(f"Prompt '{name}' has been deleted.")
+        if prompt_manager.delete_prompt(name):
+            gr.Info(f"Prompt '{name}' has been deleted.")
+        else:
+            gr.Warning(f"Prompt '{name}' was not found.")
         return gr.update(choices=prompt_manager.get_prompts(), value=None)
 
     def refresh_prompt_list():

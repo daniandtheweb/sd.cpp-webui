@@ -41,11 +41,13 @@ class PromptManager:
         }
         self.save_prompts()
 
-    def delete_prompt(self, name: str):
-        """Deletes a prompt."""
+    def delete_prompt(self, name: str) -> bool:
+        """Deletes a prompt. Returns True if deleted, False if not found."""
         if name in self.prompts:
             del self.prompts[name]
             self.save_prompts()
+            return True
+        return False
 
     def get_prompt(self, name: str) -> Tuple[str, str]:
         """Retrieves a specific prompt as two generate strings for Gradio."""
