@@ -152,13 +152,10 @@ def apply_lora(
         n_lora_string = "<lora:" + lora_model + ":-" + str(lora_strength) + ">"
 
         if lora_prompt_switch == "Positive":
-            pprompt = "".join([pprompt, lora_string])
+            pprompt = "".join([pprompt or "", lora_string])
 
         elif lora_prompt_switch == "Negative":
-            if nprompt is True:
-                nprompt = "".join([nprompt, lora_string])
-            elif nprompt.visible is False:
-                pprompt = "".join([pprompt, n_lora_string])
+            nprompt = "".join([nprompt or "", n_lora_string])
 
     return (pprompt, nprompt)
 
