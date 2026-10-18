@@ -135,7 +135,7 @@ class CommandRunner(CommonRunner):
             '-W', str(self._int_param('in_width')),
             '-H', str(self._int_param('in_height')),
             '--cfg-scale', str(self._get_param('in_cfg')),
-            '-s', str(self._int_param('in_seed')),
+            '-s', str(self.get_seed()),
             '-o', self.output_path
         ])
 

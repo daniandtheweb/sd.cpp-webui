@@ -153,6 +153,18 @@ class CommonRunner():
             return None
         return int(float(val))
 
+    def get_seed(self) -> int:
+        """
+        Helper to get the seed as an int.
+
+        Maps the "cleared" seed state (None or empty string from the seed
+        textbox) to -1, sd.cpp's "random seed" default.
+        """
+        val = self.params.get('in_seed')
+        if val is None or val == '':
+            return -1
+        return int(float(val))
+
     # Canonical module names and the aliases the CLI accepts for them
     _BACKEND_MODULES = {
         'diffusion': {'diffusion', 'model', 'unet', 'dit'},

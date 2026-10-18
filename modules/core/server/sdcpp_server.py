@@ -225,7 +225,7 @@ class ApiTaskRunner(CommonRunner):
             "width": int(self._get_param('in_width', 512)),
             "height": int(self._get_param('in_height', 512)),
             "batch_size": int(self._get_param('in_batch_count', 1)),
-            "seed": int(self._get_param('in_seed', -1)),
+            "seed": self.get_seed(),
             "steps": int(self._get_param('in_steps', 20)),
             "cfg_scale": float(self._get_param('in_cfg', 7.0)),
         }
@@ -266,7 +266,7 @@ class ApiTaskRunner(CommonRunner):
                 target_path = f"{base}_{begin_idx + i}{ext}"
             if ext.lower() == '.png':
                 meta_string = build_a1111_metadata(
-                    self.params, self._get_param('in_seed', -1)
+                    self.params, self._get_seed()
                 )
                 save_image_with_metadata(image, target_path, meta_string)
             else:
