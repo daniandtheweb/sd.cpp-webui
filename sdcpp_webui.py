@@ -327,7 +327,7 @@ def sdcpp_launch(
     # Pass the arguments to sdcpp.launch with argument unpacking
     sdcpp.launch(
         css="footer {visibility: hidden}",
-        theme="default", js=color_js,
+        theme=theme or "default", js=color_js,
         **launch_args
     )
 
