@@ -54,6 +54,17 @@ def test_add_resolution_casts_floats_to_int(manager):
     assert manager.get_resolution("floats") == (960, 1280)
 
 
+def test_add_resolution_refuses_invalid_dimensions(manager):
+    # Raw UI Textbox values: None, '', non-numeric, zero, negative
+    assert manager.add_resolution("bad", None, 100) is False
+    assert manager.add_resolution("bad", "", 100) is False
+    assert manager.add_resolution("bad", "abc", 100) is False
+    assert manager.add_resolution("bad", 0, 100) is False
+    assert manager.add_resolution("bad", 100, -5) is False
+    assert manager.get_resolution("bad") is None
+    assert "bad" not in manager.resolutions
+
+
 def test_add_resolution_refuses_empty_name(manager):
     assert manager.add_resolution("", 100, 100) is False
     assert manager.add_resolution("   ", 100, 100) is False

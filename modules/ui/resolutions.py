@@ -26,7 +26,16 @@ def create_resolutions_ui(width, height):
             gr.Warning("Please give a name to the resolution preset.")
             return gr.skip()
         clean_name = str(name).strip()
-        if not resolution_manager.add_resolution(clean_name, res_width, res_height):
+        try:
+            res_w = int(str(res_width).strip())
+            res_h = int(str(res_height).strip())
+        except (TypeError, ValueError):
+            gr.Warning("Please enter valid numeric width and height values.")
+            return gr.skip()
+        if res_w <= 0 or res_h <= 0:
+            gr.Warning("Width and height must be positive integers.")
+            return gr.skip()
+        if not resolution_manager.add_resolution(clean_name, res_w, res_h):
             gr.Warning(f"Resolution preset '{clean_name}' already exists.")
             return gr.skip()
         gr.Info(f"Resolution preset '{clean_name}' saved successfully.")

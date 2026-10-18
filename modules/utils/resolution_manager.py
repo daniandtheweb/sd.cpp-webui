@@ -51,7 +51,7 @@ class ResolutionManager:
         """
         Adds a new user resolution preset.
         Returns False if the name is empty, a built-in preset,
-        or already in use.
+        already in use, or width/height is not a valid positive integer.
         """
         if not name or not str(name).strip():
             return False
@@ -61,7 +61,15 @@ class ResolutionManager:
         if clean_name in BUILTIN_RESOLUTIONS or clean_name in self.resolutions:
             return False
 
-        self.resolutions[clean_name] = {'width': int(width), 'height': int(height)}
+        try:
+            width = int(width)
+            height = int(height)
+        except (TypeError, ValueError):
+            return False
+        if width <= 0 or height <= 0:
+            return False
+
+        self.resolutions[clean_name] = {'width': width, 'height': height}
         self.save_resolutions()
         return True
 
