@@ -170,10 +170,10 @@ def load_credentials(filepath: str = "credentials.json"):
             # [("user", "pass"), ...]
             return list(data.items())
         else:
-            print(f"Credentials file '{filepath}' not found. Skipping password protection.")
+            print(f"Credentials file '{filepath}' not found.")
             return None
     except Exception as e:
-        print(f"Error reading credentials: {e}. Skipping password protection.")
+        print(f"Error reading credentials: {e}")
         return None
 
 
@@ -194,7 +194,9 @@ def build_launch_args(
             print(f"Secure mode enabled with {len(auth_data)} users.")
             launch_args["auth"] = auth_data
         else:
-            print("Secure mode requested but failed to load credentials. Launching without auth.")
+            print("ERROR: Secure mode requested but no valid credentials were loaded.")
+            print("Refusing to launch without authentication. Fix or create credentials.json and retry.")
+            sys.exit(1)
 
     return launch_args
 
