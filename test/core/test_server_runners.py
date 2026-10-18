@@ -201,3 +201,18 @@ def test_server_startup_command_defaults_omitted(app_root):
     # Unconditional directories remain
     assert '--embd-dir' in flags
     assert '--lora-model-dir' in flags
+
+
+@pytest.mark.parametrize('log_level', ['', '   '])
+def test_server_startup_command_empty_log_level_omitted(app_root, log_level):
+    """An empty log-level value must not emit a dangling --log-level flag."""
+    from modules.core.server.manager import ServerRunner
+
+    runner = ServerRunner({
+        'ip': '127.0.0.1',
+        'port': 1234,
+        'in_log_level': log_level,
+    })
+    runner.build_command()
+    flags = _flags(runner.command)
+    assert '--log-level' not in flags

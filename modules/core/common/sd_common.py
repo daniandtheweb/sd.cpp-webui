@@ -415,7 +415,7 @@ class CommonRunner():
         cache_size = self._get_param('in_conditioning_cache_size')
         linear_scale = self._get_param('in_linear_scale')
         attn_scale = self._get_param('in_attn_scale')
-        log_level = self._get_param('in_log_level')
+        log_level = str(self._get_param('in_log_level') or "").strip()
         compression_quality = self._get_param(
             'in_compression_quality'
         )
@@ -434,7 +434,7 @@ class CommonRunner():
                              if attn_scale not in (None, 0, 0.0)
                              else None),
             '--log-level': (log_level
-                            if log_level != "info"
+                            if log_level and log_level != "info"
                             else None),
             '--compression-quality': (compression_quality
                                       if compression_quality != 90

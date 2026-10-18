@@ -1,12 +1,13 @@
-from modules.core.common.sd_common import CommonRunner
-from modules.utils.sdcpp_utils import extract_env_vars
-
-
 def test_extract_env_vars_preserves_value_types():
     """
     extract_env_vars must keep the original value types (bool / number)
     so _build_process_env can serialize them correctly.
     """
+    # Imported lazily: a module-level import of sd_common would pull in
+    # modules.shared_instance (and its ConfigManager) at collection time,
+    # before the app_root fixture exports SD_WEBUI_CONFIG_PATH.
+    from modules.utils.sdcpp_utils import extract_env_vars
+
     params = {
         'env_GGML_VK_DISABLE_COOPMAT': True,
         'env_GGML_VK_DISABLE_INTEGER_DOT_PRODUCT': False,
@@ -26,6 +27,8 @@ def test_extract_env_vars_preserves_value_types():
 
 def test_extract_env_vars_omits_device_when_override_off():
     """Device ids must only be emitted when their override is enabled."""
+    from modules.utils.sdcpp_utils import extract_env_vars
+
     params = {
         'env_vk_visible_override': False,
         'env_GGML_VK_VISIBLE_DEVICES': 3.0,
@@ -45,6 +48,8 @@ def test_build_process_env_injects_env_vars():
     Previously every value was stringified upstream and only bool/int
     values were injected, so nothing was ever set.
     """
+    from modules.core.common.sd_common import CommonRunner
+
     params = {
         'env_GGML_VK_DISABLE_COOPMAT': True,
         'env_GGML_VK_DISABLE_INTEGER_DOT_PRODUCT': False,
