@@ -21,10 +21,14 @@ def get_active_model_name(ip, port):
     """
     Gets the currently active model's name.
     """
+    try:
+        port = int(float(port))
+    except (TypeError, ValueError):
+        return "Offline"
     base_url = f"http://{ip}:{port}"
 
     try:
-        resp = httpx.get(f"{base_url}/sdapi/v1/sd-models", timeout=1.0)
+        resp = httpx.get(f"{base_url}/sdapi/v1/sd-models", timeout=0.5)
         if resp.status_code == 200:
             data = resp.json()
             if isinstance(data, list) and len(data) > 0:
@@ -32,14 +36,14 @@ def get_active_model_name(ip, port):
                 if name and name.strip():
                     return name
 
-        resp_opt = httpx.get(f"{base_url}/sdapi/v1/options", timeout=1.0)
+        resp_opt = httpx.get(f"{base_url}/sdapi/v1/options", timeout=0.5)
         if resp_opt.status_code == 200:
             opt_data = resp_opt.json()
             checkpoint = opt_data.get("sd_model_checkpoint")
             if checkpoint and checkpoint.strip():
                 return checkpoint
 
-        resp_v1 = httpx.get(f"{base_url}/v1/models", timeout=1.0)
+        resp_v1 = httpx.get(f"{base_url}/v1/models", timeout=0.5)
         if resp_v1.status_code == 200:
             v1_data = resp_v1.json()
             if "data" in v1_data and len(v1_data["data"]) > 0:
