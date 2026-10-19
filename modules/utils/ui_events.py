@@ -1,10 +1,12 @@
 """sd.cpp-webui - UI interactivity and events module"""
 
+import itertools
 import os
+import threading
 
 import gradio as gr
 
-import modules.utils.queue as queue_manager
+import modules.utils.streaming_queue as queue_manager
 from modules.shared_instance import (
     sd_options, model_state
 )
@@ -35,110 +37,156 @@ def bind_generation_pipeline(
     """
     tab_id = api_func.__name__
 
-    def submit_job(*args):
-        params = dict(zip(ordered_keys, args))
+    _pending_jobs = {}
+    _pending_lock = threading.Lock()
+    _stream_lock = threading.Lock()
+    _job_counter = itertools.count(1)
 
-        current_state = queue_manager.get_status()
-        already_running = current_state.get("is_running", False)
-
-        queue_manager.add_job(api_func, params, owner=tab_id)
-
-        if already_running:
-            return (
-                gr.skip(),
-                gr.skip(),
-            )
-
-        return (
-            gr.update(visible=True, value=0),
-            gr.update(visible=True, value="Added to queue..."),
-        )
-
-    def poll_status():
-        state = queue_manager.get_status()
-        q_len = queue_manager.get_queue_size()
-        just_finished = queue_manager.consume_finished()
-
-        owner = state.get("owner")
-        is_running = state.get("is_running")
-        imgs = state.get("images", None)
-
-        if just_finished and q_len == 0 and not is_running:
-            timer_update = gr.update(active=False)
-        elif q_len > 0 or is_running:
-            timer_update = gr.update(active=True)
-        else:
-            timer_update = gr.skip()
-
-        if not just_finished and ((owner != tab_id and not is_running) or (not is_running and q_len == 0)):
-            return (
-                gr.skip(),
-                gr.skip(),
-                gr.skip(),
-                gr.skip(),
-                gr.skip(),
-                timer_update,
-                gr.skip()
-            )
-
-        prog = state.get("progress", 0)
-        stat = state.get("status", "")
-        cmd = state.get("command", "")
-        stats = state.get("stats", "")
-
-        if just_finished and q_len == 0 and not is_running:
-            prog_update = gr.update(visible=False, value=0)
-            stat_update = gr.update(visible=False, value="")
-        else:
-            prog_update = prog
-            stat_update = stat
-
-        if q_len > 0:
-            queue_display = gr.update(
-                visible=True,
-                value=f"⏳ Jobs in queue: {q_len}"
-            )
-        else:
-            queue_display = gr.update(visible=False, value="")
-
-        if imgs is None:
-            imgs = gr.update(value=None)
-
-        return (
-            cmd,
-            prog_update,
-            stat_update,
-            stats,
-            imgs,
-            timer_update,
-            queue_display
-        )
-
-    outputs_map['gen_btn'].click(
-        fn=submit_job,
-        inputs=ordered_components,
-        outputs=[
-            outputs_map['progress_slider'],
-            outputs_map['progress_textbox'],
-        ]
-    ).then(
-        fn=lambda: gr.update(active=True),
-        inputs=[],
-        outputs=[outputs_map['timer']]
+    trigger = gr.Textbox(
+        value="",
+        visible=False,
+        interactive=False,
+        elem_id=f"gen-trigger-{tab_id}"
     )
 
-    outputs_map['timer'].tick(
-        poll_status,
-        inputs=[],
+    def enqueue_job(*args):
+        params = dict(zip(ordered_keys, args))
+        sub = queue_manager.add_job(api_func, params, owner=tab_id)
+        job_id = str(next(_job_counter))
+        with _pending_lock:
+            _pending_jobs[job_id] = sub
+        return job_id
+
+    def _drain_job(sub):
+        last_imgs = gr.skip()
+        while True:
+            kind, payload = sub.get()
+
+            if kind == "done":
+                remaining = queue_manager.get_queue_size()
+                if remaining > 0:
+                    yield (
+                        gr.skip(),
+                        gr.skip(),
+                        gr.skip(),
+                        gr.skip(),
+                        last_imgs,
+                        gr.update(
+                            visible=True,
+                            value=f"⏳ Jobs in queue: {remaining}"
+                        ),
+                    )
+                else:
+                    yield (
+                        gr.skip(),
+                        gr.skip(),
+                        gr.skip(),
+                        gr.skip(),
+                        last_imgs,
+                        gr.update(visible=False, value=""),
+                    )
+                return
+
+            if kind == "stopped":
+                yield (
+                    gr.update(value=""),
+                    gr.update(visible=False, value=0),
+                    gr.update(visible=False, value=""),
+                    gr.update(value=""),
+                    gr.update(value=None),
+                    gr.update(visible=False, value=""),
+                )
+                return
+
+            if kind == "error":
+                yield (
+                    gr.skip(),
+                    gr.update(visible=False, value=0),
+                    gr.update(visible=False, value=""),
+                    gr.update(value=f"Error: {payload}"),
+                    last_imgs,
+                    gr.update(visible=False, value=""),
+                )
+                return
+
+            cmd, prog, prog_txt, stats, imgs = payload
+
+            if imgs is not None:
+                last_imgs = imgs
+
+            remaining = queue_manager.get_queue_size()
+            if remaining > 0:
+                queue_display = gr.update(
+                    visible=True,
+                    value=f"⏳ Jobs in queue: {remaining}",
+                )
+            else:
+                queue_display = gr.update(visible=False, value="")
+
+            yield (cmd, prog, prog_txt, stats, imgs, queue_display)
+
+    def stream_jobs(_trigger_value):
+        with _stream_lock:
+            did_work = False
+            while True:
+                with _pending_lock:
+                    if not _pending_jobs:
+                        if not did_work:
+                            yield (
+                                gr.skip(),
+                                gr.skip(),
+                                gr.skip(),
+                                gr.skip(),
+                                gr.skip(),
+                                gr.skip(),
+                            )
+                        return
+                    job_id = next(iter(_pending_jobs))
+                    sub = _pending_jobs.pop(job_id)
+
+                did_work = True
+
+                yield (
+                    gr.skip(),
+                    gr.update(visible=True, value=0),
+                    gr.update(visible=True, value="Starting..."),
+                    gr.skip(),
+                    gr.skip(),
+                    gr.skip(),
+                )
+
+                try:
+                    yield from _drain_job(sub)
+                except Exception as exc:
+                    yield (
+                        gr.skip(),
+                        gr.update(visible=False, value=0),
+                        gr.update(visible=False, value=""),
+                        gr.update(
+                            value=f"Error: {type(exc).__name__}: {exc}"
+                        ),
+                        None,
+                        gr.update(visible=False, value=""),
+                    )
+
+    outputs_map['gen_btn'].click(
+        fn=enqueue_job,
+        inputs=ordered_components,
+        outputs=[trigger],
+    )
+
+    trigger.change(
+        fn=stream_jobs,
+        inputs=[trigger],
         outputs=[
             outputs_map['command'],
             outputs_map['progress_slider'],
             outputs_map['progress_textbox'],
             outputs_map['stats'],
             outputs_map['img_final'],
-            outputs_map['timer'],
-            outputs_map['queue_tracker']
-        ]
+            outputs_map['queue_tracker'],
+        ],
+        concurrency_limit=None,
     )
 
 

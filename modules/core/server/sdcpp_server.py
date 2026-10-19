@@ -6,8 +6,9 @@ import json
 import time
 import base64
 import re
+import threading
 import httpx
-from PIL import Image
+from PIL import Image, ImageOps
 from typing import Dict, Any, Generator
 
 import gradio as gr
@@ -35,6 +36,7 @@ class ApiTaskRunner(CommonRunner):
         self.ip = str(self._get_param('in_ip'))
         self.port = str(self._get_param('in_port'))
         self.url = ""
+        self.use_async = False
 
         self.output_path = ""
         self.outputs = []
@@ -182,6 +184,9 @@ class ApiTaskRunner(CommonRunner):
         if v is not None:
             extra_args['strength'] = v
 
+        extra_args['preview'] = 'proj'
+        extra_args['preview_interval'] = 1
+
         return (f"<sd_cpp_extra_args>{json.dumps(extra_args)}</sd_cpp_extra_args>"
                 if extra_args else "")
 
@@ -208,7 +213,8 @@ class ApiTaskRunner(CommonRunner):
         return (prompt or "") + f" <sd_cpp_extra_args>{json.dumps(extra)}</sd_cpp_extra_args>"
 
     def _build_payload(self) -> dict:
-        """Constructs the JSON payload for sdapi endpoints."""
+        """Constructs the JSON payload for sdapi endpoints (blocking path,
+        used by imgedit)."""
         raw_pprompt = self._get_param('in_pprompt', '')
         raw_nprompt = self._get_param('in_nprompt', '')
 
@@ -240,15 +246,95 @@ class ApiTaskRunner(CommonRunner):
 
         return payload
 
+    def _build_sdcpp_payload(self) -> dict:
+        """Constructs the native sdcpp img_gen payload (async path)."""
+        raw_pprompt = self._get_param('in_pprompt', '')
+        raw_nprompt = self._get_param('in_nprompt', '')
+
+        clean_pprompt, pprompt_loras = self._extract_loras(raw_pprompt)
+        clean_nprompt, nprompt_loras = self._extract_loras(raw_nprompt)
+
+        loras = pprompt_loras + nprompt_loras
+
+        def _num(p_key, cast, cond_key=None, default=None):
+            if cond_key is not None and not self._get_param(cond_key, False):
+                return default
+            val = self._get_param(p_key)
+            if val in (None, ''):
+                return default
+            try:
+                return cast(val)
+            except (ValueError, TypeError):
+                return default
+
+        sample_params = {}
+        guidance = {}
+
+        v = _num('in_steps', int)
+        if v is not None:
+            sample_params['sample_steps'] = v
+        v = _num('in_cfg', float)
+        if v is not None:
+            guidance['txt_cfg'] = v
+        v = _num('in_guidance', float, 'in_guidance_bool')
+        if v is not None:
+            guidance['distilled_guidance'] = v
+        v = _num('in_flow_shift', float, 'in_flow_shift_bool')
+        if v is not None:
+            sample_params['flow_shift'] = v
+        v = _num('in_eta', float, 'in_eta_bool')
+        if v is not None:
+            sample_params['eta'] = v
+        v = _num('in_timestep_shift', int, 'in_timestep_shift_bool')
+        if v is not None:
+            sample_params['shifted_timestep'] = v
+
+        val = self._get_param('in_sampling')
+        if val is not None and str(val).strip() != "":
+            sample_params['sample_method'] = self._to_tag_sampler(val)
+        val = self._get_param('in_scheduler')
+        if val is not None and str(val).strip() != "":
+            s = str(val).strip().lower()
+            sample_params['scheduler'] = 'discrete' if s == 'normal' else s
+
+        if guidance:
+            sample_params['guidance'] = guidance
+
+        payload = {
+            "prompt": clean_pprompt,
+            "negative_prompt": clean_nprompt,
+            "width": int(self._get_param('in_width', 512)),
+            "height": int(self._get_param('in_height', 512)),
+            "batch_count": int(self._get_param('in_batch_count', 1)),
+            "seed": self.get_seed(),
+            "sample_params": sample_params,
+            "preview": "proj",
+            "preview_interval": 1,
+            "output_format": "png",
+        }
+
+        v = _num('in_clip_skip', int)
+        if v is not None:
+            payload['clip_skip'] = v
+        v = _num('in_strength', float)
+        if v is not None:
+            payload['strength'] = v
+
+        if loras:
+            unique_loras = {lora['path']: lora for lora in loras}.values()
+            payload["lora"] = list(unique_loras)
+
+        return payload
+
     def _process_response(self, data: dict):
+        """Process the sdapi response (blocking path, used by imgedit)."""
         base, ext = os.path.splitext(self.output_path)
-        # The Gradio slider yields floats, so normalize to int. Target names
-        # mirror sd-cli: %d/%Nd specifiers are expanded with the image index
-        # (offset by the output begin index); otherwise index 0 uses the
-        # exact path and later images get <base>_<begin+i>.ext (0-based).
-        # sd-cli clamps negative begin indices to 0 (main.cpp:482)
         begin_idx = max(0, self._int_param('in_output_begin_idx') or 0)
-        images_list = data.get("images", []) or [item.get("b64_json") for item in data.get("data", []) if "b64_json" in item]
+        images_list = data.get("images", []) or [
+            item.get("b64_json")
+            for item in data.get("data", [])
+            if "b64_json" in item
+        ]
 
         for i, b64_data in enumerate(images_list):
             if not b64_data:
@@ -266,7 +352,37 @@ class ApiTaskRunner(CommonRunner):
                 target_path = f"{base}_{begin_idx + i}{ext}"
             if ext.lower() == '.png':
                 meta_string = build_a1111_metadata(
-                    self.params, self._get_seed()
+                    self.params, self.get_seed()
+                )
+                save_image_with_metadata(image, target_path, meta_string)
+            else:
+                image.save(target_path)
+            self.outputs.append(target_path)
+
+    def _process_sdcpp_response(self, result: dict):
+        """Process the sdcpp job result (async path)."""
+        base, ext = os.path.splitext(self.output_path)
+        begin_idx = max(0, self._int_param('in_output_begin_idx') or 0)
+        images_list = result.get("images", []) or []
+
+        for i, img_data in enumerate(images_list):
+            b64_data = img_data.get("b64_json")
+            if not b64_data:
+                continue
+            if "," in b64_data:
+                b64_data = b64_data.split(",")[1]
+
+            image_bytes = base64.b64decode(b64_data)
+            image = Image.open(io.BytesIO(image_bytes))
+            if has_output_index_spec(self.output_path):
+                target_path = expand_output_index(self.output_path, begin_idx + i)
+            elif i == 0:
+                target_path = self.output_path
+            else:
+                target_path = f"{base}_{begin_idx + i}{ext}"
+            if ext.lower() == '.png':
+                meta_string = build_a1111_metadata(
+                    self.params, self.get_seed()
                 )
                 save_image_with_metadata(image, target_path, meta_string)
             else:
@@ -275,6 +391,169 @@ class ApiTaskRunner(CommonRunner):
 
     def run(self) -> Generator:
         self._resolve_paths()
+        if self.use_async:
+            yield from self._run_async()
+        else:
+            yield from self._run_blocking()
+
+    def _run_async(self) -> Generator:
+        """Submit to /sdcpp/v1/img_gen and poll job status."""
+        payload = self._build_sdcpp_payload()
+        self.fcommand = json.dumps(payload, indent=4)
+
+        yield (
+            self.fcommand,
+            gr.update(visible=True, value=0),
+            gr.update(visible=True, value="Submitting..."),
+            gr.skip(),
+            None
+        )
+
+        try:
+            response = httpx.post(self.url, json=payload, timeout=30.0)
+            if response.status_code not in (200, 201, 202):
+                body = (response.text or "").strip()
+                detail = f" {body[:200]}" if body else ""
+                yield (
+                    self.fcommand,
+                    gr.update(visible=False, value=0),
+                    gr.update(visible=False, value=""),
+                    gr.update(
+                        value=f"Error: server returned HTTP "
+                              f"{response.status_code}{detail}"
+                    ),
+                    None
+                )
+                return
+
+            job_data = response.json()
+            job_id = job_data.get("id")
+            if not job_id:
+                yield (
+                    self.fcommand,
+                    gr.update(visible=False, value=0),
+                    gr.update(visible=False, value=""),
+                    gr.update(value="Error: no job id in response"),
+                    None
+                )
+                return
+
+            poll_url = f"http://{self.ip}:{self.port}/sdcpp/v1/jobs/{job_id}"
+
+            prev_stats = server_state.last_generation_stats
+            last_preview = None
+            last_status = None
+
+            while True:
+                if not server_state.running:
+                    return
+
+                try:
+                    r = httpx.get(poll_url, timeout=5.0)
+                    if r.status_code != 200:
+                        time.sleep(0.4)
+                        continue
+
+                    job = r.json()
+                    status = job.get("status", "")
+
+                    if status != last_status:
+                        last_status = status
+                        yield (
+                            self.fcommand,
+                            gr.update(visible=True, value=0),
+                            gr.update(visible=True, value=f"{status}"),
+                            gr.skip(),
+                            gr.skip()
+                        )
+
+                    preview = job.get("preview")
+                    if isinstance(preview, dict):
+                        preview_b64 = preview.get("b64_json")
+                        if preview_b64 and preview_b64 != last_preview:
+                            last_preview = preview_b64
+                            try:
+                                preview_img = Image.open(
+                                    io.BytesIO(base64.b64decode(preview_b64))
+                                )
+                                step = preview.get("step", 0) or 0
+                                total = preview.get("total_steps", 1) or 1
+                                pct = int(step / total * 100)
+                                yield (
+                                    self.fcommand,
+                                    gr.update(visible=True, value=pct),
+                                    gr.update(
+                                        visible=True,
+                                        value=f"Generating ({step}/{total})"
+                                    ),
+                                    gr.skip(),
+                                    [preview_img]
+                                )
+                            except Exception:
+                                pass
+
+                    if status == "completed":
+                        result = job.get("result") or {}
+                        self._process_sdcpp_response(result)
+
+                        gen_stats = server_state.last_generation_stats
+                        if gen_stats == prev_stats and server_state.running:
+                            deadline = time.time() + 1.5
+                            while (
+                                server_state.last_generation_stats == prev_stats
+                                and time.time() < deadline
+                            ):
+                                time.sleep(0.1)
+                            gen_stats = server_state.last_generation_stats
+                        if not gen_stats:
+                            gen_stats = "No stats recorded."
+
+                        yield (
+                            self.fcommand,
+                            gr.update(visible=False, value=0),
+                            gr.update(visible=False, value=""),
+                            gr.update(value=gen_stats),
+                            self.outputs
+                        )
+                        return
+
+                    if status == "cancelled":
+                        yield (
+                            self.fcommand,
+                            gr.update(visible=False, value=0),
+                            gr.update(visible=False, value=""),
+                            gr.update(value="Cancelled by server"),
+                            None
+                        )
+                        return
+
+                    if status == "failed":
+                        error = job.get("error") or {}
+                        msg = error.get("message", "unknown")
+                        yield (
+                            self.fcommand,
+                            gr.update(visible=False, value=0),
+                            gr.update(visible=False, value=""),
+                            gr.update(value=f"Error: {msg}"),
+                            None
+                        )
+                        return
+                except Exception:
+                    pass
+
+                time.sleep(0.4)
+        except Exception as exc:
+            ApiTaskRunner._lora_lookup_cache.clear()
+            yield (
+                self.fcommand,
+                gr.update(visible=False, value=0),
+                gr.update(visible=False, value=""),
+                gr.update(value=f"Error: {type(exc).__name__}: {exc}"),
+                None
+            )
+
+    def _run_blocking(self) -> Generator:
+        """Synchronous path (used by imgedit)."""
         payload_or_files = self._build_payload()
 
         if isinstance(payload_or_files, tuple):
@@ -284,15 +563,19 @@ class ApiTaskRunner(CommonRunner):
             for key in ["init_images", "mask"]:
                 if key in display_payload:
                     if isinstance(display_payload[key], list):
-                        display_payload[key] = [img[:60] + "..." for img in display_payload[key]]
+                        display_payload[key] = [
+                            img[:60] + "..." for img in display_payload[key]
+                        ]
                     elif isinstance(display_payload[key], str):
-                        display_payload[key] = display_payload[key][:60] + "..."
+                        display_payload[key] = (
+                            display_payload[key][:60] + "..."
+                        )
             self.fcommand = json.dumps(display_payload, indent=4)
 
         yield (
             self.fcommand,
-            gr.skip(),
-            gr.skip(),
+            gr.update(visible=True, value=0),
+            gr.update(visible=True, value="Starting..."),
             gr.skip(),
             None
         )
@@ -300,22 +583,79 @@ class ApiTaskRunner(CommonRunner):
         prev_stats = server_state.last_generation_stats
 
         try:
-            if isinstance(payload_or_files, tuple):
-                data, files = payload_or_files
-                response = httpx.post(
-                    self.url, data=data, files=files, timeout=None
-                )
-            else:
-                response = httpx.post(
-                    self.url, json=payload_or_files, timeout=None
-                )
+            result_holder = {}
+
+            def _do_request():
+                try:
+                    if isinstance(payload_or_files, tuple):
+                        data, files = payload_or_files
+                        result_holder['response'] = httpx.post(
+                            self.url, data=data, files=files, timeout=None
+                        )
+                    else:
+                        result_holder['response'] = httpx.post(
+                            self.url, json=payload_or_files, timeout=None
+                        )
+                except Exception as exc:
+                    result_holder['error'] = exc
+
+            worker = threading.Thread(target=_do_request, daemon=True)
+            worker.start()
+
+            progress_url = f"http://{self.ip}:{self.port}/sdapi/v1/progress"
+            last_preview = None
+            last_pct = -1
+            while worker.is_alive():
+                if not server_state.running:
+                    return
+
+                try:
+                    r = httpx.get(progress_url, timeout=1.0)
+                    if r.status_code == 200:
+                        pdata = r.json()
+                        pct = int(round(pdata.get("progress", 0.0) * 100))
+                        img_b64 = pdata.get("current_image")
+
+                        img_update = gr.skip()
+                        changed = False
+
+                        if img_b64 and img_b64 != last_preview:
+                            last_preview = img_b64
+                            img_update = [
+                                Image.open(
+                                    io.BytesIO(base64.b64decode(img_b64))
+                                )
+                            ]
+                            changed = True
+
+                        if pct != last_pct:
+                            last_pct = pct
+                            changed = True
+
+                        if changed:
+                            yield (
+                                self.fcommand,
+                                gr.update(visible=True, value=last_pct),
+                                gr.update(
+                                    visible=True,
+                                    value=f"Generating ({last_pct}%)"
+                                ),
+                                gr.skip(),
+                                img_update
+                            )
+                except Exception:
+                    pass
+                worker.join(timeout=0.4)
+            worker.join()
+
+            if 'error' in result_holder:
+                raise result_holder['error']
+            response = result_holder['response']
 
             if response.status_code == 200:
                 self._process_response(response.json())
                 gen_stats = server_state.last_generation_stats
                 if gen_stats == prev_stats and server_state.running:
-                    # Log-parser output can arrive slightly after the
-                    # HTTP response; wait briefly for fresh stats.
                     deadline = time.time() + 1.5
                     while (
                         server_state.last_generation_stats == prev_stats
@@ -328,33 +668,31 @@ class ApiTaskRunner(CommonRunner):
 
                 yield (
                     self.fcommand,
-                    gr.skip(),
-                    gr.skip(),
+                    gr.update(visible=False, value=0),
+                    gr.update(visible=False, value=""),
                     gr.update(value=gen_stats),
                     self.outputs
                 )
             else:
-                # SAFEGUARD: The API rejected the request (missing lora?).
-                #            Wipe lora cache.
                 ApiTaskRunner._lora_lookup_cache.clear()
                 body = (response.text or "").strip()
                 detail = f" {body[:200]}" if body else ""
                 yield (
                     self.fcommand,
-                    gr.skip(),
-                    gr.skip(),
+                    gr.update(visible=False, value=0),
+                    gr.update(visible=False, value=""),
                     gr.update(
-                        value=f"Error: server returned HTTP {response.status_code}{detail}"
+                        value=f"Error: server returned HTTP "
+                              f"{response.status_code}{detail}"
                     ),
                     None
                 )
         except Exception as exc:
-            # SAFEGUARD: Hard crash. Wipe lora cache.
             ApiTaskRunner._lora_lookup_cache.clear()
             yield (
                 self.fcommand,
-                gr.skip(),
-                gr.skip(),
+                gr.update(visible=False, value=0),
+                gr.update(visible=False, value=""),
                 gr.update(value=f"Error: {type(exc).__name__}: {exc}"),
                 None
             )
@@ -365,7 +703,8 @@ class Txt2ImgApiRunner(ApiTaskRunner):
         self._set_output_path(
             dir_key='txt2img_dir', subctrl_id=0, extension='png'
         )
-        self.url = f"http://{self.ip}:{self.port}/sdapi/v1/txt2img"
+        self.use_async = True
+        self.url = f"http://{self.ip}:{self.port}/sdcpp/v1/img_gen"
 
 
 class Img2ImgApiRunner(ApiTaskRunner):
@@ -373,9 +712,47 @@ class Img2ImgApiRunner(ApiTaskRunner):
         self._set_output_path(
             dir_key='img2img_dir', subctrl_id=1, extension='png'
         )
-        self.url = f"http://{self.ip}:{self.port}/sdapi/v1/img2img"
+        self.use_async = True
+        self.url = f"http://{self.ip}:{self.port}/sdcpp/v1/img_gen"
+
+    def _build_sdcpp_payload(self) -> dict:
+        payload = super()._build_sdcpp_payload()
+
+        init_img = image_to_pil(
+            self._get_param('in_img_inp') or self._get_param('in_first_frame_inp')
+        )
+        if init_img is not None:
+            buf = io.BytesIO()
+            init_img.save(buf, format="PNG")
+            payload["init_image"] = base64.b64encode(
+                buf.getvalue()
+            ).decode('utf-8')
+
+        mask_input = self._get_param('in_img_mask') or self._get_param('in_mask_img')
+        mask_img = process_editor_mask(mask_input)
+
+        if mask_img is not None:
+            if self._get_param('in_invert_mask', False):
+                mask_img = ImageOps.invert(mask_img.convert('L'))
+            m_buf = io.BytesIO()
+            mask_img.save(m_buf, format="PNG")
+            payload["mask_image"] = base64.b64encode(
+                m_buf.getvalue()
+            ).decode('utf-8')
+
+        if self._get_param('in_img_cfg_bool'):
+            try:
+                img_cfg = float(self._get_param('in_img_cfg'))
+                payload.setdefault('sample_params', {}) \
+                       .setdefault('guidance', {})['img_cfg'] = img_cfg
+            except (TypeError, ValueError):
+                pass
+
+        return payload
 
     def _build_payload(self) -> dict:
+        # Dead code for the async path, kept for API symmetry if use_async
+        # is ever toggled off.
         payload = super()._build_payload()
         init_img = image_to_pil(
             self._get_param('in_img_inp') or self._get_param('in_first_frame_inp')
@@ -383,7 +760,9 @@ class Img2ImgApiRunner(ApiTaskRunner):
         if init_img is not None:
             buf = io.BytesIO()
             init_img.save(buf, format="PNG")
-            payload["init_images"] = [base64.b64encode(buf.getvalue()).decode('utf-8')]
+            payload["init_images"] = [
+                base64.b64encode(buf.getvalue()).decode('utf-8')
+            ]
 
         mask_input = self._get_param('in_img_mask') or self._get_param('in_mask_img')
         mask_img = process_editor_mask(mask_input)
@@ -392,7 +771,9 @@ class Img2ImgApiRunner(ApiTaskRunner):
             m_buf = io.BytesIO()
             mask_img.save(m_buf, format="PNG")
             payload["mask"] = base64.b64encode(m_buf.getvalue()).decode('utf-8')
-            payload["inpainting_mask_invert"] = self._get_param('in_invert_mask', False)
+            payload["inpainting_mask_invert"] = self._get_param(
+                'in_invert_mask', False
+            )
 
         strength = self._get_param('in_strength', 0.75)
         if strength not in (None, ''):
@@ -414,6 +795,7 @@ class Img2ImgApiRunner(ApiTaskRunner):
 class ImgEditApiRunner(ApiTaskRunner):
     def prepare(self):
         self._set_output_path(dir_key='imgedit_dir', subctrl_id=2, extension='png')
+        self.use_async = False
         self.url = f"http://{self.ip}:{self.port}/v1/images/edits"
 
     def _build_payload(self) -> tuple:
@@ -429,7 +811,6 @@ class ImgEditApiRunner(ApiTaskRunner):
             "output_format": "png"
         }
 
-        # Files
         files = []
         init_imgs = self._get_param('in_ref_img') or self._get_param('in_img_inp')
         if init_imgs is not None:
@@ -445,7 +826,9 @@ class ImgEditApiRunner(ApiTaskRunner):
                 img_obj.save(buf, format="PNG")
                 buf.seek(0)
 
-                files.append(("image[]", (f"image_{idx}.png", buf, "image/png")))
+                files.append(
+                    ("image[]", (f"image_{idx}.png", buf, "image/png"))
+                )
 
         mask_input = self._get_param('in_img_mask') or self._get_param('in_mask_img')
         mask_img = process_editor_mask(mask_input)

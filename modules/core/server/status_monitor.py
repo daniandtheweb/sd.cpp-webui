@@ -69,8 +69,13 @@ def server_status_monitor_wrapper(ip, port):
     server_state.port = port
 
     if not server_state.running:
+        exit_code = getattr(server_state, 'last_exit_code', None)
+        if exit_code is None or exit_code == 0:
+            status_msg = "Stopped (No Model Loaded)"
+        else:
+            status_msg = f"Crashed (exit code {exit_code})"
         return (
-            "Stopped (No Model Loaded)",
+            status_msg,
             gr.update(interactive=False),
             gr.update(visible=False),
             gr.update(visible=False)
@@ -109,7 +114,9 @@ def server_status_monitor_wrapper(ip, port):
         server_state.latest_update = {}
 
     if is_offline:
-        combined_status = "Server unreachable (starting or crashed)"
+        # Reached only while server_state.running is True (checked above).
+        # The subprocess is alive; the HTTP port simply hasn't been bound yet.
+        combined_status = "Starting (waiting for server...)"
         btn_interactive = False
     elif is_loading_model or model_name == "None":
         combined_status = "Loading (Model initializing...)"

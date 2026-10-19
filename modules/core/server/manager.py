@@ -66,6 +66,8 @@ class ServerRunner(CommonRunner):
 
         def run_server_wrapper():
             server_state.running = True
+            server_state.last_exit_code = None
+            server_state.user_stopped = False
 
             try:
                 final_stats_str = "Process completed with unknown stats."
@@ -87,7 +89,14 @@ class ServerRunner(CommonRunner):
                         server_state.latest_update = update
             except Exception as e:
                 print(f"[SD-Server] Crashed: {e}")
+                server_state.last_exit_code = -1
             finally:
+                if server_state.last_exit_code is None:
+                    if server_state.user_stopped:
+                        server_state.last_exit_code = 0
+                    else:
+                        server_state.last_exit_code = -1
+                server_state.user_stopped = False
                 server_state.running = False
 
         thread = threading.Thread(target=run_server_wrapper, daemon=True)
@@ -118,9 +127,9 @@ def stop_server():
         return "Stopped", gr.update(active=False), gr.update(interactive=False)
 
     try:
-        # Use the manager to kill the process
-        subprocess_manager.kill_subprocess()
+        server_state.user_stopped = True
         server_state.running = False
+        subprocess_manager.kill_subprocess()
 
         return (
             "Stopped",
@@ -129,6 +138,8 @@ def stop_server():
         )
 
     except Exception:
+        server_state.user_stopped = False
+        server_state.running = True
         return (
             "Error",
             gr.update(active=False),
