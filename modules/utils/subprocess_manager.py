@@ -22,16 +22,23 @@ class SubprocessManager:
     def _stream_output(self):
         """
         Generates raw strings from the subprocess stdout,
-        breaking at line endings or progress updates."""
+        breaking at line endings or progress updates.
+
+        Progress updates are split right after the speed unit
+        ("it/s"/"s/it") so they show up immediately even on older sd.cpp
+        builds that print nothing after it. Newer builds append
+        " - ETA mm:ss" and end every update with ESC[K; that tail arrives
+        as its own chunk and the log parser attaches it to the bar.
+        """
         buffer = bytearray()
         for byte in iter(lambda: self.process.stdout.read(1), b''):
             buffer.extend(byte)
 
             is_line_end = byte in (b'\r', b'\n')
             is_progress_end = (
-                    len(buffer) > 4 and
-                    byte in (b's', b't') and
-                    (buffer.endswith(b'it/s') or buffer.endswith(b's/it'))
+                (byte in (b's', b't') and
+                 (buffer.endswith(b'it/s') or buffer.endswith(b's/it'))) or
+                (byte == b'K' and buffer.endswith(b'\x1b[K'))
             )
 
             if is_line_end or is_progress_end:

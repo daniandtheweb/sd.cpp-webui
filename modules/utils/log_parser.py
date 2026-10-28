@@ -12,7 +12,12 @@ class LogParser:
     def __init__(self):
         self.STATS_REGEX = re.compile(r"completed, taking ([\d.]+)s")
         self.TOTAL_TIME_REGEX = re.compile(r"completed in ([\d.]+)s")
-        self.ETA_REGEX = re.compile(r'(\d+)/(\d+)\s*-\s*([\d.]+)(s/it|it/s)')
+        self.ETA_REGEX = re.compile(
+            r'(\d+)/(\d+)\s*-\s*([\d.]+)(s/it|it/s)'
+            r'(?:\s*-\s*ETA\s+([\d:]+))?'
+        )
+        # Trailing " - ETA mm:ss" fragment printed by newer sd.cpp builds
+        self.ETA_FRAGMENT_REGEX = re.compile(r'^\s*-\s*ETA\s+([\d:]+)\s*$')
         self.SIMPLE_REGEX = re.compile(r'(\d+)/(\d+)')
         self.SEED_REGEX = re.compile(r"generating image:.*?seed\s+(\d+)")
         self.PROGRESS_LINE_REGEX = re.compile(
@@ -70,7 +75,7 @@ class LogParser:
         eta_match = self.ETA_REGEX.search(line)
         if eta_match and int(eta_match.group(2)) > 0:
             (current_step, total_steps,
-             speed_value, speed_unit) = eta_match.groups()
+             speed_value, speed_unit, sdcpp_eta) = eta_match.groups()
             final_stats['last_speed'] = (
                     f"{float(speed_value):.2f} {speed_unit}"
             )
@@ -87,7 +92,11 @@ class LogParser:
             elif speed_unit == 'it/s' and speed_value > 0:
                 eta_seconds = int(steps_remaining / speed_value)
 
-            if eta_seconds < 60:
+            if sdcpp_eta:
+                # sd.cpp's ETA uses the average speed, which is steadier
+                # than extrapolating from the current step's speed
+                eta_str = sdcpp_eta
+            elif eta_seconds < 60:
                 eta_str = f"{eta_seconds}s"
             elif eta_seconds < 3600:  # Less than an hour
                 minutes = eta_seconds // 60
@@ -146,11 +155,28 @@ class LogParser:
 
             update_data = self._parse_progress_update(clean_probe, final_stats)
             if update_data:
-                sys.stdout.write(f"\r{display_line}")
+                # ESC[K clears a leftover ETA from the previous update
+                sys.stdout.write(f"\r{display_line}\x1b[K")
                 sys.stdout.flush()
+                self._last_percent = update_data.get("percent")
                 return update_data, True
 
             return None, last_was_progress
+
+        # " - ETA mm:ss" tail of the current bar (newer sd.cpp builds)
+        eta_match = self.ETA_FRAGMENT_REGEX.match(clean_probe)
+        if last_was_progress and eta_match:
+            sys.stdout.write(display_line)
+            sys.stdout.flush()
+            if self._last_percent is not None and 'last_speed' in final_stats:
+                return {
+                    "percent": self._last_percent,
+                    "status": (
+                        f"Speed: {final_stats['last_speed']} | "
+                        f"ETA: {eta_match.group(1)}"
+                    )
+                }, True
+            return None, True
 
         # Keep the bar running instead of breaking it
         if last_was_progress and self._is_progress_noise(clean_probe):
@@ -159,6 +185,7 @@ class LogParser:
         if last_was_progress:
             sys.stdout.write("\n\n")
         self._last_bar_total = None
+        self._last_percent = None
 
         print(display_line)
         if 'generate_image completed' in clean_line:
