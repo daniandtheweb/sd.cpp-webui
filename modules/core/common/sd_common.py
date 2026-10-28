@@ -5,7 +5,7 @@ import os
 import re
 from PIL import Image
 from enum import IntEnum
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 from modules.utils.file_utils import get_path
 from modules.utils.sdcpp_utils import extract_env_vars, generate_output_filename
@@ -527,7 +527,31 @@ class CommonRunner():
             '--compression-quality': (compression_quality
                                       if compression_quality != 90
                                       else None),
+            '--conv-direct': self._build_conv_direct_spec(),
         }
+
+    def _build_conv_direct_spec(self) -> Optional[str]:
+        """
+        Builds the --conv-direct value: a global mode followed by
+        per-module overrides, e.g. "auto,vae=off".
+        A module set to "auto" follows the global mode.
+        Returns None when everything is "auto" (sd.cpp's default).
+        """
+        modes = ("auto", "on", "off")
+
+        def mode(key):
+            value = str(self._get_param(key) or "auto").lower()
+            return value if value in modes else "auto"
+
+        parts = [mode('in_conv_direct')]
+        for module, key in (("diffusion", 'in_conv_direct_diffusion'),
+                            ("vae", 'in_conv_direct_vae')):
+            module_mode = mode(key)
+            if module_mode != "auto":
+                parts.append(f"{module}={module_mode}")
+
+        spec = ",".join(parts)
+        return None if spec == "auto" else spec
 
     def _get_common_flags(self) -> Dict[str, bool]:
         """
@@ -551,8 +575,8 @@ class CommonRunner():
             '--circulary': self._get_param('in_circular_padding') == CIRCULAR_PADDING[3],
             '--fa': self._get_param('in_flash_attn'),
             '--diffusion-fa': self._get_param('in_diffusion_fa'),
-            '--diffusion-conv-direct': self._get_param('in_diffusion_conv_direct'),
-            '--vae-conv-direct': self._get_param('in_vae_conv_direct'),
+            # The ESRGAN upscaler only reads the legacy flag
+            '--diffusion-conv-direct': self._get_param('in_upscale_conv_direct'),
             '--force-sdxl-vae-conv-scale': self._get_param('in_force_sdxl_vae_conv_scale'),
             '--disable-image-metadata': self._get_param('in_disable_img_metadata'),
             '--mmap': self._get_param('in_mmap'),

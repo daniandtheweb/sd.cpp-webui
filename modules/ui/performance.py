@@ -6,6 +6,7 @@ import gradio as gr
 
 from modules.shared_instance import config
 from modules.ui.backend_devices import create_backend_devices_ui
+from modules.ui.constants import CONV_DIRECT_MODES
 
 
 def create_performance_ui():
@@ -64,14 +65,6 @@ def create_performance_ui():
                 label="SageAttention (native CUDA, FA fallback)",
                 value=config.get('def_sage_attn')
             )
-            diffusion_conv_direct = gr.Checkbox(
-                label="Conv2D Direct for diffusion",
-                value=config.get('def_diffusion_conv_direct')
-            )
-            vae_conv_direct = gr.Checkbox(
-                label="Conv2D Direct for VAE",
-                value=config.get('def_vae_conv_direct')
-            )
             force_sdxl_vae_conv_scale = gr.Checkbox(
                 label="Force conv scale on SDXL VAE",
                 value=config.get('def_force_sdxl_vae_conv_scale')
@@ -89,6 +82,27 @@ def create_performance_ui():
                 minimum=0
             )
 
+        with gr.Group():
+            with gr.Row():
+                conv_direct = gr.Dropdown(
+                    label="Conv Direct",
+                    choices=CONV_DIRECT_MODES,
+                    value=config.get('def_conv_direct'),
+                    info="auto probes each backend for the faster method"
+                )
+                conv_direct_diffusion = gr.Dropdown(
+                    label="Conv Direct (diffusion)",
+                    choices=CONV_DIRECT_MODES,
+                    value=config.get('def_conv_direct_diffusion'),
+                    info="auto follows Conv Direct"
+                )
+                conv_direct_vae = gr.Dropdown(
+                    label="Conv Direct (VAE)",
+                    choices=CONV_DIRECT_MODES,
+                    value=config.get('def_conv_direct_vae'),
+                    info="auto follows Conv Direct"
+                )
+
     return {
         'in_threads': threads,
         'in_max_vram_table': max_vram_state,
@@ -105,8 +119,9 @@ def create_performance_ui():
         'in_flash_attn': flash_attn,
         'in_diffusion_fa': diffusion_fa,
         'in_sage_attn': sage_attn,
-        'in_diffusion_conv_direct': diffusion_conv_direct,
-        'in_vae_conv_direct': vae_conv_direct,
+        'in_conv_direct': conv_direct,
+        'in_conv_direct_diffusion': conv_direct_diffusion,
+        'in_conv_direct_vae': conv_direct_vae,
         'in_force_sdxl_vae_conv_scale': force_sdxl_vae_conv_scale,
         'in_linear_scale': linear_scale,
         'in_attn_scale': attn_scale,

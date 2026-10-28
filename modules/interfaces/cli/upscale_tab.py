@@ -119,9 +119,9 @@ with gr.Blocks() as upscale_block:
                     flash_attn = gr.Checkbox(
                         label="Flash Attention", value=config.get('def_flash_attn')
                     )
-                    diffusion_conv_direct = gr.Checkbox(
-                        label="Conv2D Direct for diffusion",
-                        value=config.get('def_diffusion_conv_direct')
+                    upscale_conv_direct = gr.Checkbox(
+                        label="Conv2D Direct for upscaler",
+                        value=config.get('def_upscale_conv_direct')
                     )
                     color = gr.Checkbox(
                         label="Color", value=config.get('def_color')
@@ -197,7 +197,7 @@ with gr.Blocks() as upscale_block:
         'in_upscl_tile_size': upscl_tile_size,
         'in_output': output,
         'in_flash_attn': flash_attn,
-        'in_diffusion_conv_direct': diffusion_conv_direct,
+        'in_upscale_conv_direct': upscale_conv_direct,
         'in_color': color,
         'in_disable_img_metadata': disable_img_metadata,
         'in_compression_quality': compression_quality,
