@@ -293,6 +293,19 @@ class CommandRunner(CommonRunner):
 class ImageGenerationRunner(CommandRunner):
     """A common base for txt2img, img2img, and imgedit runners."""
 
+    def _build_ref_image_args(self):
+        """
+        Builds the --ref-image-args key=value list from the reference
+        image settings.
+        Returns None when nothing is set (model preset is auto-detected).
+        """
+        args = []
+        if self._get_param('in_increase_ref_index'):
+            args.append("ref_index_mode=increase")
+        if self._get_param('in_disable_auto_resize_ref_image'):
+            args.append("resize_before_vae=false")
+        return ",".join(args) if args else None
+
     def build_command(self, output_dir_key: str, subctrl_id: int):
         """Builds the common command for image generation."""
         self._resolve_paths()
@@ -381,6 +394,8 @@ class ImageGenerationRunner(CommandRunner):
             '--image-preprocess': (self._get_param('in_img_preprocess')
                                    if self._get_param('in_img_preprocess')
                                    else None),
+            # Reference images
+            '--ref-image-args': self._build_ref_image_args(),
             # Skip Layer Guidance (SLG)
             **({
                 '--slg-scale': self._get_param('in_slg_scale'),
@@ -443,10 +458,6 @@ class ImageGenerationRunner(CommandRunner):
             '--preview-noisy': (self._get_param('in_preview_noisy')
                                 if self._get_param('in_preview_bool')
                                 else False),
-            '--increase-ref-index': self._get_param('in_increase_ref_index'),
-            '--disable-auto-resize-ref-image': self._get_param(
-                'in_disable_auto_resize_ref_image'
-            ),
             '--hires': self._get_param('in_hires_bool'),
         })
         self._add_flags(flags)
