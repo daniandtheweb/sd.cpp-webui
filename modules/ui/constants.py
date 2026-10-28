@@ -33,6 +33,7 @@ CACHE_MODE = [
 ]
 SCM_POLICY = ["none", "dynamic", "static"]
 AUTO_ON_OFF = ["auto", "on", "off"]
+ON_OFF = ["on", "off"]
 LOG_LEVEL = [
     "debug", "verbose", "info",
     "warn", "error"

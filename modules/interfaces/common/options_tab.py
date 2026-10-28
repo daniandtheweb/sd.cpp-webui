@@ -85,6 +85,7 @@ OPTION_KEY_MAP = {
     'in_conv_direct_vae': 'def_conv_direct_vae',
     'in_force_sdxl_vae_conv_scale': 'def_force_sdxl_vae_conv_scale',
     'in_auto_fit': 'def_auto_fit',
+    'in_batched_cfg': 'def_batched_cfg',
     'in_sage_attn': 'def_sage_attn',
     'in_split_modes': 'def_split_modes',
     'in_rpc_servers': 'def_rpc_servers',

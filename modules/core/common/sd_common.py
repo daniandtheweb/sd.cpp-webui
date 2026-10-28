@@ -529,6 +529,8 @@ class CommonRunner():
                                       else None),
             '--conv-direct': self._build_mode_spec('in_conv_direct'),
             '--flash-attn': self._build_mode_spec('in_flash_attention'),
+            '--batched-cfg': ('off' if self._get_param('in_batched_cfg') == 'off'
+                              else None),
         }
 
     def _build_mode_spec(self, base_key: str) -> Optional[str]:

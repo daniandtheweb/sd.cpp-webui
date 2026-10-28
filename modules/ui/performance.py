@@ -6,7 +6,7 @@ import gradio as gr
 
 from modules.shared_instance import config
 from modules.ui.backend_devices import create_backend_devices_ui
-from modules.ui.constants import AUTO_ON_OFF
+from modules.ui.constants import AUTO_ON_OFF, ON_OFF
 
 
 def create_performance_ui():
@@ -53,6 +53,13 @@ def create_performance_ui():
             )
 
         with gr.Group():
+            batched_cfg = gr.Dropdown(
+                label="Batched CFG",
+                choices=ON_OFF,
+                value=config.get('def_batched_cfg'),
+                info="Runs the conditional and unconditional CFG passes "
+                     "in one UNet forward when supported"
+            )
             sage_attn = gr.Checkbox(
                 label="SageAttention (native CUDA, FA fallback)",
                 value=config.get('def_sage_attn')
@@ -132,6 +139,7 @@ def create_performance_ui():
         'in_flash_attention': flash_attention,
         'in_flash_attention_diffusion': flash_attention_diffusion,
         'in_flash_attention_vae': flash_attention_vae,
+        'in_batched_cfg': batched_cfg,
         'in_sage_attn': sage_attn,
         'in_conv_direct': conv_direct,
         'in_conv_direct_diffusion': conv_direct_diffusion,

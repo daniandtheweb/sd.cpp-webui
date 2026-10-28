@@ -121,6 +121,7 @@ DEFAULT_SETTINGS = {
     'def_upscale_conv_direct': False,
     'def_force_sdxl_vae_conv_scale': False,
     'def_auto_fit': "on",
+    'def_batched_cfg': "on",
     'def_sage_attn': False,
     'def_rpc_servers': "",
     'def_conditioning_cache_size': 0,
