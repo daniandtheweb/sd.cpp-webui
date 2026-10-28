@@ -6,7 +6,7 @@ import gradio as gr
 
 from modules.shared_instance import config
 from modules.ui.backend_devices import create_backend_devices_ui
-from modules.ui.constants import CONV_DIRECT_MODES
+from modules.ui.constants import AUTO_ON_OFF
 
 
 def create_performance_ui():
@@ -53,14 +53,6 @@ def create_performance_ui():
             )
 
         with gr.Group():
-            flash_attn = gr.Checkbox(
-                label="Flash Attention",
-                value=config.get('def_flash_attn')
-            )
-            diffusion_fa = gr.Checkbox(
-                label="Flash Attention in the diffusion model only",
-                value=config.get('def_diffusion_fa')
-            )
             sage_attn = gr.Checkbox(
                 label="SageAttention (native CUDA, FA fallback)",
                 value=config.get('def_sage_attn')
@@ -84,21 +76,42 @@ def create_performance_ui():
 
         with gr.Group():
             with gr.Row():
+                flash_attention = gr.Dropdown(
+                    label="Flash Attention",
+                    choices=AUTO_ON_OFF,
+                    value=config.get('def_flash_attention'),
+                    info="auto enables it where the backend supports it"
+                )
+                flash_attention_diffusion = gr.Dropdown(
+                    label="Flash Attention (diffusion)",
+                    choices=AUTO_ON_OFF,
+                    value=config.get('def_flash_attention_diffusion'),
+                    info="auto follows Flash Attention"
+                )
+                flash_attention_vae = gr.Dropdown(
+                    label="Flash Attention (VAE)",
+                    choices=AUTO_ON_OFF,
+                    value=config.get('def_flash_attention_vae'),
+                    info="auto follows Flash Attention"
+                )
+
+        with gr.Group():
+            with gr.Row():
                 conv_direct = gr.Dropdown(
                     label="Conv Direct",
-                    choices=CONV_DIRECT_MODES,
+                    choices=AUTO_ON_OFF,
                     value=config.get('def_conv_direct'),
                     info="auto probes each backend for the faster method"
                 )
                 conv_direct_diffusion = gr.Dropdown(
                     label="Conv Direct (diffusion)",
-                    choices=CONV_DIRECT_MODES,
+                    choices=AUTO_ON_OFF,
                     value=config.get('def_conv_direct_diffusion'),
                     info="auto follows Conv Direct"
                 )
                 conv_direct_vae = gr.Dropdown(
                     label="Conv Direct (VAE)",
-                    choices=CONV_DIRECT_MODES,
+                    choices=AUTO_ON_OFF,
                     value=config.get('def_conv_direct_vae'),
                     info="auto follows Conv Direct"
                 )
@@ -116,8 +129,9 @@ def create_performance_ui():
         'in_backend_table': backend_state,
         'in_params_backend_table': params_state,
         'in_split_modes': split_state,
-        'in_flash_attn': flash_attn,
-        'in_diffusion_fa': diffusion_fa,
+        'in_flash_attention': flash_attention,
+        'in_flash_attention_diffusion': flash_attention_diffusion,
+        'in_flash_attention_vae': flash_attention_vae,
         'in_sage_attn': sage_attn,
         'in_conv_direct': conv_direct,
         'in_conv_direct_diffusion': conv_direct_diffusion,

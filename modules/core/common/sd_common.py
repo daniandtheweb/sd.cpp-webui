@@ -527,14 +527,16 @@ class CommonRunner():
             '--compression-quality': (compression_quality
                                       if compression_quality != 90
                                       else None),
-            '--conv-direct': self._build_conv_direct_spec(),
+            '--conv-direct': self._build_mode_spec('in_conv_direct'),
+            '--flash-attn': self._build_mode_spec('in_flash_attention'),
         }
 
-    def _build_conv_direct_spec(self) -> Optional[str]:
+    def _build_mode_spec(self, base_key: str) -> Optional[str]:
         """
-        Builds the --conv-direct value: a global mode followed by
-        per-module overrides, e.g. "auto,vae=off".
-        A module set to "auto" follows the global mode.
+        Builds an on|off|auto value with per-module overrides, as used by
+        --conv-direct and --flash-attn, e.g. "auto,vae=off".
+        Reads base_key (global mode), base_key + '_diffusion' and
+        base_key + '_vae'. A module set to "auto" follows the global mode.
         Returns None when everything is "auto" (sd.cpp's default).
         """
         modes = ("auto", "on", "off")
@@ -543,10 +545,9 @@ class CommonRunner():
             value = str(self._get_param(key) or "auto").lower()
             return value if value in modes else "auto"
 
-        parts = [mode('in_conv_direct')]
-        for module, key in (("diffusion", 'in_conv_direct_diffusion'),
-                            ("vae", 'in_conv_direct_vae')):
-            module_mode = mode(key)
+        parts = [mode(base_key)]
+        for module in ("diffusion", "vae"):
+            module_mode = mode(f"{base_key}_{module}")
             if module_mode != "auto":
                 parts.append(f"{module}={module_mode}")
 
@@ -573,8 +574,6 @@ class CommonRunner():
             '--circular': self._get_param('in_circular_padding') == CIRCULAR_PADDING[1],
             '--circularx': self._get_param('in_circular_padding') == CIRCULAR_PADDING[2],
             '--circulary': self._get_param('in_circular_padding') == CIRCULAR_PADDING[3],
-            '--fa': self._get_param('in_flash_attn'),
-            '--diffusion-fa': self._get_param('in_diffusion_fa'),
             # The ESRGAN upscaler only reads the legacy flag
             '--diffusion-conv-direct': self._get_param('in_upscale_conv_direct'),
             '--force-sdxl-vae-conv-scale': self._get_param('in_force_sdxl_vae_conv_scale'),

@@ -116,9 +116,6 @@ with gr.Blocks() as upscale_block:
                         step=1,
                         value=config.get('def_compression_quality')
                     )
-                    flash_attn = gr.Checkbox(
-                        label="Flash Attention", value=config.get('def_flash_attn')
-                    )
                     upscale_conv_direct = gr.Checkbox(
                         label="Conv2D Direct for upscaler",
                         value=config.get('def_upscale_conv_direct')
@@ -196,7 +193,6 @@ with gr.Blocks() as upscale_block:
         'in_upscl_rep': upscl_rep,
         'in_upscl_tile_size': upscl_tile_size,
         'in_output': output,
-        'in_flash_attn': flash_attn,
         'in_upscale_conv_direct': upscale_conv_direct,
         'in_color': color,
         'in_disable_img_metadata': disable_img_metadata,

@@ -32,7 +32,7 @@ CACHE_MODE = [
     "taylorseer", "cache-dit", "spectrum"
 ]
 SCM_POLICY = ["none", "dynamic", "static"]
-CONV_DIRECT_MODES = ["auto", "on", "off"]
+AUTO_ON_OFF = ["auto", "on", "off"]
 LOG_LEVEL = [
     "debug", "verbose", "info",
     "warn", "error"
