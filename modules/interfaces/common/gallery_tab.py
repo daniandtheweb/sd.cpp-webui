@@ -10,13 +10,7 @@ from modules.ui.constants import (
 )
 
 
-gallery_manager = GalleryManager(
-    config.get('txt2img_dir'),
-    config.get('img2img_dir'),
-    config.get('imgedit_dir'),
-    config.get('any2video_dir'),
-    config.get('upscale_dir')
-)
+gallery_manager = GalleryManager()
 info_params = {}
 
 
