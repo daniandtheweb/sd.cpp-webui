@@ -168,6 +168,14 @@ def test_hires_vae_tiling_cache_preview_and_preprocess():
     assert payload['image_preprocess'] == 'target=ref,mode=none'
 
 
+def test_output_settings_are_sent_per_request():
+    payload = _runner('Txt2ImgApiRunner', {
+        'in_disable_img_metadata': True, 'in_compression_quality': 80.0,
+    })._build_payload()
+    assert payload['embed_image_metadata'] is False
+    assert payload['output_compression'] == 80
+
+
 def test_runtime_toggles_can_switch_launch_defaults_off():
     payload = _runner('Txt2ImgApiRunner', {
         'in_vae_tiling': False, 'in_cache_bool': False,

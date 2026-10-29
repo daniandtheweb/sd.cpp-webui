@@ -18,6 +18,15 @@ class ServerRunner(CommonRunner):
     Builds and manages the sd-server command execution.
     """
 
+    # Set per request through the API, so never passed at launch
+    REQUEST_OPTIONS = {
+        '--upscale-model',
+        '--vae-tiling',
+        '--cache-mode',
+        '--disable-image-metadata',
+        '--compression-quality',
+    }
+
     def __init__(self, params: Dict[str, Any]):
         super().__init__(params)
         self.command = [SD_SERVER]
@@ -41,9 +50,12 @@ class ServerRunner(CommonRunner):
 
         # Server-specific options
         options.update({
-            '--cache-mode': (self._get_param('in_cache_mode')
-                             if self._get_param('in_cache_bool')
-                             else None),
+            # ControlNet model, enabled per request
+            '--control-net': self._make_relative(self._get_param('f_cnnet')),
+            # PhotoMaker
+            '--pm-style-strength': (self._get_param('in_phtmkr_strength')
+                                    if self._get_param('in_phtmkr_bool')
+                                    else None),
             '--lora-model-dir': self._make_relative(config.get('lora_dir')),
             # HiRes Fix and Upscale models
             '--hires-upscalers-dir': self._make_relative(
@@ -58,9 +70,15 @@ class ServerRunner(CommonRunner):
             **self._get_common_options(),
         })
 
-        self._add_options(options)
+        self._add_options({
+            opt: val for opt, val in options.items()
+            if opt not in self.REQUEST_OPTIONS
+        })
 
-        self._add_flags(self._get_common_flags())
+        self._add_flags({
+            flag: val for flag, val in self._get_common_flags().items()
+            if flag not in self.REQUEST_OPTIONS
+        })
 
     def _choice(self, key: str):
         """Helper to get a dropdown value, None if 'Default'."""

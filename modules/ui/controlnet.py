@@ -12,34 +12,43 @@ from modules.utils.ui_events import update_interactivity
 from .constants import RELOAD_SYMBOL
 
 
-def create_cnnet_ui():
-    """Create the ControlNet UI"""
+def create_cnnet_ui(model_sel: bool = True, inputs: bool = True):
+    """
+    Create the ControlNet UI
+    model_sel: show the model selection (a launch option in server mode)
+    inputs: show the enable checkbox, control image and strength
+    """
     cnnet_dir_txt = gr.Textbox(value=config.get('cnnet_dir'), visible=False)
+
+    # Without the enable checkbox the model selection is always active
+    model_interactive = not inputs
 
     with gr.Accordion(
         label="ControlNet", open=False
     ):
         cnnet_bool = gr.Checkbox(
-            label="Enable ControlNet", value=False
+            label="Enable ControlNet", value=False,
+            visible=inputs
         )
-        with gr.Group():
+        with gr.Group(visible=model_sel):
             cnnet = gr.Dropdown(
                 label="ControlNet",
                 choices=get_models(config.get('cnnet_dir')),
                 value=None,
-                interactive=False
+                interactive=model_interactive
             )
             with gr.Row():
                 reload_cnnet_btn = gr.Button(
                     value=RELOAD_SYMBOL,
-                    interactive=False)
+                    interactive=model_interactive)
                 clear_cnnet_btn = gr.ClearButton(
                     cnnet,
-                    interactive=False
+                    interactive=model_interactive
                 )
         control_img = gr.Image(
             sources="upload", type="filepath",
-            interactive=False
+            interactive=False,
+            visible=inputs
         )
         control_strength = gr.Slider(
             label="ControlNet strength",
@@ -47,7 +56,8 @@ def create_cnnet_ui():
             maximum=1,
             step=0.01,
             value=0.9,
-            interactive=False
+            interactive=False,
+            visible=inputs
         )
 
     cnnet_comp = [

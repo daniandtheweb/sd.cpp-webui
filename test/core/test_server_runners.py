@@ -115,10 +115,13 @@ def test_server_startup_command(app_root):
         'f_phtmkr': os.path.join(exe_dir, 'models', 'pm.gguf'),
         'in_phtmkr_id': os.path.join(exe_dir, 'models', 'pm_id'),
         'in_phtmkr_emb': os.path.join(exe_dir, 'models', 'pm_emb.bin'),
+        'in_phtmkr_strength': 30,
         'in_upscl_bool': True,
         'f_upscl': os.path.join(exe_dir, 'models', 'up.gguf'),
-        'in_cnnet_bool': True,
+        'in_cnnet_bool': False,
         'f_cnnet': os.path.join(exe_dir, 'models', 'cn.gguf'),
+        'in_vae_tiling': True,
+        'in_disable_img_metadata': True,
         'in_max_vram_table': [['*', '8']],
         'in_backend_table': [['*', 'vulkan0']],
         'in_params_backend_table': [['*', 'vulkan0']],
@@ -149,12 +152,12 @@ def test_server_startup_command(app_root):
 
     # Components
     assert flags['-t'] == '8'
-    assert flags['--cache-mode'] == 'easycache'
     assert flags['--taesd'] == 'models/taesd.safetensors'
     assert flags['--photo-maker'] == 'models/pm.gguf'
     assert flags['--pm-id-images-dir'] == 'models/pm_id'
     assert flags['--pm-id-embed-path'] == 'models/pm_emb.bin'
-    assert flags['--upscale-model'] == 'models/up.gguf'
+    assert flags['--pm-style-strength'] == '30'
+    # Loaded when selected, the checkbox only enables the control image
     assert flags['--control-net'] == 'models/cn.gguf'
     assert flags['--prediction'] == 'epsilon'
 
@@ -176,8 +179,12 @@ def test_server_startup_command(app_root):
     assert flags['--rpc-servers'] == '127.0.0.1:5000'
     assert flags['--conditioning-cache-size'] == '16'
     assert flags['--log-level'] == 'debug'
-    assert flags['--compression-quality'] == '95'
     assert '--auto-fit' not in flags
+
+    # Set per request through the API
+    for flag in ('--cache-mode', '--upscale-model', '--vae-tiling',
+                 '--disable-image-metadata', '--compression-quality'):
+        assert flag not in flags
 
 
 def test_server_startup_command_defaults_omitted(app_root):

@@ -26,21 +26,6 @@ from modules.shared_instance import server_state
 
 HIGH_NOISE_LORA_PREFIX = "|high_noise|"
 
-# Sent with every request, so they stay editable while the server runs
-REQUEST_TIME_KEYS = frozenset({
-    # Upscale
-    'in_upscl_bool', 'in_upscl', 'in_upscl_rep', 'in_upscl_tile_size',
-    # ControlNet (the model itself is loaded at launch)
-    'in_cnnet_bool', 'in_control_img', 'in_control_strength',
-    # VAE Tiling
-    'in_vae_tiling', 'in_vae_tile_overlap', 'in_vae_tile_size',
-    'in_vae_relative_bool', 'in_vae_relative_tile_size',
-    'in_temporal_tiling',
-    # Cache
-    'in_cache_bool', 'in_cache_mode', 'in_cache_option',
-    'in_scm_mask', 'in_scm_policy',
-})
-
 # Base64 fields shortened in the displayed payload
 _IMAGE_FIELDS = (
     "init_image", "end_image", "mask_image", "control_image",
@@ -552,6 +537,15 @@ class ApiTaskRunner(CommonRunner):
         v = self._num('in_clip_skip', int)
         if v is not None:
             payload['clip_skip'] = v
+
+        # Output
+        if 'in_disable_img_metadata' in self.params:
+            payload['embed_image_metadata'] = not self._get_param(
+                'in_disable_img_metadata'
+            )
+        v = self._num('in_compression_quality', int)
+        if v is not None:
+            payload['output_compression'] = v
 
         # LoRA
         loras = pprompt_loras + nprompt_loras

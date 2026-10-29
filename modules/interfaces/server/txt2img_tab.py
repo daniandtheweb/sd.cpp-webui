@@ -3,7 +3,7 @@
 import gradio as gr
 
 from modules.core.server.sdcpp_server import (
-    txt2img_api, cancel_active_job, REQUEST_TIME_KEYS
+    txt2img_api, cancel_active_job
 )
 from modules.core.server.manager import (
     start_server, stop_server
@@ -88,12 +88,9 @@ with gr.Blocks() as txt2img_server_block:
         ):
             with gr.Tab("Image Enhancement"):
 
-                # Upscale
-                upscl_ui = create_upscl_ui()
-                inputs_map.update(upscl_ui)
-
                 # ControlNet
-                cnnet_ui = create_cnnet_ui()
+                cnnet_ui = create_cnnet_ui(inputs=False)
+                cnnet_ui = {'in_cnnet': cnnet_ui['in_cnnet']}
                 inputs_map.update(cnnet_ui)
 
                 # Chroma
@@ -118,20 +115,9 @@ with gr.Blocks() as txt2img_server_block:
                 taesd_ui = create_taesd_ui()
                 inputs_map.update(taesd_ui)
 
-                # VAE Tiling
-                vae_tiling_ui = create_vae_tiling_ui()
-                inputs_map.update(vae_tiling_ui)
-
-                # Cache
-                cache_ui = create_cache_ui()
-                inputs_map.update(cache_ui)
-
-                # Output
-                output_ui = create_output_ui()
-                inputs_map.update(output_ui)
-
                 # Extra Settings
-                extras_ui = create_extras_ui()
+                extras_ui = create_extras_ui(generation=False)
+                del extras_ui['in_sigmas']
                 inputs_map.update(extras_ui)
 
                 # Performance Settings
@@ -207,6 +193,15 @@ with gr.Blocks() as txt2img_server_block:
 
             with gr.Tab("Image Enhancement"):
 
+                # Upscale
+                upscl_ui = create_upscl_ui()
+                inputs_map.update(upscl_ui)
+
+                # ControlNet
+                cnnet_inputs_ui = create_cnnet_ui(model_sel=False)
+                del cnnet_inputs_ui['in_cnnet']
+                inputs_map.update(cnnet_inputs_ui)
+
                 # Timestep shift
                 timestep_shift_ui = create_timestep_shift_ui()
                 inputs_map.update(timestep_shift_ui)
@@ -214,6 +209,25 @@ with gr.Blocks() as txt2img_server_block:
                 # ETA
                 eta_ui = create_eta_ui()
                 inputs_map.update(eta_ui)
+
+            with gr.Tab("Advanced Settings"):
+
+                # VAE Tiling
+                vae_tiling_ui = create_vae_tiling_ui()
+                inputs_map.update(vae_tiling_ui)
+
+                # Cache
+                cache_ui = create_cache_ui()
+                inputs_map.update(cache_ui)
+
+                # Output
+                output_ui = create_output_ui()
+                inputs_map.update(output_ui)
+
+                # Extra Settings
+                extras_gen_ui = create_extras_ui(launch=False)
+                extras_gen_ui = {'in_sigmas': extras_gen_ui['in_sigmas']}
+                inputs_map.update(extras_gen_ui)
 
             # Experimental
             # experimental_ui = create_experimental_ui()
@@ -286,14 +300,10 @@ with gr.Blocks() as txt2img_server_block:
     _server_config_keys = (
         list(model_ui['inputs'].keys())
         + list(quant_ui.keys())
-        + list(upscl_ui.keys())
         + list(cnnet_ui.keys())
         + list(circular_ui.keys())
         + list(photomaker_ui.keys())
         + list(taesd_ui.keys())
-        + list(vae_tiling_ui.keys())
-        + list(cache_ui.keys())
-        + list(output_ui.keys())
         + list(extras_ui.keys())
         + list(performance_ui.keys())
         + list(env_ui.keys())
@@ -303,8 +313,7 @@ with gr.Blocks() as txt2img_server_block:
     server_config_components = [
         inputs_map[k]
         for k in _server_config_keys
-        if k not in REQUEST_TIME_KEYS
-        and hasattr(inputs_map.get(k), 'interactive')
+        if hasattr(inputs_map.get(k), 'interactive')
     ]
 
     def _config_updates(is_running):
