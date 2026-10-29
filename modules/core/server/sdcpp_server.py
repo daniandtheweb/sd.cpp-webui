@@ -207,8 +207,13 @@ class ApiTaskRunner(CommonRunner):
 
     def __init__(self, params: Dict[str, Any]):
         super().__init__(params)
-        self.ip = str(self._get_param('in_ip'))
-        self.port = str(self._get_param('in_port'))
+        # The server may have been started from another tab
+        if server_state.running and server_state.ip:
+            self.ip = str(server_state.ip)
+            self.port = str(server_state.port)
+        else:
+            self.ip = str(self._get_param('in_ip'))
+            self.port = str(self._int_param('in_port'))
         self.base_url = f"http://{self.ip}:{self.port}"
         self.url = ""
 

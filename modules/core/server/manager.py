@@ -36,9 +36,11 @@ class ServerRunner(CommonRunner):
         self._resolve_paths()
 
         # Network settings
+        self.ip = str(self._get_param('in_ip') or '127.0.0.1').strip()
+        self.port = self._int_param('in_port') or 1234
         self.command.extend([
-            "--listen-ip", str(self._get_param('ip', '127.0.0.1')),
-            "--listen-port", str(self._get_param('port', 1234)),
+            "--listen-ip", self.ip,
+            "--listen-port", str(self.port),
         ])
 
         options = self._get_common_model_options()
@@ -137,6 +139,9 @@ class ServerRunner(CommonRunner):
         thread = threading.Thread(target=run_server_wrapper, daemon=True)
         thread.start()
 
+        # Address of the running server, shared by every tab
+        server_state.ip = self.ip
+        server_state.port = self.port
         server_state.running = True
         return "Running", gr.update(active=True), gr.update(interactive=True)
 

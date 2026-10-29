@@ -100,8 +100,8 @@ def test_server_startup_command(app_root):
     exe_dir = os.path.dirname(os.path.abspath(SD_CLI))
 
     params = {
-        'ip': '127.0.0.1',
-        'port': 1234,
+        'in_ip': '127.0.0.1',
+        'in_port': 1234,
         'in_diffusion_mode': 0,
         'f_ckpt_model': os.path.join(exe_dir, 'models', 'ckpt.gguf'),
         'f_ckpt_vae': os.path.join(exe_dir, 'models', 'vae.gguf'),
@@ -190,7 +190,7 @@ def test_server_startup_command(app_root):
 def test_server_startup_command_defaults_omitted(app_root):
     from modules.core.server.manager import ServerRunner
 
-    runner = ServerRunner({'ip': '127.0.0.1', 'port': 1234})
+    runner = ServerRunner({'in_ip': '127.0.0.1', 'in_port': 1234})
     runner.build_command()
     flags = _flags(runner.command)
 
@@ -216,10 +216,21 @@ def test_server_startup_command_empty_log_level_omitted(app_root, log_level):
     from modules.core.server.manager import ServerRunner
 
     runner = ServerRunner({
-        'ip': '127.0.0.1',
-        'port': 1234,
+        'in_ip': '127.0.0.1',
+        'in_port': 1234,
         'in_log_level': log_level,
     })
     runner.build_command()
     flags = _flags(runner.command)
     assert '--log-level' not in flags
+
+
+def test_server_startup_uses_tab_address(app_root):
+    """The IP/port fields are used, a Gradio float port included."""
+    from modules.core.server.manager import ServerRunner
+
+    runner = ServerRunner({'in_ip': '0.0.0.0', 'in_port': 7861.0})
+    runner.build_command()
+    flags = _flags(runner.command)
+    assert flags['--listen-ip'] == '0.0.0.0'
+    assert flags['--listen-port'] == '7861'

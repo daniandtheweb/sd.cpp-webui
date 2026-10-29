@@ -369,6 +369,8 @@ def fake_server(mocker, tmp_path):
     mocker.patch.object(sdcpp_server.ApiTaskRunner, 'POLL_INTERVAL', 0.01)
     mocker.patch.object(server_state, 'running', True)
     mocker.patch.object(server_state, 'last_generation_stats', '')
+    # Runners target the address the tab gives
+    mocker.patch.object(server_state, 'ip', '')
     # Keep generated files out of the shared output dirs other tests count.
     saved = config.data.get('txt2img_dir')
     config.update_settings({'txt2img_dir': str(tmp_path)})
@@ -536,7 +538,7 @@ def test_server_launch_passes_context_settings(app_root):
     try:
         config.update_settings({'upscl_dir': str(app_root / 'upscalers')})
         runner = ServerRunner({
-            'ip': '127.0.0.1', 'port': 1234,
+            'in_ip': '127.0.0.1', 'in_port': 1234,
             'in_rng': 'cpu', 'in_sampler_rng': 'Default',
             'in_lora_apply': 'immediately',
             'in_qwen_image_zero_cond_t': True,
@@ -552,3 +554,39 @@ def test_server_launch_passes_context_settings(app_root):
     assert '--sampler-rng' not in cmd
     assert value['--lora-apply-mode'] == 'immediately'
     assert value['--model-args'] == 'qwen_image_zero_cond_t=true'
+
+
+def test_runner_targets_the_running_server(mocker):
+    """A tab generates on the server started from another tab."""
+    from modules.core.server import sdcpp_server
+    from modules.shared_instance import server_state
+    mocker.patch.object(server_state, 'running', True)
+    mocker.patch.object(server_state, 'ip', '127.0.0.1')
+    mocker.patch.object(server_state, 'port', 1234)
+    runner = sdcpp_server.Img2ImgApiRunner(
+        {'in_ip': '127.0.0.1', 'in_port': 9999.0})
+    assert runner.base_url == "http://127.0.0.1:1234"
+
+    mocker.patch.object(server_state, 'running', False)
+    runner = sdcpp_server.Img2ImgApiRunner(
+        {'in_ip': '127.0.0.1', 'in_port': 9999.0})
+    assert runner.base_url == "http://127.0.0.1:9999"
+
+
+def test_stop_reaches_every_tab(mocker):
+    """Stopping the watcher broadcasts the final status to all tabs."""
+    from modules.core.server import live_status
+    from modules.shared_instance import server_state
+    mocker.patch.object(server_state, 'running', False)
+    mocker.patch.object(server_state, 'last_exit_code', 0, create=True)
+
+    tabs = [live_status._subscribe() for _ in range(3)]
+    try:
+        live_status.stop_watcher()
+        for q in tabs:
+            status, btn = q.get_nowait()
+            assert status == "Stopped (No Model Loaded)"
+            assert btn['interactive'] is False
+    finally:
+        for q in tabs:
+            live_status._unsubscribe(q)

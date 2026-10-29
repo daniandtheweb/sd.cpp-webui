@@ -348,8 +348,6 @@ with gr.Blocks() as imgedit_server_block:
 
     def start_server_wrapper(*args):
         params = dict(zip(ordered_keys, args))
-        ip_val = params.get('in_ip', '127.0.0.1')
-        port_val = params.get('in_port', 1234)
 
         prev_exit = getattr(server_state, 'last_exit_code', None)
         was_crashed = (
@@ -370,7 +368,7 @@ with gr.Blocks() as imgedit_server_block:
             gen_btn_update = gr.skip()
 
         if _is_interactive_update(gen_btn_update):
-            start_watcher(ip_val, port_val)
+            start_watcher(server_state.ip, server_state.port)
 
         is_running = server_state.running
         reset = _reset_outputs() if was_crashed else (gr.skip(),) * 6

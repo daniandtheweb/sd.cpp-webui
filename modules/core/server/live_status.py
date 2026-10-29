@@ -108,6 +108,11 @@ def stop_watcher():
         _watcher_thread.join(timeout=10)
     _watcher_thread = None
 
+    # The loop exits without broadcasting when it's stopped, so tell
+    # every tab the server is down
+    if not server_state.running:
+        _broadcast((_final_status_message(), gr.update(interactive=False)))
+
 
 def status_stream():
     """Persistent generator drained by a Gradio .load() event.
