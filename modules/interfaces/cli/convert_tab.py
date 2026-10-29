@@ -155,7 +155,8 @@ with gr.Blocks() as convert_block:
     convert_btn.click(
         convert_wrapper,
         inputs=ordered_components,
-        outputs=[command, progress_bar, status_textbox]
+        outputs=[command, progress_bar, status_textbox],
+        show_progress="hidden"
     )
 
     kill_btn.click(

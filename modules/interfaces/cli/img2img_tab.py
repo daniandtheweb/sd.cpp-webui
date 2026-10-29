@@ -258,7 +258,8 @@ with gr.Blocks()as img2img_block:
                         columns=[3],
                         rows=[1],
                         object_fit="contain",
-                        height="auto"
+                        height="auto",
+                        buttons=["share", "download", "fullscreen"]
                     )
                 with gr.Row():
                     stats = gr.Textbox(

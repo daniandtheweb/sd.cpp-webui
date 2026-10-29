@@ -19,6 +19,17 @@ def _job(release):
     return fake_api
 
 
+def _shown(snapshots):
+    """What the browser shows after applying the snapshots in order."""
+    state = [{} for _ in snapshots[0]]
+    for snapshot in snapshots:
+        for slot, update in enumerate(snapshot):
+            state[slot].update(
+                {k: v for k, v in update.items() if k != '__type__'}
+            )
+    return state
+
+
 def _next_until(stream, check):
     for snapshot in stream:
         if check(snapshot):
@@ -96,7 +107,29 @@ def test_idle_resync_sends_nothing_new():
 
     snapshots = list(GenerationStream(unused).stream("session"))
     assert len(snapshots) == 1
-    assert all(update == gr.skip() for update in snapshots[0])
+    command, progress, stats, images, queue = snapshots[0]
+    assert all(update == gr.skip() for update in (command, progress, stats, queue))
+    # Only the images being clickable again
+    assert images == gr.update(allow_preview=True, elem_classes=[])
+
+
+def test_images_not_clickable_while_generating():
+    from modules.utils.ui_events import GenerationStream
+
+    release = threading.Event()
+    gen_stream = GenerationStream(_job(release))
+    gen_stream.enqueue({})
+
+    stream = gen_stream.stream("session")
+    preview = _next_until(stream, lambda s: s[3].get('value') == ["preview.png"])
+    assert preview[3]['allow_preview'] is False
+    assert preview[3]['elem_classes'] == ['gen-busy']
+
+    release.set()
+    final = list(stream)[-1]
+    assert final[3]['value'] == ["final.png"]
+    assert final[3]['allow_preview'] is True
+    assert final[3]['elem_classes'] == []
 
 
 def test_stop_keeps_the_command():
@@ -109,12 +142,32 @@ def test_stop_keeps_the_command():
     gen_stream.enqueue({})
 
     stream = gen_stream.stream("session")
-    _next_until(stream, lambda s: "Speed" in s[1].get('value', ''))
+    first = _next_until(stream, lambda s: "Speed" in s[1].get('value', ''))
     queue_manager.clear_all()
     release.set()
 
-    command, progress, stats, images, _ = list(stream)[-1]
+    command, progress, stats, images, _ = _shown([first] + list(stream))
     assert command['value'] == "cmd"
     assert progress['visible'] is False
-    assert stats == {'visible': False, 'value': ""} | {'__type__': 'update'}
+    assert stats == {'visible': False, 'value': ""}
     assert images['value'] is None
+
+
+def test_outputs_are_sent_only_when_changed():
+    """The command is sent once, not with every progress update."""
+    from modules.utils.ui_events import GenerationStream
+
+    def job(params):
+        for step in range(1, 4):
+            yield ("cmd", progress_update(step * 25, step, 4), gr.skip(),
+                   gr.skip())
+        yield ("cmd", progress_update(visible=False),
+               gr.update(visible=True, value="Total: 1.00s"), ["final.png"])
+
+    gen_stream = GenerationStream(job)
+    gen_stream.enqueue({})
+    snapshots = list(gen_stream.stream("session"))
+
+    commands = [s[0] for s in snapshots if s[0] != gr.skip()]
+    assert commands == [gr.update(value="cmd")]
+    assert _shown(snapshots)[2]['value'] == "Total: 1.00s"

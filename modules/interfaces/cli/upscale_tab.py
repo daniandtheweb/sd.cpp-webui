@@ -155,6 +155,7 @@ with gr.Blocks() as upscale_block:
                         rows=[1],
                         object_fit="contain",
                         height="auto",
+                        buttons=["share", "download", "fullscreen"],
                         interactive=False
                     )
                 with gr.Row():
@@ -217,7 +218,8 @@ with gr.Blocks() as upscale_block:
     upscl_btn.click(
         upscale_wrapper,
         inputs=ordered_components,
-        outputs=[command, progress_bar, stats, img_final]
+        outputs=[command, progress_bar, stats, img_final],
+        show_progress_on=img_final
     )
 
     kill_btn.click(

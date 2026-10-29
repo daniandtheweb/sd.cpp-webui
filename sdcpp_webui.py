@@ -48,7 +48,7 @@ from modules.interfaces.common.options_tab import (
 from modules.config import ConfigManager
 from modules.ui.constants import FIELDS, SAMPLERS, SCHEDULERS
 from modules.utils.sdcpp_utils import restart_server
-from modules.utils.ui_events import RESYNC_JS
+from modules.utils.ui_events import RESYNC_JS, GENERATING_CSS
 
 
 def _is_within(real_path: str, base_real_path: str) -> bool:
@@ -360,7 +360,7 @@ def sdcpp_launch(
 
     # Pass the arguments to sdcpp.launch with argument unpacking
     sdcpp.launch(
-        css="footer {visibility: hidden}",
+        css="footer {visibility: hidden}" + GENERATING_CSS,
         theme=theme or "default", js=page_js,
         **launch_args
     )

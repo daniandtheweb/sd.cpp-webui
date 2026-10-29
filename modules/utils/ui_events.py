@@ -35,6 +35,13 @@ _VIEW_SLOTS = (
     'command', 'progress_bar', 'stats', 'img_final', 'queue_tracker'
 )
 
+# Output images can't be clicked while generating
+GENERATING_CSS = """
+.gen-busy .thumbnail-item {
+    pointer-events: none;
+}
+"""
+
 # Clicks every tab's resync button when the page becomes visible again,
 # so a stream dropped while the page was hidden is restored
 RESYNC_JS = """
@@ -46,6 +53,22 @@ RESYNC_JS = """
         });
     });
 """
+
+
+def _comparable(value) -> bool:
+    """True for values cheap to compare (not images)."""
+    if isinstance(value, (str, int, float, bool, type(None))):
+        return True
+    if isinstance(value, (list, tuple)):
+        return all(_comparable(v) for v in value)
+    if isinstance(value, dict):
+        return all(_comparable(v) for v in value.values())
+    return False
+
+
+def _same(a: dict, b: dict) -> bool:
+    """Whether two slot states are known to be equal."""
+    return _comparable(a) and _comparable(b) and a == b
 
 
 def _merge_update(current: dict, update) -> dict:
@@ -76,6 +99,8 @@ class GenerationStream:
 
         # Latest state of each output slot
         self.view = {slot: {} for slot in _VIEW_SLOTS}
+        # Version of the last change of each slot
+        self.slot_versions = {slot: 0 for slot in _VIEW_SLOTS}
         self.cond = threading.Condition()
         self.version = 0
         self.active = 0
@@ -86,10 +111,21 @@ class GenerationStream:
     def _set_view(self, *updates):
         """Applies one update per output slot and wakes the streams."""
         with self.cond:
+            changed = False
             for slot, update in zip(_VIEW_SLOTS, updates):
-                self.view[slot] = _merge_update(self.view[slot], update)
-            self.version += 1
-            self.cond.notify_all()
+                if update == gr.skip():
+                    continue
+                merged = _merge_update(self.view[slot], update)
+                # The CLI preview keeps its path while its content changes,
+                # so images are always sent again
+                if slot != 'img_final' and _same(merged, self.view[slot]):
+                    continue
+                self.view[slot] = merged
+                self.slot_versions[slot] = self.version + 1
+                changed = True
+            if changed:
+                self.version += 1
+                self.cond.notify_all()
 
     @staticmethod
     def _queue_display():
@@ -171,22 +207,39 @@ class GenerationStream:
         ).start()
         return str(next(self.job_counter))
 
-    def _snapshot(self) -> tuple:
-        return tuple(
-            gr.update(**self.view[slot]) if self.view[slot] else gr.skip()
-            for slot in _VIEW_SLOTS
-        )
+    def _snapshot(self, sent: dict) -> tuple:
+        """
+        Builds the updates of the slots changed since `sent` (the slot
+        versions a stream already delivered), the others are skipped.
+        """
+        snapshot = []
+        idle = self.active == 0
+        for slot in _VIEW_SLOTS:
+            changed = self.slot_versions[slot] != sent.get(slot)
+            update = dict(self.view[slot]) if changed else {}
+            if slot == 'img_final' and (changed or idle != sent.get('idle')):
+                # The images can't be clicked or enlarged while generating
+                update.update(
+                    allow_preview=idle,
+                    elem_classes=[] if idle else ['gen-busy'],
+                )
+            snapshot.append(gr.update(**update) if update else gr.skip())
+            sent[slot] = self.slot_versions[slot]
+        sent['idle'] = idle
+        return tuple(snapshot)
 
     def stream(self, session=None):
         """
-        Streams the collected state until the jobs of this tab end.
-        Only the newest stream of a session runs, an older one (e.g. a
-        stream the browser dropped) stops.
+        Streams the collected state until the jobs of this tab end, each
+        output only when it changes. Only the newest stream of a session
+        runs, an older one (e.g. a stream the browser dropped) stops.
         """
         with self.cond:
             stream_id = self.streams.get(session, 0) + 1
             self.streams[session] = stream_id
         delivered = -1
+        # Slot versions delivered by this stream, a new one sends everything
+        sent = {}
 
         while True:
             with self.cond:
@@ -198,7 +251,7 @@ class GenerationStream:
                     return
                 delivered = self.version
                 finished = self.active == 0
-                snapshot = self._snapshot()
+                snapshot = self._snapshot(sent)
 
             yield snapshot
 
@@ -248,6 +301,8 @@ def bind_generation_pipeline(
         inputs=[trigger],
         outputs=stream_outputs,
         concurrency_limit=None,
+        # Gradio's generating outline only around the images
+        show_progress_on=outputs_map['img_final'],
     )
 
     resync_btn.click(
