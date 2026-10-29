@@ -22,6 +22,7 @@ from modules.utils.metadata_utils import (
     find_sdcpp_generation, SDCPP_SEPARATOR
 )
 from modules.shared_instance import server_state
+from modules.ui.progress import progress_update
 
 
 HIGH_NOISE_LORA_PREFIX = "|high_noise|"
@@ -201,7 +202,10 @@ class ApiTaskRunner(CommonRunner):
     subctrl_id = 0
     extension = "png"
 
+    # The job (and its preview image) is polled every POLL_INTERVAL,
+    # the progress parsed from the server log every PROGRESS_INTERVAL
     POLL_INTERVAL = 0.4
+    PROGRESS_INTERVAL = 0.1
 
     _lora_lookup_cache = {}
 
@@ -658,24 +662,31 @@ class ApiTaskRunner(CommonRunner):
                 f.write(data)
             self.outputs.append(target_path)
 
-    def _update(self, pct=0, status="", gallery=None):
+    def _update(self, pct=0, status="", step=None, total=None, gallery=None):
         """Builds a progress update."""
         return (
             self.fcommand,
-            gr.update(visible=True, value=pct),
-            gr.update(visible=True, value=status),
+            progress_update(pct, step, total, status),
             gr.skip(),
             gr.skip() if gallery is None else gallery,
         )
 
     def _final(self, stats: str, gallery=None):
-        """Builds the final update."""
+        """Builds the final update, the statistics are only shown here."""
         return (
             self.fcommand,
-            gr.update(visible=False, value=0),
-            gr.update(visible=False, value=""),
-            gr.update(value=stats),
+            progress_update(visible=False),
+            gr.update(visible=True, value=stats),
             gallery,
+        )
+
+    def _stopped(self):
+        """Builds the update of a stopped job: keeps the command only."""
+        return (
+            self.fcommand,
+            progress_update(visible=False),
+            gr.update(visible=False, value=""),
+            gr.update(value=None),
         )
 
     def _wait_for_log_stats(self, prev_stats: str) -> str:
@@ -710,9 +721,8 @@ class ApiTaskRunner(CommonRunner):
 
         yield (
             self.fcommand,
-            gr.update(visible=True, value=0),
-            gr.update(visible=True, value="Submitting..."),
-            gr.update(value=""),
+            progress_update(0, status="Submitting..."),
+            gr.update(visible=False, value=""),
             None,
         )
 
@@ -728,7 +738,7 @@ class ApiTaskRunner(CommonRunner):
     def _submit_and_poll(self, payload: dict) -> Generator:
         """Submits to /sdcpp/v1/img_gen and polls the job status."""
         if active_job.cancel_requested.is_set():
-            yield self._final("Cancelled")
+            yield self._stopped()
             return
 
         # Drop the progress of the previous job
@@ -758,85 +768,93 @@ class ApiTaskRunner(CommonRunner):
         last_preview = None
         last_progress = None
         last_shown = None
+        status = ""
+        job = {}
+        preview = None
+        next_poll = 0.0
 
         while True:
             if not server_state.running:
-                yield self._final("Server stopped")
+                yield self._stopped()
                 return
 
-            try:
-                r = httpx.get(poll_url, timeout=5.0)
-            except httpx.HTTPError:
-                time.sleep(self.POLL_INTERVAL)
-                continue
-            if r.status_code in (404, 410):
-                yield self._final(
-                    f"Error: job {job_id} is no longer available"
-                )
-                return
-            if r.status_code != 200:
-                time.sleep(self.POLL_INTERVAL)
-                continue
-
-            job = r.json()
-            status = job.get("status", "")
-
-            if status == "completed":
-                self._save_result(job.get("result") or {})
-                yield self._final(
-                    self._job_stats(job, prev_stats), self.outputs or None
-                )
-                return
-
-            if status == "cancelled":
-                yield self._final("Cancelled")
-                return
-
-            if status == "failed":
-                error = job.get("error") or {}
-                yield self._final(
-                    f"Error: {error.get('message', 'unknown')}"
-                )
-                return
-
-            # Preview
+            # Job status and preview
             gallery = None
-            preview = job.get("preview")
-            if isinstance(preview, dict):
-                preview_b64 = preview.get("b64_json")
-                if preview_b64 and preview_b64 != last_preview:
-                    last_preview = preview_b64
-                    try:
-                        gallery = [decode_image(preview_b64)]
-                    except Exception:
-                        gallery = None
+            if time.time() >= next_poll:
+                next_poll = time.time() + self.POLL_INTERVAL
+                try:
+                    r = httpx.get(poll_url, timeout=5.0)
+                except httpx.HTTPError:
+                    r = None
+                if r is not None and r.status_code in (404, 410):
+                    yield self._final(
+                        f"Error: job {job_id} is no longer available"
+                    )
+                    return
+                if r is not None and r.status_code == 200:
+                    job = r.json()
+                    status = job.get("status", "")
+                    preview = job.get("preview")
+
+                    if status == "completed":
+                        self._save_result(job.get("result") or {})
+                        yield self._final(
+                            self._job_stats(job, prev_stats),
+                            self.outputs or None
+                        )
+                        return
+
+                    if status == "cancelled":
+                        yield self._stopped()
+                        return
+
+                    if status == "failed":
+                        error = job.get("error") or {}
+                        yield self._final(
+                            f"Error: {error.get('message', 'unknown')}"
+                        )
+                        return
+
+                    if isinstance(preview, dict):
+                        preview_b64 = preview.get("b64_json")
+                        if preview_b64 and preview_b64 != last_preview:
+                            last_preview = preview_b64
+                            try:
+                                gallery = [decode_image(preview_b64)]
+                            except Exception:
+                                gallery = None
 
             # Progress: the server log is parsed like the CLI one
             # (Speed | ETA), the preview step is the fallback
             latest = server_state.latest_update
             if status == "queued":
                 pos = job.get("queue_position")
-                shown = (0, f"Queued (position {pos})" if pos else "Queued")
+                shown = (0, f"Queued (position {pos})" if pos else "Queued",
+                         None, None)
             elif isinstance(latest, dict) and 'percent' in latest:
                 last_progress = latest
-                shown = (latest['percent'], latest.get('status', ''))
+                shown = (latest['percent'], latest.get('status', ''),
+                         latest.get('step'), latest.get('total'))
             elif last_progress is not None:
                 shown = (last_progress['percent'],
-                         last_progress.get('status', ''))
+                         last_progress.get('status', ''),
+                         last_progress.get('step'),
+                         last_progress.get('total'))
             elif isinstance(preview, dict) and preview.get('total_steps'):
                 step = preview.get('step', 0) or 0
                 total = preview['total_steps']
-                shown = (int(step / total * 100), f"Step: {step}/{total}")
+                shown = (int(step / total * 100), "Generating...",
+                         step, total)
             else:
-                shown = (0, "Starting...")
+                shown = (0, "Starting...", None, None)
             if active_job.cancel_requested.is_set():
-                shown = (shown[0], "Cancelling...")
+                shown = (shown[0], "Cancelling...", shown[2], shown[3])
 
             if shown != last_shown or gallery is not None:
                 last_shown = shown
                 yield self._update(*shown, gallery=gallery)
 
-            time.sleep(self.POLL_INTERVAL)
+            time.sleep(self.PROGRESS_INTERVAL)
 
 
 class Txt2ImgApiRunner(ApiTaskRunner):

@@ -17,6 +17,7 @@ from modules.shared_instance import (
 from modules.loader import (
     get_models, reload_models
 )
+from modules.ui.progress import create_progress_bar
 from modules.ui.environment import create_env_ui
 from modules.ui.constants import RELOAD_SYMBOL, SWITCH_V_SYMBOL, LOG_LEVEL
 
@@ -145,20 +146,7 @@ with gr.Blocks() as upscale_block:
                         variant="stop"
                     )
                 with gr.Row():
-                    progress_slider = gr.Slider(
-                        minimum=0,
-                        maximum=100,
-                        value=0,
-                        interactive=False,
-                        visible=False,
-                        label="Progress"
-                    )
-                with gr.Row():
-                    progress_textbox = gr.Textbox(
-                        label="Status:",
-                        visible=False,
-                        interactive=False
-                    )
+                    progress_bar = create_progress_bar()
                 with gr.Row():
                     img_final = gr.Gallery(
                         label="Generated images",
@@ -174,7 +162,8 @@ with gr.Blocks() as upscale_block:
                         label="Statistics:",
                         show_label=True,
                         value="",
-                        interactive=False
+                        interactive=False,
+                        visible=False
                     )
                 with gr.Row():
                     command = gr.Textbox(
@@ -228,7 +217,7 @@ with gr.Blocks() as upscale_block:
     upscl_btn.click(
         upscale_wrapper,
         inputs=ordered_components,
-        outputs=[command, progress_slider, progress_textbox, stats, img_final]
+        outputs=[command, progress_bar, stats, img_final]
     )
 
     kill_btn.click(

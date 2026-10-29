@@ -64,12 +64,13 @@ class JobQueue:
 
             try:
                 for result in func(params):
-                    if isinstance(result, (tuple, list)) and len(result) >= 5:
-                        normalized = tuple(result[:5])
+                    # (command, progress, stats, images)
+                    if isinstance(result, (tuple, list)) and len(result) >= 4:
+                        normalized = tuple(result[:4])
                         sub.put(("update", normalized))
                     else:
                         print(
-                            "Streaming worker warning: expected 5+ items "
+                            "Streaming worker warning: expected 4+ items "
                             f"from generator, got "
                             f"{len(result) if result else 0}"
                         )

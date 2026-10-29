@@ -42,7 +42,7 @@ def test_wrapper_calls_get_active_model_name_once(mocker):
         sm, 'get_active_model_name', return_value='model.gguf'
     )
     mocker.patch.object(
-        sm.queue_manager, 'get_status', return_value={'is_running': False}
+        sm.queue_manager, 'is_running', return_value=False
     )
 
     status, btn, slider, text = sm.server_status_monitor_wrapper(
@@ -62,7 +62,7 @@ def test_wrapper_offline_status(mocker):
         sm, 'get_active_model_name', return_value='Offline'
     )
     mocker.patch.object(
-        sm.queue_manager, 'get_status', return_value={'is_running': False}
+        sm.queue_manager, 'is_running', return_value=False
     )
 
     status, btn, slider, text = sm.server_status_monitor_wrapper(
@@ -109,7 +109,7 @@ def test_api_runner_http_error_yielded(mocker):
     runner = _make_runner()
     result = _drain_run(runner)
 
-    stats_update = result[3]
+    stats_update = result[2]
     assert stats_update['value'] == (
         'Error: server returned HTTP 400 invalid lora path'
     )
@@ -130,6 +130,6 @@ def test_api_runner_exception_yielded(mocker):
     runner = _make_runner()
     result = _drain_run(runner)
 
-    stats_update = result[3]
+    stats_update = result[2]
     assert stats_update['value'] == 'Error: ConnectError: connection refused'
     assert ApiTaskRunner._lora_lookup_cache == {}

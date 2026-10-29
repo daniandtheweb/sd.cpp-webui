@@ -12,6 +12,7 @@ from modules.utils.ui_events import (
 from modules.shared_instance import (
     config, subprocess_manager
 )
+from modules.ui.progress import create_progress_bar
 from modules.ui.models import create_video_model_sel_ui
 from modules.ui.loras import (
     create_lora_sel_ui, bind_lora_events
@@ -289,20 +290,7 @@ with gr.Blocks() as any2video_block:
                         visible=False
                     )
                 with gr.Row():
-                    progress_slider = gr.Slider(
-                        minimum=0,
-                        maximum=100,
-                        value=0,
-                        interactive=False,
-                        visible=False,
-                        label="Progress"
-                    )
-                with gr.Row():
-                    progress_textbox = gr.Textbox(
-                        label="Status:",
-                        visible=False,
-                        interactive=False
-                    )
+                    progress_bar = create_progress_bar()
                 with gr.Row():
                     video_final = gr.Gallery(
                         label="Generated videos",
@@ -317,7 +305,8 @@ with gr.Blocks() as any2video_block:
                         label="Statistics:",
                         show_label=True,
                         value="",
-                        interactive=False
+                        interactive=False,
+                        visible=False
                     )
                 with gr.Row():
                     command = gr.Textbox(
@@ -345,8 +334,7 @@ with gr.Blocks() as any2video_block:
         'gen_btn': gen_btn,
         'timer': timer,
         'command': command,
-        'progress_slider': progress_slider,
-        'progress_textbox': progress_textbox,
+        'progress_bar': progress_bar,
         'stats': stats,
         'img_final': video_final,
         'queue_tracker': queue_tracker

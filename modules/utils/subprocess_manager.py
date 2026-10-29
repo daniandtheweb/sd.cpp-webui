@@ -13,10 +13,12 @@ class SubprocessManager:
     Attributes:
         process: The currently running subprocess
         or None if no subprocess is active.
+        stopped: True if the last subprocess was stopped by the user.
     """
 
     def __init__(self):
         self.process = None
+        self.stopped = False
         self.parser = LogParser()
 
     def _stream_output(self):
@@ -54,6 +56,7 @@ class SubprocessManager:
         """
         phase = "Initializing"
         final_stats = {}
+        self.stopped = False
         last_was_progress = False
         last_processed_content = ""
         ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
@@ -106,6 +109,7 @@ class SubprocessManager:
         and prints a message indicating whether a subprocess was running.
         """
         if self.process is not None:
+            self.stopped = True
             self.process.terminate()
         else:
             print("No subprocess running.")

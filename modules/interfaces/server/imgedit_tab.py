@@ -18,6 +18,7 @@ from modules.utils.ui_events import (
     get_ordered_inputs, bind_generation_pipeline,
     refresh_all_options
 )
+from modules.ui.progress import create_progress_bar, progress_update
 from modules.ui.models import create_imgedit_model_sel_ui
 from modules.ui.loras import (
     create_lora_sel_ui, bind_lora_events
@@ -260,20 +261,7 @@ with gr.Blocks() as imgedit_server_block:
                         visible=False
                     )
                 with gr.Row():
-                    progress_slider = gr.Slider(
-                        minimum=0,
-                        maximum=100,
-                        value=0,
-                        interactive=False,
-                        visible=False,
-                        label="Progress",
-                    )
-                with gr.Row():
-                    progress_textbox = gr.Textbox(
-                        label="Status:",
-                        visible=False,
-                        interactive=False
-                    )
+                    progress_bar = create_progress_bar()
                 with gr.Row():
                     img_final = gr.Gallery(
                         label="Generated images",
@@ -288,7 +276,8 @@ with gr.Blocks() as imgedit_server_block:
                         label="Statistics:",
                         show_label=True,
                         value="",
-                        interactive=False
+                        interactive=False,
+                        visible=False
                     )
                 with gr.Row():
                     command = gr.Textbox(
@@ -327,11 +316,11 @@ with gr.Blocks() as imgedit_server_block:
         ]
 
     def _reset_outputs():
+        # Keep the command, clear the rest
         return (
-            gr.update(visible=False, value=0),
+            progress_update(visible=False),
             gr.update(visible=False, value=""),
-            gr.update(value=""),
-            gr.update(value=""),
+            gr.skip(),
             gr.update(value=None),
             gr.update(visible=False, value=""),
         )
@@ -371,7 +360,7 @@ with gr.Blocks() as imgedit_server_block:
             start_watcher(server_state.ip, server_state.port)
 
         is_running = server_state.running
-        reset = _reset_outputs() if was_crashed else (gr.skip(),) * 6
+        reset = _reset_outputs() if was_crashed else (gr.skip(),) * 5
 
         return (
             status,
@@ -412,8 +401,7 @@ with gr.Blocks() as imgedit_server_block:
         server_start,
         server_stop,
         *server_config_components,
-        progress_slider,
-        progress_textbox,
+        progress_bar,
         stats,
         command,
         img_final,
@@ -454,8 +442,7 @@ with gr.Blocks() as imgedit_server_block:
     ui_outputs = {
         'gen_btn': gen_btn,
         'command': command,
-        'progress_slider': progress_slider,
-        'progress_textbox': progress_textbox,
+        'progress_bar': progress_bar,
         'stats': stats,
         'img_final': img_final,
         'queue_tracker': queue_tracker

@@ -5,7 +5,7 @@ import httpx
 import gradio as gr
 
 from modules.shared_instance import server_state
-import modules.utils.queue as queue_manager
+import modules.utils.streaming_queue as queue_manager
 
 
 def get_server_status():
@@ -84,10 +84,10 @@ def server_status_monitor_wrapper(ip, port):
     is_loading_model = model_name in ["Loading weights...", "Checking status..."]
     is_offline = model_name == "Offline"
 
-    job = queue_manager.get_status()
     latest = server_state.latest_update
 
-    is_active = job.get("is_running", False)
+    # The streaming queue runs the generations
+    is_active = queue_manager.is_running()
 
     if is_active:
         val = latest.get("percent", 0)

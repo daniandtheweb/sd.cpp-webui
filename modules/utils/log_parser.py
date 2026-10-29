@@ -28,6 +28,8 @@ class LogParser:
         ]
         self.ANSI_REGEX = re.compile(r'\x1b\[[0-9;]*m')
         self._last_bar_total = None
+        self._last_percent = None
+        self._last_step = None
 
     def _is_progress_line(self, line, phase=None):
         """
@@ -108,8 +110,11 @@ class LogParser:
                 seconds = eta_seconds % 60
                 eta_str = f"{hours:02}:{minutes:02}:{seconds:02}"
 
+            self._last_step = (current_step, total_steps)
             return {
                 "percent": int(phase_fraction * 100),
+                "step": current_step,
+                "total": total_steps,
                 "status": (
                     f"Speed: {final_stats['last_speed']} | "
                     f"ETA: {eta_str}"
@@ -122,9 +127,13 @@ class LogParser:
             current_step, total_steps = map(int, simple_match.groups())
             if total_steps > 0:
                 phase_fraction = current_step / total_steps
+                self._last_step = (current_step, total_steps)
                 return {
                     "percent": int(phase_fraction * 100),
-                    "status": f"Step: {current_step}/{total_steps}"
+                    "step": current_step,
+                    "total": total_steps,
+                    # The step count is shown with the progress bar
+                    "status": ""
                 }
         return {}
 
@@ -169,8 +178,11 @@ class LogParser:
             sys.stdout.write(display_line)
             sys.stdout.flush()
             if self._last_percent is not None and 'last_speed' in final_stats:
+                step, total = self._last_step or (None, None)
                 return {
                     "percent": self._last_percent,
+                    "step": step,
+                    "total": total,
                     "status": (
                         f"Speed: {final_stats['last_speed']} | "
                         f"ETA: {eta_match.group(1)}"
@@ -186,6 +198,7 @@ class LogParser:
             sys.stdout.write("\n\n")
         self._last_bar_total = None
         self._last_percent = None
+        self._last_step = None
 
         print(display_line)
         if 'generate_image completed' in clean_line:

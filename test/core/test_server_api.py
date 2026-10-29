@@ -10,6 +10,7 @@ import json
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
+import gradio as gr
 import pytest
 from PIL import Image
 
@@ -367,6 +368,7 @@ def fake_server(mocker, tmp_path):
     from modules.core.server import sdcpp_server
     from modules.shared_instance import server_state, config
     mocker.patch.object(sdcpp_server.ApiTaskRunner, 'POLL_INTERVAL', 0.01)
+    mocker.patch.object(sdcpp_server.ApiTaskRunner, 'PROGRESS_INTERVAL', 0.01)
     mocker.patch.object(server_state, 'running', True)
     mocker.patch.object(server_state, 'last_generation_stats', '')
     # Runners target the address the tab gives
@@ -404,9 +406,12 @@ def test_job_completes_and_keeps_server_metadata(fake_server, mocker):
 
     assert server.requests[0]['batch_count'] == 2
     final = updates[-1]
-    outputs = final[4]
+    outputs = final[3]
     assert len(outputs) == 2
-    assert 'Job time: 2.50s' in final[3]['value']
+    # Statistics are only shown at the end
+    assert final[2]['visible'] is True
+    assert 'Job time: 2.50s' in final[2]['value']
+    assert all(u[2] == gr.skip() for u in updates[1:-1])
 
     # The server's bytes, including its embedded metadata, are kept as-is
     for i, path in enumerate(outputs):
@@ -414,8 +419,8 @@ def test_job_completes_and_keeps_server_metadata(fake_server, mocker):
         assert params == _sdcpp_parameters(_sdcpp_record(100 + i))
 
     # Preview frames were streamed to the gallery while generating
-    assert any(isinstance(u[4], list) and u[4] and
-               isinstance(u[4][0], Image.Image) for u in updates[:-1])
+    assert any(isinstance(u[3], list) and u[3] and
+               isinstance(u[3][0], Image.Image) for u in updates[:-1])
 
 
 def test_progress_shows_speed_and_eta_like_cli(fake_server, mocker):
@@ -431,21 +436,25 @@ def test_progress_shows_speed_and_eta_like_cli(fake_server, mocker):
     def log_progress(poll):
         if poll == 2:
             server_state.latest_update = {
-                "percent": 50, "status": "Speed: 1.50 it/s | ETA: 00:03"}
+                "percent": 50, "step": 10, "total": 20,
+                "status": "Speed: 1.50 it/s | ETA: 00:03"}
 
     server = fake_server(polls_before_done=3, on_poll=log_progress)
     updates = _run('txt2img_api', server.port, {})
-    shown = [(u[1]['value'], u[2]['value']) for u in updates[1:-1]]
+    from modules.ui.progress import progress_html
+    shown = [u[1]['value'] for u in updates[1:-1]]
 
-    assert (90, "old") not in shown
-    assert shown[0] == (25, "Step: 1/4")  # preview fallback
-    assert (50, "Speed: 1.50 it/s | ETA: 00:03") in shown
+    assert all(">old<" not in bar for bar in shown)
+    # Preview fallback
+    assert shown[0] == progress_html(25, 1, 4, "Generating...")
+    assert progress_html(
+        50, 10, 20, "Speed: 1.50 it/s | ETA: 00:03") in shown
 
 
 def test_failed_job_reports_server_error(fake_server):
     server = fake_server(fail="out of memory")
     final = _run('txt2img_api', server.port, {})[-1]
-    assert final[3]['value'] == "Error: out of memory"
+    assert final[2]['value'] == "Error: out of memory"
 
 
 def test_post_upscale_goes_through_upscale_endpoint(fake_server, mocker):
@@ -461,7 +470,7 @@ def test_post_upscale_goes_through_upscale_endpoint(fake_server, mocker):
     assert server.upscales[0]['upscaler'] == 'RealESRGAN_x4plus'
     assert server.upscales[0]['repeats'] == 2
     assert server.upscales[0]['tile_size'] == 192
-    upscaled = Image.open(final[4][0])
+    upscaled = Image.open(final[3][0])
     assert upscaled.size == (32, 32)
 
     # Source infotext and record survive, with both upscale passes
@@ -524,7 +533,12 @@ def test_stop_cancels_running_job(fake_server):
     thread.join(timeout=5)
 
     assert server.cancelled == ["job_1"]
-    assert results['updates'][-1][3]['value'] == "Cancelled"
+    # Stopped: the command stays, statistics and images are cleared
+    command, progress, stats, images = results['updates'][-1]
+    assert '"prompt"' in command
+    assert progress['visible'] is False
+    assert stats == {'__type__': 'update', 'visible': False, 'value': ""}
+    assert images == {'__type__': 'update', 'value': None}
     # Nothing left to cancel once the job has finished
     assert sdcpp_server.active_job.cancel() is False
 
@@ -590,3 +604,27 @@ def test_stop_reaches_every_tab(mocker):
     finally:
         for q in tabs:
             live_status._unsubscribe(q)
+
+
+def test_progress_follows_the_log_between_job_polls(fake_server, mocker):
+    """The bar is not held back by the (slower) job polling."""
+    from modules.core.server import sdcpp_server
+    from modules.shared_instance import server_state
+    mocker.patch.object(sdcpp_server.ApiTaskRunner, 'POLL_INTERVAL', 0.5)
+    mocker.patch.object(server_state, 'latest_update', {})
+    server = fake_server(hold=True)
+
+    gen = sdcpp_server.txt2img_api(
+        {'in_ip': '127.0.0.1', 'in_port': server.port, 'in_seed': -1})
+    polls_seen = None
+    for update in gen:
+        if server.polls == 1 and not server_state.latest_update:
+            server_state.latest_update = {
+                "percent": 35, "step": 7, "total": 20,
+                "status": "Speed: 2.00 it/s | ETA: 00:06"}
+        if ">Step 7/20 · 35%<" in update[1]['value']:
+            polls_seen = server.polls
+            break
+    gen.close()
+
+    assert polls_seen == 1

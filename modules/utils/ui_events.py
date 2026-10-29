@@ -7,6 +7,7 @@ import threading
 import gradio as gr
 
 import modules.utils.streaming_queue as queue_manager
+from modules.ui.progress import progress_update
 from modules.shared_instance import (
     sd_options, model_state
 )
@@ -31,8 +32,7 @@ def get_ordered_inputs(inputs_map):
 
 # Output slots of the generation pipeline, in order
 _VIEW_SLOTS = (
-    'command', 'progress_slider', 'progress_textbox',
-    'stats', 'img_final', 'queue_tracker'
+    'command', 'progress_bar', 'stats', 'img_final', 'queue_tracker'
 )
 
 # Clicks every tab's resync button when the page becomes visible again,
@@ -113,18 +113,17 @@ class GenerationStream:
                         gr.skip(),
                         gr.skip(),
                         gr.skip(),
-                        gr.skip(),
                         last_imgs,
                         self._queue_display(),
                     )
                     return
 
                 if kind == "stopped":
+                    # Keep the command, clear the rest
                     self._set_view(
-                        gr.update(value=""),
-                        gr.update(visible=False, value=0),
+                        gr.skip(),
+                        progress_update(visible=False),
                         gr.update(visible=False, value=""),
-                        gr.update(value=""),
                         gr.update(value=None),
                         gr.update(visible=False, value=""),
                     )
@@ -133,22 +132,19 @@ class GenerationStream:
                 if kind == "error":
                     self._set_view(
                         gr.skip(),
-                        gr.update(visible=False, value=0),
-                        gr.update(visible=False, value=""),
-                        gr.update(value=f"Error: {payload}"),
+                        progress_update(visible=False),
+                        gr.update(visible=True, value=f"Error: {payload}"),
                         last_imgs,
                         gr.update(visible=False, value=""),
                     )
                     return
 
-                cmd, prog, prog_txt, stats, imgs = payload
+                cmd, prog, stats, imgs = payload
 
                 if imgs is not None:
                     last_imgs = imgs
 
-                self._set_view(
-                    cmd, prog, prog_txt, stats, imgs, self._queue_display()
-                )
+                self._set_view(cmd, prog, stats, imgs, self._queue_display())
         finally:
             with self.cond:
                 self.active -= 1
@@ -161,11 +157,11 @@ class GenerationStream:
             idle = self.active == 0
             self.active += 1
         if idle:
+            # Statistics are only shown at the end of a generation
             self._set_view(
                 gr.skip(),
-                gr.update(visible=True, value=0),
-                gr.update(visible=True, value="Starting..."),
-                gr.skip(),
+                progress_update(0, status="Starting..."),
+                gr.update(visible=False, value=""),
                 gr.skip(),
                 gr.skip(),
             )

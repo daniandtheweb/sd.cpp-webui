@@ -10,6 +10,7 @@ from modules.shared_instance import (
 from modules.loader import (
     get_models, reload_models, model_choice
 )
+from modules.ui.progress import create_progress_bar
 from modules.ui.constants import (
     MODELS, QUANTS, RELOAD_SYMBOL, LOG_LEVEL
 )
@@ -123,14 +124,7 @@ with gr.Blocks() as convert_block:
                         value="Stop", variant="stop"
                     )
                 with gr.Row():
-                    progress_slider = gr.Slider(
-                        minimum=0,
-                        maximum=100,
-                        value=0,
-                        interactive=False,
-                        visible=False,
-                        label="Progress",
-                    )
+                    progress_bar = create_progress_bar()
                 with gr.Row():
                     status_textbox = gr.Textbox(
                         label="Status:",
@@ -161,7 +155,7 @@ with gr.Blocks() as convert_block:
     convert_btn.click(
         convert_wrapper,
         inputs=ordered_components,
-        outputs=[command, progress_slider, status_textbox]
+        outputs=[command, progress_bar, status_textbox]
     )
 
     kill_btn.click(

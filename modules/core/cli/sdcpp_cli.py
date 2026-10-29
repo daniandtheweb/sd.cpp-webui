@@ -12,6 +12,7 @@ from modules.core.common.sd_common import (
     CommonRunner, LORA_TAG_PATTERN, process_editor_mask,
     has_output_index_spec, expand_output_index
 )
+from modules.ui.progress import progress_update
 from modules.shared_instance import (
     config, subprocess_manager, SD_CLI
 )
@@ -193,9 +194,8 @@ class CommandRunner(CommonRunner):
 
         yield (
             self.fcommand,
-            gr.update(visible=True, value=0),
-            gr.update(visible=True, value="Initializing..."),
-            gr.update(value=""),
+            progress_update(0, status="Initializing..."),
+            gr.update(visible=False, value=""),
             None
         )
 
@@ -220,14 +220,27 @@ class CommandRunner(CommonRunner):
 
                 yield (
                     self.fcommand,
-                    gr.update(value=update["percent"]),
-                    update["status"],
-                    gr.update(value=""),
+                    progress_update(
+                        update["percent"],
+                        update.get("step"), update.get("total"),
+                        update["status"]
+                    ),
+                    gr.skip(),
                     gallery_update
                 )
 
         if self.preview_path and os.path.isfile(self.preview_path):
             os.remove(self.preview_path)
+
+        # Stopped by the user: keep the command, clear the rest
+        if subprocess_manager.stopped:
+            yield (
+                self.fcommand,
+                progress_update(visible=False),
+                gr.update(visible=False, value=""),
+                gr.update(value=None)
+            )
+            return
 
         valid_outputs = [out for out in self.outputs if os.path.isfile(out)]
 
@@ -238,9 +251,9 @@ class CommandRunner(CommonRunner):
 
         yield (
             self.fcommand,
-            gr.update(visible=False, value=100),
-            gr.update(visible=False, value=""),
-            gr.update(value=final_stats_str),
+            progress_update(100, visible=False),
+            # Statistics are only shown at the end
+            gr.update(visible=True, value=final_stats_str),
             final_gallery_update
         )
 
@@ -733,8 +746,8 @@ def convert(params: dict):
         print(f"\nError: {error}\n")
         yield (
             "",
-            gr.Slider(visible=False),
-            gr.Textbox(value=f"Error: {error}"),
+            progress_update(visible=False),
+            gr.update(visible=True, value=f"Error: {error}"),
         )
         return
 
@@ -778,8 +791,10 @@ def convert(params: dict):
 
     yield (
         fcommand,
-        gr.update(visible=True, value=0),
-        gr.update(visible=True, value="Initializing conversion..."),
+        progress_update(
+            0, status="Initializing conversion...", unit="Tensor"
+        ),
+        gr.update(visible=False, value=""),
     )
 
     last_was_progress = False
@@ -808,8 +823,11 @@ def convert(params: dict):
 
                     yield (
                         fcommand,
-                        gr.Slider(value=percent),
-                        gr.Textbox(value="Converting..."),
+                        progress_update(
+                            percent, current, total,
+                            status="Converting...", unit="Tensor"
+                        ),
+                        gr.skip(),
                     )
 
                     sys.stdout.write(f"\r{output_line}")
@@ -825,8 +843,8 @@ def convert(params: dict):
         print(f"\nError: {e}")
         yield (
             fcommand,
-            gr.Slider(visible=False),
-            gr.Textbox(value=f"Error: {e}"),
+            progress_update(visible=False),
+            gr.update(visible=True, value=f"Error: {e}"),
         )
 
     finally:
@@ -839,6 +857,6 @@ def convert(params: dict):
 
     yield (
         fcommand,
-        gr.Slider(visible=False),
-        gr.Textbox(value="Done."),
+        progress_update(visible=False),
+        gr.update(visible=True, value="Done."),
     )
