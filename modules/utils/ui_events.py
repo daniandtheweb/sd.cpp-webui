@@ -35,8 +35,41 @@ _VIEW_SLOTS = (
     'command', 'progress_bar', 'stats', 'img_final', 'queue_tracker'
 )
 
-# Output images can't be clicked while generating
-GENERATING_CSS = """
+# Class of the output galleries
+OUTPUT_GALLERY_CLASS = "gen-output"
+
+# Output galleries are square: their height follows their default width,
+# and the images fit their cell, whatever their aspect ratio (Gradio makes
+# every item a full-width square, taller than the gallery on most screens).
+# The selectors outweigh Gradio's scoped ones.
+# Output images can't be clicked while generating.
+GALLERY_CSS = """
+.gen-output.gen-output .grid-wrap {
+    overflow: hidden;
+}
+.gen-output.gen-output .grid-wrap.fixed-height {
+    height: auto;
+    aspect-ratio: 1 / 1;
+}
+.gen-output.gen-output .grid-container {
+    height: 100%;
+    grid-template-rows: repeat(var(--grid-rows), minmax(0, 1fr));
+    grid-auto-rows: minmax(0, 1fr);
+}
+.gen-output.gen-output .gallery-item {
+    min-height: 0;
+    min-width: 0;
+}
+.gen-output.gen-output .thumbnail-item {
+    aspect-ratio: auto;
+    height: 100%;
+    width: 100%;
+}
+.gen-output.gen-output .thumbnail-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
 .gen-busy .thumbnail-item {
     pointer-events: none;
 }
@@ -221,7 +254,10 @@ class GenerationStream:
                 # The images can't be clicked or enlarged while generating
                 update.update(
                     allow_preview=idle,
-                    elem_classes=[] if idle else ['gen-busy'],
+                    elem_classes=(
+                        [OUTPUT_GALLERY_CLASS] if idle
+                        else [OUTPUT_GALLERY_CLASS, 'gen-busy']
+                    ),
                 )
             snapshot.append(gr.update(**update) if update else gr.skip())
             sent[slot] = self.slot_versions[slot]

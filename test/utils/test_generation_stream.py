@@ -31,9 +31,16 @@ def _shown(snapshots):
 
 
 def _next_until(stream, check):
+    """
+    Reads the stream until a snapshot matches `check`. Returns all the
+    snapshots read: unchanged outputs are skipped, so the state shown is
+    the sum of them (see _shown).
+    """
+    read = []
     for snapshot in stream:
+        read.append(snapshot)
         if check(snapshot):
-            return snapshot
+            return read
     raise AssertionError("the stream ended first")
 
 
@@ -53,7 +60,7 @@ def test_stream_dropped_while_hidden_is_restored():
 
     # The page becomes visible again: the resync stream sends the end state
     snapshots = list(gen_stream.stream("session"))
-    command, progress, stats, images, _ = snapshots[-1]
+    command, progress, stats, images, _ = _shown(snapshots)
     assert progress['visible'] is False
     assert stats['visible'] is True
     assert stats['value'] == "Total: 1.00s"
@@ -68,14 +75,15 @@ def test_resync_resumes_a_running_job():
     gen_stream.enqueue({})
 
     resync = gen_stream.stream("session")
-    first = _next_until(resync, lambda s: "Step 5/10" in s[1].get('value', ''))
-    assert first[1]['visible'] is True
+    shown = _shown(
+        _next_until(resync, lambda s: "Step 5/10" in s[1].get('value', ''))
+    )
+    assert shown[1]['visible'] is True
     # Statistics stay hidden while generating
-    assert first[2]['visible'] is False
+    assert shown[2]['visible'] is False
 
     release.set()
-    last = list(resync)[-1]
-    assert last[2]['value'] == "Total: 1.00s"
+    assert _shown(list(resync))[2]['value'] == "Total: 1.00s"
 
 
 def test_newest_stream_of_a_session_wins():
@@ -95,8 +103,8 @@ def test_newest_stream_of_a_session_wins():
     next(new)
     release.set()
     assert list(old) == []
-    assert list(other)[-1][2]['value'] == "Total: 1.00s"
-    assert list(new)[-1][2]['value'] == "Total: 1.00s"
+    assert _shown(list(other))[2]['value'] == "Total: 1.00s"
+    assert _shown(list(new))[2]['value'] == "Total: 1.00s"
 
 
 def test_idle_resync_sends_nothing_new():
@@ -110,7 +118,7 @@ def test_idle_resync_sends_nothing_new():
     command, progress, stats, images, queue = snapshots[0]
     assert all(update == gr.skip() for update in (command, progress, stats, queue))
     # Only the images being clickable again
-    assert images == gr.update(allow_preview=True, elem_classes=[])
+    assert images == gr.update(allow_preview=True, elem_classes=['gen-output'])
 
 
 def test_images_not_clickable_while_generating():
@@ -121,15 +129,17 @@ def test_images_not_clickable_while_generating():
     gen_stream.enqueue({})
 
     stream = gen_stream.stream("session")
-    preview = _next_until(stream, lambda s: s[3].get('value') == ["preview.png"])
+    preview = _shown(
+        _next_until(stream, lambda s: s[3].get('value') == ["preview.png"])
+    )
     assert preview[3]['allow_preview'] is False
-    assert preview[3]['elem_classes'] == ['gen-busy']
+    assert preview[3]['elem_classes'] == ['gen-output', 'gen-busy']
 
     release.set()
-    final = list(stream)[-1]
+    final = _shown(list(stream))
     assert final[3]['value'] == ["final.png"]
     assert final[3]['allow_preview'] is True
-    assert final[3]['elem_classes'] == []
+    assert final[3]['elem_classes'] == ['gen-output']
 
 
 def test_stop_keeps_the_command():
@@ -142,11 +152,11 @@ def test_stop_keeps_the_command():
     gen_stream.enqueue({})
 
     stream = gen_stream.stream("session")
-    first = _next_until(stream, lambda s: "Speed" in s[1].get('value', ''))
+    read = _next_until(stream, lambda s: "Speed" in s[1].get('value', ''))
     queue_manager.clear_all()
     release.set()
 
-    command, progress, stats, images, _ = _shown([first] + list(stream))
+    command, progress, stats, images, _ = _shown(read + list(stream))
     assert command['value'] == "cmd"
     assert progress['visible'] is False
     assert stats == {'visible': False, 'value': ""}

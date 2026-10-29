@@ -19,7 +19,8 @@ from modules.utils.image_utils import size_updater
 from modules.utils.ui_events import (
     get_ordered_inputs, bind_generation_pipeline,
     unet_tab_switch, ckpt_tab_switch,
-    update_interactivity, refresh_all_options
+    update_interactivity, refresh_all_options,
+    OUTPUT_GALLERY_CLASS
 )
 from modules.ui.progress import create_progress_bar, progress_update
 from modules.ui.models import create_img_model_sel_ui
@@ -312,7 +313,8 @@ with gr.Blocks() as img2img_server_block:
                         rows=[1],
                         object_fit="contain",
                         height="auto",
-                        buttons=["share", "download", "fullscreen"]
+                        buttons=["share", "download", "fullscreen"],
+                        elem_classes=[OUTPUT_GALLERY_CLASS]
                     )
                 with gr.Row():
                     stats = gr.Textbox(

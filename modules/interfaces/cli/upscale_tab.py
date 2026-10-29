@@ -6,7 +6,8 @@ import gradio as gr
 
 from modules.core.cli.sdcpp_cli import upscale
 from modules.utils.ui_events import (
-    get_ordered_inputs, update_interactivity
+    get_ordered_inputs, update_interactivity,
+    OUTPUT_GALLERY_CLASS
 )
 from modules.utils.image_utils import (
     switch_sizes, size_updater
@@ -156,6 +157,7 @@ with gr.Blocks() as upscale_block:
                         object_fit="contain",
                         height="auto",
                         buttons=["share", "download", "fullscreen"],
+                        elem_classes=[OUTPUT_GALLERY_CLASS],
                         interactive=False
                     )
                 with gr.Row():
