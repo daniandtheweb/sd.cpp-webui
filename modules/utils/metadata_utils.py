@@ -53,6 +53,7 @@ def save_image_with_metadata(
     """
     Saves a PIL Image with A1111-style parameters
     written to the tEXt chunk.
+    Currently unused, sd.cpp embeds its own metadata.
     """
     pnginfo = PngImagePlugin.PngInfo()
     pnginfo.add_text("parameters", metadata_string)
@@ -160,6 +161,76 @@ def parse_comfyui_workflow(text_data: str) -> Optional[Dict[str, Any]]:
         return None
 
 
+SDCPP_SEPARATOR = "SDCPP: "
+SDCPP_SCHEMA = "sdcpp.generation/v1"
+
+
+def find_sdcpp_generation(text_data: str) -> Optional[tuple]:
+    """
+    Finds the sd.cpp record in the metadata
+    ("<infotext>, SDCPP: <JSON>" or the JSON alone).
+    Returns: (infotext, record) or None
+    """
+    if not text_data:
+        return None
+    stripped = text_data.strip()
+    if stripped.startswith('{'):
+        try:
+            record = json.loads(stripped)
+        except json.JSONDecodeError:
+            record = None
+        if isinstance(record, dict) and record.get('schema') == SDCPP_SCHEMA:
+            return "", record
+    end = len(text_data)
+    while True:
+        # The JSON is last, a prompt containing "SDCPP: " is skipped
+        idx = text_data.rfind(SDCPP_SEPARATOR, 0, end)
+        if idx < 0:
+            return None
+        try:
+            record = json.loads(text_data[idx + len(SDCPP_SEPARATOR):])
+        except json.JSONDecodeError:
+            end = idx
+            continue
+        if isinstance(record, dict) and record.get('schema') == SDCPP_SCHEMA:
+            infotext = text_data[:idx].rstrip()
+            if infotext.endswith(','):
+                infotext = infotext[:-1]
+            return infotext, record
+        end = idx
+
+
+def parse_sdcpp_generation(text_data: str) -> Optional[Dict[str, Any]]:
+    """
+    Parses the sd.cpp record. Unlike the infotext, it uses the raw
+    sampler and scheduler names, like the WebUI dropdowns.
+    Returns None if there's no record or no generation settings.
+    """
+    found = find_sdcpp_generation(text_data)
+    if not found:
+        return None
+    record = found[1]
+    # ADetailer keeps the generation settings in inpaint_params
+    record = record.get('inpaint_params', record)
+    sampling = record.get('sample_params')
+    if not isinstance(sampling, dict):
+        return None
+
+    params = {
+        'pprompt': record.get('prompt', ""),
+        'nprompt': record.get('negative_prompt', ""),
+        'steps': sampling.get('sample_steps'),
+        'sampler': sampling.get('sample_method', ""),
+        'scheduler': sampling.get('scheduler', ""),
+        'cfg': (sampling.get('guidance') or {}).get('txt_cfg'),
+    }
+    try:
+        params['seed'] = int(record.get('seed'))
+    except (TypeError, ValueError):
+        params['seed'] = None
+    return params
+
+
 def parse_a1111_text(text_data: str) -> Dict[str, Any]:
     """
     Parses A1111-style text metadata, now separating sampler and scheduler
@@ -222,6 +293,10 @@ def extract_params_from_text(text_data: str) -> Dict[str, Any]:
 
     if not text_data:
         return default_params
+
+    sdcpp_params = parse_sdcpp_generation(text_data)
+    if sdcpp_params:
+        return {**default_params, **sdcpp_params}
 
     comfy_params = parse_comfyui_workflow(text_data)
     if comfy_params:

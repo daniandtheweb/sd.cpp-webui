@@ -409,6 +409,51 @@ class CommonRunner():
             if condition:
                 self.command.append(flag)
 
+    def _build_model_args(self) -> str:
+        """
+        Assembles the --model-args key=value string from
+        the Model Arguments tab values.
+        """
+        args = []
+        if not self._get_param('in_chroma_use_dit_mask', True):
+            args.append('chroma_use_dit_mask=false')
+        if self._get_param('in_chroma_use_t5_mask'):
+            args.append('chroma_use_t5_mask=true')
+        t5_mask_pad = self._get_param('in_chroma_t5_mask_pad')
+        if t5_mask_pad and float(t5_mask_pad) != 0:
+            args.append(f'chroma_t5_mask_pad={int(t5_mask_pad)}')
+        if self._get_param('in_qwen_image_zero_cond_t'):
+            args.append('qwen_image_zero_cond_t=true')
+        if self._get_param('in_qwen_image_2_1_prefix_cache'):
+            args.append('qwen_image_2_1_prefix_cache=true')
+        prefix_cache_type = self._get_param(
+            'in_qwen_image_2_1_prefix_cache_type'
+        )
+        if prefix_cache_type and prefix_cache_type != "auto":
+            args.append(
+                f'qwen_image_2_1_prefix_cache_type={prefix_cache_type}'
+            )
+        pixart_pos_embed_base_size = self._get_param(
+            'in_pixart_pos_embed_base_size'
+        )
+        if (pixart_pos_embed_base_size
+                and float(pixart_pos_embed_base_size) != 0):
+            args.append(
+                f'pixart_pos_embed_base_size={int(pixart_pos_embed_base_size)}'
+            )
+        pixart_interpolation_scale = self._get_param(
+            'in_pixart_interpolation_scale'
+        )
+        if (pixart_interpolation_scale
+                and float(pixart_interpolation_scale) != 0):
+            args.append(
+                f'pixart_interpolation_scale={pixart_interpolation_scale}'
+            )
+        pixart_vae_scale_factor = self._get_param('in_pixart_vae_scale_factor')
+        if pixart_vae_scale_factor and float(pixart_vae_scale_factor) != 0:
+            args.append(f'pixart_vae_scale_factor={pixart_vae_scale_factor}')
+        return ",".join(args)
+
     def _get_common_model_options(self) -> Dict[str, Any]:
         """
         Returns the base model options.

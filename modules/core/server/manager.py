@@ -45,6 +45,15 @@ class ServerRunner(CommonRunner):
                              if self._get_param('in_cache_bool')
                              else None),
             '--lora-model-dir': self._make_relative(config.get('lora_dir')),
+            # HiRes Fix and Upscale models
+            '--hires-upscalers-dir': self._make_relative(
+                config.get('upscl_dir')
+            ),
+            # Extra options
+            '--rng': self._choice('in_rng'),
+            '--sampler-rng': self._choice('in_sampler_rng'),
+            '--lora-apply-mode': self._choice('in_lora_apply'),
+            '--model-args': self._build_model_args() or None,
             # Common runtime options (auto-fit, rpc, scales, ...)
             **self._get_common_options(),
         })
@@ -52,6 +61,14 @@ class ServerRunner(CommonRunner):
         self._add_options(options)
 
         self._add_flags(self._get_common_flags())
+
+    def _choice(self, key: str):
+        """Helper to get a dropdown value, None if 'Default'."""
+        val = self._get_param(key)
+        if val is None:
+            return None
+        val = str(val).strip()
+        return None if val in ('', 'Default') else val
 
     def _prepare_for_run(self):
         """Prepares the final command string for printing."""

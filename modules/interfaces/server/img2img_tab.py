@@ -4,7 +4,9 @@ from functools import partial
 
 import gradio as gr
 
-from modules.core.server.sdcpp_server import img2img_api
+from modules.core.server.sdcpp_server import (
+    img2img_api, cancel_active_job, REQUEST_TIME_KEYS
+)
 from modules.core.server.manager import (
     start_server, stop_server
 )
@@ -276,6 +278,10 @@ with gr.Blocks() as img2img_server_block:
                         value="Generate", size="lg",
                         variant="primary", interactive=False
                     )
+                    kill_btn = gr.Button(
+                        value="Stop", size="lg",
+                        variant="stop"
+                    )
                 with gr.Row():
                     queue_tracker = gr.Textbox(
                         show_label=False,
@@ -314,7 +320,7 @@ with gr.Blocks() as img2img_server_block:
                     )
                 with gr.Row():
                     command = gr.Textbox(
-                        label="sdapi payload:",
+                        label="Request payload:",
                         show_label=True,
                         value="",
                         interactive=False,
@@ -343,7 +349,8 @@ with gr.Blocks() as img2img_server_block:
     server_config_components = [
         inputs_map[k]
         for k in _server_config_keys
-        if hasattr(inputs_map.get(k), 'interactive')
+        if k not in REQUEST_TIME_KEYS
+        and hasattr(inputs_map.get(k), 'interactive')
     ]
 
     def _config_updates(is_running):
@@ -495,6 +502,12 @@ with gr.Blocks() as img2img_server_block:
 
     bind_generation_pipeline(
         img2img_api, ordered_keys, ordered_components, ui_outputs
+    )
+
+    kill_btn.click(
+        cancel_active_job,
+        inputs=[],
+        outputs=[]
     )
 
     # Interactive Bindings

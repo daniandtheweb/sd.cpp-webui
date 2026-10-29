@@ -2,7 +2,9 @@
 
 import gradio as gr
 
-from modules.core.server.sdcpp_server import imgedit_api
+from modules.core.server.sdcpp_server import (
+    imgedit_api, cancel_active_job, REQUEST_TIME_KEYS
+)
 from modules.core.server.manager import (
     start_server, stop_server
 )
@@ -34,6 +36,7 @@ from modules.ui.controlnet import create_cnnet_ui
 from modules.ui.circular import create_circular_ui
 from modules.ui.photomaker import create_photomaker_ui
 from modules.ui.eta import create_eta_ui
+from modules.ui.ref_img import create_ref_img_ui
 from modules.ui.taesd import create_taesd_ui
 from modules.ui.vae_tiling import create_vae_tiling_ui
 from modules.ui.cache import create_cache_ui
@@ -203,6 +206,10 @@ with gr.Blocks() as imgedit_server_block:
                 eta_ui = create_eta_ui()
                 inputs_map.update(eta_ui)
 
+                # Reference Image Settings
+                ref_img_ui = create_ref_img_ui()
+                inputs_map.update(ref_img_ui)
+
             # Experimental
             # experimental_ui = create_experimental_ui()
             # inputs_map.update(experimental_ui)
@@ -228,6 +235,10 @@ with gr.Blocks() as imgedit_server_block:
                     gen_btn = gr.Button(
                         value="Generate", size="lg",
                         variant="primary", interactive=False
+                    )
+                    kill_btn = gr.Button(
+                        value="Stop", size="lg",
+                        variant="stop"
                     )
                 with gr.Row():
                     queue_tracker = gr.Textbox(
@@ -267,7 +278,7 @@ with gr.Blocks() as imgedit_server_block:
                     )
                 with gr.Row():
                     command = gr.Textbox(
-                        label="images/edits payload:",
+                        label="Request payload:",
                         show_label=True,
                         value="",
                         interactive=False,
@@ -296,7 +307,8 @@ with gr.Blocks() as imgedit_server_block:
     server_config_components = [
         inputs_map[k]
         for k in _server_config_keys
-        if hasattr(inputs_map.get(k), 'interactive')
+        if k not in REQUEST_TIME_KEYS
+        and hasattr(inputs_map.get(k), 'interactive')
     ]
 
     def _config_updates(is_running):
@@ -444,6 +456,12 @@ with gr.Blocks() as imgedit_server_block:
 
     bind_generation_pipeline(
         imgedit_api, ordered_keys, ordered_components, ui_outputs
+    )
+
+    kill_btn.click(
+        cancel_active_job,
+        inputs=[],
+        outputs=[]
     )
 
     refresh_opt.click(
