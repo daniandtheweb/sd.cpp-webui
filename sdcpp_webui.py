@@ -48,6 +48,7 @@ from modules.interfaces.common.options_tab import (
 from modules.config import ConfigManager
 from modules.ui.constants import FIELDS, SAMPLERS, SCHEDULERS
 from modules.utils.sdcpp_utils import restart_server
+from modules.utils.ui_events import RESYNC_JS
 
 
 def _is_within(real_path: str, base_real_path: str) -> bool:
@@ -85,18 +86,19 @@ def _is_within(real_path: str, base_real_path: str) -> bool:
         current = parent
 
 
-def build_color_scheme_js(scheme: str):
-    """On-page-load JS forcing a color scheme. Gradio dark mode is a 'dark'
-    class on <body> (light/dark CSS vars are both served), so no reload is
-    needed. Returns None for system."""
+def build_page_js(scheme: str):
+    """On-page-load JS: forces the color scheme and resyncs the
+    generation outputs when the page becomes visible again.
+    Gradio dark mode is a 'dark' class on <body> (light/dark CSS vars
+    are both served), so no reload is needed."""
     scheme = str(scheme or 'system').lower()
     if scheme == 'dark':
-        action = "document.body.classList.add('dark')"
+        action = "document.body.classList.add('dark');"
     elif scheme == 'light':
-        action = "document.body.classList.remove('dark')"
+        action = "document.body.classList.remove('dark');"
     else:
-        return None
-    return f"function refresh() {{\n    {action};\n}}"
+        action = ""
+    return f"function refresh() {{\n    {action}\n{RESYNC_JS}}}"
 
 
 warnings.filterwarnings("ignore", message=".*HTTP_422_UNPROCESSABLE_ENTITY.*")
@@ -336,7 +338,7 @@ def sdcpp_launch(
 ):
     """Logic for launching sdcpp based on arguments"""
     launch_args = build_launch_args(listen, autostart, credentials)
-    color_js = build_color_scheme_js(config.get('def_color_scheme'))
+    page_js = build_page_js(config.get('def_color_scheme'))
 
     if insecure_dir:
         launch_args["allowed_paths"] = get_allowed_paths(
@@ -359,7 +361,7 @@ def sdcpp_launch(
     # Pass the arguments to sdcpp.launch with argument unpacking
     sdcpp.launch(
         css="footer {visibility: hidden}",
-        theme=theme or "default", js=color_js,
+        theme=theme or "default", js=page_js,
         **launch_args
     )
 

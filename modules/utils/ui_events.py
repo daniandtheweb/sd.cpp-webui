@@ -29,6 +29,187 @@ def get_ordered_inputs(inputs_map):
     return ordered_keys, ordered_components
 
 
+# Output slots of the generation pipeline, in order
+_VIEW_SLOTS = (
+    'command', 'progress_slider', 'progress_textbox',
+    'stats', 'img_final', 'queue_tracker'
+)
+
+# Clicks every tab's resync button when the page becomes visible again,
+# so a stream dropped while the page was hidden is restored
+RESYNC_JS = """
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState !== 'visible') return;
+        document.querySelectorAll('.gen-resync').forEach((el) => {
+            const btn = el.tagName === 'BUTTON' ? el : el.querySelector('button');
+            if (btn) btn.click();
+        });
+    });
+"""
+
+
+def _merge_update(current: dict, update) -> dict:
+    """
+    Merges a component update into its current state.
+    gr.skip() leaves it unchanged, a plain value replaces it.
+    """
+    if isinstance(update, dict) and update.get('__type__') == 'update':
+        merged = dict(current)
+        merged.update(
+            {k: v for k, v in update.items() if k != '__type__'}
+        )
+        return merged
+    return {'value': update}
+
+
+class GenerationStream:
+    """
+    Collects the job updates of a tab server-side, independently of the
+    browser, and streams them. A stream dropped while the page was
+    hidden loses nothing: a new stream sends the current state and
+    resumes streaming.
+    """
+
+    def __init__(self, api_func):
+        self.api_func = api_func
+        self.tab_id = api_func.__name__
+
+        # Latest state of each output slot
+        self.view = {slot: {} for slot in _VIEW_SLOTS}
+        self.cond = threading.Condition()
+        self.version = 0
+        self.active = 0
+        # Newest stream of each browser session
+        self.streams = {}
+        self.job_counter = itertools.count(1)
+
+    def _set_view(self, *updates):
+        """Applies one update per output slot and wakes the streams."""
+        with self.cond:
+            for slot, update in zip(_VIEW_SLOTS, updates):
+                self.view[slot] = _merge_update(self.view[slot], update)
+            self.version += 1
+            self.cond.notify_all()
+
+    @staticmethod
+    def _queue_display():
+        remaining = queue_manager.get_queue_size()
+        if remaining > 0:
+            return gr.update(
+                visible=True,
+                value=f"⏳ Jobs in queue: {remaining}"
+            )
+        return gr.update(visible=False, value="")
+
+    def _consume_job(self, sub):
+        """Collects the updates of a job, with or without a browser."""
+        last_imgs = gr.skip()
+        try:
+            while True:
+                kind, payload = sub.get()
+
+                if kind == "done":
+                    self._set_view(
+                        gr.skip(),
+                        gr.skip(),
+                        gr.skip(),
+                        gr.skip(),
+                        last_imgs,
+                        self._queue_display(),
+                    )
+                    return
+
+                if kind == "stopped":
+                    self._set_view(
+                        gr.update(value=""),
+                        gr.update(visible=False, value=0),
+                        gr.update(visible=False, value=""),
+                        gr.update(value=""),
+                        gr.update(value=None),
+                        gr.update(visible=False, value=""),
+                    )
+                    return
+
+                if kind == "error":
+                    self._set_view(
+                        gr.skip(),
+                        gr.update(visible=False, value=0),
+                        gr.update(visible=False, value=""),
+                        gr.update(value=f"Error: {payload}"),
+                        last_imgs,
+                        gr.update(visible=False, value=""),
+                    )
+                    return
+
+                cmd, prog, prog_txt, stats, imgs = payload
+
+                if imgs is not None:
+                    last_imgs = imgs
+
+                self._set_view(
+                    cmd, prog, prog_txt, stats, imgs, self._queue_display()
+                )
+        finally:
+            with self.cond:
+                self.active -= 1
+                self.version += 1
+                self.cond.notify_all()
+
+    def enqueue(self, params: dict) -> str:
+        """Queues a job. Returns a new trigger value."""
+        with self.cond:
+            idle = self.active == 0
+            self.active += 1
+        if idle:
+            self._set_view(
+                gr.skip(),
+                gr.update(visible=True, value=0),
+                gr.update(visible=True, value="Starting..."),
+                gr.skip(),
+                gr.skip(),
+                gr.skip(),
+            )
+        sub = queue_manager.add_job(self.api_func, params, owner=self.tab_id)
+        threading.Thread(
+            target=self._consume_job, args=(sub,), daemon=True
+        ).start()
+        return str(next(self.job_counter))
+
+    def _snapshot(self) -> tuple:
+        return tuple(
+            gr.update(**self.view[slot]) if self.view[slot] else gr.skip()
+            for slot in _VIEW_SLOTS
+        )
+
+    def stream(self, session=None):
+        """
+        Streams the collected state until the jobs of this tab end.
+        Only the newest stream of a session runs, an older one (e.g. a
+        stream the browser dropped) stops.
+        """
+        with self.cond:
+            stream_id = self.streams.get(session, 0) + 1
+            self.streams[session] = stream_id
+        delivered = -1
+
+        while True:
+            with self.cond:
+                while (self.version == delivered
+                       and self.active > 0
+                       and self.streams.get(session) == stream_id):
+                    self.cond.wait(timeout=1.0)
+                if self.streams.get(session) != stream_id:
+                    return
+                delivered = self.version
+                finished = self.active == 0
+                snapshot = self._snapshot()
+
+            yield snapshot
+
+            if finished:
+                return
+
+
 def bind_generation_pipeline(
     api_func, ordered_keys, ordered_components, outputs_map
 ):
@@ -36,11 +217,7 @@ def bind_generation_pipeline(
     Connects the UI components to the generation queue.
     """
     tab_id = api_func.__name__
-
-    _pending_jobs = {}
-    _pending_lock = threading.Lock()
-    _stream_lock = threading.Lock()
-    _job_counter = itertools.count(1)
+    gen_stream = GenerationStream(api_func)
 
     trigger = gr.Textbox(
         value="",
@@ -48,126 +225,21 @@ def bind_generation_pipeline(
         interactive=False,
         elem_id=f"gen-trigger-{tab_id}"
     )
+    # Clicked by RESYNC_JS when the page becomes visible again
+    resync_btn = gr.Button(
+        value="Resync",
+        visible="hidden",
+        elem_id=f"gen-resync-{tab_id}",
+        elem_classes=["gen-resync"]
+    )
 
     def enqueue_job(*args):
-        params = dict(zip(ordered_keys, args))
-        sub = queue_manager.add_job(api_func, params, owner=tab_id)
-        job_id = str(next(_job_counter))
-        with _pending_lock:
-            _pending_jobs[job_id] = sub
-        return job_id
+        return gen_stream.enqueue(dict(zip(ordered_keys, args)))
 
-    def _drain_job(sub):
-        last_imgs = gr.skip()
-        while True:
-            kind, payload = sub.get()
+    def stream_jobs(_trigger_value=None, request: gr.Request = None):
+        yield from gen_stream.stream(getattr(request, 'session_hash', None))
 
-            if kind == "done":
-                remaining = queue_manager.get_queue_size()
-                if remaining > 0:
-                    yield (
-                        gr.skip(),
-                        gr.skip(),
-                        gr.skip(),
-                        gr.skip(),
-                        last_imgs,
-                        gr.update(
-                            visible=True,
-                            value=f"⏳ Jobs in queue: {remaining}"
-                        ),
-                    )
-                else:
-                    yield (
-                        gr.skip(),
-                        gr.skip(),
-                        gr.skip(),
-                        gr.skip(),
-                        last_imgs,
-                        gr.update(visible=False, value=""),
-                    )
-                return
-
-            if kind == "stopped":
-                yield (
-                    gr.update(value=""),
-                    gr.update(visible=False, value=0),
-                    gr.update(visible=False, value=""),
-                    gr.update(value=""),
-                    gr.update(value=None),
-                    gr.update(visible=False, value=""),
-                )
-                return
-
-            if kind == "error":
-                yield (
-                    gr.skip(),
-                    gr.update(visible=False, value=0),
-                    gr.update(visible=False, value=""),
-                    gr.update(value=f"Error: {payload}"),
-                    last_imgs,
-                    gr.update(visible=False, value=""),
-                )
-                return
-
-            cmd, prog, prog_txt, stats, imgs = payload
-
-            if imgs is not None:
-                last_imgs = imgs
-
-            remaining = queue_manager.get_queue_size()
-            if remaining > 0:
-                queue_display = gr.update(
-                    visible=True,
-                    value=f"⏳ Jobs in queue: {remaining}",
-                )
-            else:
-                queue_display = gr.update(visible=False, value="")
-
-            yield (cmd, prog, prog_txt, stats, imgs, queue_display)
-
-    def stream_jobs(_trigger_value):
-        with _stream_lock:
-            did_work = False
-            while True:
-                with _pending_lock:
-                    if not _pending_jobs:
-                        if not did_work:
-                            yield (
-                                gr.skip(),
-                                gr.skip(),
-                                gr.skip(),
-                                gr.skip(),
-                                gr.skip(),
-                                gr.skip(),
-                            )
-                        return
-                    job_id = next(iter(_pending_jobs))
-                    sub = _pending_jobs.pop(job_id)
-
-                did_work = True
-
-                yield (
-                    gr.skip(),
-                    gr.update(visible=True, value=0),
-                    gr.update(visible=True, value="Starting..."),
-                    gr.skip(),
-                    gr.skip(),
-                    gr.skip(),
-                )
-
-                try:
-                    yield from _drain_job(sub)
-                except Exception as exc:
-                    yield (
-                        gr.skip(),
-                        gr.update(visible=False, value=0),
-                        gr.update(visible=False, value=""),
-                        gr.update(
-                            value=f"Error: {type(exc).__name__}: {exc}"
-                        ),
-                        None,
-                        gr.update(visible=False, value=""),
-                    )
+    stream_outputs = [outputs_map[slot] for slot in _VIEW_SLOTS]
 
     outputs_map['gen_btn'].click(
         fn=enqueue_job,
@@ -178,15 +250,16 @@ def bind_generation_pipeline(
     trigger.change(
         fn=stream_jobs,
         inputs=[trigger],
-        outputs=[
-            outputs_map['command'],
-            outputs_map['progress_slider'],
-            outputs_map['progress_textbox'],
-            outputs_map['stats'],
-            outputs_map['img_final'],
-            outputs_map['queue_tracker'],
-        ],
+        outputs=stream_outputs,
         concurrency_limit=None,
+    )
+
+    resync_btn.click(
+        fn=stream_jobs,
+        inputs=[],
+        outputs=stream_outputs,
+        concurrency_limit=None,
+        show_progress="hidden",
     )
 
 
