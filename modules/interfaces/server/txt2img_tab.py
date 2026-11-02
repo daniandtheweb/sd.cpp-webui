@@ -40,6 +40,7 @@ from modules.ui.ipadapter import create_ipadapter_ui
 # from modules.ui.qwen import create_qwen_ui
 from modules.ui.circular import create_circular_ui
 from modules.ui.photomaker import create_photomaker_ui
+from modules.ui.pulid import create_pulid_ui
 from modules.ui.timestep_shift import create_timestep_shift_ui
 from modules.ui.eta import create_eta_ui
 from modules.ui.taesd import create_taesd_ui
@@ -125,6 +126,10 @@ with gr.Blocks() as txt2img_server_block:
                 # PhotoMaker
                 photomaker_ui = create_photomaker_ui()
                 inputs_map.update(photomaker_ui)
+
+                # PuLID
+                pulid_ui = create_pulid_ui()
+                inputs_map.update(pulid_ui)
 
             with gr.Tab("Advanced Settings"):
 
@@ -324,6 +329,7 @@ with gr.Blocks() as txt2img_server_block:
         + list(ip_adapter_ui.keys())
         + list(circular_ui.keys())
         + list(photomaker_ui.keys())
+        + list(pulid_ui.keys())
         + list(taesd_ui.keys())
         + list(extras_ui.keys())
         + list(performance_ui.keys())

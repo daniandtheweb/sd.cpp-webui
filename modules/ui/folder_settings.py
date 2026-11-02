@@ -19,6 +19,7 @@ FOLDER_CONFIG = {
     'cnnet_dir': "ControlNet folder",
     'ad_dir': "ADetailer folder",
     'ipadapter_dir': "IP-Adapter folder",
+    'pulid_dir': "PuLID folder",
     'txt2img_dir': "txt2img outputs folder",
     'img2img_dir': "img2img outputs folder",
     'imgedit_dir': "imgedit outputs folder",

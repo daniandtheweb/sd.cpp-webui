@@ -36,6 +36,7 @@ SCM_POLICY = ["none", "dynamic", "static"]
 AUTO_ON_OFF = ["auto", "on", "off"]
 ON_OFF = ["on", "off"]
 AD_MASK_MODES = ["none", "merge", "merge_invert"]
+PULID_EMBEDDING_EXT = (".pulidembd",)
 LOG_LEVEL = [
     "debug", "verbose", "info",
     "warn", "error"

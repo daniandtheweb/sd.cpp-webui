@@ -24,6 +24,7 @@ DEFAULT_SETTINGS = {
     'cnnet_dir': os.path.join(CURRENT_DIR, "models/controlnet/"),
     'ad_dir': os.path.join(CURRENT_DIR, "models/adetailer/"),
     'ipadapter_dir': os.path.join(CURRENT_DIR, "models/ipadapter/"),
+    'pulid_dir': os.path.join(CURRENT_DIR, "models/pulid/"),
     'txt2img_dir': os.path.join(CURRENT_DIR, "outputs/txt2img/"),
     'img2img_dir': os.path.join(CURRENT_DIR, "outputs/img2img/"),
     'imgedit_dir': os.path.join(CURRENT_DIR, "outputs/imgedit/"),

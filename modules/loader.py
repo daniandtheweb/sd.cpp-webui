@@ -27,7 +27,8 @@ MODEL_DIR_MAP = {
     "Upscalers": config.get('upscl_dir'),
     "ControlNet": config.get('cnnet_dir'),
     "ADetailer": config.get('ad_dir'),
-    "IP-Adapter": config.get('ipadapter_dir')
+    "IP-Adapter": config.get('ipadapter_dir'),
+    "PuLID": config.get('pulid_dir')
 }
 
 

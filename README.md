@@ -26,6 +26,7 @@ This WebUI, by using **stable-diffusion.cpp** as its core, supports a large numb
 - ControlNet
 - ADetailer (YOLOv8 detectors)
 - IP-Adapter (classic and Plus)
+- PuLID-Flux
 - Upscaling models
 - LoRAs and embeddings
 

@@ -386,6 +386,7 @@ class CommonRunner():
             'cnnet_dir': ['in_cnnet'],
             'ad_dir': ['in_ad_model'],
             'ipadapter_dir': ['in_ip_adapter'],
+            'pulid_dir': ['in_pulid_weights', 'in_pulid_embedding'],
             'tokenizer_dir': ['in_tokenizer']
         }
         for dir_key, param_keys in path_mappings.items():
@@ -557,6 +558,18 @@ class CommonRunner():
                 if self._get_param('in_phtmkr_bool')
                 else None
             ),
+            # PuLID, active only with weights and embedding together
+            **({
+                '--pulid-weights': self._make_relative(
+                    self._get_param('f_pulid_weights')
+                ),
+                '--pulid-id-embedding': self._make_relative(
+                    self._get_param('f_pulid_embedding')
+                ),
+                '--pulid-id-weight': self._get_param('in_pulid_id_weight'),
+            } if (self._get_param('in_pulid_bool')
+                  and self._get_param('f_pulid_weights')
+                  and self._get_param('f_pulid_embedding')) else {}),
             '--upscale-model': (self._make_relative(self._get_param('f_upscl'))
                                 if self._get_param('in_upscl_bool')
                                 else None),
