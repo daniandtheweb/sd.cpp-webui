@@ -339,6 +339,12 @@ def create_video_unet_model_sel_ui():
                 dir_key='txt_enc_dir',
                 option_key='def_umt5_xxl',
             )
+        with gr.Column():
+            audio_encoder = create_model_widget(
+                label="audio_encoder",
+                dir_key='txt_enc_dir',
+                option_key='def_audio_encoder',
+            )
     with gr.Row():
         with gr.Column():
             llm = create_model_widget(
@@ -369,6 +375,7 @@ def create_video_unet_model_sel_ui():
         'in_audio_vae': audio_vae,
         'in_clip_vision_h': clip_vision_h,
         'in_umt5_xxl': umt5_xxl,
+        'in_audio_encoder': audio_encoder,
         'in_llm': llm,
         'in_emb_connect': emb_connect,
         'in_high_noise_model': high_noise_model

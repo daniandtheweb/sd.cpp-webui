@@ -196,6 +196,7 @@ class ConfigManager:
         'def_clip_vision_h': 'txt_enc_dir',
         'def_umt5_xxl': 'txt_enc_dir',
         'def_emb_connect': 'txt_enc_dir',
+        'def_audio_encoder': 'txt_enc_dir',
         'def_llm': 'txt_enc_dir',
         'def_llm_vision': 'txt_enc_dir',
         'def_tokenizer': 'tokenizer_dir',

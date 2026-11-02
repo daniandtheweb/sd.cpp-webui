@@ -254,6 +254,23 @@ with gr.Blocks() as any2video_block:
                     inputs_map['in_img_inp'] = img_inp_any2video
             with gr.Row():
                 with gr.Accordion(
+                    label="Speech to Video (S2V)", open=False
+                ):
+                    gr.Markdown(
+                        "Wan2.2 S2V: the portrait goes in Image to Video "
+                        "and needs the audio_encoder model and the "
+                        "wan_2.1 VAE. Runs at 16 FPS, pick about "
+                        "16 frames per second of audio (up to 81)."
+                    )
+                    s2v_audio = gr.Audio(
+                        label="Driving audio",
+                        sources=["upload"],
+                        type="filepath",
+                        format="wav"
+                    )
+                    inputs_map['in_s2v_audio'] = s2v_audio
+            with gr.Row():
+                with gr.Accordion(
                     label="First-Last Frame Video", open=False
                 ):
                     with gr.Row():

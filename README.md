@@ -20,7 +20,7 @@ This WebUI, by using **stable-diffusion.cpp** as its core, supports a large numb
 - SD1.x, SD2.x, SD-Turbo, SDXL, SDXL-Turbo, NitroFusion
 - SD3, SD3.5, FLUX.1-Krea-dev, FLUX.1-dev, FLUX.1-schnell, FLUX.2-dev, Chroma, Qwen Image, Z-Image-Turbo
 - FLUX.1-Kontext-dev, Qwen Image Edit, Qwen Image Edit 2509, Qwen Image Layered
-- Wan2.1, Wan2.2
+- Wan2.1, Wan2.2 (including S2V)
 - AnimateDiff (SD 1.5)
 - TAESD
 - PhotoMaker

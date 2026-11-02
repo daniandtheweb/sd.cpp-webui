@@ -545,7 +545,7 @@ class Any2VideoRunner(CommandRunner):
     # Video model flags, replaced by AnimateDiff's in its mode
     _VIDEO_MODEL_FLAGS = (
         '--vae', '--audio-vae', '--diffusion-model', '--clip_vision',
-        '--t5xxl', '--llm', '--embeddings-connectors',
+        '--t5xxl', '--audio-encoder', '--llm', '--embeddings-connectors',
         '--high-noise-diffusion-model', '--high-noise-cfg-scale',
         '--high-noise-sampling-method', '--high-noise-steps',
         '--high-noise-img-cfg-scale', '--high-noise-guidance',
@@ -590,6 +590,8 @@ class Any2VideoRunner(CommandRunner):
             '--diffusion-model': self._make_relative(self._get_param('f_unet_model')),
             '--clip_vision': self._make_relative(self._get_param('f_clip_vision_h')),
             '--t5xxl': self._make_relative(self._get_param('f_umt5_xxl')),
+            # Wan2.2 S2V
+            '--audio-encoder': self._make_relative(self._get_param('f_audio_encoder')),
             # LTX-2.3
             '--llm': self._make_relative(self._get_param('f_llm')),
             '--embeddings-connectors': self._make_relative(self._get_param('f_emb_connect')),
@@ -658,6 +660,8 @@ class Any2VideoRunner(CommandRunner):
             '--init-img': self._make_relative(init_img),
             '--end-img': self._make_relative(self._get_param('in_last_frame_inp')),
             '--control-video': self._make_relative(self._get_param('in_control_video_dir')),
+            # Input for S2V
+            '--audio': self._make_relative(self._get_param('in_s2v_audio')),
             # Quantization & components shared with the server runner
             **self._get_quant_options(),
             **self._get_component_options(),

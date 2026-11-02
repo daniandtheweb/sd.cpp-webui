@@ -384,7 +384,8 @@ class CommonRunner():
             'txt_enc_dir': [
                 'in_clip_g', 'in_clip_l', 'in_t5xxl', 'in_llm',
                 'in_llm_vision', 'in_umt5_xxl', 'in_clip_vision_h',
-                'in_emb_connect', 'in_ip_adapter_clip_vision'
+                'in_emb_connect', 'in_ip_adapter_clip_vision',
+                'in_audio_encoder'
             ],
             'taesd_dir': ['in_taesd'],
             'phtmkr_dir': ['in_phtmkr'],
