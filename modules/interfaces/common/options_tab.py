@@ -42,6 +42,7 @@ OPTION_KEY_MAP = {
     'in_vae_relative_bool': 'def_vae_relative_bool',
     'in_vae_relative_tile_size': 'def_vae_relative_tile_size',
     'in_temporal_tiling': 'def_temporal_tiling',
+    'in_extra_tiling_args': 'def_extra_tiling_args',
 
     # Cache
     'in_cache_bool': 'def_cache_bool',
@@ -52,6 +53,7 @@ OPTION_KEY_MAP = {
 
     # Extras
     'in_sigmas': 'def_sigmas',
+    'in_extra_sample_args': 'def_extra_sample_args',
     'in_rng': 'def_rng',
     'in_sampler_rng': 'def_sampler_rng',
     'in_predict': 'def_predict',

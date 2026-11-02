@@ -25,6 +25,16 @@ def create_extras_ui(generation: bool = True, launch: bool = True):
             interactive=True,
             visible=generation
         )
+        extra_sample_args = gr.Textbox(
+            label="Extra sample args",
+            value=config.get('def_extra_sample_args'),
+            placeholder="key=value, comma-separated",
+            info="Sampler, scheduler and guidance specific, e.g. "
+                 "guidance_schedule, apg_eta, apg_momentum, slg_uncond, "
+                 "base_shift, max_shift, noise_sampler",
+            interactive=True,
+            visible=generation
+        )
         rng = gr.Dropdown(
             label="RNG",
             choices=RNG,
@@ -74,6 +84,7 @@ def create_extras_ui(generation: bool = True, launch: bool = True):
 
     return {
         'in_sigmas': sigmas,
+        'in_extra_sample_args': extra_sample_args,
         'in_rng': rng,
         'in_sampler_rng': sampler_rng,
         'in_predict': predict,

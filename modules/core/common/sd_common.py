@@ -651,6 +651,15 @@ class CommonRunner():
             '--flash-attn': self._build_mode_spec('in_flash_attention'),
             '--batched-cfg': ('off' if self._get_param('in_batched_cfg') == 'off'
                               else None),
+            # Free-form key=value lists
+            '--extra-sample-args': (
+                str(self._get_param('in_extra_sample_args') or "").strip()
+                or None
+            ),
+            '--extra-tiling-args': (
+                str(self._get_param('in_extra_tiling_args') or "").strip()
+                or None
+            ),
         }
 
     def _build_mode_spec(self, base_key: str) -> Optional[str]:

@@ -51,6 +51,15 @@ def create_vae_tiling_ui():
             value=config.get('def_temporal_tiling'),
             interactive=True
         )
+        extra_tiling_args = gr.Textbox(
+            label="Extra tiling args",
+            value=config.get('def_extra_tiling_args'),
+            placeholder="key=value, comma-separated",
+            info="Video VAEs: temporal_tile_frames (default 4), "
+                 "temporal_tile_overlap (default 1). Wan2.2 TI2V 5B: "
+                 "temporal_decode_frames (default 1)",
+            interactive=True
+        )
 
         vae_tile_comp = [
             vae_tile_overlap, vae_tile_size, vae_relative_bool
@@ -74,5 +83,6 @@ def create_vae_tiling_ui():
         'in_vae_tile_size': vae_tile_size,
         'in_vae_relative_bool': vae_relative_bool,
         'in_vae_relative_tile_size': vae_relative_tile_size,
-        'in_temporal_tiling': temporal_tiling
+        'in_temporal_tiling': temporal_tiling,
+        'in_extra_tiling_args': extra_tiling_args
     }

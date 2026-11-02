@@ -368,6 +368,10 @@ class ApiTaskRunner(CommonRunner):
         sigmas = parse_number_list(self._get_param('in_sigmas'))
         if sigmas:
             sample_params['custom_sigmas'] = sigmas
+        # Extra sample args
+        extra_sample_args = self._text('in_extra_sample_args')
+        if extra_sample_args:
+            sample_params['extra_sample_args'] = extra_sample_args
 
         # Guidance
         v = self._num('in_cfg', float)
@@ -440,6 +444,9 @@ class ApiTaskRunner(CommonRunner):
         # LTX Specifics
         if self._get_param('in_temporal_tiling'):
             tiling['temporal_tiling'] = True
+        extra_tiling_args = self._text('in_extra_tiling_args')
+        if extra_tiling_args:
+            tiling['extra_tiling_args'] = extra_tiling_args
         if not tiling['enabled']:
             return tiling
         v = self._num('in_vae_tile_overlap', float)

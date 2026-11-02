@@ -25,6 +25,8 @@ class ServerRunner(CommonRunner):
         '--cache-mode',
         '--disable-image-metadata',
         '--compression-quality',
+        '--extra-sample-args',
+        '--extra-tiling-args',
     }
 
     def __init__(self, params: Dict[str, Any]):

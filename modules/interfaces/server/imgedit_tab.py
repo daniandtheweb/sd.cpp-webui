@@ -122,6 +122,7 @@ with gr.Blocks() as imgedit_server_block:
                 # Extra Settings
                 extras_ui = create_extras_ui(generation=False)
                 del extras_ui['in_sigmas']
+                del extras_ui['in_extra_sample_args']
                 inputs_map.update(extras_ui)
 
                 # Performance Settings
@@ -240,7 +241,10 @@ with gr.Blocks() as imgedit_server_block:
 
                 # Extra Settings
                 extras_gen_ui = create_extras_ui(launch=False)
-                extras_gen_ui = {'in_sigmas': extras_gen_ui['in_sigmas']}
+                extras_gen_ui = {
+                    k: extras_gen_ui[k]
+                    for k in ('in_sigmas', 'in_extra_sample_args')
+                }
                 inputs_map.update(extras_gen_ui)
 
             # Experimental
