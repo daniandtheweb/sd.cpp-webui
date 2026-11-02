@@ -54,6 +54,9 @@ class ServerRunner(CommonRunner):
         options.update({
             # ControlNet model, enabled per request
             '--control-net': self._make_relative(self._get_param('f_cnnet')),
+            # ADetailer detector, runs after every image generation.
+            # Prompts and settings are set per request
+            '--ad-model': self._make_relative(self._get_param('f_ad_model')),
             # PhotoMaker
             '--pm-style-strength': (self._get_param('in_phtmkr_strength')
                                     if self._get_param('in_phtmkr_bool')

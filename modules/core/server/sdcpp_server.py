@@ -513,6 +513,23 @@ class ApiTaskRunner(CommonRunner):
             control['control_strength'] = v
         return control
 
+    def _adetailer(self) -> dict:
+        """
+        Builds the ADetailer fields. The detector is loaded at launch and
+        runs on every image, so only the overrides are sent.
+        """
+        adetailer = {}
+        prompt = self._text('in_ad_prompt')
+        if prompt:
+            adetailer['ad_prompt'] = prompt
+        nprompt = self._text('in_ad_nprompt')
+        if nprompt:
+            adetailer['ad_negative_prompt'] = nprompt
+        extra_args = self._build_extra_ad_args()
+        if extra_args:
+            adetailer['extra_ad_args'] = extra_args
+        return adetailer
+
     def _add_input_images(self, payload: dict):
         """
         Adds the input images to the payload.
@@ -587,6 +604,9 @@ class ApiTaskRunner(CommonRunner):
 
         # ControlNet
         payload.update(self._control())
+
+        # ADetailer
+        payload.update(self._adetailer())
 
         self._add_input_images(payload)
         return payload

@@ -25,7 +25,8 @@ MODEL_DIR_MAP = {
     "Lora": config.get('lora_dir'),
     "Embeddings": config.get('emb_dir'),
     "Upscalers": config.get('upscl_dir'),
-    "ControlNet": config.get('cnnet_dir')
+    "ControlNet": config.get('cnnet_dir'),
+    "ADetailer": config.get('ad_dir')
 }
 
 

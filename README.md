@@ -24,6 +24,7 @@ This WebUI, by using **stable-diffusion.cpp** as its core, supports a large numb
 - TAESD
 - PhotoMaker
 - ControlNet
+- ADetailer (YOLOv8 detectors)
 - Upscaling models
 - LoRAs and embeddings
 

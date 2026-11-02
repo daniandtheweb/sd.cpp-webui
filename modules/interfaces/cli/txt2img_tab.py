@@ -26,6 +26,7 @@ from modules.ui.generation_settings import (
 from modules.ui.upscale import create_upscl_ui
 from modules.ui.hires import create_hires_ui
 from modules.ui.controlnet import create_cnnet_ui
+from modules.ui.adetailer import create_adetailer_ui
 from modules.ui.img_preprocess import create_img_preprocess_ui
 from modules.ui.slg import create_slg_ui
 # from modules.ui.chroma import create_chroma_ui
@@ -102,6 +103,10 @@ with gr.Blocks() as txt2img_block:
                 # ControlNet
                 cnnet_ui = create_cnnet_ui()
                 inputs_map.update(cnnet_ui)
+
+                # ADetailer
+                adetailer_ui = create_adetailer_ui()
+                inputs_map.update(adetailer_ui)
 
                 # Image Preprocessing
                 img_preprocess_ui = create_img_preprocess_ui()

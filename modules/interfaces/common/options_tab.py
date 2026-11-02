@@ -109,6 +109,21 @@ OPTION_KEY_MAP = {
     'in_hires_sigmas': 'def_hires_sigmas',
     'in_hires_upscale_tile_size': 'def_hires_upscale_tile_size',
 
+    # ADetailer
+    'in_ad_prompt': 'def_ad_prompt',
+    'in_ad_nprompt': 'def_ad_nprompt',
+    'in_ad_confidence': 'def_ad_confidence',
+    'in_ad_denoising_strength': 'def_ad_denoising_strength',
+    'in_ad_mask_blur': 'def_ad_mask_blur',
+    'in_ad_inpaint_padding': 'def_ad_inpaint_padding',
+    'in_ad_dilate_erode': 'def_ad_dilate_erode',
+    'in_ad_mask_mode': 'def_ad_mask_mode',
+    'in_ad_inpaint_width': 'def_ad_inpaint_width',
+    'in_ad_inpaint_height': 'def_ad_inpaint_height',
+    'in_ad_steps': 'def_ad_steps',
+    'in_ad_cfg': 'def_ad_cfg',
+    'in_ad_extra_args': 'def_ad_extra_args',
+
     # Model Arguments
     'in_chroma_use_dit_mask': 'def_chroma_use_dit_mask',
     'in_chroma_use_t5_mask': 'def_chroma_use_t5_mask',

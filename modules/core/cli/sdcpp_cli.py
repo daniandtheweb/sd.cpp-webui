@@ -358,6 +358,18 @@ class ImageGenerationRunner(CommandRunner):
                 '--control-image': self._make_relative(self._get_param('in_control_img')),
                 '--control-strength': self._get_param('in_control_strength')
             } if self._get_param('in_cnnet_bool') else {}),
+            # ADetailer
+            **({
+                '--ad-model': self._make_relative(self._get_param('f_ad_model')),
+                '--ad-prompt': (str(self._get_param('in_ad_prompt') or "").strip()
+                                or None),
+                '--ad-negative-prompt': (
+                    str(self._get_param('in_ad_nprompt') or "").strip()
+                    or None
+                ),
+                '--extra-ad-args': self._build_extra_ad_args(),
+            } if (self._get_param('in_ad_bool')
+                  and self._get_param('f_ad_model')) else {}),
             # Image Preprocessing
             '--image-preprocess': (self._get_param('in_img_preprocess')
                                    if self._get_param('in_img_preprocess')

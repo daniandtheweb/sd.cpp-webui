@@ -384,6 +384,7 @@ class CommonRunner():
             'phtmkr_dir': ['in_phtmkr'],
             'upscl_dir': ['in_upscl'],
             'cnnet_dir': ['in_cnnet'],
+            'ad_dir': ['in_ad_model'],
             'tokenizer_dir': ['in_tokenizer']
         }
         for dir_key, param_keys in path_mappings.items():
@@ -453,6 +454,46 @@ class CommonRunner():
         if pixart_vae_scale_factor and float(pixart_vae_scale_factor) != 0:
             args.append(f'pixart_vae_scale_factor={pixart_vae_scale_factor}')
         return ",".join(args)
+
+    # ADetailer settings: (UI key, extra_ad_args key, type, sd.cpp default)
+    _AD_ARGS = (
+        ('in_ad_confidence', 'confidence', float, 0.3),
+        ('in_ad_denoising_strength', 'denoising_strength', float, 0.4),
+        ('in_ad_mask_blur', 'mask_blur', int, 4),
+        ('in_ad_inpaint_padding', 'inpaint_padding', int, 32),
+        ('in_ad_dilate_erode', 'dilate_erode', int, 4),
+        ('in_ad_mask_mode', 'mask_mode', str, "none"),
+        ('in_ad_inpaint_width', 'inpaint_width', int, 512),
+        ('in_ad_inpaint_height', 'inpaint_height', int, 512),
+        ('in_ad_steps', 'steps', int, 0),
+        ('in_ad_cfg', 'cfg_scale', float, -1.0),
+    )
+
+    def _build_extra_ad_args(self) -> str | None:
+        """
+        Assembles the extra ADetailer key=value list from the ADetailer
+        settings, skipping the values equal to sd.cpp's defaults.
+        The free-form extra arguments come last, so they take precedence.
+        Returns None when nothing differs from the defaults.
+        """
+        args = []
+        for key, name, cast, default in self._AD_ARGS:
+            val = self._get_param(key)
+            if val is None or str(val).strip() == "":
+                continue
+            try:
+                val = int(float(val)) if cast is int else cast(val)
+            except (TypeError, ValueError):
+                continue
+            if val == default:
+                continue
+            if cast is float:
+                val = f"{val:g}"
+            args.append(f"{name}={val}")
+        extra = str(self._get_param('in_ad_extra_args') or "").strip(" ,")
+        if extra:
+            args.append(extra)
+        return ",".join(args) if args else None
 
     def _get_common_model_options(self) -> Dict[str, Any]:
         """

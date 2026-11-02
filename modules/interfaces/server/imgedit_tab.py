@@ -34,6 +34,7 @@ from modules.ui.generation_settings import (
 )
 from modules.ui.upscale import create_upscl_ui
 from modules.ui.controlnet import create_cnnet_ui
+from modules.ui.adetailer import create_adetailer_ui
 # from modules.ui.qwen import create_qwen_ui
 from modules.ui.circular import create_circular_ui
 from modules.ui.photomaker import create_photomaker_ui
@@ -93,6 +94,11 @@ with gr.Blocks() as imgedit_server_block:
                 cnnet_ui = create_cnnet_ui(inputs=False)
                 cnnet_ui = {'in_cnnet': cnnet_ui['in_cnnet']}
                 inputs_map.update(cnnet_ui)
+
+                # ADetailer
+                adetailer_ui = create_adetailer_ui(inputs=False)
+                adetailer_ui = {'in_ad_model': adetailer_ui['in_ad_model']}
+                inputs_map.update(adetailer_ui)
 
                 # Qwen
                 # qwen_ui = create_qwen_ui()
@@ -199,6 +205,12 @@ with gr.Blocks() as imgedit_server_block:
                 del cnnet_inputs_ui['in_cnnet']
                 inputs_map.update(cnnet_inputs_ui)
 
+                # ADetailer
+                adetailer_inputs_ui = create_adetailer_ui(model_sel=False)
+                del adetailer_inputs_ui['in_ad_bool']
+                del adetailer_inputs_ui['in_ad_model']
+                inputs_map.update(adetailer_inputs_ui)
+
                 # ETA
                 eta_ui = create_eta_ui()
                 inputs_map.update(eta_ui)
@@ -297,6 +309,7 @@ with gr.Blocks() as imgedit_server_block:
         list(model_ui.keys())
         + list(quant_ui.keys())
         + list(cnnet_ui.keys())
+        + list(adetailer_ui.keys())
         + list(circular_ui.keys())
         + list(photomaker_ui.keys())
         + list(taesd_ui.keys())

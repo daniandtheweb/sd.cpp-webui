@@ -17,6 +17,7 @@ FOLDER_CONFIG = {
     'phtmkr_dir': "PhotoMaker folder",
     'upscl_dir': "Upscaler folder",
     'cnnet_dir': "ControlNet folder",
+    'ad_dir': "ADetailer folder",
     'txt2img_dir': "txt2img outputs folder",
     'img2img_dir': "img2img outputs folder",
     'imgedit_dir': "imgedit outputs folder",
