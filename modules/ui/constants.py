@@ -27,6 +27,7 @@ RNG = ['Default'] + sd_options.get_opt("rng")
 SAMPLER_RNG = ['Default'] + sd_options.get_opt("sampler_rng")
 PREVIEW = sd_options.get_opt("previews")
 PREDICTION = ['Default'] + sd_options.get_opt("prediction")
+VAE_FORMAT = ["Default", "flux", "sd3", "flux2", "wan"]
 CACHE_MODE = [
     "easycache", "ucache", "dbcache",
     "taylorseer", "cache-dit", "spectrum"

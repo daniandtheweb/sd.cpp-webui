@@ -5,7 +5,7 @@ import gradio as gr
 from modules.shared_instance import config
 
 from modules.ui.constants import (
-    RNG, SAMPLER_RNG, PREDICTION, LOG_LEVEL
+    RNG, SAMPLER_RNG, PREDICTION, VAE_FORMAT, LOG_LEVEL
 )
 
 
@@ -43,6 +43,12 @@ def create_extras_ui(generation: bool = True, launch: bool = True):
             value=config.get('def_predict'),
             visible=launch
         )
+        vae_format = gr.Dropdown(
+            label="VAE format",
+            choices=VAE_FORMAT,
+            value=config.get('def_vae_format'),
+            visible=launch
+        )
         lora_apply = gr.Dropdown(
             label="Lora apply mode",
             choices=["auto", "immediately", "at_runtime"],
@@ -71,6 +77,7 @@ def create_extras_ui(generation: bool = True, launch: bool = True):
         'in_rng': rng,
         'in_sampler_rng': sampler_rng,
         'in_predict': predict,
+        'in_vae_format': vae_format,
         'in_lora_apply': lora_apply,
         'in_mmap': mmap,
         'in_color': color,

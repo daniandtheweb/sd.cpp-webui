@@ -52,6 +52,7 @@ DEFAULT_SETTINGS = {
     'def_rng': "Default",
     'def_sampler_rng': "Default",
     'def_predict': "Default",
+    'def_vae_format': "Default",
     'def_lora_apply': "auto",
     'def_chroma_use_dit_mask': True,
     'def_chroma_use_t5_mask': False,

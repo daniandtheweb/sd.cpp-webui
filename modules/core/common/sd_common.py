@@ -567,6 +567,9 @@ class CommonRunner():
             '--prediction': (self._get_param('in_predict')
                              if self._get_param('in_predict') != "Default"
                              else None),
+            '--vae-format': (self._get_param('in_vae_format')
+                             if self._get_param('in_vae_format') != "Default"
+                             else None),
         }
 
     def _get_performance_options(self) -> Dict[str, Any]:

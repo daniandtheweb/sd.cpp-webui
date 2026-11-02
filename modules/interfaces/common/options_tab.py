@@ -55,6 +55,7 @@ OPTION_KEY_MAP = {
     'in_rng': 'def_rng',
     'in_sampler_rng': 'def_sampler_rng',
     'in_predict': 'def_predict',
+    'in_vae_format': 'def_vae_format',
     'in_lora_apply': 'def_lora_apply',
     'in_output': 'def_output',
     'in_output_begin_idx': 'def_output_begin_idx',
