@@ -96,6 +96,14 @@ with gr.Blocks() as convert_block:
                 )
                 inputs_map['in_tensor_type_rules'] = tensor_type_rules
 
+            imatrix_in = gr.File(
+                label="Imatrix (optional)",
+                file_count="multiple",
+                file_types=[".dat"],
+                type="filepath"
+            )
+            inputs_map['in_imatrix_in'] = imatrix_in
+
             with gr.Row():
                 convert_name = gr.Checkbox(
                     label="Convert tensor name"

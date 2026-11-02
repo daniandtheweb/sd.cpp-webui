@@ -807,6 +807,7 @@ def convert(params: dict):
     in_gguf_name = params.get('in_gguf_name')
     in_color = params.get('in_color', True)
     in_log_level = params.get('in_log_level')
+    in_imatrix_in = params.get('in_imatrix_in') or []
 
     # Validate required inputs up front: a missing model dir in the
     # config (ConfigManager returns None) or an empty model selection
@@ -850,6 +851,8 @@ def convert(params: dict):
         command.extend(['--tensor-type-rules', in_tensor_type_rules])
     if in_convert_name:
         command.append('--convert-name')
+    for imatrix in in_imatrix_in:
+        command.extend(['--imat-in', imatrix])
     if in_color:
         command.append('--color')
     if in_log_level and in_log_level != "info":
