@@ -142,6 +142,27 @@ class CommandRunner(CommonRunner):
                 '--lora-apply-mode', str(self._get_param('in_lora_apply'))
             ])
 
+    def _get_vae_tiling_options(self) -> Dict[str, Any]:
+        """Returns the VAE tiling options, empty when tiling is off."""
+        if not self._get_param('in_vae_tiling'):
+            return {}
+        return {
+            '--vae-tile-overlap': self._get_param('in_vae_tile_overlap'),
+            '--vae-tile-size': (
+                f"{size}x{size}"
+                if (size := self._int_param('in_vae_tile_size'))
+                else None
+            ),
+            '--vae-relative-tile-size': (
+                f"{size}x{size}"
+                if (
+                    self._get_param('in_vae_relative_bool') and
+                    (size := self._int_param('in_vae_relative_tile_size'))
+                )
+                else None
+            ),
+        }
+
     def _prepare_for_run(self):
         """
         Prepares the final command string for printing and computes outputs.
@@ -408,22 +429,7 @@ class ImageGenerationRunner(CommandRunner):
             # Performance
             **self._get_performance_options(),
             # VAE Tiling
-            **({
-                '--vae-tile-overlap': self._get_param('in_vae_tile_overlap'),
-                '--vae-tile-size': (
-                    f"{size}x{size}"
-                    if (size := self._int_param('in_vae_tile_size'))
-                    else None
-                ),
-                '--vae-relative-tile-size': (
-                    f"{size}x{size}"
-                    if (
-                        self._get_param('in_vae_relative_bool') and
-                        (size := self._int_param('in_vae_relative_tile_size'))
-                    )
-                    else None
-                ),
-            } if self._get_param('in_vae_tiling') else {}),
+            **self._get_vae_tiling_options(),
             # Cache
             **({
                 '--cache-mode': self._get_param('in_cache_mode'),
@@ -689,6 +695,8 @@ class Any2VideoRunner(CommandRunner):
                                    else None),
             # Performance
             **self._get_performance_options(),
+            # VAE Tiling
+            **self._get_vae_tiling_options(),
             # Common runtime options (auto-fit, rpc, scales, ...)
             **self._get_common_options()
         }
