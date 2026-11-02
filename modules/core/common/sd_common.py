@@ -504,6 +504,15 @@ class CommonRunner():
             args.append(extra)
         return ",".join(args) if args else None
 
+    def _qwen_image_layers(self) -> int | None:
+        """
+        Returns the Qwen Image Layered layer count, None when disabled.
+        """
+        if not self._get_param('in_qwen_layered_bool'):
+            return None
+        layers = self._int_param('in_qwen_image_layers')
+        return max(0, layers) if layers is not None else None
+
     def _get_common_model_options(self) -> Dict[str, Any]:
         """
         Returns the base model options.

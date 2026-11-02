@@ -157,6 +157,11 @@ class CommandRunner(CommonRunner):
         # output begin index). Without one, batch > 1 writes suffixed files
         # (<base>_<begin+i>.png, 0-based) — no unsuffixed file.
         batch_count = int(float(self._get_param('in_batch_count', 1) or 1))
+        # Qwen Image Layered decodes layers + 1 images per generation,
+        # numbered like a batch
+        layers = self._qwen_image_layers()
+        if layers is not None:
+            batch_count *= layers + 1
         # sd-cli clamps negative begin indices to 0 (main.cpp:482)
         begin_idx = max(0, self._int_param('in_output_begin_idx') or 0)
         if has_output_index_spec(self.output_path):
@@ -389,6 +394,8 @@ class ImageGenerationRunner(CommandRunner):
                                    else None),
             # Reference images
             '--ref-image-args': self._build_ref_image_args(),
+            # Qwen Image Layered
+            '--qwen-image-layers': self._qwen_image_layers(),
             # Skip Layer Guidance (SLG)
             **({
                 '--slg-scale': self._get_param('in_slg_scale'),

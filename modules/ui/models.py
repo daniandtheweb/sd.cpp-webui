@@ -253,7 +253,7 @@ def create_img_model_sel_ui():
 def create_imgedit_model_sel_ui():
     """Create the image edit selection UI"""
     with gr.Row():
-        gr.Markdown("Supports: FLUX.1-Kontext-dev, Qwen Image Edit, Qwen Image Edit 2509")
+        gr.Markdown("Supports: FLUX.1-Kontext-dev, Qwen Image Edit, Qwen Image Edit 2509, Qwen Image Layered")
     with gr.Row():
         with gr.Column():
             unet_model = create_model_widget(

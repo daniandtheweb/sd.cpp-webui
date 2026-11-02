@@ -31,6 +31,7 @@ from modules.ui.controlnet import create_cnnet_ui
 from modules.ui.adetailer import create_adetailer_ui
 from modules.ui.img_preprocess import create_img_preprocess_ui
 from modules.ui.ref_img import create_ref_img_ui
+from modules.ui.qwen_layered import create_qwen_layered_ui
 from modules.ui.slg import create_slg_ui
 # from modules.ui.qwen import create_qwen_ui
 from modules.ui.model_args import create_model_args_ui
@@ -118,6 +119,10 @@ with gr.Blocks() as imgedit_block:
                 # Reference Image Settings
                 ref_img_ui = create_ref_img_ui()
                 inputs_map.update(ref_img_ui)
+
+                # Qwen Image Layered
+                qwen_layered_ui = create_qwen_layered_ui()
+                inputs_map.update(qwen_layered_ui)
 
                 # Skip Layer Guidance
                 slg_ui = create_slg_ui()

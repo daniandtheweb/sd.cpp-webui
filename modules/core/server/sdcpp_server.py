@@ -617,6 +617,11 @@ class ApiTaskRunner(CommonRunner):
         if ref_args:
             payload['ref_image_args'] = ref_args
 
+        # Qwen Image Layered
+        layers = self._qwen_image_layers()
+        if layers is not None:
+            payload['qwen_image_layers'] = layers
+
         # ControlNet
         payload.update(self._control())
 
