@@ -27,6 +27,7 @@ from modules.ui.upscale import create_upscl_ui
 from modules.ui.hires import create_hires_ui
 from modules.ui.controlnet import create_cnnet_ui
 from modules.ui.adetailer import create_adetailer_ui
+from modules.ui.ipadapter import create_ipadapter_ui
 from modules.ui.img_preprocess import create_img_preprocess_ui
 from modules.ui.slg import create_slg_ui
 # from modules.ui.chroma import create_chroma_ui
@@ -107,6 +108,10 @@ with gr.Blocks() as txt2img_block:
                 # ADetailer
                 adetailer_ui = create_adetailer_ui()
                 inputs_map.update(adetailer_ui)
+
+                # IP-Adapter
+                ip_adapter_ui = create_ipadapter_ui()
+                inputs_map.update(ip_adapter_ui)
 
                 # Image Preprocessing
                 img_preprocess_ui = create_img_preprocess_ui()

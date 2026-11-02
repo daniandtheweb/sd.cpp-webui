@@ -513,6 +513,21 @@ class ApiTaskRunner(CommonRunner):
             control['control_strength'] = v
         return control
 
+    def _ip_adapter(self) -> dict:
+        """Builds the IP-Adapter fields."""
+        if not self._get_param('in_ip_adapter_bool'):
+            return {}
+        ip_img = image_to_pil(self._get_param('in_ip_adapter_img'))
+        if ip_img is None:
+            return {}
+        ip_adapter = {
+            "ip_adapter_image": encode_image(ip_img.convert('RGB'))
+        }
+        v = self._num('in_ip_adapter_strength', float)
+        if v is not None:
+            ip_adapter['ip_adapter_strength'] = v
+        return ip_adapter
+
     def _adetailer(self) -> dict:
         """
         Builds the ADetailer fields. The detector is loaded at launch and
@@ -604,6 +619,9 @@ class ApiTaskRunner(CommonRunner):
 
         # ControlNet
         payload.update(self._control())
+
+        # IP-Adapter
+        payload.update(self._ip_adapter())
 
         # ADetailer
         payload.update(self._adetailer())

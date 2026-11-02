@@ -378,13 +378,14 @@ class CommonRunner():
             'txt_enc_dir': [
                 'in_clip_g', 'in_clip_l', 'in_t5xxl', 'in_llm',
                 'in_llm_vision', 'in_umt5_xxl', 'in_clip_vision_h',
-                'in_emb_connect'
+                'in_emb_connect', 'in_ip_adapter_clip_vision'
             ],
             'taesd_dir': ['in_taesd'],
             'phtmkr_dir': ['in_phtmkr'],
             'upscl_dir': ['in_upscl'],
             'cnnet_dir': ['in_cnnet'],
             'ad_dir': ['in_ad_model'],
+            'ipadapter_dir': ['in_ip_adapter'],
             'tokenizer_dir': ['in_tokenizer']
         }
         for dir_key, param_keys in path_mappings.items():

@@ -38,6 +38,7 @@ from modules.ui.generation_settings import (
 from modules.ui.upscale import create_upscl_ui
 from modules.ui.controlnet import create_cnnet_ui
 from modules.ui.adetailer import create_adetailer_ui
+from modules.ui.ipadapter import create_ipadapter_ui
 # from modules.ui.chroma import create_chroma_ui
 # from modules.ui.qwen import create_qwen_ui
 from modules.ui.circular import create_circular_ui
@@ -105,6 +106,14 @@ with gr.Blocks() as img2img_server_block:
                 adetailer_ui = create_adetailer_ui(inputs=False)
                 adetailer_ui = {'in_ad_model': adetailer_ui['in_ad_model']}
                 inputs_map.update(adetailer_ui)
+
+                # IP-Adapter
+                ip_adapter_ui = create_ipadapter_ui(inputs=False)
+                ip_adapter_ui = {
+                    k: ip_adapter_ui[k]
+                    for k in ('in_ip_adapter', 'in_ip_adapter_clip_vision')
+                }
+                inputs_map.update(ip_adapter_ui)
 
                 # Chroma
                 # chroma_ui = create_chroma_ui()
@@ -249,6 +258,12 @@ with gr.Blocks() as img2img_server_block:
                 del adetailer_inputs_ui['in_ad_model']
                 inputs_map.update(adetailer_inputs_ui)
 
+                # IP-Adapter
+                ip_adapter_inputs_ui = create_ipadapter_ui(model_sel=False)
+                del ip_adapter_inputs_ui['in_ip_adapter']
+                del ip_adapter_inputs_ui['in_ip_adapter_clip_vision']
+                inputs_map.update(ip_adapter_inputs_ui)
+
                 # Timestep shift
                 timestep_shift_ui = create_timestep_shift_ui()
                 inputs_map.update(timestep_shift_ui)
@@ -352,6 +367,7 @@ with gr.Blocks() as img2img_server_block:
         + list(quant_ui.keys())
         + list(cnnet_ui.keys())
         + list(adetailer_ui.keys())
+        + list(ip_adapter_ui.keys())
         + list(circular_ui.keys())
         + list(photomaker_ui.keys())
         + list(taesd_ui.keys())

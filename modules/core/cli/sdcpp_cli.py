@@ -370,6 +370,19 @@ class ImageGenerationRunner(CommandRunner):
                 '--extra-ad-args': self._build_extra_ad_args(),
             } if (self._get_param('in_ad_bool')
                   and self._get_param('f_ad_model')) else {}),
+            # IP-Adapter
+            **({
+                '--ip-adapter': self._make_relative(self._get_param('f_ip_adapter')),
+                '--clip_vision': self._make_relative(
+                    self._get_param('f_ip_adapter_clip_vision')
+                ),
+                '--ip-adapter-image': self._make_relative(
+                    self._get_param('in_ip_adapter_img')
+                ),
+                '--ip-adapter-strength': self._get_param('in_ip_adapter_strength'),
+            } if (self._get_param('in_ip_adapter_bool')
+                  and self._get_param('f_ip_adapter')
+                  and self._get_param('in_ip_adapter_img')) else {}),
             # Image Preprocessing
             '--image-preprocess': (self._get_param('in_img_preprocess')
                                    if self._get_param('in_img_preprocess')

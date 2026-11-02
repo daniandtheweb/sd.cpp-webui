@@ -57,6 +57,13 @@ class ServerRunner(CommonRunner):
             # ADetailer detector, runs after every image generation.
             # Prompts and settings are set per request
             '--ad-model': self._make_relative(self._get_param('f_ad_model')),
+            # IP-Adapter and its image encoder, enabled per request
+            '--ip-adapter': self._make_relative(self._get_param('f_ip_adapter')),
+            '--clip_vision': (
+                self._make_relative(self._get_param('f_ip_adapter_clip_vision'))
+                if self._get_param('f_ip_adapter')
+                else None
+            ),
             # PhotoMaker
             '--pm-style-strength': (self._get_param('in_phtmkr_strength')
                                     if self._get_param('in_phtmkr_bool')
