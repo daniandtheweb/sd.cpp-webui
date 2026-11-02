@@ -28,7 +28,8 @@ MODEL_DIR_MAP = {
     "ControlNet": config.get('cnnet_dir'),
     "ADetailer": config.get('ad_dir'),
     "IP-Adapter": config.get('ipadapter_dir'),
-    "PuLID": config.get('pulid_dir')
+    "PuLID": config.get('pulid_dir'),
+    "AnimateDiff": config.get('animatediff_dir')
 }
 
 

@@ -10,7 +10,7 @@ import gradio as gr
 
 from modules.core.common.sd_common import (
     CommonRunner, LORA_TAG_PATTERN, process_editor_mask,
-    has_output_index_spec, expand_output_index
+    has_output_index_spec, expand_output_index, VideoMode
 )
 from modules.ui.progress import progress_update
 from modules.shared_instance import (
@@ -535,6 +535,18 @@ class ImgEditRunner(ImageGenerationRunner):
 class Any2VideoRunner(CommandRunner):
     """Builds the any2video command."""
 
+    # Video model flags, replaced by AnimateDiff's in its mode
+    _VIDEO_MODEL_FLAGS = (
+        '--vae', '--audio-vae', '--diffusion-model', '--clip_vision',
+        '--t5xxl', '--llm', '--embeddings-connectors',
+        '--high-noise-diffusion-model', '--high-noise-cfg-scale',
+        '--high-noise-sampling-method', '--high-noise-steps',
+        '--high-noise-img-cfg-scale', '--high-noise-guidance',
+        '--high-noise-slg-scale', '--high-noise-skip-layer-start',
+        '--high-noise-skip-layer-end', '--high-noise-eta',
+        '--high-noise-skip-layers',
+    )
+
     def _add_base_args(self):
         # Override to add video-specific base arguments
         super()._add_base_args()
@@ -669,6 +681,24 @@ class Any2VideoRunner(CommandRunner):
             # Common runtime options (auto-fit, rpc, scales, ...)
             **self._get_common_options()
         }
+
+        # AnimateDiff tab: an SD 1.5 checkpoint and a motion module
+        # instead of the video models
+        if self._get_param('in_video_mode') == VideoMode.ANIMATEDIFF:
+            for flag in self._VIDEO_MODEL_FLAGS:
+                options.pop(flag, None)
+            options.update({
+                '--model': self._make_relative(
+                    self._get_param('f_animatediff_ckpt')
+                ),
+                '--vae': self._make_relative(
+                    self._get_param('f_animatediff_vae')
+                ),
+                '--motion-module': self._make_relative(
+                    self._get_param('f_motion_module')
+                ),
+            })
+
         self._add_options(options)
 
         flags = self._get_common_flags()

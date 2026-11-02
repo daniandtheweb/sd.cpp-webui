@@ -303,8 +303,8 @@ def create_imgedit_model_sel_ui():
     }
 
 
-def create_video_model_sel_ui():
-    """Create the video model selection UI"""
+def create_video_unet_model_sel_ui():
+    """Create the video UNET model selection UI"""
     with gr.Row():
         gr.Markdown("Supports: LTX-2.3, Wan2.1, Wan2.2")
     with gr.Row():
@@ -373,3 +373,62 @@ def create_video_model_sel_ui():
         'in_emb_connect': emb_connect,
         'in_high_noise_model': high_noise_model
     }
+
+
+def create_animatediff_model_sel_ui():
+    """Create the AnimateDiff model selection UI"""
+    with gr.Row():
+        gr.Markdown("Supports: AnimateDiff (SD 1.5 motion modules). "
+                    "Trained with 16 frames, euler, discrete and CFG 8")
+    with gr.Row():
+        with gr.Column():
+            animatediff_ckpt = create_model_widget(
+                label="SD 1.5 Checkpoint",
+                dir_key='ckpt_dir',
+                option_key=None,
+            )
+        with gr.Column():
+            animatediff_vae = create_model_widget(
+                label="Checkpoint VAE",
+                dir_key='vae_dir',
+                option_key=None,
+            )
+    with gr.Row():
+        motion_module = create_model_widget(
+            label="Motion Module",
+            dir_key='animatediff_dir',
+            option_key=None,
+        )
+
+    return {
+        'in_animatediff_ckpt': animatediff_ckpt,
+        'in_animatediff_vae': animatediff_vae,
+        'in_motion_module': motion_module
+    }
+
+
+def create_video_model_sel_ui():
+    """Create the video model selection UI"""
+    video_mode = gr.Number(value=0, visible=False)
+    model_inputs = {'in_video_mode': video_mode}
+
+    with gr.Tabs(selected="unet") as model_tabs:
+        with gr.Tab("UNET", id="unet") as unet_tab:
+            model_inputs.update(create_video_unet_model_sel_ui())
+
+        with gr.Tab("AnimateDiff", id="animatediff") as animatediff_tab:
+            model_inputs.update(create_animatediff_model_sel_ui())
+
+    unet_tab.select(fn=lambda: 0, inputs=[], outputs=[video_mode])
+    animatediff_tab.select(fn=lambda: 1, inputs=[], outputs=[video_mode])
+
+    # Follows the mode when a preset restores it
+    video_mode.change(
+        fn=lambda mode: gr.update(
+            selected="animatediff" if mode == 1 else "unet"
+        ),
+        inputs=[video_mode],
+        outputs=[model_tabs]
+    )
+
+    return model_inputs

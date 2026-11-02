@@ -25,6 +25,7 @@ DEFAULT_SETTINGS = {
     'ad_dir': os.path.join(CURRENT_DIR, "models/adetailer/"),
     'ipadapter_dir': os.path.join(CURRENT_DIR, "models/ipadapter/"),
     'pulid_dir': os.path.join(CURRENT_DIR, "models/pulid/"),
+    'animatediff_dir': os.path.join(CURRENT_DIR, "models/animatediff/"),
     'txt2img_dir': os.path.join(CURRENT_DIR, "outputs/txt2img/"),
     'img2img_dir': os.path.join(CURRENT_DIR, "outputs/img2img/"),
     'imgedit_dir': os.path.join(CURRENT_DIR, "outputs/imgedit/"),

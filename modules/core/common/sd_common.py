@@ -123,6 +123,11 @@ class DiffusionMode(IntEnum):
     UNET = 1
 
 
+class VideoMode(IntEnum):
+    UNET = 0
+    ANIMATEDIFF = 1
+
+
 class CommonRunner():
     """
     Common class containing shared logic for CLI and server runners.
@@ -372,8 +377,9 @@ class CommonRunner():
         Resolves all model and directory paths from the config.
         """
         path_mappings = {
-            'ckpt_dir': ['in_ckpt_model'],
-            'vae_dir': ['in_ckpt_vae', 'in_unet_vae', 'in_audio_vae'],
+            'ckpt_dir': ['in_ckpt_model', 'in_animatediff_ckpt'],
+            'vae_dir': ['in_ckpt_vae', 'in_unet_vae', 'in_audio_vae',
+                        'in_animatediff_vae'],
             'unet_dir': ['in_unet_model', 'in_high_noise_model', 'in_uncond_unet_model'],
             'txt_enc_dir': [
                 'in_clip_g', 'in_clip_l', 'in_t5xxl', 'in_llm',
@@ -387,6 +393,7 @@ class CommonRunner():
             'ad_dir': ['in_ad_model'],
             'ipadapter_dir': ['in_ip_adapter'],
             'pulid_dir': ['in_pulid_weights', 'in_pulid_embedding'],
+            'animatediff_dir': ['in_motion_module'],
             'tokenizer_dir': ['in_tokenizer']
         }
         for dir_key, param_keys in path_mappings.items():
