@@ -47,7 +47,6 @@ class ServerState:
         self.ip = ""
         self.port = ""
         self.last_generation_stats = ""
-        self.seed = ""
 
 
 migrate_legacy_configs()

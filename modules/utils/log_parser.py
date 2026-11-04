@@ -3,6 +3,8 @@
 import re
 import sys
 
+from modules.utils.math_utils import remember_seed
+
 
 class LogParser:
     """
@@ -19,7 +21,9 @@ class LogParser:
         # Trailing " - ETA mm:ss" fragment printed by newer sd.cpp builds
         self.ETA_FRAGMENT_REGEX = re.compile(r'^\s*-\s*ETA\s+([\d:]+)\s*$')
         self.SIMPLE_REGEX = re.compile(r'(\d+)/(\d+)')
-        self.SEED_REGEX = re.compile(r"generating image:.*?seed\s+(\d+)")
+        self.SEED_REGEX = re.compile(
+            r"generating image:\s*(\d+)/\d+.*?seed\s+(\d+)"
+        )
         self.PROGRESS_LINE_REGEX = re.compile(
             r'^\s*\|[^|]*\|\s*(\d+)/(\d+)(?:\s*-\s*.*)?$'
         )
@@ -68,9 +72,8 @@ class LogParser:
 
         elif 'seed' in line and 'generating image:' in line:
             match = self.SEED_REGEX.search(line)
-            if match:
-                from modules.shared_instance import server_state
-                server_state.seed = int(match.group(1))
+            if match and match.group(1) == '1':
+                remember_seed(match.group(2))
 
     def _parse_progress_update(self, line, final_stats):
         """Parses a progress bar line and returns a dictionary for the UI."""

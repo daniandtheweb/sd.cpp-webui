@@ -380,3 +380,10 @@ def test_model_args():
              'in_pixart_vae_scale_factor': 0})
     assert convert.model_args(None, c) == (
         'chroma_use_dit_mask=false,chroma_t5_mask_pad=3')
+
+
+def test_cli_value_reads_an_option_back_from_a_command():
+    tokens = ['sd-cli', '-s', '99', '--steps', '5']
+    assert emit.cli_value('seed', tokens) == '99'
+    assert emit.cli_value('seed', ['sd-cli', '--steps', '5']) is None
+    assert emit.cli_value('seed', ['sd-cli', '-s']) is None

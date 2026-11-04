@@ -13,6 +13,7 @@ from modules.core.common.sd_common import (
     has_output_index_spec, expand_output_index
 )
 from modules.options import emit
+from modules.utils.math_utils import remember_seed
 from modules.ui.progress import progress_update
 from modules.shared_instance import (
     config, subprocess_manager, SD_CLI
@@ -155,6 +156,7 @@ class CommandRunner(CommonRunner):
         self._prepare_for_run()
         self._save_command()
         print(f"\n\n{self.fcommand}\n\n")
+        remember_seed(emit.cli_value('seed', self.command))
 
         process_env = self._build_process_env()
 

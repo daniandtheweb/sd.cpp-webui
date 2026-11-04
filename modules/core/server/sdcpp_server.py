@@ -25,6 +25,7 @@ from modules.shared_instance import server_state
 from modules.ui.progress import progress_update
 from modules.options import emit
 from modules.options.convert import stem
+from modules.utils.math_utils import remember_seed
 
 
 HIGH_NOISE_LORA_PREFIX = "|high_noise|"
@@ -452,6 +453,7 @@ class ApiTaskRunner(CommonRunner):
         """Submits the job and yields Gradio updates."""
         payload = self._build_payload()
         self.fcommand = json.dumps(redact_payload(payload), indent=4)
+        remember_seed(payload.get('seed'))
 
         yield (
             self.fcommand,

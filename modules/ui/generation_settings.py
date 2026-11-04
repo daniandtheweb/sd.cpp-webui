@@ -4,7 +4,7 @@ from functools import partial
 
 import gradio as gr
 
-from modules.utils.math_utils import random_seed
+from modules.utils.math_utils import random_seed, reuse_last_seed
 from modules.shared_instance import config
 from modules.utils.ui_state import update_session_cache
 from modules.utils.ui_events import update_interactivity
@@ -17,7 +17,7 @@ from modules.utils.image_utils import (
 from .resolutions import create_resolutions_ui
 from .constants import (
     QUANTS, SAMPLERS, SCHEDULERS,
-    SWITCH_V_SYMBOL, RANDOM_SYMBOL
+    SWITCH_V_SYMBOL, RANDOM_SYMBOL, REUSE_SYMBOL
 )
 
 
@@ -247,6 +247,9 @@ def create_bottom_generation_settings_ui():
             random_seed_btn = gr.Button(
                 value=RANDOM_SYMBOL, scale=1
             )
+            reuse_seed_btn = gr.Button(
+                value=REUSE_SYMBOL, scale=1
+            )
 
     with gr.Row():
         clip_skip = gr.Slider(
@@ -268,6 +271,10 @@ def create_bottom_generation_settings_ui():
 
     random_seed_btn.click(
         random_seed, inputs=[], outputs=[seed]
+    )
+
+    reuse_seed_btn.click(
+        reuse_last_seed, inputs=[], outputs=[seed]
     )
 
     return{

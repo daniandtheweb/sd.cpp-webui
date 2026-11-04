@@ -187,6 +187,15 @@ def cli(ctx: Context) -> List[str]:
     return _command('cli', ctx)
 
 
+def cli_value(name: str, tokens: List[str]) -> Optional[str]:
+    """The value of an option in the tokens of a command, None if absent."""
+    option = next(o for o in registry.OPTIONS if o.name == name)
+    for out in option.cli:
+        if out.flag in tokens[:-1]:
+            return tokens[tokens.index(out.flag) + 1]
+    return None
+
+
 def launch(ctx: Context) -> List[str]:
     """Tokens of the sd-server startup command."""
     return _command('launch', ctx)
