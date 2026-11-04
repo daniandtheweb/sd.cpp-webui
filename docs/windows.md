@@ -70,13 +70,13 @@
 
        2. Compile following the instructions from `stable-diffusion.cpp`'s repository.
 
-       3. Copy the compiled `sd.exe` binary to the main `sd.cpp_webui` directory.
+       3. Copy the compiled `sd-cli.exe` binary (`sd-server.exe` too, if you want to use the `--server` mode) to the main `sd.cpp_webui` directory.
 
     - Download a precompiled binary:
 
        1. Download a precompiled release from the Releases section of `stable-diffusion.cpp`'s repository.
 
-       2. Copy the `sd.exe` binary to the main `sd.cpp_webui` directory.
+       2. Copy the `sd-cli.exe` binary (`sd-server.exe` too, if you want to use the `--server` mode) to the main `sd.cpp_webui` directory.
 
 
 4. Execute the launch script, this will automatically create a virtual environment and install all the necessary Python packages:

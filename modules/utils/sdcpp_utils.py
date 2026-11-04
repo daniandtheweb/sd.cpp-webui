@@ -9,19 +9,19 @@ import time
 from typing import Any, Dict, List
 
 from modules.gallery import get_next_media
-from modules.shared_instance import SD_CLI
+from modules.shared_instance import SD_EXE
 
 DEVICES_CACHE_PATH = os.path.join('user_data', 'devices_cache.json')
 
 
 def list_devices(timeout: int = 10) -> List[str]:
     """
-    Runs `sd-cli --list-devices` and returns the detected device names
+    Runs `<sd executable> --list-devices` and returns the detected device names
     (one per 'name<TAB>description' line). Returns [] on any failure.
     """
     try:
         result = subprocess.run(
-            [SD_CLI, '--list-devices'],
+            [SD_EXE, '--list-devices'],
             capture_output=True, text=True, timeout=timeout
         )
     except (subprocess.SubprocessError, OSError):

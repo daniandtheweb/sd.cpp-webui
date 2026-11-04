@@ -19,7 +19,7 @@ Options:
     --allow-insecure-dir:    Allows the usage of external or linked directories based on config.json
 
 EOF
-exit 0
+exit "${1:-0}"
 }
 
 for arg in "$@"; do
@@ -34,7 +34,7 @@ for arg in "$@"; do
       ;;
     *)
       printf "Error: Unknown command parameter: %s\n" "$arg" >&2
-      print_help
+      print_help 1
       ;;
   esac
 done
@@ -52,21 +52,18 @@ elif [ ! -x "sd-cli" ] && ! command -v "sd-cli" > /dev/null && \
   exit 1
 fi
 
-if [ ! -d "venv" ]; then
+if [ ! -f "venv/bin/activate" ]; then
     echo "Creating virtual environment..."
-    python3 -m venv venv
+    if ! python3 -m venv venv; then
+        echo "Error: failed to create the virtual environment."
+        exit 1
+    fi
 fi
 
 echo "Activating virtual environment..."
 source "venv/bin/activate"
 
-if pip freeze | grep -q -F -f requirements.txt; then
-    echo "Requirements are satisfied."
-else
-    echo "Installing requirements..."
-    pip install -r requirements.txt --upgrade pip
-    echo "Requirements installed."
-fi
+pip install --quiet --disable-pip-version-check -r requirements.txt
 
 if [ $# -eq 0 ]; then
     printf "Starting the WebUI...\n\n"

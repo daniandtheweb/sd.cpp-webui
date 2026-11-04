@@ -7,7 +7,7 @@ from typing import Dict, Any, Optional
 
 from modules.utils.file_utils import get_path
 from modules.utils.sdcpp_utils import extract_env_vars, generate_output_filename
-from modules.shared_instance import config, SD_CLI
+from modules.shared_instance import config, SD_EXE
 from modules.options import convert, emit, registry
 
 LORA_TAG_PATTERN = re.compile(r'<lora:([^:]+):([^>]+)>')
@@ -151,7 +151,7 @@ class CommonRunner():
         if not path or not os.path.isabs(str(path)):
             return path
         try:
-            exe_dir = os.path.dirname(os.path.abspath(SD_CLI))
+            exe_dir = os.path.dirname(os.path.abspath(SD_EXE))
             rel = os.path.relpath(str(path), start=exe_dir)
             # Paths outside the exe directory stay absolute
             if not rel.startswith('..'):

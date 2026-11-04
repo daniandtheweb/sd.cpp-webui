@@ -1,3 +1,23 @@
+# --- Help Function ---
+function Show-Help {
+    param([int]$ExitCode = 0)
+    Write-Host @"
+
+Usage: .\sdcpp_webui.ps1 [options]
+
+Options:
+    -h, --help                                   Show this help message
+    -Server, --server                            Enable stable-diffusion.cpp's server mode
+    -Listen, --listen                            Share sd.cpp-webui on your local network
+    -Autostart, --autostart                      Open the UI automatically
+    -Credentials, --credentials                  Enable password protection using credentials.json.
+                                                 Expected format: {"username1": "password1", "username2": "password2"}
+    -Allow-Insecure-Dir, --allow-insecure-dir    Allows the usage of external or linked directories based on config.json
+
+"@
+    exit $ExitCode
+}
+
 $parsedArgs = @{
     Help = $false
     Server = $false
@@ -22,7 +42,7 @@ foreach ($arg in $args) {
         '^-Allow-Insecure-Dir$' { $parsedArgs.AllowInsecureDir = $true }
         default {
             Write-Host "Error: Unknown command parameter: $arg" -ForegroundColor Red
-            Show-Help
+            Show-Help 1
         }
     }
 }
@@ -41,25 +61,6 @@ $ErrorActionPreference = 'Stop'
 $ScriptDir = $PSScriptRoot
 Set-Location $ScriptDir
 
-# --- Help Function ---
-function Show-Help {
-    Write-Host @"
-
-Usage: .\sdcpp_webui.ps1 [options]
-
-Options:
-    -h, --help                                   Show this help message
-    -Server, --server                            Enable stable-diffusion.cpp's server mode
-    -Listen, --listen                            Share sd.cpp-webui on your local network
-    -Autostart, --autostart                      Open the UI automatically
-    -Credentials, --credentials                  Enable password protection using credentials.json.
-                                                 Expected format: {"username1": "password1", "username2": "password2"}
-    -Allow-Insecure-Dir, --allow-insecure-dir    Allows the usage of external or linked directories based on config.json
-
-"@
-    exit 0
-}
-
 if ($Help) {
     Show-Help
 }
@@ -74,31 +75,33 @@ if ($Server) {
 }
 
 # --- sd.exe Check ---
-if (-not (Test-Path -Path ".\sd-cli.exe") -and -not (Get-Command sd-cli -ErrorAction SilentlyContinue) -and `
-    -not (Test-Path -Path ".\sd.exe") -and -not (Get-Command sd -ErrorAction SilentlyContinue)) {
-    Write-Host "Error: Neither 'sd-cli.exe' nor 'sd.exe' executables were found." -ForegroundColor Red
-    Write-Host "Please place the 'sd-cli.exe' or 'sd.exe' executables in this folder." -ForegroundColor Red
-    exit 1
+if (-not $Server) {
+    if (-not (Test-Path -Path ".\sd-cli.exe") -and -not (Get-Command sd-cli -ErrorAction SilentlyContinue) -and `
+        -not (Test-Path -Path ".\sd.exe") -and -not (Get-Command sd -ErrorAction SilentlyContinue)) {
+        Write-Host "Error: Neither 'sd-cli.exe' nor 'sd.exe' executables were found." -ForegroundColor Red
+        Write-Host "Please place the 'sd-cli.exe' or 'sd.exe' executables in this folder." -ForegroundColor Red
+        exit 1
+    }
 }
 
 # --- Python Virtual Environment ---
-if (-not (Test-Path -Path ".\venv" -PathType Container)) {
+if (-not (Test-Path -Path ".\venv\Scripts\Activate.ps1")) {
     Write-Host "Creating Python virtual environment..."
     python -m venv venv
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Error: failed to create the virtual environment." -ForegroundColor Red
+        exit 1
+    }
 }
 
 Write-Host "Activating virtual environment..."
 . ".\venv\Scripts\Activate.ps1"
 
 # --- Requirements Check ---
-$requiredPackages = Get-Content -Path ".\requirements.txt"
-if (pip freeze | Select-String -Pattern $requiredPackages -SimpleMatch -Quiet) {
-    Write-Host "Requirements are satisfied."
-}
-else {
-    Write-Host "Installing requirements..."
-    python -m pip install -r .\requirements.txt --upgrade pip
-    Write-Host "Requirements installed."
+python -m pip install --quiet --disable-pip-version-check -r .\requirements.txt
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "Error: failed to install the requirements." -ForegroundColor Red
+    exit 1
 }
 
 # --- Build Python Argument List ---

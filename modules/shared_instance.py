@@ -15,9 +15,29 @@ from modules.utils.preset_manager import PresetManager
 from modules.utils.resolution_manager import ResolutionManager
 
 
-SD_CLI = exe_name("cli")
+current_mode = "server" if "--server" in sys.argv else "cli"
 
-SD_SERVER = exe_name("server")
+
+def _find_exe(mode):
+    """
+    The executable of a mode. The one the app runs in is required; the
+    other one is optional (None when missing), so an install with only
+    sd-cli or only sd-server works.
+    """
+    try:
+        return exe_name(mode)
+    except RuntimeError:
+        if mode == current_mode:
+            raise
+        return None
+
+
+SD_CLI = _find_exe("cli")
+
+SD_SERVER = _find_exe("server")
+
+# The executable of the mode the app runs in
+SD_EXE = SD_SERVER if current_mode == "server" else SD_CLI
 
 
 class ServerState:
@@ -33,8 +53,6 @@ class ServerState:
 migrate_legacy_configs()
 
 config = ConfigManager()
-
-current_mode = "server" if "--server" in sys.argv else "cli"
 
 sd_choices = SDChoicesCache(mode=current_mode)
 
