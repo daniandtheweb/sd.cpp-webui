@@ -7,18 +7,17 @@ import gradio as gr
 from modules.core.cli.sdcpp_cli import any2video
 from modules.utils.ui_events import (
     get_ordered_inputs, bind_generation_pipeline,
-    update_interactivity, refresh_all_options,
-    OUTPUT_GALLERY_CLASS
+    update_interactivity, refresh_all_options
 )
 from modules.shared_instance import (
     config, subprocess_manager
 )
-from modules.ui.progress import create_progress_bar
 from modules.ui.models import create_video_model_sel_ui
 from modules.ui.loras import (
     create_lora_sel_ui, bind_lora_events
 )
 from modules.ui.prompts import create_prompts_ui
+from modules.ui.generation_area import create_generation_area
 from modules.ui.model_presets import (
     create_model_presets_ui, bind_model_presets_events
 )
@@ -292,50 +291,8 @@ with gr.Blocks() as any2video_block:
                         placeholder="Path to folder containing extracted frames (e.g., ./post+depth)"
                     )
                     inputs_map['in_control_video_dir'] = control_video_dir
-            with gr.Group():
-                with gr.Row():
-                    gen_btn = gr.Button(
-                        value="Generate", size="lg",
-                        variant="primary"
-                    )
-                    kill_btn = gr.Button(
-                        value="Stop", size="lg",
-                        variant="stop"
-                    )
-                with gr.Row():
-                    queue_tracker = gr.Textbox(
-                        show_label=False,
-                        visible=False
-                    )
-                with gr.Row():
-                    progress_bar = create_progress_bar()
-                with gr.Row():
-                    video_final = gr.Gallery(
-                        label="Generated videos",
-                        show_label=False,
-                        columns=[3],
-                        rows=[1],
-                        object_fit="contain",
-                        height="auto",
-                        buttons=["share", "download", "fullscreen"],
-                        elem_classes=[OUTPUT_GALLERY_CLASS]
-                    )
-                with gr.Row():
-                    stats = gr.Textbox(
-                        label="Statistics:",
-                        show_label=True,
-                        value="",
-                        interactive=False,
-                        visible=False
-                    )
-                with gr.Row():
-                    command = gr.Textbox(
-                        label="stable-diffusion.cpp command:",
-                        show_label=True,
-                        value="",
-                        interactive=False,
-                        buttons=['copy'],
-                    )
+            (gen_btn, kill_btn, queue_tracker, progress_bar, video_final,
+             stats, command) = create_generation_area(video=True)
 
     ordered_keys, ordered_components = get_ordered_inputs(inputs_map)
 
