@@ -315,6 +315,30 @@ def test_seed(value, expected):
     assert convert.convert('seed', value, None) == expected
 
 
+def _entropy_context(on):
+    return emit.Context({}, 'txt2img',
+                        cfg=lambda key: on if key == 'def_high_entropy_seed'
+                        else None)
+
+
+@pytest.mark.parametrize('value', [None, '', -1, -1.0])
+def test_high_entropy_seed_replaces_the_random_seed(value):
+    seeds = {convert.convert('seed', value, _entropy_context(True))
+             for _ in range(20)}
+    assert len(seeds) > 1
+    assert all(0 <= s <= convert.MAX_WIDGET_SEED for s in seeds)
+
+
+@pytest.mark.parametrize('value', [None, -1])
+def test_random_seed_stays_with_sdcpp_when_the_setting_is_off(value):
+    assert convert.convert('seed', value, _entropy_context(False)) == -1
+
+
+@pytest.mark.parametrize('value', [0, 7, 1234.0])
+def test_a_chosen_seed_is_never_replaced(value):
+    assert convert.convert('seed', value, _entropy_context(True)) == int(value)
+
+
 @pytest.mark.parametrize('value, expected', [
     ('euler a', 'euler_a'), ('k_dpmpp_2m', 'dpmpp_2m'),
     ('DDIM', 'ddim_trailing'),

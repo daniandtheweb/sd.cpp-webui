@@ -13,6 +13,7 @@ This module must not import application modules.
 
 import math
 import os
+import secrets
 from typing import Any, Callable, Dict, Optional
 
 # Legacy SD-API-style sampler names -> raw sd.cpp sample_method names
@@ -84,11 +85,23 @@ def invert(value, ctx):
     return not value
 
 
+# The largest seed the seed widget can hold without losing precision (2**53)
+MAX_WIDGET_SEED = 2**53 - 1
+
+
 def seed(value, ctx):
-    """The "cleared" seed state (None or '') is sd.cpp's random seed."""
+    """
+    The "cleared" seed state (None or '') and -1 are the random seed: sd.cpp
+    picks it from the clock, or, with the high_entropy_seed setting on, the
+    webui draws a seed from the system's entropy (sd.cpp's own is the
+    seconds-resolution time, so runs started within a second share it).
+    """
     if value is None or value == '':
-        return -1
-    return int(float(value))
+        value = -1
+    value = int(float(value))
+    if value < 0 and ctx is not None and ctx.cfg('def_high_entropy_seed'):
+        return secrets.randbelow(MAX_WIDGET_SEED + 1)
+    return value
 
 
 def int_or_1(value, ctx):

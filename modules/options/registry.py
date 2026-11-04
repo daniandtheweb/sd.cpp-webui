@@ -843,6 +843,9 @@ OPTIONS: tuple = (
     Option('color_scheme', default='System', mapped=False),
     Option('gallery_sorting', default='Date (Oldest First)', mapped=False),
 
+    # -- Generation -----------------------------------------------------------
+    Option('high_entropy_seed', default=False, mapped=False),
+
     # -- Output naming --------------------------------------------------------
     Option('output_scheme', default='Sequential', mapped=False),
     Option('output_steps', default=False, mapped=False),

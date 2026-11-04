@@ -269,6 +269,22 @@ with gr.Blocks() as settings_block:
             )
 
         with gr.Row():
+            # Generation settings
+            binder.register(
+                'def_high_entropy_seed', gr.Checkbox(
+                    label="High entropy random seed",
+                    info=(
+                        "A random seed (-1) is drawn by the webui from the "
+                        "system's entropy instead of sd.cpp's clock based "
+                        "one, so runs started within the same second "
+                        "no longer share a seed."
+                    ),
+                    value=config.get('def_high_entropy_seed'),
+                    interactive=True
+                )
+            )
+
+        with gr.Row():
             # Gallery settings
             binder.register(
                 'def_gallery_sorting', gr.Radio(
