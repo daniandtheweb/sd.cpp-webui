@@ -32,7 +32,8 @@ HIGH_NOISE_LORA_PREFIX = "|high_noise|"
 # Base64 fields shortened in the displayed payload
 _IMAGE_FIELDS = (
     "init_image", "end_image", "mask_image", "control_image",
-    "ip_adapter_image", "ref_images", "control_frames", "image",
+    "ip_adapter_image", "ref_images", "control_frames", "ref_audios",
+    "image",
 )
 
 
@@ -655,6 +656,68 @@ class ImgEditApiRunner(ApiTaskRunner):
         return values
 
 
+class VideoApiRunner(ApiTaskRunner):
+    """Builds the video request (/sdcpp/v1/vid_gen)."""
+    kind = "video"
+    endpoint = "/sdcpp/v1/vid_gen"
+    dir_key = "any2video_dir"
+    subctrl_id = 3
+    extension = "webm"
+
+    IMAGE_TYPES = ('.png', '.jpg', '.jpeg', '.webp', '.bmp')
+
+    def _control_frames(self) -> Optional[list]:
+        """The images of the control video folder, in name order."""
+        folder = self._get_param('in_control_video_dir')
+        if not folder or not os.path.isdir(str(folder).strip()):
+            return None
+        folder = str(folder).strip()
+        frames = []
+        for name in sorted(os.listdir(folder)):
+            if name.lower().endswith(self.IMAGE_TYPES):
+                with Image.open(os.path.join(folder, name)) as img:
+                    frames.append(encode_image(img.convert('RGB')))
+        return frames or None
+
+    def _audio(self) -> Optional[list]:
+        """The speech audio (S2V) of the request, base64 WAV."""
+        path = self._get_param('in_s2v_audio')
+        if not path or not os.path.isfile(str(path)):
+            return None
+        with open(str(path), 'rb') as f:
+            return [base64.b64encode(f.read()).decode('utf-8')]
+
+    def _input_images(self) -> Dict[str, Any]:
+        values = {}
+        init = (self._get_param('in_img_inp')
+                or self._get_param('in_first_frame_inp'))
+        img = image_to_pil(init)
+        if img is not None:
+            values['init_image'] = encode_image(img.convert('RGB'))
+        end = image_to_pil(self._get_param('in_last_frame_inp'))
+        if end is not None:
+            values['end_image'] = encode_image(end.convert('RGB'))
+        values['control_frames'] = self._control_frames()
+        values['ref_audios'] = self._audio()
+        return {k: v for k, v in values.items() if v is not None}
+
+    def _save_result(self, result: dict):
+        """Saves the video container of a completed job."""
+        b64_data = result.get("b64_json")
+        if not b64_data:
+            return
+        fmt = result.get("output_format")
+        base, _ = os.path.splitext(self.output_path)
+        path = f"{base}.{fmt}" if fmt else self.output_path
+        with open(path, 'wb') as f:
+            f.write(decode_bytes(b64_data))
+        self.output_path = path
+        self.outputs.append(path)
+        if result.get("frame_count") and result.get("fps"):
+            self.notes.append(
+                f"{result['frame_count']} frames at {result['fps']} fps")
+
+
 def txt2img_api(params: dict):
     """Creates and runs a Txt2ImgApiRunner."""
     runner = Txt2ImgApiRunner(params)
@@ -672,5 +735,12 @@ def img2img_api(params: dict):
 def imgedit_api(params: dict):
     """Creates and runs an ImgEditApiRunner."""
     runner = ImgEditApiRunner(params)
+    runner.prepare()
+    yield from runner.run()
+
+
+def any2video_api(params: dict):
+    """Creates and runs a VideoApiRunner."""
+    runner = VideoApiRunner(params)
     runner.prepare()
     yield from runner.run()

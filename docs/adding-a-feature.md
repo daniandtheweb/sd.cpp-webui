@@ -88,7 +88,9 @@ Option('stag_attention', default=False,
 `default` is the config default (`def_stag_attention`). `Flag` outputs the bare
 flag when the setting is truthy. `scopes=GEN` means the image and video
 commands (without a scope, `cli` applies to the image, video and upscale
-commands, not to convert; `launch` always applies to the server).
+commands, not to convert; `launch` applies to the image tabs' server and
+the video tab's server; `payload` to the image tabs only, so a request field
+of the video tab needs `scopes=GEN` or `scopes=VID`).
 
 ### A value with a checkbox and a request field
 
@@ -172,7 +174,9 @@ To make a checkbox switch other widgets on and off, copy the pattern in
     `modules/interfaces/common/settings_tab.py`, so it can be saved as a default;
   - **server tabs, for startup (`launch=`) options**: add its keys to
     `_server_config_keys` in `modules/interfaces/server/*_tab.py`. These are
-    the widgets that are locked while the server is running.
+    the widgets that are locked while the server is running. The video
+    tab (`any2video_tab.py`) starts the server with its own models: its
+    startup kind is `video`, the others' is `server`.
 
 ### Defaults and saving
 
@@ -274,7 +278,8 @@ def test_stag_attention():
 
 `emit.Context(params, kind)` takes the parameters as the UI gives them and the
 runner kind (`txt2img`, `img2img`, `imgedit`, `video`, `upscale`, `convert` for
-the CLI; `server` for the startup command; the image kinds for the request).
+the CLI; `server` (image tabs) or `video` for the startup command; the image
+kinds and `video` for the request).
 Use `emit.payload(context, {'sample_params': {}})` for the request.
 
 ## Reference
@@ -325,7 +330,8 @@ relative path, `P('a.b')` a request field.
 | `VID`, `UP`, `I2I`, `EDIT`, `CONV` | video, upscale, img2img only, imgedit only, the convert command |
 
 Defaults: `cli` → the image, video and upscale commands (not convert),
-`launch` → the server, `payload` → the image tabs.
+`launch` → the server of the image tabs and of the video tab, `payload` → the
+image tabs.
 
 ### Conditions (`when=`)
 

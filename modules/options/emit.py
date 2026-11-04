@@ -4,8 +4,9 @@ Turns the UI parameters into what sd.cpp receives, following the
 registry (registry.OPTIONS):
 
     cli(ctx)      tokens of an sd-cli command     (ctx.kind: txt2img, ...)
-    launch(ctx)   tokens of the sd-server startup command (kind 'server')
-    payload(ctx)  the per-request JSON of sd-server       (kind: txt2img..)
+    launch(ctx)   tokens of the sd-server startup command (kind 'server',
+                  or 'video' for the video tab)
+    payload(ctx)  the per-request JSON of sd-server (kind: txt2img.., video)
 
 The runners only add what the registry can't know (executable, output
 paths, images, LoRAs, ...), passing those they compute in ctx.values and
@@ -37,7 +38,8 @@ class Context:
 
     params:  the UI parameters ('in_*', plus the resolved paths 'f_*').
     kind:    txt2img, img2img, imgedit, video, upscale, convert (CLI),
-             server (launch command); the payload uses the image kinds.
+             server, video (launch command); the payload uses the image kinds
+             and video.
     rel:     makes a path relative to the executable.
     cfg:     reads the config (cfg:<key> sources).
     values:  values the runner computes (ctx:<name> sources).
@@ -218,10 +220,9 @@ def _set_fields(ctx: Context, result: Dict[str, Any]):
 
 def _set_group_states(ctx: Context, result: Dict[str, Any]):
     """What each group says about its toggle: the marker, the off fields."""
-    if ctx.kind not in expand_scopes(DEFAULT_SCOPES['payload']):
-        return
     for group in registry.GROUPS.values():
-        if not (group.marker or group.off):
+        kinds = expand_scopes(group.scopes or DEFAULT_SCOPES['payload'])
+        if ctx.kind not in kinds or not (group.marker or group.off):
             continue
         if group.requires_key and _key(group.toggle) not in ctx.params:
             continue

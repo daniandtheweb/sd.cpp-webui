@@ -33,6 +33,10 @@ from modules.interfaces.server.imgedit_tab import (
 from modules.interfaces.cli.any2video_tab import (
     any2video_block, any2video_params, img_inp_any2video
 )
+from modules.interfaces.server.any2video_tab import (
+    any2video_server_block, any2video_server_params,
+    img_inp_any2video_server
+)
 from modules.interfaces.cli.upscale_tab import (
     upscale_block, img_inp_upscale
 )
@@ -241,8 +245,9 @@ def render_server_ui():
             img2img_server_block.render()
         with gr.TabItem("imgedit", id="imgedit"):
             imgedit_server_block.render()
+        with gr.TabItem("any2video", id="any2video"):
+            any2video_server_block.render()
         with gr.TabItem("Gallery", id="gallery") as gallery_tab:
-            cpy_2_any2video_btn.visible = False
             cpy_2_upscale_btn.visible = False
             gallery_block.render()
         with gr.TabItem("Settings", id="settings"):
@@ -291,6 +296,8 @@ def bind_ui_events(server: bool, tabs, gallery_tab, gallery_loaded_state):
     ie_width = width_imgedit_server if server else width_imgedit
     ie_height = height_imgedit_server if server else height_imgedit
     ie_ref = ref_img_imgedit_server if server else ref_img_imgedit
+    v2v_params = any2video_server_params if server else any2video_params
+    v2v_inp = img_inp_any2video_server if server else img_inp_any2video
 
     # Copy data from gallery image to txt2img.
     cpy_2_txt2img_btn.click(
@@ -310,14 +317,13 @@ def bind_ui_events(server: bool, tabs, gallery_tab, gallery_loaded_state):
         inputs=[info_params['width'], info_params['height'], path_info],
         outputs=[tabs, ie_width, ie_height, ie_ref]
     )
+    # Copy data from gallery image to any2video.
+    cpy_2_any2video_btn.click(
+        create_copy_fn("any2video", FIELDS + ['input_image']),
+        inputs=common_inputs + [path_info],
+        outputs=[tabs] + [v2v_params[f] for f in FIELDS] + [v2v_inp]
+    )
     if not server:
-        # Copy data from gallery image to any2video.
-        cpy_2_any2video_btn.click(
-            create_copy_fn("any2video", FIELDS + ['input_image']),
-            inputs=common_inputs + [path_info],
-            outputs=[tabs] + [any2video_params[f] for f in FIELDS]
-                + [img_inp_any2video]
-        )
         cpy_2_upscale_btn.click(
             create_copy_fn("upscale"),
             inputs=[path_info],

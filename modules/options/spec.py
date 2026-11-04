@@ -31,10 +31,12 @@ SCOPE_ALIASES = {
     'all': ALL_KINDS,          # gen + upscale (not convert)
 }
 
-# Default scopes of each target
+# Default scopes of each target. The server has two startup kinds: 'server'
+# (the image tabs) and 'video' (the video tab); a request is for an image
+# kind or for 'video'.
 DEFAULT_SCOPES = {
     'cli': ('all',),
-    'launch': ('server',),
+    'launch': ('server', 'video'),
     'payload': ('image',),
 }
 
@@ -59,8 +61,10 @@ class Out:
               'flag'   bare flag (payload: true), output when truthy,
               'repeat' flag repeated for each item of a list.
     scopes:   runner kinds it applies to: txt2img, img2img, imgedit,
-              video, upscale, convert, server (launch); or an alias
-              (image, gen, all). Empty: the target's default.
+              video, upscale, convert (CLI); server, video (the server
+              startup: image tabs, video tab); txt2img, img2img, imgedit,
+              video (the request); or an alias (image, gen, all). Empty:
+              the target's default.
     when:     extra conditions, all must hold (see emit.py): 'name',
               '!name', 'name==value', 'name!=value', '?name' (the tab
               has the setting), '@flag' (set by the runner).
@@ -105,12 +109,14 @@ class Group:
                   ('hires.enabled': true/false).
     off:          payload fields set while the toggle is off
                   ({'cache_mode': 'disabled'}).
+    scopes:       the requests it applies to (default: the image tabs).
     """
     name: str
     toggle: str
     requires_key: bool = False
     marker: Optional[str] = None
     off: Dict[str, Any] = field(default_factory=dict)
+    scopes: Tuple[str, ...] = ()
 
 
 def _outs(value, target: str) -> Tuple[Out, ...]:

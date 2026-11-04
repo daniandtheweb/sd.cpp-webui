@@ -5,7 +5,7 @@ from modules.options import emit, registry, report
 from modules.options.emit import _key, _literal
 from modules.options.registry import OPTIONS
 from modules.options.spec import (
-    DEFAULT_SCOPES, IMAGE_KINDS, expand_scopes
+    DEFAULT_SCOPES, GEN_KINDS, expand_scopes
 )
 
 # A value that must come out of each converter
@@ -28,8 +28,8 @@ ASSEMBLED = {
 }
 KINDS = {
     'cli': set(expand_scopes(DEFAULT_SCOPES['cli'])) | {'convert'},
-    'launch': {'server'},
-    'payload': set(IMAGE_KINDS),
+    'launch': {'server', 'video'},
+    'payload': set(GEN_KINDS),
 }
 
 
@@ -133,26 +133,26 @@ def test_every_output_fires_on_its_runner_kinds(option, out, target, kind):
 # Which options the server doesn't get
 # ---------------------------------------------------------------------------
 
-def test_every_image_option_reaches_the_server_or_says_why():
+def test_every_server_kind_is_covered_or_explained():
     """
-    An option of the image tabs with CLI output but nothing for the server
-    must carry no_server='reason', so it's a decision and never an
-    oversight. Add launch= / payload= (or the reason) to the new option.
+    When the CLI outputs an option for a kind the server has too (the
+    image kinds, video), the server must get it for that kind, or the
+    option says why with no_server='reason'. Add launch= / payload= (with
+    the scopes of the kind), or the reason.
     """
-    missing = [o.name for o in OPTIONS
-               if report.needs_a_reason(o) and not o.no_server]
+    missing = {o.name: report.uncovered_kinds(o) for o in OPTIONS
+               if report.needs_a_reason(o) and not o.no_server}
     assert not missing, (
-        f"no server output and no no_server= reason: {missing}")
+        f"not on the server for these kinds, and no no_server= reason: "
+        f"{missing}")
 
 
 def test_no_server_reasons_are_true():
     for o in OPTIONS:
         if o.no_server:
             assert o.cli, f"{o.name}: no_server= without a CLI output"
-            assert not (o.launch or o.payload), \
-                f"{o.name}: has a server output, drop no_server="
             assert report.needs_a_reason(o), \
-                f"{o.name}: no_server= on an option the server never gets"
+                f"{o.name}: the server gets it for every kind, drop no_server="
 
 
 def test_report_runs_and_covers_every_option():
@@ -166,7 +166,8 @@ def test_report_runs_and_covers_every_option():
 @pytest.mark.parametrize('name, expected', [
     ('scheduler', 'both'), ('hires_bool', 'both'), ('cache_bool', 'both'),
     ('preview_taesd', 'both'),
-    ('preview_noisy', 'cli only'), ('frames', 'cli only'),
+    ('preview_noisy', 'cli only'), ('init_width', 'cli only'),
+    ('frames', 'both'),
     ('ip', 'server only'), ('pprompt', 'server only'),
     ('max_vram_bool', 'toggle'), ('theme', 'ui only'),
 ])

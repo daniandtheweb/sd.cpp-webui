@@ -4,10 +4,11 @@
     python -m modules.options.report scheduler  where one option goes
 
 Statuses:
-    both         output on the CLI and on the server
+    both         output on the CLI and on the server (an option the server
+                 lacks for one kind, e.g. video, shows its no_server reason)
     cli only     nothing for the server: the reason (Option.no_server) is
-                 shown, or that the server has no such tab (video,
-                 upscale, convert)
+                 shown, or that the server has no such tab (upscale,
+                 convert)
     server only  only the server gets it (the CLI gets it another way)
     toggle       passes nothing itself, it only switches other options
                  on or off (a checkbox); the options it gates are shown
@@ -22,10 +23,11 @@ from typing import Dict, List
 
 from modules.options import registry
 from modules.options.spec import (
-    DEFAULT_SCOPES, IMAGE_KINDS, Option, expand_scopes
+    DEFAULT_SCOPES, GEN_KINDS, IMAGE_KINDS, Option, expand_scopes
 )
 
-SERVER_KINDS = set(IMAGE_KINDS)
+# What the server can generate: the image kinds and video
+SERVER_KINDS = set(GEN_KINDS)
 
 
 def cli_kinds(option: Option) -> List[str]:
@@ -107,13 +109,36 @@ def status(option: Option) -> str:
     return 'ui only'
 
 
+def server_kinds(option: Option) -> set:
+    """The kinds the server gets the option for (startup or request)."""
+    kinds = set()
+    for out in option.launch:
+        scopes = expand_scopes(out.scopes or DEFAULT_SCOPES['launch'])
+        if 'server' in scopes:
+            kinds |= set(IMAGE_KINDS)
+        if 'video' in scopes:
+            kinds.add('video')
+    for out in option.payload:
+        kinds |= expand_scopes(out.scopes or DEFAULT_SCOPES['payload'])
+    for group in registry.GROUPS.values():
+        if group.toggle == option.name and (group.marker or group.off):
+            kinds |= expand_scopes(group.scopes or DEFAULT_SCOPES['payload'])
+    return kinds & SERVER_KINDS
+
+
+def uncovered_kinds(option: Option) -> List[str]:
+    """The kinds the CLI gets the option for and the server doesn't."""
+    missing = (set(cli_kinds(option)) & SERVER_KINDS) - server_kinds(option)
+    return sorted(missing)
+
+
 def needs_a_reason(option: Option) -> bool:
     """
-    True for an option of the image tabs (the only ones the server has)
-    that has CLI output but nothing for the server: it must say why.
+    True for an option the CLI outputs for a kind the server also has
+    (the image kinds, video) but that the server doesn't get for it: it
+    must say why (Option.no_server).
     """
-    return (status(option) == 'cli only'
-            and bool(set(cli_kinds(option)) & SERVER_KINDS))
+    return bool(uncovered_kinds(option))
 
 
 def _note(option: Option) -> str:
@@ -144,6 +169,8 @@ def describe(option: Option) -> str:
                      "   [startup command]")
     if payload_fields(option):
         lines.append(f"  request     {', '.join(payload_fields(option))}")
+    if uncovered_kinds(option) and status(option) != 'cli only':
+        lines.append(f"  not for     {', '.join(uncovered_kinds(option))}")
     if _note(option):
         lines.append(f"  note        {_note(option)}")
     return '\n'.join(lines)
@@ -175,8 +202,11 @@ def report() -> str:
                     where.append('startup ' + ' '.join(launch_flags(o)))
                 if payload_fields(o):
                     where.append('request ' + ', '.join(payload_fields(o)))
+                gap = uncovered_kinds(o)
+                suffix = (f"   [not for {', '.join(gap)}: {_note(o)}]"
+                          if gap else '')
                 out.append(f"  {o.name:<{width}}  {_flags(o):<30} "
-                           f"{' | '.join(where)}")
+                           f"{' | '.join(where)}{suffix}")
             elif key == 'cli only':
                 out.append(f"  {o.name:<{width}}  {_flags(o):<30} "
                            f"{_note(o)}")

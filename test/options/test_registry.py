@@ -64,13 +64,13 @@ def test_scope_aliases():
 
 
 def test_cli_and_payload_scopes_stay_in_their_target():
-    """The payload is for the image tabs only, the launch for the server."""
+    """A request is for the image tabs or video, the launch for the server."""
     for option, target, out in _outs():
         kinds = expand_scopes(out.scopes) if out.scopes else None
         if target == 'payload' and kinds:
-            assert kinds <= set(IMAGE_KINDS), option.name
+            assert kinds <= set(GEN_KINDS), option.name
         if target == 'launch' and kinds:
-            assert kinds == {'server'}, option.name
+            assert kinds <= {'server', 'video'}, option.name
         if target == 'cli' and kinds:
             assert 'server' not in kinds, option.name
 

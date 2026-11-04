@@ -23,6 +23,9 @@ class ServerRunner(CommonRunner):
 
     def __init__(self, params: Dict[str, Any]):
         super().__init__(params)
+        # The video tab starts the server with its own models
+        if 'in_video_mode' in params:
+            self.kind = 'video'
         self.command = [SD_SERVER]
 
     def build_command(self):
