@@ -7,9 +7,9 @@ Background: the seed textbox yields None when cleared (empty -> '').
   because _get_param falls back to -1 only when the KEY is missing, not
   when the value is None.
 
-Fix locked in: CommonRunner._get_seed() maps None/'' to -1, keeps 0 as 0,
-and is used by both the CLI base args ('-s') and the server payload and
-A1111 metadata seed.
+Fix locked in: the registry's 'seed' converter (modules/options/convert.py)
+maps None/'' to -1 and keeps 0 as 0; it is used by both the CLI ('-s') and
+the server payload ('seed').
 """
 import pytest
 
@@ -41,7 +41,7 @@ class TestCliSeed:
         monkeypatch.chdir(tmp_path)  # keep outputs/ out of the repo
         runner = Txt2ImgRunner('txt2img', _cli_params(seed))
         runner.output_path = str(tmp_path / 'out.png')
-        runner._add_base_args()
+        runner._add_registry_args()
         assert _cli_flag(runner.command, '-s') == '-1'
 
     def test_zero_seed_stays_zero(self, tmp_path, monkeypatch):
@@ -49,7 +49,7 @@ class TestCliSeed:
         monkeypatch.chdir(tmp_path)
         runner = Txt2ImgRunner('txt2img', _cli_params(0))
         runner.output_path = str(tmp_path / 'out.png')
-        runner._add_base_args()
+        runner._add_registry_args()
         assert _cli_flag(runner.command, '-s') == '0'
 
     def test_float_seed_normalized(self, tmp_path, monkeypatch):
@@ -57,7 +57,7 @@ class TestCliSeed:
         monkeypatch.chdir(tmp_path)
         runner = Txt2ImgRunner('txt2img', _cli_params(1234.0))
         runner.output_path = str(tmp_path / 'out.png')
-        runner._add_base_args()
+        runner._add_registry_args()
         assert _cli_flag(runner.command, '-s') == '1234'
 
 

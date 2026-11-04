@@ -36,6 +36,7 @@ def _cli_command(tmp_path, monkeypatch, params):
 
 def test_extra_args_skip_sdcpp_defaults():
     from modules.core.common.sd_common import CommonRunner
+    from modules.options import convert
     runner = CommonRunner({
         'in_ad_confidence': 0.3, 'in_ad_denoising_strength': 0.4,
         'in_ad_mask_blur': 4.0, 'in_ad_inpaint_padding': 32,
@@ -43,11 +44,12 @@ def test_extra_args_skip_sdcpp_defaults():
         'in_ad_inpaint_width': 512, 'in_ad_inpaint_height': 512,
         'in_ad_steps': 0, 'in_ad_cfg': -1, 'in_ad_extra_args': ' ',
     })
-    assert runner._build_extra_ad_args() is None
+    assert convert.ad_args(None, runner._context()) is None
 
 
 def test_extra_args_changed_values_then_free_form():
     from modules.core.common.sd_common import CommonRunner
+    from modules.options import convert
     runner = CommonRunner({
         'in_ad_confidence': 0.45, 'in_ad_denoising_strength': 0.35,
         'in_ad_mask_blur': 8.0, 'in_ad_dilate_erode': -2,
@@ -55,7 +57,7 @@ def test_extra_args_changed_values_then_free_form():
         'in_ad_steps': 12, 'in_ad_cfg': 5.0,
         'in_ad_extra_args': ' mask_k_largest=1,sort_by=area, ',
     })
-    assert runner._build_extra_ad_args() == (
+    assert convert.ad_args(None, runner._context()) == (
         "confidence=0.45,denoising_strength=0.35,mask_blur=8,"
         "dilate_erode=-2,mask_mode=merge,inpaint_width=768,steps=12,"
         "cfg_scale=5,mask_k_largest=1,sort_by=area"

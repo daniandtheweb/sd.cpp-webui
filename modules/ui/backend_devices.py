@@ -1,10 +1,12 @@
 """sd.cpp-webui - UI component for backend device assignment"""
 
 import math
+from functools import partial
 
 import gradio as gr
 
 from modules.shared_instance import config
+from modules.utils.ui_events import update_interactivity
 from modules.utils.sdcpp_utils import (
     build_device_choices, get_cached_devices
 )
@@ -205,9 +207,12 @@ def _create_backend_accordion(label, config_key, device_choices,
 
 def create_max_vram_accordion():
     """
-    Creates a nested 'Max VRAM budget (--max-vram)' accordion: one budget
-    per cached device (cpu/disk excluded) plus the 'All devices' budget.
-    Returns the gr.State carrying the [device, budget] rows.
+    Creates a nested 'Max VRAM budget (--max-vram)' accordion: an enable
+    checkbox, then one budget per cached device (cpu/disk excluded) plus
+    the 'All devices' budget. The budgets are only editable while the
+    checkbox is on. A budget of 0 is not passed to sd.cpp.
+    Returns (state, enable checkbox): the gr.State carries the
+    [device, budget] rows.
     """
     devices = [
         d for d in get_cached_devices()
@@ -223,12 +228,18 @@ def create_max_vram_accordion():
         saved[key] = _budget_value(row[1])
 
     state = gr.State(value=config.get('def_max_vram_table'))
+    enabled = bool(config.get('def_max_vram_bool'))
     with gr.Accordion(label="Max VRAM budget (--max-vram)", open=False):
+        max_vram_bool = gr.Checkbox(
+            label="Enable Max VRAM budget",
+            value=enabled
+        )
         default_budget = gr.Number(
             label="All devices (GiB)",
             value=saved.get('*'),
             precision=1,
-            minimum=0
+            minimum=0,
+            interactive=enabled
         )
         budget_inputs = []
         for i in range(0, len(devices), 2):
@@ -237,7 +248,8 @@ def create_max_vram_accordion():
                     budget_inputs.append((device, gr.Number(
                         label=f"{device} (GiB)",
                         value=saved.get(device.lower()),
-                        precision=1
+                        precision=1,
+                        interactive=enabled
                     )))
 
         def _sync(default_value, *values):
@@ -254,7 +266,13 @@ def create_max_vram_accordion():
         inputs = [default_budget] + [comp for _, comp in budget_inputs]
         for comp in inputs:
             comp.change(_sync, inputs=inputs, outputs=[state])
-    return state
+
+        max_vram_bool.change(
+            partial(update_interactivity, len(inputs)),
+            inputs=max_vram_bool,
+            outputs=inputs
+        )
+    return state, max_vram_bool
 
 
 def create_backend_devices_ui():
@@ -262,13 +280,13 @@ def create_backend_devices_ui():
     Creates a top-level 'Backend devices' accordion holding the max VRAM
     budgets, the placement options and the runtime and parameter backends.
     Returns (backend_state, params_state, split_state, offload_to_cpu,
-    max_vram_state, auto_fit).
+    max_vram_state, max_vram_bool, auto_fit).
     """
     device_choices = [d for d in build_device_choices() if d != 'default']
     split_initial = _rows_to_map(config.get('def_split_modes'))
 
     with gr.Accordion(label="Backend devices", open=False):
-        max_vram_state = create_max_vram_accordion()
+        max_vram_state, max_vram_bool = create_max_vram_accordion()
         with gr.Row():
             auto_fit = gr.Dropdown(
                 label="Auto-fit (--auto-fit)",
@@ -303,4 +321,4 @@ def create_backend_devices_ui():
             )
 
     return (backend_state, params_state, split_state,
-            offload_to_cpu, max_vram_state, auto_fit)
+            offload_to_cpu, max_vram_state, max_vram_bool, auto_fit)

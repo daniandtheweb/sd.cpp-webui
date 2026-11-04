@@ -4,17 +4,17 @@
 _SESSION_CACHE = {}
 
 
-def get_session_value(option_key):
+def get_session_value(config_key):
     """
     Helper to get the current model value.
     Prioritizes the live cache; falls back to config.
     """
     from modules.shared_instance import config
 
-    if option_key and option_key in _SESSION_CACHE:
-        return _SESSION_CACHE[option_key]
+    if config_key and config_key in _SESSION_CACHE:
+        return _SESSION_CACHE[config_key]
 
-    return config.get(option_key)
+    return config.get(config_key)
 
 
 def update_session_cache(key, value):

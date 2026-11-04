@@ -122,6 +122,7 @@ def test_server_startup_command(app_root):
         'f_cnnet': os.path.join(exe_dir, 'models', 'cn.gguf'),
         'in_vae_tiling': True,
         'in_disable_img_metadata': True,
+        'in_max_vram_bool': True,
         'in_max_vram_table': [['*', '8']],
         'in_backend_table': [['*', 'vulkan0']],
         'in_params_backend_table': [['*', 'vulkan0']],

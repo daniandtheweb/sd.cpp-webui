@@ -9,9 +9,10 @@ from typing import Dict, Any, Generator
 import gradio as gr
 
 from modules.core.common.sd_common import (
-    CommonRunner, LORA_TAG_PATTERN, process_editor_mask,
-    has_output_index_spec, expand_output_index, VideoMode
+    CommonRunner, process_editor_mask,
+    has_output_index_spec, expand_output_index
 )
+from modules.options import emit
 from modules.ui.progress import progress_update
 from modules.shared_instance import (
     config, subprocess_manager, SD_CLI
@@ -28,6 +29,8 @@ class CommandRunner(CommonRunner):
         self.outputs = []
         self.output_path = ""
         self.preview_path = None
+        # Prompt files (positive, negative), see _save_prompts
+        self._prompt_paths = (None, None)
         self.run_idx = self._get_next_synced_index()
 
     def _get_next_synced_index(self) -> int:
@@ -83,85 +86,27 @@ class CommandRunner(CommonRunner):
         with open(cmd_path, 'w', encoding='utf-8') as f:
             f.write(self.fcommand)
 
-    def _add_base_args(self):
-        """Adds arguments common to all modes."""
-        self.command.extend([
-            '--sampling-method', str(self._get_param('in_sampling')),
-            '--steps', str(self._int_param('in_steps')),
-            '-W', str(self._int_param('in_width')),
-            '-H', str(self._int_param('in_height')),
-            '--cfg-scale', str(self._get_param('in_cfg')),
-            '-s', str(self.get_seed()),
-            '-o', self.output_path
-        ])
-
+    def _indexed_output(self) -> bool:
+        """
+        True when the outputs are numbered: a batch, or a %d index
+        specifier in the output path (--output-begin-idx then applies).
+        """
         batch_count = self._get_param('in_batch_count')
-        if batch_count is not None:
-            batch_count = int(float(batch_count))
-        multi_output = batch_count is not None and batch_count > 1
-        has_index_spec = has_output_index_spec(self.output_path)
+        multi_output = (batch_count is not None
+                        and int(float(batch_count)) > 1)
+        return multi_output or has_output_index_spec(self.output_path)
 
-        # Only add --output-begin-idx when generating sequenced outputs
-        output_begin_idx = self._int_param('in_output_begin_idx')
-        if (output_begin_idx and output_begin_idx != 0
-                and (multi_output or has_index_spec)):
-            self.command.extend(['--output-begin-idx', str(output_begin_idx)])
+    def _run_values(self) -> Dict[str, Any]:
+        """The values the registry can't know (see Option.source 'ctx:')."""
+        return {'output_path': self.output_path}
 
-        # Only add --model-args when there are non-default model args
-        model_args = self._build_model_args()
-        if model_args:
-            self.command.extend(['--model-args', model_args])
-
-        # Only add -b if batch count differs from default (1)
-        if batch_count and str(batch_count) != "1":
-            self.command.extend(['-b', str(batch_count)])
-
-        # Only add --clip-skip if it differs from default (-1)
-        clip_skip = self._int_param('in_clip_skip')
-        if clip_skip is not None and clip_skip != -1:
-            self.command.extend(['--clip-skip', str(clip_skip)])
-
-        rng = str(self._get_param('in_rng'))
-        if rng and str(rng) != "Default":
-            self.command.extend([
-                '--rng', str(self._get_param('in_rng'))
-            ])
-
-        sampler_rng = str(self._get_param('in_sampler_rng'))
-        if sampler_rng and str(sampler_rng) != "Default":
-            self.command.extend([
-                '--sampler-rng', str(self._get_param('in_sampler_rng')),
-            ])
-
-        # Only add LoRA arguments if prompts contain <lora:name:strength> tags
-        pp_text = str(self._get_param('in_pprompt', "")).strip()
-        np_text = str(self._get_param('in_nprompt', "")).strip()
-        if LORA_TAG_PATTERN.search(f"{pp_text} {np_text}"):
-            self.command.extend([
-                '--lora-model-dir', self._make_relative(config.get('lora_dir')),
-                '--lora-apply-mode', str(self._get_param('in_lora_apply'))
-            ])
-
-    def _get_vae_tiling_options(self) -> Dict[str, Any]:
-        """Returns the VAE tiling options, empty when tiling is off."""
-        if not self._get_param('in_vae_tiling'):
-            return {}
-        return {
-            '--vae-tile-overlap': self._get_param('in_vae_tile_overlap'),
-            '--vae-tile-size': (
-                f"{size}x{size}"
-                if (size := self._int_param('in_vae_tile_size'))
-                else None
-            ),
-            '--vae-relative-tile-size': (
-                f"{size}x{size}"
-                if (
-                    self._get_param('in_vae_relative_bool') and
-                    (size := self._int_param('in_vae_relative_tile_size'))
-                )
-                else None
-            ),
-        }
+    def _add_registry_args(self):
+        """Adds every registered argument (modules/options/registry.py)."""
+        context = self._context(
+            values=self._run_values(),
+            flags={'indexed_output': self._indexed_output()}
+        )
+        self.command.extend(emit.cli(context))
 
     def _prepare_for_run(self):
         """
@@ -287,18 +232,14 @@ class CommandRunner(CommonRunner):
 class ImageGenerationRunner(CommandRunner):
     """A common base for txt2img, img2img, and imgedit runners."""
 
-    def _build_ref_image_args(self):
-        """
-        Builds the --ref-image-args key=value list from the reference
-        image settings.
-        Returns None when nothing is set (model preset is auto-detected).
-        """
-        args = []
-        if self._get_param('in_increase_ref_index'):
-            args.append("ref_index_mode=increase")
-        if self._get_param('in_disable_auto_resize_ref_image'):
-            args.append("resize_before_vae=false")
-        return ",".join(args) if args else None
+    def _run_values(self) -> Dict[str, Any]:
+        values = super()._run_values()
+        values.update(
+            prompt_file=self._prompt_paths[0],
+            negative_prompt_file=self._prompt_paths[1],
+            preview_path=self.preview_path,
+        )
+        return values
 
     def build_command(self, output_dir_key: str, subctrl_id: int):
         """Builds the common command for image generation."""
@@ -306,171 +247,19 @@ class ImageGenerationRunner(CommandRunner):
         self._set_output_path(output_dir_key, subctrl_id, 'png')
 
         # Save prompts to synced sequential files
-        pp_path, np_path = self._save_prompts()
-        if pp_path:
-            self.command.extend(['--prompt-file', pp_path])
-        if np_path:
-            self.command.extend(['--negative-prompt-file', np_path])
-
-        self._add_base_args()
+        self._prompt_paths = self._save_prompts()
 
         if self._get_param('in_preview_bool'):
             base_name, extension = os.path.splitext(self.output_path)
             self.preview_path = self._make_relative(base_name + "_preview" + extension)
 
-        options = {
-            # Models
-            **self._get_common_model_options(),
-            # Quantization & components shared with the server runner
-            **self._get_quant_options(),
-            **self._get_component_options(),
-            # Scheduler
-            '--scheduler': (self._get_param('in_scheduler')
-                            if not self._get_param('in_sigmas')
-                            else None),
-            '--sigmas': (self._get_param('in_sigmas')
-                         if self._get_param('in_sigmas') != ""
-                         else None),
-            # PhotoMaker
-            **({
-                '--pm-style-strength': self._int_param('in_phtmkr_strength')
-            } if self._get_param('in_phtmkr_bool') else {}),
-            # Guidance
-            '--guidance': (self._get_param('in_guidance')
-                           if self._get_param('in_guidance_bool')
-                           else None),
-            # Flow Shift
-            '--flow-shift': (self._get_param('in_flow_shift')
-                             if self._get_param('in_flow_shift_bool')
-                             else None),
-            # Timestep shift for NitroFusion
-            '--timestep-shift': (self._get_param('in_timestep_shift')
-                                 if self._get_param('in_timestep_shift_bool')
-                                 else None),
-            # ETA for DDIM and TCD
-            '--eta': (self._get_param('in_eta')
-                      if self._get_param('in_eta_bool')
-                      else None),
-            # Upscale
-            **({
-                '--upscale-repeats': self._int_param('in_upscl_rep'),
-                '--upscale-tile-size': self._int_param('in_upscl_tile_size'),
-
-            } if self._get_param('in_upscl_bool') else {}),
-            # HiRes Fix
-            **({
-                '--hires-upscaler': os.path.splitext(
-                    self._get_param('in_hires_upscaler') or 'Latent'
-                )[0],
-                '--hires-upscalers-dir': self._make_relative(
-                    config.get('upscl_dir')
-                ),
-                '--hires-scale': self._get_param('in_hires_scale'),
-                '--hires-width': self._int_param('in_hires_width'),
-                '--hires-height': self._int_param('in_hires_height'),
-                '--hires-steps': self._int_param('in_hires_steps'),
-                '--hires-denoising-strength': self._get_param(
-                    'in_hires_denoising_strength'
-                ),
-                '--hires-upscale-tile-size': self._int_param(
-                    'in_hires_upscale_tile_size'
-                ),
-                '--hires-sigmas': (self._get_param('in_hires_sigmas')
-                                   if self._get_param('in_hires_sigmas') != ""
-                                   else None),
-            } if self._get_param('in_hires_bool') else {}),
-            # ControlNet
-            **({
-                '--control-image': self._make_relative(self._get_param('in_control_img')),
-                '--control-strength': self._get_param('in_control_strength')
-            } if self._get_param('in_cnnet_bool') else {}),
-            # ADetailer
-            **({
-                '--ad-model': self._make_relative(self._get_param('f_ad_model')),
-                '--ad-prompt': (str(self._get_param('in_ad_prompt') or "").strip()
-                                or None),
-                '--ad-negative-prompt': (
-                    str(self._get_param('in_ad_nprompt') or "").strip()
-                    or None
-                ),
-                '--extra-ad-args': self._build_extra_ad_args(),
-            } if (self._get_param('in_ad_bool')
-                  and self._get_param('f_ad_model')) else {}),
-            # IP-Adapter
-            **({
-                '--ip-adapter': self._make_relative(self._get_param('f_ip_adapter')),
-                '--clip_vision': self._make_relative(
-                    self._get_param('f_ip_adapter_clip_vision')
-                ),
-                '--ip-adapter-image': self._make_relative(
-                    self._get_param('in_ip_adapter_img')
-                ),
-                '--ip-adapter-strength': self._get_param('in_ip_adapter_strength'),
-            } if (self._get_param('in_ip_adapter_bool')
-                  and self._get_param('f_ip_adapter')
-                  and self._get_param('in_ip_adapter_img')) else {}),
-            # Image Preprocessing
-            '--image-preprocess': (self._get_param('in_img_preprocess')
-                                   if self._get_param('in_img_preprocess')
-                                   else None),
-            # Reference images
-            '--ref-image-args': self._build_ref_image_args(),
-            # Qwen Image Layered
-            '--qwen-image-layers': self._qwen_image_layers(),
-            # Skip Layer Guidance (SLG)
-            **({
-                '--slg-scale': self._get_param('in_slg_scale'),
-                '--skip-layer-start': self._get_param('in_skip_layer_start'),
-                '--skip-layer-end': self._get_param('in_skip_layer_end'),
-                '--skip-layers': (self._get_param('in_skip_layers')
-                                  if self._get_param('in_skip_layers') != ""
-                                  else None),
-            } if self._get_param('in_slg_bool') else {}),
-            # Performance
-            **self._get_performance_options(),
-            # VAE Tiling
-            **self._get_vae_tiling_options(),
-            # Cache
-            **({
-                '--cache-mode': self._get_param('in_cache_mode'),
-                '--cache-option': (
-                    val.strip('"')
-                    if (val := self._get_param('in_cache_option')) and str(val).strip('"') != ""
-                    else None
-                ),
-                '--scm-mask': (self._get_param('in_scm_mask')
-                               if self._get_param('in_scm_mask') != ""
-                               else None),
-                '--scm-policy': (self._get_param('in_scm_policy')
-                                 if self._get_param('in_scm_policy') != "none"
-                                 else None)
-            } if self._get_param('in_cache_bool') else {}),
-            # Preview
-            **({
-                '--preview': self._get_param('in_preview_mode'),
-                '--preview-path': self._make_relative(self.preview_path),
-                '--preview-interval': self._int_param('in_preview_interval'),
-            } if self._get_param('in_preview_bool') else {}),
-            # Common runtime options (auto-fit, split-mode, rpc, scales, ...)
-            **self._get_common_options()
-        }
-        self._add_options(options)
-
-        flags = self._get_common_flags()
-        flags.update({
-            '--taesd-preview-only': (self._get_param('in_preview_taesd')
-                                     if self._get_param('in_preview_bool')
-                                     else False),
-            '--preview-noisy': (self._get_param('in_preview_noisy')
-                                if self._get_param('in_preview_bool')
-                                else False),
-            '--hires': self._get_param('in_hires_bool'),
-        })
-        self._add_flags(flags)
+        self._add_registry_args()
 
 
 class Txt2ImgRunner(ImageGenerationRunner):
     """Builds the txt2img command."""
+
+    kind = 'txt2img'
 
     def build_command(self):
         super().build_command(
@@ -481,282 +270,81 @@ class Txt2ImgRunner(ImageGenerationRunner):
 class Img2ImgRunner(ImageGenerationRunner):
     """Builds the img2img command."""
 
+    kind = 'img2img'
+
+    def _save_mask(self) -> str | None:
+        """
+        The CLI requires a file path, so the mask image is saved to disk.
+        Returns its path, None without a mask.
+        """
+        mask_input = self._get_param('in_img_mask') or self._get_param('in_mask')
+        mask_img = process_editor_mask(mask_input)
+        if mask_img is None:
+            return None
+        output_dir = config.get_or_create_dir('img2img_dir')
+        mask_path = os.path.join(output_dir, "sdcpp_temp_mask.png")
+        try:
+            mask_img.save(mask_path)
+        except Exception as e:
+            print(f"Error saving temporary mask for CLI: {e}")
+            return None
+        return mask_path
+
+    def _run_values(self) -> Dict[str, Any]:
+        values = super()._run_values()
+        values['mask_path'] = self._save_mask()
+        return values
+
     def build_command(self):
         super().build_command(
             output_dir_key='img2img_dir', subctrl_id=1
         )
 
-        # Add img2img specific arguments
-        self.command.extend(['--init-img', self._make_relative(str(self._get_param('in_img_inp')))])
-        self.command.extend([
-            '--strength',
-            str(self._get_param('in_strength'))
-        ])
-
-        mask_input = self._get_param('in_img_mask') or self._get_param('in_mask')
-        mask_img = process_editor_mask(mask_input)
-        final_mask_path = None
-
-        if mask_img is not None:
-            # The CLI requires a file path, so we save the PIL Image to disk
-            output_dir = config.get_or_create_dir('img2img_dir')
-            final_mask_path = os.path.join(output_dir, "sdcpp_temp_mask.png")
-
-            try:
-                mask_img.save(final_mask_path)
-            except Exception as e:
-                print(f"Error saving temporary mask for CLI: {e}")
-                final_mask_path = None
-        options = {
-            '--mask': self._make_relative(final_mask_path),
-            '--img-cfg-scale': (self._get_param('in_img_cfg')
-                                if self._get_param('in_img_cfg_bool')
-                                else None),
-        }
-        self._add_options(options)
-
 
 class ImgEditRunner(ImageGenerationRunner):
     """Builds the image editing (instruct) command."""
+
+    kind = 'imgedit'
 
     def build_command(self):
         super().build_command(
             output_dir_key='imgedit_dir', subctrl_id=2
         )
 
-        ref_imgs = self._get_param('in_ref_img')
-
-        if not ref_imgs:
-            return
-
-        if not isinstance(ref_imgs, list):
-            ref_imgs = [ref_imgs]
-
-        for img in ref_imgs:
-            if isinstance(img, tuple):
-                img_path = img[0]
-            elif isinstance(img, dict) and "name" in img:
-                img_path = img["name"]
-            else:
-                img_path = str(img)
-
-            self.command.extend(
-                ['--ref-image', self._make_relative(img_path)]
-            )
-
 
 class Any2VideoRunner(CommandRunner):
     """Builds the any2video command."""
 
-    # Video model flags, replaced by AnimateDiff's in its mode
-    _VIDEO_MODEL_FLAGS = (
-        '--vae', '--audio-vae', '--diffusion-model', '--clip_vision',
-        '--t5xxl', '--audio-encoder', '--llm', '--embeddings-connectors',
-        '--high-noise-diffusion-model', '--high-noise-cfg-scale',
-        '--high-noise-sampling-method', '--high-noise-steps',
-        '--high-noise-img-cfg-scale', '--high-noise-guidance',
-        '--high-noise-slg-scale', '--high-noise-skip-layer-start',
-        '--high-noise-skip-layer-end', '--high-noise-eta',
-        '--high-noise-skip-layers',
-    )
+    kind = 'video'
 
-    def _add_base_args(self):
-        # Override to add video-specific base arguments
-        super()._add_base_args()
-
-        self.command.extend([
-            '--video-frames', str(self._int_param('in_frames')),
-            '--fps', str(self._get_param('in_fps')),
-        ])
+    def _run_values(self) -> Dict[str, Any]:
+        values = super()._run_values()
+        values.update(
+            prompt_file=self._prompt_paths[0],
+            negative_prompt_file=self._prompt_paths[1],
+        )
+        return values
 
     def build_command(self):
         self._resolve_paths()
         self._set_output_path('any2video_dir', 3, 'webm')
 
         # Save prompts to synced sequential files
-        pp_path, np_path = self._save_prompts()
-        if pp_path:
-            self.command.extend(['--prompt-file', pp_path])
-        if np_path:
-            self.command.extend(['--negative-prompt-file', np_path])
+        self._prompt_paths = self._save_prompts()
 
-        self._add_base_args()
-
-        init_img = (self._get_param('in_img_inp')
-                    or self._get_param('in_first_frame_inp'))
-
-        use_high_noise = self._get_param('in_high_noise_bool')
-        high_noise_model = self._get_param('f_high_noise_model')
-
-        options = {
-            # VAE
-            '--vae': self._make_relative(self._get_param('f_unet_vae')),
-            '--audio-vae': self._make_relative(self._get_param('f_audio_vae')),
-            # Wan2.1, Wan2.2
-            '--diffusion-model': self._make_relative(self._get_param('f_unet_model')),
-            '--clip_vision': self._make_relative(self._get_param('f_clip_vision_h')),
-            '--t5xxl': self._make_relative(self._get_param('f_umt5_xxl')),
-            # Wan2.2 S2V
-            '--audio-encoder': self._make_relative(self._get_param('f_audio_encoder')),
-            # LTX-2.3
-            '--llm': self._make_relative(self._get_param('f_llm')),
-            '--embeddings-connectors': self._make_relative(self._get_param('f_emb_connect')),
-            # Wan2.2 High Noise Configuration
-            '--high-noise-diffusion-model': (
-                self._make_relative(high_noise_model)
-                if use_high_noise else None
-            ),
-            '--high-noise-cfg-scale': (
-                self._get_param('in_high_noise_cfg')
-                if use_high_noise else None
-            ),
-            '--high-noise-sampling-method': (
-                self._get_param('in_high_noise_sampling')
-                if use_high_noise else None
-            ),
-            '--high-noise-steps': (
-                self._get_param('in_high_noise_steps')
-                if use_high_noise else None
-            ),
-            '--high-noise-img-cfg-scale': (
-                self._get_param('in_high_noise_img_cfg')
-                if use_high_noise else None
-            ),
-            '--high-noise-guidance': (
-                self._get_param('in_high_noise_guidance')
-                if use_high_noise else None
-            ),
-            '--high-noise-slg-scale': (
-                self._get_param('in_high_noise_slg_scale')
-                if use_high_noise else None
-            ),
-            '--high-noise-skip-layer-start': (
-                self._get_param('in_high_noise_skip_layer_start')
-                if use_high_noise else None
-            ),
-            '--high-noise-skip-layer-end': (
-                self._get_param('in_high_noise_skip_layer_end')
-                if use_high_noise else None
-            ),
-            '--high-noise-eta': (
-                self._get_param('in_high_noise_eta')
-                if use_high_noise else None
-            ),
-            '--high-noise-skip-layers': (
-                self._get_param('in_high_noise_skip_layers')
-                if use_high_noise else None
-            ),
-            # Skip Layer Guidance (SLG)
-            **({
-                '--slg-scale': self._get_param('in_slg_scale'),
-                '--skip-layer-start': self._get_param('in_skip_layer_start'),
-                '--skip-layer-end': self._get_param('in_skip_layer_end'),
-                '--skip-layers': (self._get_param('in_skip_layers')
-                                  if self._get_param('in_skip_layers') != ""
-                                  else None),
-            } if self._get_param('in_slg_bool') else {}),
-            # Wan & MoE Specifics
-            '--moe-boundary': (self._get_param('in_moe_boundary')
-                               if self._get_param('in_moe_boundary_bool')
-                               else None),
-            '--vace-strength': (self._get_param('in_vace_strength')
-                                if self._get_param('in_vace_strength_bool')
-                                else None),
-            # Inputs for I2V, FLF2V, and VACE V2V
-            '--init-img': self._make_relative(init_img),
-            '--end-img': self._make_relative(self._get_param('in_last_frame_inp')),
-            '--control-video': self._make_relative(self._get_param('in_control_video_dir')),
-            # Input for S2V
-            '--audio': self._make_relative(self._get_param('in_s2v_audio')),
-            # Quantization & components shared with the server runner
-            **self._get_quant_options(),
-            **self._get_component_options(),
-            # Upscaling
-            '--upscale-repeats': (self._get_param('in_upscl_rep')
-                                  if self._get_param('in_upscl_bool')
-                                  else None),
-            '--upscale-tile-size': (self._get_param('in_upscl_tile_size')
-                                    if self._get_param('in_upscl_bool')
-                                    else None),
-            # Additional Params
-            '--flow-shift': (self._get_param('in_flow_shift')
-                             if self._get_param('in_flow_shift_bool')
-                             else None),
-            # ControlNet
-            '--control-image': (self._make_relative(self._get_param('in_control_img'))
-                                if self._get_param('in_cnnet_bool')
-                                else None),
-            '--control-strength': (self._get_param('in_control_strength')
-                                   if self._get_param('in_cnnet_bool')
-                                   else None),
-            # Image Preprocessing
-            '--image-preprocess': (self._get_param('in_img_preprocess')
-                                   if self._get_param('in_img_preprocess')
-                                   else None),
-            # Performance
-            **self._get_performance_options(),
-            # VAE Tiling
-            **self._get_vae_tiling_options(),
-            # Common runtime options (auto-fit, rpc, scales, ...)
-            **self._get_common_options()
-        }
-
-        # AnimateDiff tab: an SD 1.5 checkpoint and a motion module
-        # instead of the video models
-        if self._get_param('in_video_mode') == VideoMode.ANIMATEDIFF:
-            for flag in self._VIDEO_MODEL_FLAGS:
-                options.pop(flag, None)
-            options.update({
-                '--model': self._make_relative(
-                    self._get_param('f_animatediff_ckpt')
-                ),
-                '--vae': self._make_relative(
-                    self._get_param('f_animatediff_vae')
-                ),
-                '--motion-module': self._make_relative(
-                    self._get_param('f_motion_module')
-                ),
-            })
-
-        self._add_options(options)
-
-        flags = self._get_common_flags()
-        flags.update({
-            '--taesd-preview-only': (self._get_param('in_preview_taesd')
-                                     if self._get_param('in_preview_bool')
-                                     else False),
-            '--preview-noisy': (self._get_param('in_preview_noisy')
-                                if self._get_param('in_preview_bool')
-                                else False),
-            # LTX Specifics
-            '--temporal-tiling': self._get_param('in_temporal_tiling'),
-        })
-        self._add_flags(flags)
+        self._add_registry_args()
 
 
 class UpscaleRunner(CommandRunner):
     """Builds the upscale command."""
 
+    kind = 'upscale'
+
     def build_command(self):
         self._resolve_paths()
         self._set_output_path('upscale_dir', 4, 'png')
 
-        init_img = (self._get_param('in_img_inp')
-                    or self._get_param('in_first_frame_inp'))
-        options = {
-            '--init-img': self._make_relative(init_img),
-            '--upscale-model': self._make_relative(self._get_param('f_upscl')),
-            '-W': self._int_param('in_init_width'),
-            '-H': self._int_param('in_init_height'),
-            '--upscale-repeats': self._int_param('in_upscl_rep'),
-            '--upscale-tile-size': self._int_param('in_upscl_tile_size'),
-            '-o': self.output_path,
-            # Common runtime options (auto-fit, rpc, scales, ...)
-            **self._get_common_options()
-        }
-        self._add_options(options)
-
-        self._add_flags(self._get_common_flags())
+        self._add_registry_args()
 
 
 def txt2img(params: dict) -> Generator:
@@ -802,12 +390,7 @@ def convert(params: dict):
     in_orig_model = params.get('in_orig_model')
     in_model_dir = params.get('in_model_dir')
     in_quant_type = params.get('in_quant_type')
-    in_tensor_type_rules = params.get('in_tensor_type_rules')
-    in_convert_name = params.get('in_convert_name', False)
     in_gguf_name = params.get('in_gguf_name')
-    in_color = params.get('in_color', True)
-    in_log_level = params.get('in_log_level')
-    in_imatrix_in = params.get('in_imatrix_in') or []
 
     # Validate required inputs up front: a missing model dir in the
     # config (ConfigManager returns None) or an empty model selection
@@ -840,23 +423,10 @@ def convert(params: dict):
             os.path.join(in_model_dir, f"{model_name}-{in_quant_type}.gguf"), start=exe_dir
         )
 
-    command = [
-        SD_CLI, '-M', 'convert',
-        '--model', orig_model_path,
-        '-o', gguf_path,
-        '--type', in_quant_type
-    ]
-
-    if in_tensor_type_rules:
-        command.extend(['--tensor-type-rules', in_tensor_type_rules])
-    if in_convert_name:
-        command.append('--convert-name')
-    for imatrix in in_imatrix_in:
-        command.extend(['--imat-in', imatrix])
-    if in_color:
-        command.append('--color')
-    if in_log_level and in_log_level != "info":
-        command.extend(['--log-level', in_log_level])
+    command = [SD_CLI, '-M', 'convert', *emit.cli(emit.Context(
+        params, 'convert',
+        values={'model_path': orig_model_path, 'output_path': gguf_path}
+    ))]
 
     fcommand = ' '.join(command)
     print(f"\n\n{fcommand}\n\n")

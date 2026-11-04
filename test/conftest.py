@@ -20,7 +20,7 @@ os.environ['SD_WEBUI_PROMPTS_PATH'] = str(_TEST_ROOT / "prompts.json")
 
 import pytest  # noqa: E402
 
-from modules.config import ConfigManager  # noqa: E402
+from modules.settings import ConfigManager  # noqa: E402
 
 # Seed the config file with the isolated output dirs so that however and
 # whenever the shared singleton is constructed, it loads these values.
@@ -38,5 +38,5 @@ def app_root():
 
 
 @pytest.fixture(autouse=True)
-def sd_options_mock(mocker):
-    mocker.patch("modules.utils.sd_interface.SDOptionsCache")
+def sd_choices_mock(mocker):
+    mocker.patch("modules.utils.sd_interface.SDChoicesCache")

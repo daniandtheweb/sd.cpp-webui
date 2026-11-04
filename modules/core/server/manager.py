@@ -9,8 +9,9 @@ from modules.core.common.sd_common import (
     CommonRunner
 )
 from modules.shared_instance import (
-    config, subprocess_manager, SD_SERVER, server_state
+    subprocess_manager, SD_SERVER, server_state
 )
+from modules.options import convert, emit
 
 
 class ServerRunner(CommonRunner):
@@ -18,89 +19,23 @@ class ServerRunner(CommonRunner):
     Builds and manages the sd-server command execution.
     """
 
-    # Set per request through the API, so never passed at launch
-    REQUEST_OPTIONS = {
-        '--upscale-model',
-        '--vae-tiling',
-        '--cache-mode',
-        '--disable-image-metadata',
-        '--compression-quality',
-        '--extra-sample-args',
-        '--extra-tiling-args',
-    }
+    kind = 'server'
 
     def __init__(self, params: Dict[str, Any]):
         super().__init__(params)
         self.command = [SD_SERVER]
 
     def build_command(self):
-        """Constructs the server arguments."""
+        """
+        Constructs the server arguments. The options sent per request
+        (those with a payload field in the registry) are not part of it.
+        """
         self._resolve_paths()
 
-        # Network settings
-        self.ip = str(self._get_param('in_ip') or '127.0.0.1').strip()
-        self.port = self._int_param('in_port') or 1234
-        self.command.extend([
-            "--listen-ip", self.ip,
-            "--listen-port", str(self.port),
-        ])
+        self.ip = convert.listen_ip(self._get_param('in_ip'), None)
+        self.port = convert.listen_port(self._get_param('in_port'), None)
 
-        options = self._get_common_model_options()
-
-        # Shared options (quantization, components, performance)
-        options.update(self._get_quant_options())
-        options.update(self._get_component_options())
-        options.update(self._get_performance_options())
-
-        # Server-specific options
-        options.update({
-            # ControlNet model, enabled per request
-            '--control-net': self._make_relative(self._get_param('f_cnnet')),
-            # ADetailer detector, runs after every image generation.
-            # Prompts and settings are set per request
-            '--ad-model': self._make_relative(self._get_param('f_ad_model')),
-            # IP-Adapter and its image encoder, enabled per request
-            '--ip-adapter': self._make_relative(self._get_param('f_ip_adapter')),
-            '--clip_vision': (
-                self._make_relative(self._get_param('f_ip_adapter_clip_vision'))
-                if self._get_param('f_ip_adapter')
-                else None
-            ),
-            # PhotoMaker
-            '--pm-style-strength': (self._get_param('in_phtmkr_strength')
-                                    if self._get_param('in_phtmkr_bool')
-                                    else None),
-            '--lora-model-dir': self._make_relative(config.get('lora_dir')),
-            # HiRes Fix and Upscale models
-            '--hires-upscalers-dir': self._make_relative(
-                config.get('upscl_dir')
-            ),
-            # Extra options
-            '--rng': self._choice('in_rng'),
-            '--sampler-rng': self._choice('in_sampler_rng'),
-            '--lora-apply-mode': self._choice('in_lora_apply'),
-            '--model-args': self._build_model_args() or None,
-            # Common runtime options (auto-fit, rpc, scales, ...)
-            **self._get_common_options(),
-        })
-
-        self._add_options({
-            opt: val for opt, val in options.items()
-            if opt not in self.REQUEST_OPTIONS
-        })
-
-        self._add_flags({
-            flag: val for flag, val in self._get_common_flags().items()
-            if flag not in self.REQUEST_OPTIONS
-        })
-
-    def _choice(self, key: str):
-        """Helper to get a dropdown value, None if 'Default'."""
-        val = self._get_param(key)
-        if val is None:
-            return None
-        val = str(val).strip()
-        return None if val in ('', 'Default') else val
+        self.command.extend(emit.launch(self._context()))
 
     def _prepare_for_run(self):
         """Prepares the final command string for printing."""

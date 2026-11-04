@@ -16,7 +16,7 @@ def create_lora_sel_ui():
             lora_model = create_model_widget(
                 label="LoRA",
                 dir_key='lora_dir',
-                option_key=''
+                config_key=''
             )
             lora_prompt_switch = gr.Radio(
                 label="Prompt",

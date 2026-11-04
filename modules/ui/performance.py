@@ -15,7 +15,7 @@ def create_performance_ui():
     by the 'Performance' accordion (execution settings only).
     """
     (backend_state, params_state, split_state,
-     offload_to_cpu, max_vram_state,
+     offload_to_cpu, max_vram_state, max_vram_bool,
      auto_fit) = create_backend_devices_ui()
 
     with gr.Accordion(
@@ -125,6 +125,7 @@ def create_performance_ui():
 
     return {
         'in_threads': threads,
+        'in_max_vram_bool': max_vram_bool,
         'in_max_vram_table': max_vram_state,
         'in_eager_load': eager_load,
         'in_offload_to_cpu': offload_to_cpu,

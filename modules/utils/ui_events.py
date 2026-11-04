@@ -9,13 +9,13 @@ import gradio as gr
 import modules.utils.streaming_queue as queue_manager
 from modules.ui.progress import progress_update
 from modules.shared_instance import (
-    sd_options, model_state
+    sd_choices, model_state
 )
 from modules.utils.sdcpp_utils import (
     get_cached_devices, refresh_device_cache
 )
 
-# Populate the device cache on the first launch (mirrors sd_options)
+# Populate the device cache on the first launch (mirrors sd_choices)
 if not get_cached_devices():
     refresh_device_cache()
 
@@ -423,11 +423,11 @@ def update_interactivity(count, checkbox_value):
 
 
 def refresh_all_options():
-    sd_options.refresh()
+    sd_choices.refresh()
     refresh_device_cache()
     return [
-        gr.update(choices=sd_options.get_opt("samplers")),
-        gr.update(choices=sd_options.get_opt("schedulers")),
-        gr.update(choices=sd_options.get_opt("previews")),
-        gr.update(choices=["Default"] + sd_options.get_opt("prediction"))
+        gr.update(choices=["Default"] + sd_choices.get_choices("samplers")),
+        gr.update(choices=["Default"] + sd_choices.get_choices("schedulers")),
+        gr.update(choices=sd_choices.get_choices("previews")),
+        gr.update(choices=["Default"] + sd_choices.get_choices("prediction"))
     ]

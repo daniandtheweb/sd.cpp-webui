@@ -15,7 +15,7 @@ Fixes locked in here:
 """
 import os
 
-from modules.config import ConfigManager
+from modules.settings import ConfigManager
 from modules.shared_instance import config
 
 

@@ -23,6 +23,8 @@ from modules.utils.metadata_utils import (
 )
 from modules.shared_instance import server_state
 from modules.ui.progress import progress_update
+from modules.options import emit
+from modules.options.convert import stem
 
 
 HIGH_NOISE_LORA_PREFIX = "|high_noise|"
@@ -104,26 +106,6 @@ def merge_upscale_metadata(source: bytes, upscaled: bytes,
     buf = io.BytesIO()
     image.save(buf, format="PNG", pnginfo=pnginfo)
     return buf.getvalue()
-
-
-def parse_number_list(text: Any, cast=float) -> Optional[list]:
-    """
-    Parses "1.0, 0.5, 0" or "[7,8,9]" into a list of numbers.
-    Returns None if empty or malformed.
-    """
-    if text is None:
-        return None
-    if isinstance(text, (list, tuple)):
-        items = list(text)
-    else:
-        raw = str(text).strip().strip('[]').replace(';', ',')
-        if not raw:
-            return None
-        items = [p for p in raw.replace(' ', ',').split(',') if p.strip()]
-    try:
-        return [cast(float(item)) for item in items]
-    except (TypeError, ValueError):
-        return None
 
 
 def redact_payload(payload: dict) -> dict:
@@ -233,36 +215,10 @@ class ApiTaskRunner(CommonRunner):
         )
         self.url = f"{self.base_url}{self.endpoint}"
 
-    def _num(self, key: str, cast, cond_key: str = None):
-        """
-        Helper to get a numeric parameter.
-        Returns None if empty or if its checkbox (cond_key) is disabled.
-        """
-        if cond_key is not None and not self._get_param(cond_key, False):
-            return None
-        val = self._get_param(key)
-        if val in (None, ''):
-            return None
-        try:
-            # Gradio Number/Slider widgets yield floats (e.g. 512.0)
-            return cast(float(val)) if cast is int else cast(val)
-        except (ValueError, TypeError):
-            return None
-
-    def _text(self, key: str) -> Optional[str]:
-        """Helper to get a stripped string parameter, None if empty."""
-        val = self._get_param(key)
-        if val is None:
-            return None
-        val = str(val).strip()
-        return val or None
-
     @staticmethod
     def _model_stem(name: Any) -> Optional[str]:
         """The server looks up upscalers by file stem."""
-        if not name:
-            return None
-        return os.path.splitext(os.path.basename(str(name)))[0] or None
+        return stem(name, None)
 
     def _extract_loras(self, text: str) -> tuple:
         """
@@ -317,329 +273,56 @@ class ApiTaskRunner(CommonRunner):
         cleaned_text = LORA_TAG_PATTERN.sub(match_handler, text)
         return cleaned_text.strip(), extracted_loras
 
-    # Legacy SD-API-style sampler names -> raw sd.cpp sample_method names
-    _SAMPLER_ALIASES = {
-        'euler a': 'euler_a',
-        'euler': 'euler',
-        'ddim': 'ddim_trailing',
-        'res multistep': 'res_multistep',
-        'res 2s': 'res_2s',
-    }
-
-    @classmethod
-    def _to_api_sampler(cls, name: str) -> str:
-        n = str(name).strip().lower()
-        if n.startswith('k_'):
-            n = n[2:]
-        return cls._SAMPLER_ALIASES.get(n, n)
-
-    def _sample_params(self) -> dict:
-        """Builds the sample_params object."""
-        sample_params = {}
-        guidance = {}
-
-        # Steps
-        v = self._num('in_steps', int)
-        if v is not None:
-            sample_params['sample_steps'] = v
-        # Flow Shift
-        v = self._num('in_flow_shift', float, 'in_flow_shift_bool')
-        if v is not None:
-            sample_params['flow_shift'] = v
-        # ETA for DDIM and TCD
-        v = self._num('in_eta', float, 'in_eta_bool')
-        if v is not None:
-            sample_params['eta'] = v
-        # Timestep shift for NitroFusion
-        v = self._num('in_timestep_shift', int, 'in_timestep_shift_bool')
-        if v is not None:
-            sample_params['shifted_timestep'] = v
-
-        # Sampler & Scheduler
-        sampler = self._text('in_sampling')
-        if sampler:
-            sample_params['sample_method'] = self._to_api_sampler(sampler)
-        scheduler = self._text('in_scheduler')
-        if scheduler:
-            s = scheduler.lower()
-            sample_params['scheduler'] = 'discrete' if s == 'normal' else s
-
-        # Sigmas
-        sigmas = parse_number_list(self._get_param('in_sigmas'))
-        if sigmas:
-            sample_params['custom_sigmas'] = sigmas
-        # Extra sample args
-        extra_sample_args = self._text('in_extra_sample_args')
-        if extra_sample_args:
-            sample_params['extra_sample_args'] = extra_sample_args
-
-        # Guidance
-        v = self._num('in_cfg', float)
-        if v is not None:
-            guidance['txt_cfg'] = v
-        v = self._num('in_img_cfg', float, 'in_img_cfg_bool')
-        if v is not None:
-            guidance['img_cfg'] = v
-        v = self._num('in_guidance', float, 'in_guidance_bool')
-        if v is not None:
-            guidance['distilled_guidance'] = v
-
-        # Skip Layer Guidance (SLG)
-        if self._get_param('in_slg_bool'):
-            slg = {}
-            v = self._num('in_slg_scale', float)
-            if v is not None:
-                slg['scale'] = v
-            v = self._num('in_skip_layer_start', float)
-            if v is not None:
-                slg['layer_start'] = v
-            v = self._num('in_skip_layer_end', float)
-            if v is not None:
-                slg['layer_end'] = v
-            layers = parse_number_list(self._get_param('in_skip_layers'), int)
-            if layers:
-                slg['layers'] = layers
-            if slg:
-                guidance['slg'] = slg
-
-        if guidance:
-            sample_params['guidance'] = guidance
-        return sample_params
-
-    def _hires(self) -> Optional[dict]:
-        """Builds the hires object."""
-        # Only if the tab has the HiRes Fix settings
-        if 'in_hires_bool' not in self.params:
+    def _encoded_image(self, key: str) -> Optional[str]:
+        """The base64 PNG of an input image setting, None without one."""
+        img = image_to_pil(self._get_param(key))
+        if img is None:
             return None
-        if not self._get_param('in_hires_bool'):
-            return {"enabled": False}
-        hires = {
-            "enabled": True,
-            "upscaler": self._model_stem(
-                self._get_param('in_hires_upscaler') or 'Latent'
-            ),
-        }
-        for key, field, cast in (
-            ('in_hires_scale', 'scale', float),
-            ('in_hires_width', 'target_width', int),
-            ('in_hires_height', 'target_height', int),
-            ('in_hires_steps', 'steps', int),
-            ('in_hires_denoising_strength', 'denoising_strength', float),
-            ('in_hires_upscale_tile_size', 'upscale_tile_size', int),
-        ):
-            v = self._num(key, cast)
-            if v is not None:
-                hires[field] = v
-        sigmas = parse_number_list(self._get_param('in_hires_sigmas'))
-        if sigmas:
-            hires['custom_sigmas'] = sigmas
-        return hires
+        return encode_image(img.convert('RGB'))
 
-    def _vae_tiling(self) -> Optional[dict]:
-        """Builds the vae_tiling_params object."""
-        # Only if the tab has the VAE Tiling settings
-        if 'in_vae_tiling' not in self.params:
-            return None
-        tiling = {"enabled": bool(self._get_param('in_vae_tiling'))}
-        # LTX Specifics
-        if self._get_param('in_temporal_tiling'):
-            tiling['temporal_tiling'] = True
-        extra_tiling_args = self._text('in_extra_tiling_args')
-        if extra_tiling_args:
-            tiling['extra_tiling_args'] = extra_tiling_args
-        if not tiling['enabled']:
-            return tiling
-        v = self._num('in_vae_tile_overlap', float)
-        if v is not None:
-            tiling['target_overlap'] = v
-        size = self._num('in_vae_tile_size', int)
-        if size:
-            tiling['tile_size_w'] = tiling['tile_size_h'] = size
-        if self._get_param('in_vae_relative_bool'):
-            rel = self._num('in_vae_relative_tile_size', float)
-            if rel:
-                tiling['rel_size_w'] = tiling['rel_size_h'] = rel
-        return tiling
-
-    def _cache(self) -> dict:
-        """Builds the cache fields."""
-        # Only if the tab has the Cache settings
-        if 'in_cache_bool' not in self.params:
-            return {}
-        if not self._get_param('in_cache_bool'):
-            return {"cache_mode": "disabled"}
-        cache = {}
-        mode = self._text('in_cache_mode')
-        if mode:
-            cache['cache_mode'] = mode
-        option = self._text('in_cache_option')
-        if option and option.strip('"'):
-            cache['cache_option'] = option.strip('"')
-        mask = self._text('in_scm_mask')
-        if mask:
-            cache['scm_mask'] = mask
-        policy = self._text('in_scm_policy')
-        if policy in ('dynamic', 'static'):
-            cache['scm_policy_dynamic'] = policy == 'dynamic'
-        return cache
-
-    def _preview(self) -> tuple:
-        """Returns (preview_mode, preview_interval)."""
-        # Tabs without the Preview settings use the projection preview
-        if 'in_preview_bool' not in self.params:
-            return "proj", 1
-        if not self._get_param('in_preview_bool'):
-            return "none", 1
-        mode = self._text('in_preview_mode') or "proj"
-        interval = self._num('in_preview_interval', int) or 1
-        return mode, max(1, interval)
-
-    def _ref_image_args(self) -> Optional[str]:
+    def _input_images(self) -> Dict[str, Any]:
         """
-        Builds the ref_image_args key=value list from the reference
-        image settings.
-        Returns None when nothing is set (model preset is auto-detected).
+        The input images of the request (init_image, mask_image,
+        ref_images). To be implemented by subclasses.
         """
-        args = []
-        if self._get_param('in_increase_ref_index'):
-            args.append("ref_index_mode=increase")
-        if self._get_param('in_disable_auto_resize_ref_image'):
-            args.append("resize_before_vae=false")
-        return ",".join(args) if args else None
-
-    def _control(self) -> dict:
-        """Builds the ControlNet fields."""
-        if not self._get_param('in_cnnet_bool'):
-            return {}
-        control_img = image_to_pil(self._get_param('in_control_img'))
-        if control_img is None:
-            return {}
-        control = {"control_image": encode_image(control_img.convert('RGB'))}
-        v = self._num('in_control_strength', float)
-        if v is not None:
-            control['control_strength'] = v
-        return control
-
-    def _ip_adapter(self) -> dict:
-        """Builds the IP-Adapter fields."""
-        if not self._get_param('in_ip_adapter_bool'):
-            return {}
-        ip_img = image_to_pil(self._get_param('in_ip_adapter_img'))
-        if ip_img is None:
-            return {}
-        ip_adapter = {
-            "ip_adapter_image": encode_image(ip_img.convert('RGB'))
-        }
-        v = self._num('in_ip_adapter_strength', float)
-        if v is not None:
-            ip_adapter['ip_adapter_strength'] = v
-        return ip_adapter
-
-    def _adetailer(self) -> dict:
-        """
-        Builds the ADetailer fields. The detector is loaded at launch and
-        runs on every image, so only the overrides are sent.
-        """
-        adetailer = {}
-        prompt = self._text('in_ad_prompt')
-        if prompt:
-            adetailer['ad_prompt'] = prompt
-        nprompt = self._text('in_ad_nprompt')
-        if nprompt:
-            adetailer['ad_negative_prompt'] = nprompt
-        extra_args = self._build_extra_ad_args()
-        if extra_args:
-            adetailer['extra_ad_args'] = extra_args
-        return adetailer
-
-    def _add_input_images(self, payload: dict):
-        """
-        Adds the input images to the payload.
-        To be implemented by subclasses.
-        """
+        return {}
 
     def _build_payload(self) -> dict:
-        """Constructs the JSON payload for /sdcpp/v1/img_gen."""
+        """
+        Constructs the JSON payload for /sdcpp/v1/img_gen. Where each
+        field goes and when comes from modules/options/registry.py; the
+        runner only computes what the registry can't: the prompts without
+        their LoRA tags, the LoRAs and the encoded images.
+        """
         clean_pprompt, pprompt_loras = self._extract_loras(
             self._get_param('in_pprompt', '') or ''
         )
         clean_nprompt, nprompt_loras = self._extract_loras(
             self._get_param('in_nprompt', '') or ''
         )
-
-        preview_mode, preview_interval = self._preview()
-
-        payload = {
-            "prompt": clean_pprompt,
-            "negative_prompt": clean_nprompt,
-            "width": self._int_param('in_width', 512),
-            "height": self._int_param('in_height', 512),
-            "batch_count": self._int_param('in_batch_count', 1) or 1,
-            "seed": self.get_seed(),
-            "sample_params": self._sample_params(),
-            "preview": preview_mode,
-            "preview_interval": preview_interval,
-            "output_format": "png",
-        }
-
-        v = self._num('in_clip_skip', int)
-        if v is not None:
-            payload['clip_skip'] = v
-
-        # Output
-        if 'in_disable_img_metadata' in self.params:
-            payload['embed_image_metadata'] = not self._get_param(
-                'in_disable_img_metadata'
-            )
-        v = self._num('in_compression_quality', int)
-        if v is not None:
-            payload['output_compression'] = v
-
-        # LoRA
         loras = pprompt_loras + nprompt_loras
-        if loras:
-            unique = {(l['path'], l['is_high_noise']): l for l in loras}
-            payload['lora'] = list(unique.values())
+        unique = {(l['path'], l['is_high_noise']): l for l in loras}
 
-        # HiRes Fix
-        hires = self._hires()
-        if hires is not None:
-            payload['hires'] = hires
+        values = {
+            'prompt': clean_pprompt,
+            'negative_prompt': clean_nprompt,
+            'output_format': self.extension,
+            'loras': list(unique.values()) or None,
+            'control_image': (self._encoded_image('in_control_img')
+                              if self._get_param('in_cnnet_bool') else None),
+            'ip_adapter_image': (
+                self._encoded_image('in_ip_adapter_img')
+                if self._get_param('in_ip_adapter_bool') else None
+            ),
+            **self._input_images(),
+        }
+        flags = {name: values[name] is not None
+                 for name in ('control_image', 'ip_adapter_image')}
 
-        # VAE Tiling
-        tiling = self._vae_tiling()
-        if tiling is not None:
-            payload['vae_tiling_params'] = tiling
-
-        # Cache
-        payload.update(self._cache())
-
-        # Image Preprocessing
-        preprocess = self._text('in_img_preprocess')
-        if preprocess:
-            payload['image_preprocess'] = preprocess
-
-        # Reference images
-        ref_args = self._ref_image_args()
-        if ref_args:
-            payload['ref_image_args'] = ref_args
-
-        # Qwen Image Layered
-        layers = self._qwen_image_layers()
-        if layers is not None:
-            payload['qwen_image_layers'] = layers
-
-        # ControlNet
-        payload.update(self._control())
-
-        # IP-Adapter
-        payload.update(self._ip_adapter())
-
-        # ADetailer
-        payload.update(self._adetailer())
-
-        self._add_input_images(payload)
-        return payload
+        # The server expects sample_params even when it's empty
+        return emit.payload(
+            self._context(values, flags), {'sample_params': {}}
+        )
 
     def _target_path(self, i: int) -> str:
         """
@@ -909,23 +592,25 @@ class ApiTaskRunner(CommonRunner):
 
 class Txt2ImgApiRunner(ApiTaskRunner):
     """Builds the txt2img request."""
+    kind = "txt2img"
     dir_key = "txt2img_dir"
     subctrl_id = 0
 
 
 class Img2ImgApiRunner(ApiTaskRunner):
     """Builds the img2img request."""
+    kind = "img2img"
     dir_key = "img2img_dir"
     subctrl_id = 1
 
-    def _add_input_images(self, payload: dict):
-        # Add img2img specific fields
+    def _input_images(self) -> Dict[str, Any]:
+        values = {}
         init_img = image_to_pil(
             self._get_param('in_img_inp')
             or self._get_param('in_first_frame_inp')
         )
         if init_img is not None:
-            payload["init_image"] = encode_image(init_img)
+            values['init_image'] = encode_image(init_img)
 
         mask_input = (self._get_param('in_img_mask')
                       or self._get_param('in_mask_img'))
@@ -934,40 +619,40 @@ class Img2ImgApiRunner(ApiTaskRunner):
             mask_img = mask_img.convert('L')
             if self._get_param('in_invert_mask', False):
                 mask_img = ImageOps.invert(mask_img)
-            payload["mask_image"] = encode_image(mask_img)
-
-        v = self._num('in_strength', float)
-        if v is not None:
-            payload['strength'] = v
+            values['mask_image'] = encode_image(mask_img)
+        return values
 
 
 class ImgEditApiRunner(ApiTaskRunner):
     """Builds the image editing (instruct) request."""
+    kind = "imgedit"
     dir_key = "imgedit_dir"
     subctrl_id = 2
 
-    def _add_input_images(self, payload: dict):
+    def _input_images(self) -> Dict[str, Any]:
         ref_imgs = self._get_param('in_ref_img')
         if ref_imgs is None:
             ref_imgs = self._get_param('in_img_inp')
         if ref_imgs is None:
-            return
+            return {}
         if not isinstance(ref_imgs, list):
             ref_imgs = [ref_imgs]
 
+        values = {}
         encoded = []
         for item in ref_imgs:
             img = image_to_pil(item)
             if img is not None:
                 encoded.append(encode_image(img))
         if encoded:
-            payload["ref_images"] = encoded
+            values['ref_images'] = encoded
 
         mask_input = (self._get_param('in_img_mask')
                       or self._get_param('in_mask_img'))
         mask_img = process_editor_mask(mask_input)
         if mask_img is not None:
-            payload["mask_image"] = encode_image(mask_img.convert('L'))
+            values['mask_image'] = encode_image(mask_img.convert('L'))
+        return values
 
 
 def txt2img_api(params: dict):

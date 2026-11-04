@@ -3,9 +3,9 @@
 import sys
 
 from modules.utils.file_utils import migrate_legacy_configs
-from modules.config import ConfigManager
+from modules.settings import ConfigManager
 from modules.utils.sd_interface import (
-    SDOptionsCache, exe_name
+    SDChoicesCache, exe_name
 )
 from modules.utils.subprocess_manager import SubprocessManager
 import modules.utils.queue as queue_manager
@@ -36,7 +36,7 @@ config = ConfigManager()
 
 current_mode = "server" if "--server" in sys.argv else "cli"
 
-sd_options = SDOptionsCache(mode=current_mode)
+sd_choices = SDChoicesCache(mode=current_mode)
 
 subprocess_manager = SubprocessManager()
 

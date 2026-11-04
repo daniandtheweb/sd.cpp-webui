@@ -28,18 +28,13 @@ def create_preview_ui():
             minimum=1,
             interactive=True
         )
-        preview_taesd = gr.Checkbox(
-            label="TAESD for preview only",
-            value=config.get('def_preview_taesd')
-        )
         preview_noisy = gr.Checkbox(
             label="Preview noisy",
             value=config.get('def_preview_noisy')
         )
 
     preview_comp = [
-        preview_mode, preview_interval, preview_taesd,
-        preview_noisy
+        preview_mode, preview_interval, preview_noisy
     ]
 
     preview_bool.change(
@@ -52,6 +47,5 @@ def create_preview_ui():
         'in_preview_bool': preview_bool,
         'in_preview_mode': preview_mode,
         'in_preview_interval': preview_interval,
-        'in_preview_taesd': preview_taesd,
         'in_preview_noisy': preview_noisy,
     }

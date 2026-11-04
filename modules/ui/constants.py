@@ -1,6 +1,6 @@
 """sd.cpp-webui - UI constants"""
 
-from modules.shared_instance import sd_options
+from modules.shared_instance import sd_choices
 
 
 QUANTS = [
@@ -11,8 +11,8 @@ FIELDS = [
     "pprompt", "nprompt", "width", "height", "steps",
     "sampling", "scheduler", "cfg", "seed"
 ]
-SAMPLERS = sd_options.get_opt("samplers")
-SCHEDULERS = sd_options.get_opt("schedulers")
+SAMPLERS = ['Default'] + sd_choices.get_choices("samplers")
+SCHEDULERS = ['Default'] + sd_choices.get_choices("schedulers")
 MODELS = [
     "Checkpoint", "UNET", "VAE", "clip_g", "clip_l", "t5xxl", "llm",
     "tokenizer", "TAESD", "Lora", "Embeddings", "Upscaler", "ControlNet"
@@ -23,10 +23,10 @@ BUILTIN_UPSCALERS = [
     "Latent (bicubic)", "Latent (bicubic antialiased)"
 ]
 CIRCULAR_PADDING = ["None", "Circular", "Circular X", "Circular Y"]
-RNG = ['Default'] + sd_options.get_opt("rng")
-SAMPLER_RNG = ['Default'] + sd_options.get_opt("sampler_rng")
-PREVIEW = sd_options.get_opt("previews")
-PREDICTION = ['Default'] + sd_options.get_opt("prediction")
+RNG = ['Default'] + sd_choices.get_choices("rng")
+SAMPLER_RNG = ['Default'] + sd_choices.get_choices("sampler_rng")
+PREVIEW = sd_choices.get_choices("previews")
+PREDICTION = ['Default'] + sd_choices.get_choices("prediction")
 VAE_FORMAT = ["Default", "flux", "sd3", "flux2", "wan"]
 CACHE_MODE = [
     "easycache", "ucache", "dbcache",

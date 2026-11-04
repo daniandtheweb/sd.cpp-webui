@@ -55,7 +55,10 @@ def test_wrapper_calls_get_active_model_name_once(mocker):
 
 
 def test_wrapper_offline_status(mocker):
-    """Offline sentinel maps to an unreachable status with a dead button."""
+    """
+    While the server process runs, an unanswered probe means it is still
+    starting (the port isn't bound yet): a 'Starting' status, dead button.
+    """
     import modules.core.server.status_monitor as sm
 
     mocker.patch.object(
@@ -69,8 +72,26 @@ def test_wrapper_offline_status(mocker):
         '127.0.0.1', 7860
     )
 
-    assert status == 'Server unreachable (starting or crashed)'
+    assert status == 'Starting (waiting for server...)'
     assert btn['interactive'] is False
+
+
+def test_wrapper_crashed_status(mocker):
+    """A dead process is reported as crashed, not as 'starting'."""
+    import modules.core.server.status_monitor as sm
+    from modules.shared_instance import server_state
+
+    server_state.running = False
+    mocker.patch.object(server_state, 'last_exit_code', 1, create=True)
+    probe = mocker.patch.object(sm, 'get_active_model_name')
+
+    status, btn, slider, text = sm.server_status_monitor_wrapper(
+        '127.0.0.1', 7860
+    )
+
+    assert status == 'Crashed (exit code 1)'
+    assert btn['interactive'] is False
+    probe.assert_not_called()          # no HTTP probe for a dead process
 
 
 def _make_runner():

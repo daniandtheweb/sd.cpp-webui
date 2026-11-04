@@ -26,8 +26,9 @@ def create_vae_tiling_ui():
             interactive=config.get('def_vae_tiling')
         )
         vae_tile_size = gr.Number(
-            label="VAE Tile size",
-            minimum=1,
+            label="VAE Tile size (pixels)",
+            info="0 leaves it to sd.cpp (256)",
+            minimum=0,
             maximum=1024,
             step=1,
             value=config.get('def_vae_tile_size'),

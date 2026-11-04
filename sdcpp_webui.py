@@ -42,10 +42,10 @@ from modules.interfaces.common.gallery_tab import (
     gallery, gallery_manager, def_page, txt2img_ctrl, page_num_select
 )
 from modules.interfaces.cli.convert_tab import convert_block
-from modules.interfaces.common.options_tab import (
-    options_block, restart_btn
+from modules.interfaces.common.settings_tab import (
+    settings_block, restart_btn
 )
-from modules.config import ConfigManager
+from modules.settings import ConfigManager
 from modules.ui.constants import FIELDS, SAMPLERS, SCHEDULERS
 from modules.utils.sdcpp_utils import restart_server
 from modules.utils.ui_events import RESYNC_JS, GALLERY_CSS
@@ -245,8 +245,8 @@ def render_server_ui():
             cpy_2_any2video_btn.visible = False
             cpy_2_upscale_btn.visible = False
             gallery_block.render()
-        with gr.TabItem("Options", id="options"):
-            options_block.render()
+        with gr.TabItem("Settings", id="settings"):
+            settings_block.render()
 
     return tabs, gallery_tab
 
@@ -268,8 +268,8 @@ def render_cli_ui():
             upscale_block.render()
         with gr.TabItem("Checkpoint Converter", id="convert"):
             convert_block.render()
-        with gr.TabItem("Options", id="options"):
-            options_block.render()
+        with gr.TabItem("Settings", id="settings"):
+            settings_block.render()
 
     return tabs, gallery_tab
 

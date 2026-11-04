@@ -1,16 +1,14 @@
 """sd.cpp-webui - core - stable-diffusion.cpp common"""
 
-import math
 import os
 import re
 from PIL import Image
-from enum import IntEnum
 from typing import Dict, Any, Optional
 
 from modules.utils.file_utils import get_path
 from modules.utils.sdcpp_utils import extract_env_vars, generate_output_filename
 from modules.shared_instance import config, SD_CLI
-from modules.ui.constants import CIRCULAR_PADDING
+from modules.options import convert, emit, registry
 
 LORA_TAG_PATTERN = re.compile(r'<lora:([^:]+):([^>]+)>')
 
@@ -118,16 +116,6 @@ def process_editor_mask(mask_input: Any) -> Image.Image | None:
     return None
 
 
-class DiffusionMode(IntEnum):
-    CHECKPOINT = 0
-    UNET = 1
-
-
-class VideoMode(IntEnum):
-    UNET = 0
-    ANIMATEDIFF = 1
-
-
 class CommonRunner():
     """
     Common class containing shared logic for CLI and server runners.
@@ -157,141 +145,6 @@ class CommonRunner():
         if val is None:
             return None
         return int(float(val))
-
-    def get_seed(self) -> int:
-        """
-        Helper to get the seed as an int.
-
-        Maps the "cleared" seed state (None or empty string from the seed
-        textbox) to -1, sd.cpp's "random seed" default.
-        """
-        val = self.params.get('in_seed')
-        if val is None or val == '':
-            return -1
-        return int(float(val))
-
-    # Canonical module names and the aliases the CLI accepts for them
-    _BACKEND_MODULES = {
-        'diffusion': {'diffusion', 'model', 'unet', 'dit'},
-        'te': {'te', 'clip', 'text', 'textencoder', 'textencoders',
-               'conditioner', 'cond', 'llm', 't5', 't5xxl'},
-        'clip_vision': {'clip_vision', 'clipvision', 'vision'},
-        'vae': {'vae', 'firststage', 'autoencoder', 'tae'},
-        'controlnet': {'controlnet', 'control'},
-        'photomaker': {'photomaker', 'photomakerid', 'pmid', 'photo'},
-        'upscaler': {'upscaler', 'esrgan', 'hires'},
-        'detector': {'detector', 'adetailer', 'yolo'},
-        'audio_encoder': {'audio_encoder', 'audioencoder', 'audio'},
-    }
-    _BACKEND_ALIAS_MAP = {
-        alias.replace('-', '').replace('_', ''): module
-        for module, aliases in _BACKEND_MODULES.items()
-        for alias in aliases
-    }
-    _DEFAULT_ALIASES = {'*', 'primary', 'all', 'default'}
-
-    @staticmethod
-    def _norm_name(name: str) -> str:
-        return str(name).strip().lower().replace('-', '').replace('_', '')
-
-    def _parse_backend_table(self, param_key: str = 'in_backend_table',
-                             params_backend: bool = False) -> str | None:
-        """
-        Parses the backend table rows into a valid sd.cpp backend string.
-        Example output: "vulkan0,diffusion=vulkan0&vulkan1,vae=cpu"
-        """
-        backend_table = self._get_param(param_key)
-
-        # If UI didn't pass it or it's empty, return None
-        if not backend_table or not isinstance(backend_table, list):
-            return None
-
-        parts = []
-        default_device = None
-
-        for row in backend_table:
-            if len(row) < 2:
-                continue
-            component = self._norm_name(row[0])
-            device = str(row[1]).strip().lower()
-
-            # Skip invalid/default rows
-            if not device or device in ('default', 'auto', ''):
-                continue
-            # 'disk' is a parameter residency mode, not a compute backend
-            if not params_backend and device == 'disk':
-                continue
-
-            if component in self._DEFAULT_ALIASES:
-                default_device = device
-                continue
-
-            module = self._BACKEND_ALIAS_MAP.get(component)
-            if not module:
-                continue
-            parts.append(f"{module}={device}")
-
-        # Default entry first, per-module assignments override it
-        if default_device:
-            entry = (f"*={default_device}"
-                     if params_backend else default_device)
-            parts.insert(0, entry)
-
-        return ",".join(parts) if parts else None
-
-    # Only these modules support layer/row splitting of their compute
-    _SPLIT_MODULES = {'diffusion', 'te'}
-
-    def _parse_split_modes(self) -> str | None:
-        """
-        Parses the per-module split mode rows into a '--split-mode'
-        value. Example output: "diffusion=row,te=layer"
-        """
-        rows = self._get_param('in_split_modes')
-        if not rows or not isinstance(rows, list):
-            return None
-
-        parts = []
-        for row in rows:
-            if not row or len(row) < 2:
-                continue
-            module = str(row[0]).strip().lower()
-            mode = str(row[1]).strip().lower()
-            if module in self._SPLIT_MODULES and mode in ('layer', 'row'):
-                parts.append(f"{module}={mode}")
-        return ",".join(parts) if parts else None
-
-    # Budget keys the CLI accepts in place of a device name
-    _MAX_VRAM_DEFAULT_KEYS = {'', 'default', 'all', '*'}
-
-    def _parse_max_vram_table(self) -> str | None:
-        """
-        Parses the max-vram table rows into a valid sd.cpp budget string.
-        Example output: "cuda0=6,vulkan0=2"
-        """
-        rows = self._get_param('in_max_vram_table')
-        if not rows or not isinstance(rows, list):
-            return None
-
-        parts = []
-        for row in rows:
-            if not isinstance(row, (list, tuple)) or len(row) < 2:
-                continue
-            device = str(row[0] or '').strip()
-            value = str(row[1] or '').strip()
-            if not value or device.lower() == 'disk':
-                continue
-            try:
-                budget = float(value)
-            except ValueError:
-                continue
-            if not math.isfinite(budget):
-                continue
-            if device.lower() in self._MAX_VRAM_DEFAULT_KEYS:
-                parts.append(value)
-            else:
-                parts.append(f"{device}={value}")
-        return ",".join(parts) if parts else None
 
     def _make_relative(self, path):
         """Converts paths inside the exe directory to relative form."""
@@ -376,27 +229,7 @@ class CommonRunner():
         """
         Resolves all model and directory paths from the config.
         """
-        path_mappings = {
-            'ckpt_dir': ['in_ckpt_model', 'in_animatediff_ckpt'],
-            'vae_dir': ['in_ckpt_vae', 'in_unet_vae', 'in_audio_vae',
-                        'in_animatediff_vae'],
-            'unet_dir': ['in_unet_model', 'in_high_noise_model', 'in_uncond_unet_model'],
-            'txt_enc_dir': [
-                'in_clip_g', 'in_clip_l', 'in_t5xxl', 'in_llm',
-                'in_llm_vision', 'in_umt5_xxl', 'in_clip_vision_h',
-                'in_emb_connect', 'in_ip_adapter_clip_vision',
-                'in_audio_encoder'
-            ],
-            'taesd_dir': ['in_taesd'],
-            'phtmkr_dir': ['in_phtmkr'],
-            'upscl_dir': ['in_upscl'],
-            'cnnet_dir': ['in_cnnet'],
-            'ad_dir': ['in_ad_model'],
-            'ipadapter_dir': ['in_ip_adapter'],
-            'pulid_dir': ['in_pulid_weights', 'in_pulid_embedding'],
-            'animatediff_dir': ['in_motion_module'],
-            'tokenizer_dir': ['in_tokenizer']
-        }
+        path_mappings = registry.path_mappings()
         for dir_key, param_keys in path_mappings.items():
             for param_key in param_keys:
                 if param_key in self.params:
@@ -406,312 +239,31 @@ class CommonRunner():
                         config.get(dir_key), self.params.get(param_key)
                     )
 
-    def _add_options(self, options: Dict[str, Any]):
-        """
-        Adds key-value options to the command if the value is not None.
-        """
-        for opt, val in options.items():
-            if val is not None:
-                self.command.extend([opt, str(val)])
+    # Command kind, set by the subclasses (see modules/options/spec.py)
+    kind = None
 
-    def _add_flags(self, flags: Dict[str, bool]):
-        """Adds boolean flags to the command if they are True."""
-        for flag, condition in flags.items():
-            if condition:
-                self.command.append(flag)
+    def _lora_tags(self) -> bool:
+        """True if the prompts contain <lora:name:strength> tags."""
+        pp_text = str(self._get_param('in_pprompt', "")).strip()
+        np_text = str(self._get_param('in_nprompt', "")).strip()
+        return bool(LORA_TAG_PATTERN.search(f"{pp_text} {np_text}"))
 
-    def _build_model_args(self) -> str:
+    def _context(self, values: Optional[Dict[str, Any]] = None,
+                 flags: Optional[Dict[str, bool]] = None) -> emit.Context:
         """
-        Assembles the --model-args key=value string from
-        the Model Arguments tab values.
+        What the option registry needs to build this run's command:
+        the values/conditions the runner computes (output path, ...) go
+        in 'values' and 'flags'.
         """
-        args = []
-        if not self._get_param('in_chroma_use_dit_mask', True):
-            args.append('chroma_use_dit_mask=false')
-        if self._get_param('in_chroma_use_t5_mask'):
-            args.append('chroma_use_t5_mask=true')
-        t5_mask_pad = self._get_param('in_chroma_t5_mask_pad')
-        if t5_mask_pad and float(t5_mask_pad) != 0:
-            args.append(f'chroma_t5_mask_pad={int(t5_mask_pad)}')
-        if self._get_param('in_qwen_image_zero_cond_t'):
-            args.append('qwen_image_zero_cond_t=true')
-        if self._get_param('in_qwen_image_2_1_prefix_cache'):
-            args.append('qwen_image_2_1_prefix_cache=true')
-        prefix_cache_type = self._get_param(
-            'in_qwen_image_2_1_prefix_cache_type'
+        flags = {'lora_tags': self._lora_tags(), **(flags or {})}
+        return emit.Context(
+            self.params, self.kind, rel=self._make_relative,
+            cfg=config.get, values=values, flags=flags
         )
-        if prefix_cache_type and prefix_cache_type != "auto":
-            args.append(
-                f'qwen_image_2_1_prefix_cache_type={prefix_cache_type}'
-            )
-        pixart_pos_embed_base_size = self._get_param(
-            'in_pixart_pos_embed_base_size'
-        )
-        if (pixart_pos_embed_base_size
-                and float(pixart_pos_embed_base_size) != 0):
-            args.append(
-                f'pixart_pos_embed_base_size={int(pixart_pos_embed_base_size)}'
-            )
-        pixart_interpolation_scale = self._get_param(
-            'in_pixart_interpolation_scale'
-        )
-        if (pixart_interpolation_scale
-                and float(pixart_interpolation_scale) != 0):
-            args.append(
-                f'pixart_interpolation_scale={pixart_interpolation_scale}'
-            )
-        pixart_vae_scale_factor = self._get_param('in_pixart_vae_scale_factor')
-        if pixart_vae_scale_factor and float(pixart_vae_scale_factor) != 0:
-            args.append(f'pixart_vae_scale_factor={pixart_vae_scale_factor}')
-        return ",".join(args)
-
-    # ADetailer settings: (UI key, extra_ad_args key, type, sd.cpp default)
-    _AD_ARGS = (
-        ('in_ad_confidence', 'confidence', float, 0.3),
-        ('in_ad_denoising_strength', 'denoising_strength', float, 0.4),
-        ('in_ad_mask_blur', 'mask_blur', int, 4),
-        ('in_ad_inpaint_padding', 'inpaint_padding', int, 32),
-        ('in_ad_dilate_erode', 'dilate_erode', int, 4),
-        ('in_ad_mask_mode', 'mask_mode', str, "none"),
-        ('in_ad_inpaint_width', 'inpaint_width', int, 512),
-        ('in_ad_inpaint_height', 'inpaint_height', int, 512),
-        ('in_ad_steps', 'steps', int, 0),
-        ('in_ad_cfg', 'cfg_scale', float, -1.0),
-    )
-
-    def _build_extra_ad_args(self) -> str | None:
-        """
-        Assembles the extra ADetailer key=value list from the ADetailer
-        settings, skipping the values equal to sd.cpp's defaults.
-        The free-form extra arguments come last, so they take precedence.
-        Returns None when nothing differs from the defaults.
-        """
-        args = []
-        for key, name, cast, default in self._AD_ARGS:
-            val = self._get_param(key)
-            if val is None or str(val).strip() == "":
-                continue
-            try:
-                val = int(float(val)) if cast is int else cast(val)
-            except (TypeError, ValueError):
-                continue
-            if val == default:
-                continue
-            if cast is float:
-                val = f"{val:g}"
-            args.append(f"{name}={val}")
-        extra = str(self._get_param('in_ad_extra_args') or "").strip(" ,")
-        if extra:
-            args.append(extra)
-        return ",".join(args) if args else None
 
     def _qwen_image_layers(self) -> int | None:
-        """
-        Returns the Qwen Image Layered layer count, None when disabled.
-        """
-        if not self._get_param('in_qwen_layered_bool'):
-            return None
-        layers = self._int_param('in_qwen_image_layers')
-        return max(0, layers) if layers is not None else None
-
-    def _get_common_model_options(self) -> Dict[str, Any]:
-        """
-        Returns the base model options.
-        """
-        options = {}
-        diffusion_mode = self._get_param('in_diffusion_mode')
-
-        if diffusion_mode == DiffusionMode.CHECKPOINT:
-            options['--model'] = self._make_relative(self._get_param('f_ckpt_model'))
-            options['--vae'] = self._make_relative(self._get_param('f_ckpt_vae'))
-        elif diffusion_mode == DiffusionMode.UNET:
-            options['--diffusion-model'] = self._make_relative(self._get_param('f_unet_model'))
-            options['--vae'] = self._make_relative(self._get_param('f_unet_vae'))
-            options['--uncond-diffusion-model'] = self._make_relative(self._get_param('f_uncond_unet_model'))
-            options['--clip_g'] = self._make_relative(self._get_param('f_clip_g'))
-            options['--clip_l'] = self._make_relative(self._get_param('f_clip_l'))
-            options['--t5xxl'] = self._make_relative(self._get_param('f_t5xxl'))
-            options['--llm'] = self._make_relative(self._get_param('f_llm'))
-            options['--llm_vision'] = self._make_relative(self._get_param('f_llm_vision'))
-            options['--tokenizer'] = self._make_relative(self._get_param('f_tokenizer'))
-
-        return {k: v for k, v in options.items() if v is not None}
-
-    def _get_quant_options(self) -> Dict[str, Any]:
-        """
-        Returns the quantization options shared by CLI and server runners.
-        """
-        return {
-            '--type': (self._get_param('in_model_type')
-                       if self._get_param('in_model_type') != "Default"
-                       else None),
-            '--tensor-type-rules': (
-                self._get_param('in_tensor_type_rules')
-                if self._get_param('in_tensor_type_rules') != ""
-                else None
-            ),
-        }
-
-    def _get_component_options(self) -> Dict[str, Any]:
-        """
-        Returns the model component options shared by CLI and server runners.
-        """
-        threads = self._get_param('in_threads')
-        return {
-            '-t': (threads
-                   if threads and str(threads) != "0"
-                   else None),
-            '--taesd': self._make_relative(self._get_param('f_taesd')),
-            '--photo-maker': (self._make_relative(self._get_param('f_phtmkr'))
-                              if self._get_param('in_phtmkr_bool')
-                              else None),
-            '--pm-id-images-dir': (
-                self._make_relative(self._get_param('in_phtmkr_id'))
-                if self._get_param('in_phtmkr_bool')
-                else None
-            ),
-            '--pm-id-embed-path': (
-                self._make_relative(self._get_param('in_phtmkr_emb'))
-                if self._get_param('in_phtmkr_bool')
-                else None
-            ),
-            # PuLID, active only with weights and embedding together
-            **({
-                '--pulid-weights': self._make_relative(
-                    self._get_param('f_pulid_weights')
-                ),
-                '--pulid-id-embedding': self._make_relative(
-                    self._get_param('f_pulid_embedding')
-                ),
-                '--pulid-id-weight': self._get_param('in_pulid_id_weight'),
-            } if (self._get_param('in_pulid_bool')
-                  and self._get_param('f_pulid_weights')
-                  and self._get_param('f_pulid_embedding')) else {}),
-            '--upscale-model': (self._make_relative(self._get_param('f_upscl'))
-                                if self._get_param('in_upscl_bool')
-                                else None),
-            '--control-net': (self._make_relative(self._get_param('f_cnnet'))
-                              if self._get_param('in_cnnet_bool')
-                              else None),
-            '--embd-dir': self._make_relative(config.get('emb_dir')),
-            '--prediction': (self._get_param('in_predict')
-                             if self._get_param('in_predict') != "Default"
-                             else None),
-            '--vae-format': (self._get_param('in_vae_format')
-                             if self._get_param('in_vae_format') != "Default"
-                             else None),
-        }
-
-    def _get_performance_options(self) -> Dict[str, Any]:
-        """
-        Returns the performance/device options shared by CLI and server runners.
-        """
-        return {
-            '--max-vram': self._parse_max_vram_table(),
-            '--backend': self._parse_backend_table('in_backend_table'),
-            '--params-backend': self._parse_backend_table(
-                'in_params_backend_table', params_backend=True
-            ),
-            '--split-mode': self._parse_split_modes(),
-        }
-
-    def _get_common_options(self) -> Dict[str, Any]:
-        """
-        Returns the runtime options shared by almost all commands.
-        """
-        rpc_servers = str(self._get_param('in_rpc_servers') or "").strip()
-        cache_size = self._get_param('in_conditioning_cache_size')
-        linear_scale = self._get_param('in_linear_scale')
-        attn_scale = self._get_param('in_attn_scale')
-        log_level = str(self._get_param('in_log_level') or "").strip()
-        compression_quality = self._get_param(
-            'in_compression_quality'
-        )
-
-        return {
-            '--auto-fit': ('off' if self._get_param('in_auto_fit') == 'off'
-                           else None),
-            '--rpc-servers': (rpc_servers if rpc_servers else None),
-            '--conditioning-cache-size': (cache_size
-                                          if cache_size not in (None, 0)
-                                          else None),
-            '--linear-scale': (linear_scale
-                               if linear_scale not in (None, 0, 0.0)
-                               else None),
-            '--attn-scale': (attn_scale
-                             if attn_scale not in (None, 0, 0.0)
-                             else None),
-            '--log-level': (log_level
-                            if log_level and log_level != "info"
-                            else None),
-            '--compression-quality': (compression_quality
-                                      if compression_quality != 90
-                                      else None),
-            '--conv-direct': self._build_mode_spec('in_conv_direct'),
-            '--flash-attn': self._build_mode_spec('in_flash_attention'),
-            '--batched-cfg': ('off' if self._get_param('in_batched_cfg') == 'off'
-                              else None),
-            # Free-form key=value lists
-            '--extra-sample-args': (
-                str(self._get_param('in_extra_sample_args') or "").strip()
-                or None
-            ),
-            '--extra-tiling-args': (
-                str(self._get_param('in_extra_tiling_args') or "").strip()
-                or None
-            ),
-        }
-
-    def _build_mode_spec(self, base_key: str) -> Optional[str]:
-        """
-        Builds an on|off|auto value with per-module overrides, as used by
-        --conv-direct and --flash-attn, e.g. "auto,vae=off".
-        Reads base_key (global mode), base_key + '_diffusion' and
-        base_key + '_vae'. A module set to "auto" follows the global mode.
-        Returns None when everything is "auto" (sd.cpp's default).
-        """
-        modes = ("auto", "on", "off")
-
-        def mode(key):
-            value = str(self._get_param(key) or "auto").lower()
-            return value if value in modes else "auto"
-
-        parts = [mode(base_key)]
-        for module in ("diffusion", "vae"):
-            module_mode = mode(f"{base_key}_{module}")
-            if module_mode != "auto":
-                parts.append(f"{module}={module_mode}")
-
-        spec = ",".join(parts)
-        return None if spec == "auto" else spec
-
-    def _get_common_flags(self) -> Dict[str, bool]:
-        """
-        Returns the execution flags shared by almost all commands.
-        """
-        return {
-            '--eager-load': self._get_param('in_eager_load'),
-            '--sage-attn': self._get_param('in_sage_attn'),
-            '--disable-prefetch': self._get_param('in_disable_prefetch'),
-            '--disable-segmented-compute': (
-                self._get_param('in_disable_segmented_compute')
-            ),
-            '--offload-to-cpu': self._get_param('in_offload_to_cpu'),
-            # Deprecated placement compatibility flags
-            '--clip-on-cpu': self._get_param('in_clip_on_cpu'),
-            '--vae-on-cpu': self._get_param('in_vae_on_cpu'),
-            '--control-net-cpu': self._get_param('in_control_net_cpu'),
-            '--vae-tiling': self._get_param('in_vae_tiling'),
-            '--circular': self._get_param('in_circular_padding') == CIRCULAR_PADDING[1],
-            '--circularx': self._get_param('in_circular_padding') == CIRCULAR_PADDING[2],
-            '--circulary': self._get_param('in_circular_padding') == CIRCULAR_PADDING[3],
-            # The ESRGAN upscaler only reads the legacy flag
-            '--diffusion-conv-direct': self._get_param('in_upscale_conv_direct'),
-            '--force-sdxl-vae-conv-scale': self._get_param('in_force_sdxl_vae_conv_scale'),
-            '--disable-image-metadata': self._get_param('in_disable_img_metadata'),
-            '--mmap': self._get_param('in_mmap'),
-            '--color': self._get_param('in_color')
-        }
+        """The Qwen Image Layered layer count, None when disabled."""
+        return convert.qwen_layers(None, self._context())
 
     def _build_process_env(self) -> dict:
         """

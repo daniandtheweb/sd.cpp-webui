@@ -41,7 +41,7 @@ def _get_initial_diffusion_mode():
 
 
 def create_model_widget(
-    label, dir_key, option_key, **kwargs
+    label, dir_key, config_key, **kwargs
 ):
     """
     Universal widget with auto-save to session cache.
@@ -52,7 +52,7 @@ def create_model_widget(
         folder_name = os.path.basename(os.path.normpath(full_path))
         kwargs['info'] = f"{folder_name} folder"
 
-    current_value = get_session_value(option_key)
+    current_value = get_session_value(config_key)
 
     # Tokenizers are JSON files, not the usual weight formats.
     extensions = (".json",) if dir_key == 'tokenizer_dir' else SUPPORTED_EXTENSIONS
@@ -76,9 +76,9 @@ def create_model_widget(
                 **kwargs
             )
 
-            if option_key:
+            if config_key:
                 dropdown.input(
-                    fn=lambda x: update_session_cache(option_key, x),
+                    fn=lambda x: update_session_cache(config_key, x),
                     inputs=[dropdown],
                     outputs=[]
                 )
@@ -109,9 +109,9 @@ def create_model_widget(
                 dropdown,
                 scale=1
             )
-            if option_key:
+            if config_key:
                 clear_btn.click(
-                    fn=lambda: update_session_cache(option_key, None),
+                    fn=lambda: update_session_cache(config_key, None),
                     inputs=[],
                     outputs=[]
                 )
@@ -128,13 +128,13 @@ def create_ckpt_model_sel_ui():
             ckpt_model = create_model_widget(
                 label="Checkpoint Model",
                 dir_key='ckpt_dir',
-                option_key='def_ckpt',
+                config_key='def_ckpt',
             )
         with gr.Column():
             ckpt_vae = create_model_widget(
                 label="Checkpoint VAE",
                 dir_key='vae_dir',
-                option_key='def_ckpt_vae',
+                config_key='def_ckpt_vae',
             )
 
     return {
@@ -152,56 +152,56 @@ def create_unet_model_sel_ui():
             unet_model = create_model_widget(
                 label="UNET Model",
                 dir_key='unet_dir',
-                option_key='def_unet',
+                config_key='def_unet',
             )
         with gr.Column():
             unet_vae = create_model_widget(
                 label="UNET VAE",
                 dir_key='vae_dir',
-                option_key='def_unet_vae',
+                config_key='def_unet_vae',
             )
     with gr.Row():
         uncond_unet_model = create_model_widget(
             label="Unconditional UNET Model",
             dir_key='unet_dir',
-            option_key='def_uncond_unet',
+            config_key='def_uncond_unet',
         )
     with gr.Row():
         with gr.Column():
             clip_g = create_model_widget(
                 label="clip_g",
                 dir_key='txt_enc_dir',
-                option_key='def_clip_g',
+                config_key='def_clip_g',
             )
         with gr.Column():
             clip_l = create_model_widget(
                 label="clip_l",
                 dir_key='txt_enc_dir',
-                option_key='def_clip_l',
+                config_key='def_clip_l',
             )
         with gr.Column():
             t5xxl = create_model_widget(
                 label="t5xxl",
                 dir_key='txt_enc_dir',
-                option_key='def_t5xxl',
+                config_key='def_t5xxl',
             )
         with gr.Column():
             llm = create_model_widget(
                 label="llm",
                 dir_key='txt_enc_dir',
-                option_key='def_llm',
+                config_key='def_llm',
             )
         with gr.Column():
             llm_vision = create_model_widget(
                 label="llm_vision",
                 dir_key='txt_enc_dir',
-                option_key='def_llm_vision',
+                config_key='def_llm_vision',
             )
     with gr.Row():
         tokenizer = create_model_widget(
             label="tokenizer",
             dir_key='tokenizer_dir',
-            option_key='def_tokenizer',
+            config_key='def_tokenizer',
         )
 
     return {
@@ -259,38 +259,38 @@ def create_imgedit_model_sel_ui():
             unet_model = create_model_widget(
                 label="UNET Model",
                 dir_key='unet_dir',
-                option_key='def_unet',
+                config_key='def_unet',
             )
         with gr.Column():
             unet_vae = create_model_widget(
                 label="UNET VAE",
                 dir_key='vae_dir',
-                option_key='def_unet_vae',
+                config_key='def_unet_vae',
             )
     with gr.Row():
         with gr.Column():
             clip_l = create_model_widget(
                 label="clip_l",
                 dir_key='txt_enc_dir',
-                option_key='def_clip_l',
+                config_key='def_clip_l',
             )
         with gr.Column():
             t5xxl = create_model_widget(
                 label="t5xxl",
                 dir_key='txt_enc_dir',
-                option_key='def_t5xxl',
+                config_key='def_t5xxl',
             )
         with gr.Column():
             llm = create_model_widget(
                 label="llm",
                 dir_key='txt_enc_dir',
-                option_key='def_llm',
+                config_key='def_llm',
             )
         with gr.Column():
             llm_vision = create_model_widget(
                 label="llm_vision",
                 dir_key='txt_enc_dir',
-                option_key='def_llm_vision',
+                config_key='def_llm_vision',
             )
 
     return {
@@ -312,52 +312,52 @@ def create_video_unet_model_sel_ui():
             unet_model = create_model_widget(
                 label="UNET Model",
                 dir_key='unet_dir',
-                option_key='def_unet',
+                config_key='def_unet',
             )
         with gr.Column():
             unet_vae = create_model_widget(
                 label="UNET VAE",
                 dir_key='vae_dir',
-                option_key='def_unet_vae',
+                config_key='def_unet_vae',
             )
         with gr.Column():
             audio_vae = create_model_widget(
                 label="Audio VAE",
                 dir_key='vae_dir',
-                option_key='def_audio_vae',
+                config_key='def_audio_vae',
             )
     with gr.Row():
         with gr.Column():
             clip_vision_h = create_model_widget(
                 label="clip_vision_h",
                 dir_key='txt_enc_dir',
-                option_key='def_clip_vision_h',
+                config_key='def_clip_vision_h',
             )
         with gr.Column():
             umt5_xxl = create_model_widget(
                 label="umt5_xxl",
                 dir_key='txt_enc_dir',
-                option_key='def_umt5_xxl',
+                config_key='def_umt5_xxl',
             )
         with gr.Column():
             audio_encoder = create_model_widget(
                 label="audio_encoder",
                 dir_key='txt_enc_dir',
-                option_key='def_audio_encoder',
+                config_key='def_audio_encoder',
             )
     with gr.Row():
         with gr.Column():
             llm = create_model_widget(
                 label="llm",
                 dir_key='txt_enc_dir',
-                option_key='def_llm',
+                config_key='def_llm',
 
             )
         with gr.Column():
             emb_connect = create_model_widget(
                 label="Embedding Connectors",
                 dir_key='txt_enc_dir',
-                option_key='def_emb_connect',
+                config_key='def_emb_connect',
             )
     with gr.Row():
         with gr.Accordion(
@@ -366,7 +366,7 @@ def create_video_unet_model_sel_ui():
             high_noise_model = create_model_widget(
                 label="high_noise_model",
                 dir_key='unet_dir',
-                option_key=None,
+                config_key=None,
             )
 
     return {
@@ -392,19 +392,19 @@ def create_animatediff_model_sel_ui():
             animatediff_ckpt = create_model_widget(
                 label="SD 1.5 Checkpoint",
                 dir_key='ckpt_dir',
-                option_key=None,
+                config_key=None,
             )
         with gr.Column():
             animatediff_vae = create_model_widget(
                 label="Checkpoint VAE",
                 dir_key='vae_dir',
-                option_key=None,
+                config_key=None,
             )
     with gr.Row():
         motion_module = create_model_widget(
             label="Motion Module",
             dir_key='animatediff_dir',
-            option_key=None,
+            config_key=None,
         )
 
     return {

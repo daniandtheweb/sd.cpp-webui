@@ -30,6 +30,11 @@ def build_a1111_metadata(
     vae_path = str(params.get('in_ckpt_vae', 'unknown'))
     vae_name = os.path.basename(vae_path)
 
+    # 'Default' leaves the scheduler to sd.cpp: it isn't a scheduler name.
+    # (A 'Default' sampler stays: the sampler is always the first word, which
+    # is how parse_a1111_text reads it back.)
+    if str(scheduler).strip() == 'Default':
+        scheduler = ''
     full_sampler = f"{sampler} {scheduler}".strip()
 
     meta_str = f"{pprompt}\n"
@@ -39,7 +44,7 @@ def build_a1111_metadata(
     meta_str += (
         f"Steps: {steps}, CFG scale: {cfg}, Seed: {seed}, "
         f"Size: {width}x{height}, Model: {model_name}, "
-        f"RNG: {rng}, Sampler RNG: {sampler_rng} , "
+        f"RNG: {rng}, Sampler RNG: {sampler_rng}, "
         f"Sampler: {full_sampler}, "
         f"VAE: {vae_name}, Version: sd.cpp-webui"
     )

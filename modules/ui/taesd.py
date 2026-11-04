@@ -31,11 +31,18 @@ def create_taesd_ui():
                     with gr.Row():
                         reload_taesd_btn = gr.Button(value=RELOAD_SYMBOL)
                         gr.ClearButton(taesd_model)
+        preview_taesd = gr.Checkbox(
+            label="TAESD for preview only",
+            info="The VAE still decodes the final image. "
+                 "Needs a preview mode that uses TAESD",
+            value=config.get('def_preview_taesd')
+        )
 
     reload_taesd_btn.click(
         reload_models, inputs=[taesd_dir_txt], outputs=[taesd_model]
     )
 
     return {
-        'in_taesd': taesd_model
+        'in_taesd': taesd_model,
+        'in_preview_taesd': preview_taesd
     }

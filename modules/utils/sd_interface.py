@@ -74,42 +74,40 @@ def exe_name(mode="cli"):
     )
 
 
-class SDOptionsCache:
+class SDChoicesCache:
     """
-    Class to load and cache stable-diffusion.cpp command options synchronously.
+    Loads and caches the choices stable-diffusion.cpp accepts for some of its
+    arguments (samplers, schedulers, preview modes, ...).
 
-    This class provides a robust and efficient way to retrieve and cache
-    command-line options from the stable-diffusion.cpp executable's helpers
-    output.
-    It uses file hashes of both the sd binary and this script to ensure the
-    cache is always in sync.
+    The choices are read from the executable's --help output. The cache uses
+    file hashes of both the sd binary and this script to stay in sync with
+    them.
 
     Attributes:
         SD_PATH: Full path to the SD binary.
         SCRIPT_PATH: Full path to this Python script.
         SD: Executable name for subprocess calls (remains as before).
-        _CACHE_FILE: JSON file path to store cached options and
-                     dependency hashes.
-        _OPTIONS: List of SD command-line options to cache.
-        _help_cache: Dictionary holding cached option values.
+        _CACHE_FILE: JSON file that stores the choices and dependency hashes.
+        _FLAGS: The sd arguments whose choices are cached.
+        _help_cache: Dictionary holding the cached choices, by flag.
     """
 
     def __init__(self, mode="cli", first_run=False):
         """
-        Initializes the SDOptionsCache and prepares the cache.
+        Initializes the SDChoicesCache and prepares the cache.
         """
         try:
             self.SD_PATH = exe_name(mode=mode)
             self.SD = os.path.basename(self.SD_PATH)
         except RuntimeError as e:
-            print(f"SDOptionsCache Initialization Error: {e}")
+            print(f"SDChoicesCache Initialization Error: {e}")
             self.SD_PATH = None
             self.SD = None
 
         self.SCRIPT_PATH = os.path.abspath(__file__)
 
-        self._CACHE_FILE = "options_cache.json"
-        self._OPTIONS = ["--sampling-method", "--scheduler", "--preview",
+        self._CACHE_FILE = "choices_cache.json"
+        self._FLAGS = ["--sampling-method", "--scheduler", "--preview",
                          "--type", "--prediction", "--rng", "--sampler-rng"]
         self._help_cache = {}
 
@@ -131,7 +129,7 @@ class SDOptionsCache:
             return None
 
     def _run_and_cache_help(self):
-        """Runs the --help command, parses options, and caches them."""
+        """Runs the --help command, parses the choices, and caches them."""
         if not self.SD_PATH:
             print("Cannot run --help: Executable path is None.")
             return
@@ -146,7 +144,7 @@ class SDOptionsCache:
             )
             help_text = process.stdout
 
-            for option in self._OPTIONS:
+            for option in self._FLAGS:
                 match = re.search(
                     fr"^\s*{re.escape(option)}\s.*?\[([^\]]+)\]",
                     help_text,
@@ -162,8 +160,15 @@ class SDOptionsCache:
             print(f"Failed to run SD --help command: {e}")
 
         self._help_cache = {
-            opt: help_cache.get(opt, []) for opt in self._OPTIONS
+            opt: help_cache.get(opt, []) for opt in self._FLAGS
         }
+
+        if not any(self._help_cache.values()):
+            # Nothing was parsed (the help call failed or its format
+            # changed). Don't keep it: an empty cache would be trusted until
+            # the binary changes, and the built-in fallbacks would be used.
+            print("No choices found in the --help output: not caching them.")
+            return
 
         sd_hash = self._hash_file(self.SD_PATH)
         script_hash = self._hash_file(self.SCRIPT_PATH)
@@ -174,14 +179,14 @@ class SDOptionsCache:
                     {
                         "sd_hash": sd_hash,
                         "script_hash": script_hash,
-                        "options": self._help_cache
+                        "choices": self._help_cache
                     }, f, indent=2
                 )
         except (IOError, TypeError, ValueError) as e:
             print(f"Failed to write to cache file: {e}")
 
     def _load_help_text_sync(self, force_refresh=False):
-        """Synchronously load SD --help output and cache options to JSON."""
+        """Synchronously load the SD --help choices, using the JSON cache."""
         if (
             force_refresh
             or not self.SD_PATH
@@ -201,8 +206,9 @@ class SDOptionsCache:
 
                 if (data.get("sd_hash") == current_sd_hash and
                         data.get("script_hash") == current_script_hash):
-                    self._help_cache = data.get("options", {})
-                    if self._help_cache:
+                    self._help_cache = data.get("choices", {})
+                    # A cache without any choice is not a cache
+                    if any(self._help_cache.values()):
                         cache_valid = True
 
             except (IOError, json.JSONDecodeError) as e:
@@ -213,30 +219,30 @@ class SDOptionsCache:
         if not cache_valid:
             self._run_and_cache_help()
 
-    def _parse_help_option(self, option_name: str):
-        """Return cached values for a given SD --help option."""
-        return self._help_cache.get(option_name, [])
+    def _parse_help_flag(self, flag: str):
+        """Return the cached choices of a given sd flag."""
+        return self._help_cache.get(flag, [])
 
     def refresh(self):
         """
-        Public method to force a refresh of the options from the executable.
+        Public method to force a refresh of the choices from the executable.
         """
         self._load_help_text_sync(force_refresh=True)
 
-    def get_opt(self, option: str):
-        """Public getter to return values for a named option.
+    def get_choices(self, name: str):
+        """Public getter to return the choices of a named argument.
 
         Args:
-            option: Name of the option ('samplers', 'schedulers', 'previews',
-                    'prediction', 'rng', 'sampler_rng').
+            name: Name of the argument ('samplers', 'schedulers', 'previews',
+                  'prediction', 'rng', 'sampler_rng').
 
         Returns:
-            List of available values for the option.
+            List of the available choices.
 
         Raises:
-            ValueError: If unknown option name is provided.
+            ValueError: If an unknown name is provided.
         """
-        option_map = {
+        flags = {
             "samplers": "--sampling-method",
             "schedulers": "--scheduler",
             "previews": "--preview",
@@ -244,15 +250,15 @@ class SDOptionsCache:
             "rng": "--rng",
             "sampler_rng": "--sampler-rng"
         }
-        if option not in option_map:
+        if name not in flags:
             raise ValueError(
-                f"Unknown option '{option}'. "
-                f"Valid options are: {list(option_map.keys())}"
+                f"Unknown choices '{name}'. "
+                f"Valid names are: {list(flags.keys())}"
             )
 
-        parsed_options = self._parse_help_option(option_map[option])
+        parsed = self._parse_help_flag(flags[name])
 
-        if not parsed_options:
+        if not parsed:
             fallbacks = {
                 "samplers": [
                     "euler", "euler_a", "heun", "dpm2", "dpm++2s_a",
@@ -280,6 +286,6 @@ class SDOptionsCache:
                     "cpu"
                 ],
             }
-            return fallbacks.get(option, [])
+            return fallbacks.get(name, [])
 
-        return parsed_options
+        return parsed

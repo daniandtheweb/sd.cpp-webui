@@ -1,4 +1,4 @@
-"""sd.cpp-webui - Options UI"""
+"""sd.cpp-webui - Settings UI"""
 
 import gradio as gr
 
@@ -23,139 +23,25 @@ from modules.ui.cache import create_cache_ui
 from modules.ui.extra import create_extras_ui
 from modules.ui.preview import create_preview_ui
 from modules.ui.environment import create_env_ui
+from modules.options import registry as option_registry
 
 
 OUTPUT_SCHEMES = ["Sequential", "Timestamp", "TimestampMS", "EpochTime"]
 
-OPTION_KEY_MAP = {
-    # Quant
-    'in_model_type': 'def_model_type',
-    'in_tensor_type_rules': 'def_tensor_type_rules',
-
-    # TAESD
-    'in_taesd': 'def_taesd',
-
-    # VAE tiling
-    'in_vae_tiling': 'def_vae_tiling',
-    'in_vae_tile_overlap': 'def_vae_tile_overlap',
-    'in_vae_tile_size': 'def_vae_tile_size',
-    'in_vae_relative_bool': 'def_vae_relative_bool',
-    'in_vae_relative_tile_size': 'def_vae_relative_tile_size',
-    'in_temporal_tiling': 'def_temporal_tiling',
-    'in_extra_tiling_args': 'def_extra_tiling_args',
-
-    # Cache
-    'in_cache_bool': 'def_cache_bool',
-    'in_cache_mode': 'def_cache_mode',
-    'in_cache_option': 'def_cache_option',
-    'in_scm_mask': 'def_scm_mask',
-    'in_scm_policy': 'def_scm_policy',
-
-    # Extras
-    'in_sigmas': 'def_sigmas',
-    'in_extra_sample_args': 'def_extra_sample_args',
-    'in_rng': 'def_rng',
-    'in_sampler_rng': 'def_sampler_rng',
-    'in_predict': 'def_predict',
-    'in_vae_format': 'def_vae_format',
-    'in_lora_apply': 'def_lora_apply',
-    'in_output': 'def_output',
-    'in_output_begin_idx': 'def_output_begin_idx',
-    'in_disable_img_metadata': 'def_disable_img_metadata',
-    'in_compression_quality': 'def_compression_quality',
-    'in_mmap': 'def_mmap',
-    'in_color': 'def_color',
-    'in_log_level': 'def_log_level',
-
-    # Preview
-    'in_preview_bool': 'def_preview_bool',
-    'in_preview_mode': 'def_preview_mode',
-    'in_preview_interval': 'def_preview_interval',
-    'in_preview_taesd': 'def_preview_taesd',
-    'in_preview_noisy': 'def_preview_noisy',
-
-    # Performance
-    'in_threads': 'def_threads',
-    'in_max_vram_table': 'def_max_vram_table',
-    'in_backend_table': 'def_backend_table',
-    'in_params_backend_table': 'def_params_backend_table',
-    'in_eager_load': 'def_eager_load',
-    'in_flash_attention': 'def_flash_attention',
-    'in_flash_attention_diffusion': 'def_flash_attention_diffusion',
-    'in_flash_attention_vae': 'def_flash_attention_vae',
-    'in_conv_direct': 'def_conv_direct',
-    'in_conv_direct_diffusion': 'def_conv_direct_diffusion',
-    'in_conv_direct_vae': 'def_conv_direct_vae',
-    'in_force_sdxl_vae_conv_scale': 'def_force_sdxl_vae_conv_scale',
-    'in_auto_fit': 'def_auto_fit',
-    'in_batched_cfg': 'def_batched_cfg',
-    'in_sage_attn': 'def_sage_attn',
-    'in_split_modes': 'def_split_modes',
-    'in_rpc_servers': 'def_rpc_servers',
-    'in_conditioning_cache_size': 'def_conditioning_cache_size',
-    'in_disable_prefetch': 'def_disable_prefetch',
-    'in_disable_segmented_compute': 'def_disable_segmented_compute',
-    'in_offload_to_cpu': 'def_offload_to_cpu',
-    'in_clip_on_cpu': 'def_clip_on_cpu',
-    'in_vae_on_cpu': 'def_vae_on_cpu',
-    'in_control_net_cpu': 'def_control_net_cpu',
-    'in_linear_scale': 'def_linear_scale',
-    'in_attn_scale': 'def_attn_scale',
-
-    # HiRes
-    'in_hires_upscaler': 'def_hires_upscaler',
-    'in_hires_scale': 'def_hires_scale',
-    'in_hires_width': 'def_hires_width',
-    'in_hires_height': 'def_hires_height',
-    'in_hires_steps': 'def_hires_steps',
-    'in_hires_denoising_strength': 'def_hires_denoising_strength',
-    'in_hires_sigmas': 'def_hires_sigmas',
-    'in_hires_upscale_tile_size': 'def_hires_upscale_tile_size',
-
-    # ADetailer
-    'in_ad_prompt': 'def_ad_prompt',
-    'in_ad_nprompt': 'def_ad_nprompt',
-    'in_ad_confidence': 'def_ad_confidence',
-    'in_ad_denoising_strength': 'def_ad_denoising_strength',
-    'in_ad_mask_blur': 'def_ad_mask_blur',
-    'in_ad_inpaint_padding': 'def_ad_inpaint_padding',
-    'in_ad_dilate_erode': 'def_ad_dilate_erode',
-    'in_ad_mask_mode': 'def_ad_mask_mode',
-    'in_ad_inpaint_width': 'def_ad_inpaint_width',
-    'in_ad_inpaint_height': 'def_ad_inpaint_height',
-    'in_ad_steps': 'def_ad_steps',
-    'in_ad_cfg': 'def_ad_cfg',
-    'in_ad_extra_args': 'def_ad_extra_args',
-
-    # Model Arguments
-    'in_chroma_use_dit_mask': 'def_chroma_use_dit_mask',
-    'in_chroma_use_t5_mask': 'def_chroma_use_t5_mask',
-    'in_chroma_t5_mask_pad': 'def_chroma_t5_mask_pad',
-    'in_qwen_image_zero_cond_t': 'def_qwen_image_zero_cond_t',
-    'in_qwen_image_2_1_prefix_cache': 'def_qwen_image_2_1_prefix_cache',
-    'in_qwen_image_2_1_prefix_cache_type': 'def_qwen_image_2_1_prefix_cache_type',
-    'in_pixart_pos_embed_base_size': 'def_pixart_pos_embed_base_size',
-    'in_pixart_interpolation_scale': 'def_pixart_interpolation_scale',
-    'in_pixart_vae_scale_factor': 'def_pixart_vae_scale_factor',
-
-    # Image preprocessing
-    'in_img_preprocess': 'def_img_preprocess',
-
-    # Environment
-    'env_vk_visible_override': 'def_env_vk_visible_override',
-    'env_GGML_VK_VISIBLE_DEVICES': 'def_env_GGML_VK_VISIBLE_DEVICES',
-    'env_cuda_visible_override': 'def_env_cuda_visible_override',
-    'env_CUDA_VISIBLE_DEVICES': 'def_env_CUDA_VISIBLE_DEVICES',
-    'env_GGML_VK_DISABLE_COOPMAT': 'def_env_GGML_VK_DISABLE_COOPMAT',
-    'env_GGML_VK_DISABLE_INTEGER_DOT_PRODUCT': 'def_env_GGML_VK_DISABLE_INTEGER_DOT_PRODUCT'}
+# 'in_<name>' -> 'def_<name>': the config key each setting's default is
+# saved under (from the option registry)
+CONFIG_KEY_MAP = option_registry.config_key_map()
 
 
-def resolve_option_key(ui_key: str) -> str:
-    return OPTION_KEY_MAP.get(ui_key, ui_key)
+def config_key_for(ui_key: str) -> str:
+    return CONFIG_KEY_MAP.get(ui_key, ui_key)
 
 
-class SettingsRegistry:
-    """Manages UI-to-config mapping, saving, and ordering."""
+class SettingsBinder:
+    """
+    Binds the settings widgets to their config keys: keeps their order and
+    saves or resets them.
+    """
 
     def __init__(self, config_obj):
         self.config = config_obj
@@ -178,7 +64,7 @@ class SettingsRegistry:
         self.config.reset_defaults()
         status = "🔄 Defaults restored."
         # Refresh every registered widget with the restored defaults,
-        # otherwise stale values are re-saved on the next "Set new options".
+        # otherwise stale values are re-saved on the next "Save defaults".
         updates = [
             gr.update(value=self.config.get(key))
             for key in self.ordered_keys
@@ -186,148 +72,148 @@ class SettingsRegistry:
         return (status, *updates)
 
 
-# Initialize registry
-registry = SettingsRegistry(config)
+# Binds the widgets to the config
+binder = SettingsBinder(config)
 
 
-with gr.Blocks() as options_block:
+with gr.Blocks() as settings_block:
     settings_map = {}
     # Title
-    options_title = gr.Markdown("# Options")
+    settings_title = gr.Markdown("# Settings")
 
     with gr.Tab(label="Default models"):
         with gr.Row():
-            registry.register(
+            binder.register(
                 'def_model_tab', gr.Radio(
                     label="Default model TAB",
                     choices=["checkpoint", "unet"],
                     value=config.get('def_model_tab'))
                 )
         with gr.Row():
-            registry.register(
+            binder.register(
                 'def_ckpt', create_model_widget(
                     label="Checkpoint Model",
                     dir_key='ckpt_dir',
-                    option_key='def_ckpt')
+                    config_key='def_ckpt')
                 )
-            registry.register(
+            binder.register(
                 'def_ckpt_vae', create_model_widget(
                     label="Checkpoint VAE",
                     dir_key='vae_dir',
-                    option_key='def_ckpt_vae')
+                    config_key='def_ckpt_vae')
                 )
         with gr.Row():
-            registry.register(
+            binder.register(
                 'def_unet', create_model_widget(
                     label="UNET Model",
                     dir_key='unet_dir',
-                    option_key='def_unet')
+                    config_key='def_unet')
                 )
-            registry.register(
+            binder.register(
                 'def_unet_vae', create_model_widget(
                     label="UNET VAE",
                     dir_key='vae_dir',
-                    option_key='def_unet_vae')
+                    config_key='def_unet_vae')
                 )
         with gr.Row():
-            registry.register(
+            binder.register(
                 'def_clip_g', create_model_widget(
                     label="clip_g",
                     dir_key='txt_enc_dir',
-                    option_key='def_clip_g')
+                    config_key='def_clip_g')
                 )
-            registry.register(
+            binder.register(
                 'def_clip_l', create_model_widget(
                     label="clip_l",
                     dir_key='txt_enc_dir',
-                    option_key='def_clip_l')
+                    config_key='def_clip_l')
                 )
-            registry.register(
+            binder.register(
                 'def_clip_vision_h', create_model_widget(
                     label="clip_vision_h",
                     dir_key='txt_enc_dir',
-                    option_key='def_clip_vision_h')
+                    config_key='def_clip_vision_h')
                 )
         with gr.Row():
-            registry.register(
+            binder.register(
                 'def_t5xxl', create_model_widget(
                     label="t5xxl",
                     dir_key='txt_enc_dir',
-                    option_key='def_t5xxl')
+                    config_key='def_t5xxl')
                 )
-            registry.register(
+            binder.register(
                 'def_umt5_xxl', create_model_widget(
                     label="umt5_xxl",
                     dir_key='txt_enc_dir',
-                    option_key='def_umt5_xxl')
+                    config_key='def_umt5_xxl')
                 )
         with gr.Row():
-            registry.register(
+            binder.register(
                 'def_llm', create_model_widget(
                     label="llm",
                     dir_key='txt_enc_dir',
-                    option_key='def_llm')
+                    config_key='def_llm')
                 )
-            registry.register(
+            binder.register(
                 'def_llm_vision', create_model_widget(
                     label="llm_vision",
                     dir_key='txt_enc_dir',
-                    option_key='def_llm_vision')
+                    config_key='def_llm_vision')
                 )
         with gr.Row():
-            registry.register(
+            binder.register(
                 'def_tokenizer', create_model_widget(
                     label="tokenizer",
                     dir_key='tokenizer_dir',
-                    option_key='def_tokenizer')
+                    config_key='def_tokenizer')
                 )
 
         quant_ui = create_quant_ui()
         for k, v in quant_ui.items():
-            registry.register(resolve_option_key(k), v)
+            binder.register(config_key_for(k), v)
 
     with gr.Tab(label="Generation settings"):
 
         generation_settings_ui = create_generation_settings_ui(True)
-        registry.register(
+        binder.register(
             'def_sampling', generation_settings_ui['in_sampling']
         )
-        registry.register(
+        binder.register(
             'def_steps', generation_settings_ui['in_steps']
         )
-        registry.register(
+        binder.register(
             'def_scheduler', generation_settings_ui['in_scheduler']
         )
-        registry.register(
+        binder.register(
             'def_width', generation_settings_ui['in_width']
         )
-        registry.register(
+        binder.register(
             'def_height', generation_settings_ui['in_height']
         )
-        registry.register(
+        binder.register(
             'def_cfg', generation_settings_ui['in_cfg']
         )
-        registry.register(
+        binder.register(
             'def_guidance_bool', generation_settings_ui['in_guidance_bool']
         )
-        registry.register(
+        binder.register(
             'def_guidance', generation_settings_ui['in_guidance']
         )
-        registry.register(
+        binder.register(
             'def_flow_shift_bool', generation_settings_ui['in_flow_shift_bool']
         )
-        registry.register(
+        binder.register(
             'def_flow_shift', generation_settings_ui['in_flow_shift']
         )
 
         bottom_generation_settings_ui = create_bottom_generation_settings_ui()
-        registry.register(
+        binder.register(
             'def_seed', bottom_generation_settings_ui['in_seed']
         )
-        registry.register(
+        binder.register(
             'def_clip_skip', bottom_generation_settings_ui['in_clip_skip']
         )
-        registry.register(
+        binder.register(
             'def_batch_count', bottom_generation_settings_ui['in_batch_count']
         )
 
@@ -344,20 +230,20 @@ with gr.Blocks() as options_block:
             ('deprecated', create_deprecated_ui())
         ]:
             for k, v in ui_dict.items():
-                registry.register(resolve_option_key(k), v)
+                binder.register(config_key_for(k), v)
 
     with gr.Tab(label="Directories"):
 
-        # Folders options
+        # Folders settings
         folders_ui = create_folders_opt_ui()
         for k, v in folders_ui.items():
-            registry.register(k.replace('_txt', ''), v)
+            binder.register(k.replace('_txt', ''), v)
 
     with gr.Tab(label="sd.cpp-webui settings"):
 
         with gr.Row():
-            # Output options
-            registry.register(
+            # Output settings
+            binder.register(
                 'def_output_scheme', gr.Dropdown(
                     label="Output Scheme",
                     choices=OUTPUT_SCHEMES,
@@ -366,7 +252,7 @@ with gr.Blocks() as options_block:
                 )
             )
 
-            registry.register(
+            binder.register(
                 'def_output_steps', gr.Checkbox(
                     label="Add steps count to the output name",
                     value=config.get('def_output_steps'),
@@ -374,7 +260,7 @@ with gr.Blocks() as options_block:
                 )
             )
 
-            registry.register(
+            binder.register(
                 'def_output_quant', gr.Checkbox(
                     label="Add quantization type to the output name",
                     value=config.get('def_output_quant'),
@@ -383,8 +269,8 @@ with gr.Blocks() as options_block:
             )
 
         with gr.Row():
-            # Gallery options
-            registry.register(
+            # Gallery settings
+            binder.register(
                 'def_gallery_sorting', gr.Radio(
                     label="Sort By",
                     choices=SORT_OPTIONS,
@@ -394,8 +280,8 @@ with gr.Blocks() as options_block:
             )
 
         with gr.Row():
-            # Theme options
-            registry.register(
+            # Theme settings
+            binder.register(
                 'def_theme', gr.Dropdown(
                     label="Theme",
                     choices=THEMES,
@@ -403,7 +289,7 @@ with gr.Blocks() as options_block:
                     interactive=True
                 )
             )
-            registry.register(
+            binder.register(
                 'def_color_scheme', gr.Dropdown(
                     label="Color scheme",
                     choices=["System", "Light", "Dark"],
@@ -413,8 +299,8 @@ with gr.Blocks() as options_block:
             )
 
     with gr.Row():
-        refresh_opt = gr.Button(
-            value="Refresh sd options"
+        refresh_choices = gr.Button(
+            value="Refresh sd choices"
         )
 
     with gr.Group():
@@ -424,40 +310,40 @@ with gr.Blocks() as options_block:
             interactive=False
         )
 
-        # Set Defaults and Restore Defaults Buttons
+        # Save defaults and Restore defaults buttons
         with gr.Row():
-            set_btn = gr.Button(
-                value="Set new options", variant="primary"
+            save_btn = gr.Button(
+                value="Save defaults", variant="primary"
             )
             restore_btn = gr.Button(
-                value="Restore Defaults", variant="stop"
+                value="Restore defaults", variant="stop"
             )
         with gr.Row():
             restart_btn = gr.Button(
                 value="Restart server", variant="stop"
             )
 
-    ordered_keys = registry.ordered_keys
-    ordered_components = registry.ordered_components
+    ordered_keys = binder.ordered_keys
+    ordered_components = binder.ordered_components
 
-    set_btn.click(
-        registry.save,
+    save_btn.click(
+        binder.save,
         inputs=ordered_components,
         outputs=[status_textbox]
     )
 
     restore_btn.click(
-        registry.reset,
+        binder.reset,
         inputs=[],
         outputs=[status_textbox] + ordered_components
     )
 
     # Safely collect refresh targets
     refresh_outputs = [
-        registry.map.get('def_sampling'),
-        registry.map.get('def_scheduler'),
-        registry.map.get('def_preview_mode'),
-        registry.map.get('def_predict'),
+        binder.map.get('def_sampling'),
+        binder.map.get('def_scheduler'),
+        binder.map.get('def_preview_mode'),
+        binder.map.get('def_predict'),
     ]
 
     # Remove any missing components to prevent Gradio initialization crash
@@ -474,7 +360,7 @@ with gr.Blocks() as options_block:
             f"Missing refresh output component(s): {missing_refresh_outputs}"
         )
 
-    refresh_opt.click(
+    refresh_choices.click(
         refresh_all_options,
         inputs=[],
         outputs=refresh_outputs

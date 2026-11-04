@@ -238,8 +238,8 @@ with gr.Blocks() as any2video_block:
             # inputs_map.update(experimental_ui)
 
             with gr.Row():
-                refresh_opt = gr.Button(
-                    value="Refresh sd options"
+                refresh_choices = gr.Button(
+                    value="Refresh sd choices"
                 )
 
         # Output
@@ -371,7 +371,7 @@ with gr.Blocks() as any2video_block:
     )
 
     # Interactive Bindings
-    refresh_opt.click(
+    refresh_choices.click(
         refresh_all_options,
         inputs=[],
         outputs=[
