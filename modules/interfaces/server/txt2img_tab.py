@@ -5,21 +5,16 @@ import gradio as gr
 from modules.core.server.sdcpp_server import (
     txt2img_api, cancel_active_job
 )
-from modules.core.server.manager import (
-    start_server, stop_server
+from modules.interfaces.server.controls import (
+    create_listen_ui, create_server_controls, bind_server_controls
 )
-from modules.core.server.live_status import (
-    start_watcher, stop_watcher, status_stream
-)
-from modules.shared_instance import server_state
-from modules.utils import streaming_queue as queue_manager
 from modules.utils.ui_events import (
     get_ordered_inputs, bind_generation_pipeline,
     unet_tab_switch, ckpt_tab_switch,
     refresh_all_options,
     OUTPUT_GALLERY_CLASS
 )
-from modules.ui.progress import create_progress_bar, progress_update
+from modules.ui.progress import create_progress_bar
 from modules.ui.models import create_img_model_sel_ui
 from modules.ui.loras import (
     create_lora_sel_ui, bind_lora_events
@@ -56,13 +51,6 @@ from modules.ui.environment import create_env_ui
 
 txt2img_server_params = {}
 server_process = None
-
-
-def _is_interactive_update(update):
-    try:
-        return update.get('interactive') is True
-    except (AttributeError, TypeError):
-        return False
 
 
 with gr.Blocks() as txt2img_server_block:
@@ -155,44 +143,10 @@ with gr.Blocks() as txt2img_server_block:
                 deprecated_ui = create_deprecated_ui()
                 inputs_map.update(deprecated_ui)
 
-            listen_ip = gr.Textbox(
-                label="Listen IP",
-                show_label=True,
-                value="127.0.0.1",
-                interactive=True
-            )
-            inputs_map['in_ip'] = listen_ip
+            listen_ui = create_listen_ui()
+            inputs_map.update(listen_ui)
 
-            port = gr.Number(
-                label="Port",
-                minimum=0,
-                maximum=65535,
-                value=1234,
-                interactive=True,
-                step=1
-            )
-            inputs_map['in_port'] = port
-
-    with gr.Group():
-        with gr.Row():
-            with gr.Column(scale=1):
-                with gr.Row():
-                    server_start = gr.Button(
-                        value="Start server", variant="primary"
-                    )
-                with gr.Row():
-                    server_stop = gr.Button(
-                        value="Stop server", variant="stop",
-                        interactive=False
-                    )
-            with gr.Column(scale=1):
-                with gr.Row():
-                    server_status = gr.Textbox(
-                        label="Server & Model status:",
-                        show_label=True,
-                        value="Stopped (No Model Loaded)",
-                        interactive=False
-                    )
+    server_controls = create_server_controls()
 
     # Loras
     lora_ui = create_lora_sel_ui()
@@ -341,134 +295,11 @@ with gr.Blocks() as txt2img_server_block:
         + list(deprecated_ui.keys())
         + ['in_ip', 'in_port']
     )
-    server_config_components = [
-        inputs_map[k]
-        for k in _server_config_keys
-        if hasattr(inputs_map.get(k), 'interactive')
-    ]
 
-    def _config_updates(is_running):
-        return [
-            gr.update(interactive=not is_running)
-            for _ in server_config_components
-        ]
-
-    def _reset_outputs():
-        # Keep the command, clear the rest
-        return (
-            progress_update(visible=False),
-            gr.update(visible=False, value=""),
-            gr.skip(),
-            gr.update(value=None),
-            gr.update(visible=False, value=""),
-        )
-
-    def _status_stream_expanded():
-        for status, btn, is_running in status_stream():
-            yield (
-                status,
-                btn,
-                gr.update(interactive=not is_running),
-                gr.update(interactive=is_running),
-                *_config_updates(is_running),
-            )
-
-    def start_server_wrapper(*args):
-        params = dict(zip(ordered_keys, args))
-
-        prev_exit = getattr(server_state, 'last_exit_code', None)
-        was_crashed = (
-            not server_state.running
-            and prev_exit is not None
-            and prev_exit != 0
-        )
-
-        if was_crashed:
-            queue_manager.clear_all()
-
-        result = start_server(params)
-        if isinstance(result, (tuple, list)) and len(result) >= 3:
-            status = result[0]
-            gen_btn_update = result[2]
-        else:
-            status = result
-            gen_btn_update = gr.skip()
-
-        if _is_interactive_update(gen_btn_update):
-            start_watcher(server_state.ip, server_state.port)
-
-        is_running = server_state.running
-        reset = _reset_outputs() if was_crashed else (gr.skip(),) * 5
-
-        return (
-            status,
-            gen_btn_update,
-            gr.update(interactive=not is_running),
-            gr.update(interactive=is_running),
-            *_config_updates(is_running),
-            *reset,
-        )
-
-    def stop_server_wrapper():
-        queue_manager.clear_all()
-
-        result = stop_server()
-        if isinstance(result, (tuple, list)) and len(result) >= 3:
-            status = result[0]
-            gen_btn_update = result[2]
-        else:
-            status = result
-            gen_btn_update = gr.skip()
-
-        stop_watcher()
-
-        is_running = server_state.running
-
-        return (
-            status,
-            gen_btn_update,
-            gr.update(interactive=not is_running),
-            gr.update(interactive=is_running),
-            *_config_updates(is_running),
-            *_reset_outputs(),
-        )
-
-    _start_outputs = [
-        server_status,
-        gen_btn,
-        server_start,
-        server_stop,
-        *server_config_components,
-        progress_bar,
-        stats,
-        command,
-        img_final,
-        queue_tracker,
-    ]
-
-    server_start.click(
-        fn=start_server_wrapper,
-        inputs=ordered_components,
-        outputs=_start_outputs
-    )
-
-    server_stop.click(
-        fn=stop_server_wrapper,
-        inputs=[],
-        outputs=_start_outputs
-    )
-
-    txt2img_server_block.load(
-        fn=_status_stream_expanded,
-        outputs=[
-            server_status,
-            gen_btn,
-            server_start,
-            server_stop,
-            *server_config_components,
-        ],
-        concurrency_limit=10,
-        show_progress="hidden",
+    bind_server_controls(
+        txt2img_server_block, server_controls, gen_btn,
+        [progress_bar, stats, command, img_final, queue_tracker],
+        _server_config_keys, inputs_map, ordered_keys, ordered_components
     )
 
     bind_lora_events(lora_ui, prompts_ui)
