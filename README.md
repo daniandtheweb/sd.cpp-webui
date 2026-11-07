@@ -11,7 +11,9 @@ Designed to run local AI text-to-image and video generation models without heavy
 - **Generation preview:** Live image preview using **stable-diffusion.cpp**'s native preview option.
 - **Image management:** Built-in image gallery.
 - **Metadata reader:** Built-in metadata reader to extract generation data from images.
+- **Model manager:** Built-in Models tab to browse, rename and remove the installed models of each type.
 - **Secure access:** Optional protected login with user credentials.
+- **Extensions:** Optional plugins that add tabs, tools and model downloads (see [Extensions](#extensions)).
 
 ## **stable-diffusion.cpp**'s supported models
 
@@ -57,6 +59,20 @@ This WebUI, by using **stable-diffusion.cpp** as its core, supports a large numb
 
   4. Access the WebUI with the browser at `http://localhost:7860/`.
 
+
+## Extensions
+
+Extensions add features without touching the app. They are off by default: start the WebUI with `--extensions` to enable them (for example `./sdcpp_webui.sh --extensions`).
+
+Three come with the repository, in the `extensions` folder:
+
+- **Civitai:** search [Civitai](https://civitai.com) and download models straight into the right model folder.
+- **Masker:** create foreground masks from a photo with [rembg](https://github.com/danielgatis/rembg) and reuse them in img2img.
+- **Pose:** turn a photo of a person into an OpenPose skeleton to use as a ControlNet control image.
+
+> **Only install extensions you trust.** An extension is Python code that runs with all your permissions, and so are the packages it requires. The first time the WebUI sees a new or updated extension it shows what it declares (network sites, output folder, packages) in the terminal and asks for your confirmation. Declining leaves the extension unloaded and it will ask again at the next start.
+
+To write your own, see [`docs/extensions.md`](https://github.com/daniandtheweb/sd.cpp-webui/blob/master/docs/extensions.md).
 
 <img width="2860" height="1954" alt="Screenshot of sd.cpp-webui, a lightweight Gradio interface for local AI image generation using stable-diffusion.cpp" src="https://github.com/user-attachments/assets/9e6cc19f-55f4-4f76-8202-fa41bbbc4975" />
 

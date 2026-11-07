@@ -7,6 +7,7 @@ import gradio as gr
 from modules.core.server.sdcpp_server import (
     any2video_api, cancel_active_job
 )
+from modules.extensions.ui import create_extensions_ui
 from modules.interfaces.server.controls import (
     create_listen_ui, create_server_controls, bind_server_controls
 )
@@ -241,6 +242,9 @@ with gr.Blocks() as any2video_server_block:
                     for k in ('in_extra_sample_args',)
                 }
                 inputs_map.update(extras_gen_ui)
+
+            # Sections added by extensions
+            inputs_map.update(create_extensions_ui('any2video'))
 
             with gr.Row():
                 refresh_choices = gr.Button(

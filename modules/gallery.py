@@ -8,6 +8,7 @@ from typing import List, Tuple, Any, Optional
 
 import gradio as gr
 
+from modules.extensions.host import registered_outputs
 from modules.shared_instance import config
 from modules.utils.image_utils import size_extractor
 from modules.utils.video_utils import get_avi_resolution
@@ -24,6 +25,9 @@ MEDIA_DIRS = [
     'txt2img_dir', 'img2img_dir', 'imgedit_dir',
     'any2video_dir', 'upscale_dir'
 ]
+# The ctrl values after these are the output folders extensions declared
+# (add_output), in registration order: EXTENSION_CTRL_BASE + index
+EXTENSION_CTRL_BASE = len(MEDIA_DIRS)
 MEDIA_EXTENSIONS = (
     '.png', '.jpg', '.jpeg', '.webp', '.avi', '.webm', '.mp4'
 )
@@ -67,6 +71,13 @@ class GalleryManager:
         Read from the config every time, so a changed or newly created
         output directory is picked up.
         """
+        if self.ctrl >= EXTENSION_CTRL_BASE:
+            outputs = registered_outputs()
+            index = self.ctrl - EXTENSION_CTRL_BASE
+            if index < len(outputs):
+                folder = outputs[index][2]
+                os.makedirs(folder, exist_ok=True)
+                return folder
         if 0 <= self.ctrl < len(MEDIA_DIRS):
             return config.get_or_create_dir(MEDIA_DIRS[self.ctrl])
         return config.get_or_create_dir(MEDIA_DIRS[0])
@@ -141,6 +152,8 @@ class GalleryManager:
             3: 'any2video',
             4: 'upscale'
         }
+        for index, (_, label, _) in enumerate(registered_outputs()):
+            dir_map[EXTENSION_CTRL_BASE + index] = label
         current_label = f"{dir_map.get(self.ctrl, 'Gallery')} - {self.sort_order}"
 
         # Reset selections when reloading
@@ -342,18 +355,17 @@ class GalleryManager:
         return (gallery_update, page_num, *self._read_media_info())
 
 
-def get_next_media(subctrl: int) -> str:
-    """Creates a new, sequential media name (e.g., '123.png')."""
-    if 0 <= subctrl < len(MEDIA_DIRS):
-        dir_key = MEDIA_DIRS[subctrl]
-    else:
-        dir_key = MEDIA_DIRS[0]
-    media_out_dir = config.get_or_create_dir(dir_key)
-
+def next_media_name(media_out_dir: str, extension: str = ".png") -> str:
+    """
+    Creates a new, sequential media name (e.g., '123.png') for a folder:
+    one more than the highest number its media (and files ending in
+    extension, such as the .txt of an extension) start with.
+    """
+    counted = MEDIA_EXTENSIONS + (extension.lower(),)
     try:
         numbers = []
         for f in os.listdir(media_out_dir):
-            if f.lower().endswith(MEDIA_EXTENSIONS):
+            if f.lower().endswith(counted):
                 name_without_ext = os.path.splitext(f)[0]
 
                 base_num_str = name_without_ext.split('_')[0]
@@ -365,6 +377,15 @@ def get_next_media(subctrl: int) -> str:
     except (ValueError, FileNotFoundError):
         next_number = 1
 
-    extension = ".webm" if subctrl == 3 else ".png"
-
     return f"{next_number}{extension}"
+
+
+def get_next_media(subctrl: int) -> str:
+    """Creates a new, sequential media name for an output gallery."""
+    if 0 <= subctrl < len(MEDIA_DIRS):
+        dir_key = MEDIA_DIRS[subctrl]
+    else:
+        dir_key = MEDIA_DIRS[0]
+    media_out_dir = config.get_or_create_dir(dir_key)
+
+    return next_media_name(media_out_dir, ".webm" if subctrl == 3 else ".png")

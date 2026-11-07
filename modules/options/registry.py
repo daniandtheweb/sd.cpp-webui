@@ -405,6 +405,7 @@ OPTIONS: tuple = (
     Option('cnnet', path_dir='cnnet_dir', source='f:cnnet',
            cli=File('--control-net', scopes=GEN, when=('cnnet_bool',)),
            launch=File('--control-net')),
+    Option('cnnet_union'),                  # the model is a ControlNet Union
     Option('control_img', when=('cnnet_bool',),
            cli=File('--control-image', scopes=GEN),
            payload=P('control_image', source='ctx:control_image'),
@@ -413,6 +414,11 @@ OPTIONS: tuple = (
            cli=Out('--control-strength', scopes=GEN, when=('cnnet_bool',)),
            payload=P('control_strength', convert='float',
                      when=('cnnet_bool', '@control_image')),
+           no_server='the video request has no ControlNet'),
+    # The kind of control image a ControlNet Union model is given
+    Option('control_type', when=('cnnet_bool', 'cnnet_union'),
+           cli=Out('--control-type', scopes=GEN),
+           payload=P('control_type', when=('@control_image',)),
            no_server='the video request has no ControlNet'),
 
     # -- IP-Adapter -----------------------------------------------------------

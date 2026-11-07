@@ -520,3 +520,37 @@ def test_default_key_is_only_for_model_files():
             assert o.path_dir, f"{o.name}: default_key is for model files"
             assert o.default_key.startswith('def_'), o.name
             assert o.config_key == o.default_key
+
+
+def test_control_type_is_only_sent_for_a_controlnet_union():
+    params = {'in_cnnet_bool': True, 'in_control_strength': 0.8,
+              'in_control_type': 'canny'}
+
+    def flags(**changes):
+        return emit.cli(emit.Context({**params, **changes}, 'txt2img'))
+
+    # a ControlNet Union: the type goes after its flag
+    union = flags(in_cnnet_union=True)
+    assert union[union.index('--control-type') + 1] == 'canny'
+    # a plain ControlNet, or none, never gets it
+    assert '--control-type' not in flags(in_cnnet_union=False)
+    assert '--control-type' not in flags(in_cnnet_union=True,
+                                         in_cnnet_bool=False)
+    # and it is part of every image command that takes a control image
+    assert '--control-type' in emit.cli(
+        emit.Context({**params, 'in_cnnet_union': True}, 'img2img'))
+
+
+def test_control_type_reaches_the_server_request_with_a_control_image():
+    params = {'in_cnnet_bool': True, 'in_cnnet_union': True,
+              'in_control_type': 'depth', 'in_control_strength': 0.5}
+
+    def request(flags, **changes):
+        context = emit.Context({**params, **changes}, 'txt2img',
+                               flags=flags)
+        return emit.payload(context, {})
+
+    assert request({'control_image': True})['control_type'] == 'depth'
+    assert 'control_type' not in request({'control_image': False})
+    assert 'control_type' not in request({'control_image': True},
+                                         in_cnnet_union=False)

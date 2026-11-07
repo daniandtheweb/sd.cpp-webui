@@ -36,7 +36,15 @@ DIR_DEFAULTS = {
     'img2img_dir': os.path.join(CURRENT_DIR, "outputs/img2img/"),
     'imgedit_dir': os.path.join(CURRENT_DIR, "outputs/imgedit/"),
     'any2video_dir': os.path.join(CURRENT_DIR, "outputs/any2video/"),
-    'upscale_dir': os.path.join(CURRENT_DIR, "outputs/upscale/")
+    'upscale_dir': os.path.join(CURRENT_DIR, "outputs/upscale/"),
+    # Resolved from this file (not CWD) so a fresh config always points
+    # at the app's own extensions folder, no matter where it is launched.
+    'ext_dir': os.path.join(
+        os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        ),
+        "extensions/"
+    )
 }
 
 DEFAULT_SETTINGS = {**DIR_DEFAULTS, **registry.config_defaults()}

@@ -5,6 +5,7 @@ from functools import partial
 import gradio as gr
 
 from modules.core.cli.sdcpp_cli import any2video
+from modules.extensions.ui import create_extensions_ui
 from modules.utils.ui_events import (
     get_ordered_inputs, bind_generation_pipeline,
     update_interactivity, refresh_all_options
@@ -235,6 +236,9 @@ with gr.Blocks() as any2video_block:
             # Experimental
             # experimental_ui = create_experimental_ui()
             # inputs_map.update(experimental_ui)
+
+            # Sections added by extensions
+            inputs_map.update(create_extensions_ui('any2video'))
 
             with gr.Row():
                 refresh_choices = gr.Button(

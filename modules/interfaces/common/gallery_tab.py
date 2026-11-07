@@ -2,13 +2,21 @@
 
 import gradio as gr
 
-from modules.gallery import GalleryManager
+from modules.extensions.host import (
+    registered_gallery_actions, registered_outputs, run_gallery_action
+)
+from modules.extensions.ui import ensure_loaded
+from modules.gallery import EXTENSION_CTRL_BASE, GalleryManager
 
 from modules.shared_instance import config
 from modules.ui.constants import (
     FIELDS, SORT_OPTIONS
 )
 
+
+ensure_loaded()
+ext_outputs = registered_outputs()
+ext_actions = registered_gallery_actions()
 
 gallery_manager = GalleryManager()
 info_params = {}
@@ -55,6 +63,11 @@ with gr.Blocks() as gallery_block:
         upscl_btn = gr.Button(
             value="upscale", variant="primary"
         )
+        # One button per output folder an extension declared
+        ext_btns = [
+            gr.Button(value=label, variant="primary")
+            for _, label, _ in ext_outputs
+        ]
 
     with gr.Row():
         first_btn = gr.Button(value="First page")
@@ -204,6 +217,16 @@ with gr.Blocks() as gallery_block:
                 cpy_2_any2video_btn = gr.Button(value="Copy to any2video")
                 # Copy to upscale
                 cpy_2_upscale_btn = gr.Button(value="Copy to upscale")
+            # Actions added by extensions, on the selected image
+            action_btns = []
+            if ext_actions:
+                with gr.Row():
+                    action_btns = [
+                        gr.Button(value=label) for _, label, _ in ext_actions
+                    ]
+                action_status = gr.Textbox(
+                    label="Extension action", interactive=False
+                )
             # Delete image Button
             del_img = gr.Button(
                 value="Delete", variant="stop")
@@ -256,6 +279,28 @@ with gr.Blocks() as gallery_block:
         inputs=[def_page, upscl_ctrl, sort_order],
         outputs=nav_outputs
     )
+
+    for index, ext_btn in enumerate(ext_btns):
+        ext_btn.click(
+            gallery_manager.reload_gallery,
+            inputs=[
+                def_page, gr.State(EXTENSION_CTRL_BASE + index), sort_order
+            ],
+            outputs=nav_outputs
+        )
+
+    def make_action(ext, fn):
+        # The selection is the server's, not a value the browser sends
+        def run():
+            return run_gallery_action(
+                ext, fn, gallery_manager.current_media_path
+            )
+        return run
+
+    for (ext, _, fn), action_btn in zip(ext_actions, action_btns):
+        action_btn.click(
+            make_action(ext, fn), inputs=[], outputs=[action_status]
+        )
 
     pvw_btn.click(
         gallery_manager.prev_page,

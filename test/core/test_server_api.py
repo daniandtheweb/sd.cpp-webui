@@ -224,7 +224,7 @@ def test_img2img_inputs(image_file, app_root):
     Image.new("L", (8, 8), 255).save(mask_path)
     payload = _runner('Img2ImgApiRunner', {
         'in_img_inp': image_file,
-        'in_img_mask': {'background': str(mask_path), 'layers': []},
+        'in_img_mask': str(mask_path),
         'in_invert_mask': True, 'in_strength': 0.6,
         'in_img_cfg_bool': True, 'in_img_cfg': 1.5,
     })._build_payload()

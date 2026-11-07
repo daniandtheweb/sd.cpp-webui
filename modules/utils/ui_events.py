@@ -1,5 +1,6 @@
 """sd.cpp-webui - UI interactivity and events module"""
 
+import functools
 import itertools
 import os
 import threading
@@ -7,6 +8,7 @@ import threading
 import gradio as gr
 
 import modules.utils.streaming_queue as queue_manager
+from modules.extensions.host import generation_tab, run_post, run_pre
 from modules.ui.progress import progress_update
 from modules.shared_instance import (
     sd_choices, model_state
@@ -295,12 +297,37 @@ class GenerationStream:
                 return
 
 
+def _hooked(api_func):
+    """
+    Wraps a generation api_func with the extension pre/post hooks:
+    pre hooks mutate the params dict, post hooks may replace the
+    final images. The wrapper keeps the function name (it is the tab_id).
+    """
+    tab = generation_tab(api_func.__name__)
+
+    @functools.wraps(api_func)
+    def wrapped(params):
+        run_pre(params, tab)
+        last = None
+        for result in api_func(params):
+            yield result
+            if (isinstance(result, (tuple, list)) and len(result) >= 4
+                    and isinstance(result[3], list)):
+                last = result[3]
+        repl = run_post(last, params, tab)
+        if repl is not None:
+            yield (gr.skip(), gr.skip(), gr.skip(), repl)
+
+    return wrapped
+
+
 def bind_generation_pipeline(
     api_func, ordered_keys, ordered_components, outputs_map
 ):
     """
     Connects the UI components to the generation queue.
     """
+    api_func = _hooked(api_func)
     tab_id = api_func.__name__
     gen_stream = GenerationStream(api_func)
 

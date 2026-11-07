@@ -5,6 +5,7 @@ from functools import partial
 import gradio as gr
 
 from modules.core.cli.sdcpp_cli import img2img
+from modules.extensions.ui import create_extensions_ui
 from modules.utils.image_utils import size_updater
 from modules.utils.ui_events import (
     get_ordered_inputs, bind_generation_pipeline,
@@ -229,6 +230,9 @@ with gr.Blocks()as img2img_block:
             # experimental_ui = create_experimental_ui()
             # inputs_map.update(experimental_ui)
 
+            # Sections added by extensions
+            inputs_map.update(create_extensions_ui('img2img'))
+
             with gr.Row():
                 refresh_choices = gr.Button(
                     value="Refresh sd choices"
@@ -243,10 +247,9 @@ with gr.Blocks()as img2img_block:
                 inputs_map['in_img_inp'] = img_inp_img2img
             with gr.Row():
                 with gr.Accordion(label="Mask", open=False):
-                    img_mask = gr.ImageEditor(
+                    img_mask = gr.Image(
                         sources="upload",
-                        type="filepath",
-                        layers=False
+                        type="filepath"
                     )
                 inputs_map['in_img_mask'] = img_mask
             (gen_btn, kill_btn, queue_tracker, progress_bar, img_final,

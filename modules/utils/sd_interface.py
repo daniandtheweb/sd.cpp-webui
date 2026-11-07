@@ -108,7 +108,8 @@ class SDChoicesCache:
 
         self._CACHE_FILE = "choices_cache.json"
         self._FLAGS = ["--sampling-method", "--scheduler", "--preview",
-                         "--type", "--prediction", "--rng", "--sampler-rng"]
+                         "--type", "--prediction", "--rng", "--sampler-rng",
+                         "--control-type"]
         self._help_cache = {}
 
         self._load_help_text_sync()
@@ -234,7 +235,7 @@ class SDChoicesCache:
 
         Args:
             name: Name of the argument ('samplers', 'schedulers', 'previews',
-                  'prediction', 'rng', 'sampler_rng').
+                  'prediction', 'rng', 'sampler_rng', 'control_types').
 
         Returns:
             List of the available choices.
@@ -248,7 +249,8 @@ class SDChoicesCache:
             "previews": "--preview",
             "prediction": "--prediction",
             "rng": "--rng",
-            "sampler_rng": "--sampler-rng"
+            "sampler_rng": "--sampler-rng",
+            "control_types": "--control-type"
         }
         if name not in flags:
             raise ValueError(
@@ -284,6 +286,12 @@ class SDChoicesCache:
                     "std_default",
                     "cuda",
                     "cpu"
+                ],
+                # What a ControlNet Union model is trained on (the ProMax
+                # variant adds the last two)
+                "control_types": [
+                    "openpose", "depth", "scribble", "canny", "normal",
+                    "segment", "tile", "repaint"
                 ],
             }
             return fallbacks.get(name, [])

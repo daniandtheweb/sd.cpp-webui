@@ -3,6 +3,7 @@
 import gradio as gr
 
 from modules.core.cli.sdcpp_cli import txt2img
+from modules.extensions.ui import create_extensions_ui
 from modules.utils.ui_events import (
     get_ordered_inputs, bind_generation_pipeline,
     unet_tab_switch, ckpt_tab_switch,
@@ -194,6 +195,9 @@ with gr.Blocks() as txt2img_block:
             # Experimental
             # experimental_ui = create_experimental_ui()
             # inputs_map.update(experimental_ui)
+
+            # Sections added by extensions
+            inputs_map.update(create_extensions_ui('txt2img'))
 
             with gr.Row():
                 refresh_choices = gr.Button(

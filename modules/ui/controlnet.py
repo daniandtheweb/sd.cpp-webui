@@ -1,15 +1,14 @@
 """sd.cpp-webui - UI component for ControlNet"""
 
-from functools import partial
-
 import gradio as gr
 
 from modules.shared_instance import config
 from modules.loader import (
     get_models, reload_models
 )
+from modules.utils.image_utils import size_extractor
 from modules.utils.ui_events import update_interactivity
-from .constants import RELOAD_SYMBOL
+from .constants import CONTROL_TYPES, RELOAD_SYMBOL
 
 
 def create_cnnet_ui(model_sel: bool = True, inputs: bool = True):
@@ -50,6 +49,7 @@ def create_cnnet_ui(model_sel: bool = True, inputs: bool = True):
             interactive=False,
             visible=inputs
         )
+        control_info = gr.Markdown(visible=inputs)
         control_strength = gr.Slider(
             label="ControlNet strength",
             minimum=0,
@@ -59,11 +59,48 @@ def create_cnnet_ui(model_sel: bool = True, inputs: bool = True):
             interactive=False,
             visible=inputs
         )
+        cnnet_union = gr.Checkbox(
+            label="ControlNet Union", value=False,
+            info="The model is a ControlNet Union: it needs to be told "
+                 "the kind of the control image.",
+            interactive=False,
+            visible=inputs
+        )
+        control_type = gr.Dropdown(
+            label="Control type",
+            choices=CONTROL_TYPES,
+            value=CONTROL_TYPES[0] if CONTROL_TYPES else None,
+            interactive=False,
+            visible=inputs
+        )
 
     cnnet_comp = [
         cnnet, reload_cnnet_btn, clear_cnnet_btn, control_img,
-        control_strength
+        control_strength, cnnet_union
     ]
+
+    def set_cnnet_interactivity(enabled, union):
+        """
+        ControlNet switches its widgets on; the control type also needs the
+        union checkbox.
+        """
+        return [
+            *update_interactivity(len(cnnet_comp), enabled),
+            gr.update(interactive=bool(enabled and union))
+        ]
+
+    def describe_control_img(path):
+        """The size of the control image, shown under it."""
+        if not path:
+            return ""
+        width, height = size_extractor(path)
+        if not width:
+            return ""
+        return f"Control image size: **{width} x {height}**"
+
+    control_img.change(
+        describe_control_img, inputs=[control_img], outputs=[control_info]
+    )
 
     reload_cnnet_btn.click(
         reload_models,
@@ -72,14 +109,24 @@ def create_cnnet_ui(model_sel: bool = True, inputs: bool = True):
     )
 
     cnnet_bool.change(
-        partial(update_interactivity, len(cnnet_comp)),
-        inputs=cnnet_bool,
-        outputs=cnnet_comp
+        set_cnnet_interactivity,
+        inputs=[cnnet_bool, cnnet_union],
+        outputs=cnnet_comp + [control_type]
+    )
+
+    cnnet_union.change(
+        lambda enabled, union: gr.update(
+            interactive=bool(enabled and union)
+        ),
+        inputs=[cnnet_bool, cnnet_union],
+        outputs=control_type
     )
 
     return {
         'in_cnnet_bool': cnnet_bool,
         'in_cnnet': cnnet,
         'in_control_img': control_img,
-        'in_control_strength': control_strength
+        'in_control_strength': control_strength,
+        'in_cnnet_union': cnnet_union,
+        'in_control_type': control_type
     }

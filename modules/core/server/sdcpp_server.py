@@ -14,7 +14,7 @@ from PIL import Image, ImageOps, PngImagePlugin
 import gradio as gr
 
 from modules.core.common.sd_common import (
-    CommonRunner, LORA_TAG_PATTERN, image_to_pil, process_editor_mask,
+    CommonRunner, LORA_TAG_PATTERN, image_to_pil,
     has_output_index_spec, expand_output_index
 )
 from modules.loader import get_loras
@@ -617,7 +617,7 @@ class Img2ImgApiRunner(ApiTaskRunner):
 
         mask_input = (self._get_param('in_img_mask')
                       or self._get_param('in_mask_img'))
-        mask_img = process_editor_mask(mask_input)
+        mask_img = image_to_pil(mask_input)
         if mask_img is not None:
             mask_img = mask_img.convert('L')
             if self._get_param('in_invert_mask', False):
@@ -652,7 +652,7 @@ class ImgEditApiRunner(ApiTaskRunner):
 
         mask_input = (self._get_param('in_img_mask')
                       or self._get_param('in_mask_img'))
-        mask_img = process_editor_mask(mask_input)
+        mask_img = image_to_pil(mask_input)
         if mask_img is not None:
             values['mask_image'] = encode_image(mask_img.convert('L'))
         return values

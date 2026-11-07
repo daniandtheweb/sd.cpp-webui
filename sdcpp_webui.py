@@ -9,6 +9,8 @@ import warnings
 
 import gradio as gr
 
+from modules.extensions.loader import load_extensions
+from modules.extensions.ui import render_extension_tabs, render_extensions_info
 from modules.interfaces.cli.txt2img_tab import (
     txt2img_block, txt2img_params
 )
@@ -46,6 +48,7 @@ from modules.interfaces.common.gallery_tab import (
     gallery, gallery_manager, def_page, txt2img_ctrl, page_num_select
 )
 from modules.interfaces.cli.convert_tab import convert_block
+from modules.interfaces.common.models_tab import models_block
 from modules.interfaces.common.settings_tab import (
     settings_block, restart_btn
 )
@@ -162,7 +165,8 @@ def get_allowed_paths(config_data, base_path: str) -> list:
     allowed_paths = []
     dirs = [
         val for key, val in config_data.items()
-        if key.endswith('_dir') and isinstance(val, str) and val
+        if key.endswith('_dir') and key != 'ext_dir'
+        and isinstance(val, str) and val
     ]
 
     base_real_path = os.path.realpath(base_path)
@@ -250,8 +254,12 @@ def render_server_ui():
         with gr.TabItem("Gallery", id="gallery") as gallery_tab:
             cpy_2_upscale_btn.visible = False
             gallery_block.render()
+        with gr.TabItem("Models", id="models"):
+            models_block.render()
+        render_extension_tabs()
         with gr.TabItem("Settings", id="settings"):
             settings_block.render()
+        render_extensions_info()
 
     return tabs, gallery_tab
 
@@ -273,8 +281,12 @@ def render_cli_ui():
             upscale_block.render()
         with gr.TabItem("Checkpoint Converter", id="convert"):
             convert_block.render()
+        with gr.TabItem("Models", id="models"):
+            models_block.render()
+        render_extension_tabs()
         with gr.TabItem("Settings", id="settings"):
             settings_block.render()
+        render_extensions_info()
 
     return tabs, gallery_tab
 
@@ -408,7 +420,15 @@ def main():
         action='store_true',
         help='Allows the usage of external or linked directories based on config.json'
     )
+    parser.add_argument(
+        '--extensions',
+        action='store_true',
+        help='Enable extensions: install their requirements and load '
+             'them from the extensions folder'
+    )
     args = parser.parse_args()
+
+    load_extensions(config)
 
     sdcpp_launch(
         args.server, args.listen, args.autostart,

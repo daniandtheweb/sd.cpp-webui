@@ -117,3 +117,29 @@ def test_a_good_cache_is_kept(app_cwd, mocker):
     assert cached._help_cache["--sampling-method"]
     help_calls = [c for c in run.call_args_list if "--help" in c.args[0]]
     assert not help_calls
+
+
+def test_control_types_fall_back_with_a_binary_that_has_none():
+    """The saved --help of an old binary has no --control-type."""
+    types = SDChoicesCache().get_choices("control_types")
+    assert types[:6] == ["openpose", "depth", "scribble", "canny", "normal",
+                         "segment"]
+    assert types[-2:] == ["tile", "repaint"]
+
+
+def test_control_types_come_from_the_binary(mocker):
+    """The list of --control-type, as a newer sd-cli prints it."""
+    help_text = (
+        "  --seed <int>        RNG seed\n"
+        "  --control-type <string>                  kind of the control "
+        "image, one of [openpose, depth, scribble, canny, normal,\n"
+        "                                           segment, tile, repaint]."
+        " Required by a Control Net Union model\n"
+        "  --cfg-scale <float> cfg\n"
+    )
+    mocker.patch(
+        "modules.utils.sd_interface.subprocess.run"
+    ).return_value.configure_mock(stdout=help_text, returncode=0)
+    assert SDChoicesCache().get_choices("control_types") == [
+        "openpose", "depth", "scribble", "canny", "normal", "segment",
+        "tile", "repaint"]

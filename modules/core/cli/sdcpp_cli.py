@@ -9,7 +9,7 @@ from typing import Dict, Any, Generator
 import gradio as gr
 
 from modules.core.common.sd_common import (
-    CommonRunner, process_editor_mask,
+    CommonRunner, image_to_pil,
     has_output_index_spec, expand_output_index
 )
 from modules.options import emit
@@ -280,7 +280,7 @@ class Img2ImgRunner(ImageGenerationRunner):
         Returns its path, None without a mask.
         """
         mask_input = self._get_param('in_img_mask') or self._get_param('in_mask')
-        mask_img = process_editor_mask(mask_input)
+        mask_img = image_to_pil(mask_input)
         if mask_img is None:
             return None
         output_dir = config.get_or_create_dir('img2img_dir')

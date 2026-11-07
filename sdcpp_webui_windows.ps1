@@ -13,6 +13,7 @@ Options:
     -Credentials, --credentials                  Enable password protection using credentials.json.
                                                  Expected format: {"username1": "password1", "username2": "password2"}
     -Allow-Insecure-Dir, --allow-insecure-dir    Allows the usage of external or linked directories based on config.json
+    -Extensions, --extensions                    Enable extensions (asks before installing their requirements)
 
 "@
     exit $ExitCode
@@ -25,6 +26,7 @@ $parsedArgs = @{
     Autostart = $false
     Credentials = $false
     AllowInsecureDir = $false
+    Extensions = $false
 }
 
 foreach ($arg in $args) {
@@ -40,6 +42,8 @@ foreach ($arg in $args) {
         '^-Credentials$'        { $parsedArgs.Credentials = $true }
         '^--allow-insecure-dir$'{ $parsedArgs.AllowInsecureDir = $true }
         '^-Allow-Insecure-Dir$' { $parsedArgs.AllowInsecureDir = $true }
+        '^--extensions$'        { $parsedArgs.Extensions = $true }
+        '^-Extensions$'         { $parsedArgs.Extensions = $true }
         default {
             Write-Host "Error: Unknown command parameter: $arg" -ForegroundColor Red
             Show-Help 1
@@ -54,6 +58,7 @@ $Listen = $parsedArgs.Listen
 $Autostart = $parsedArgs.Autostart
 $Credentials = $parsedArgs.Credentials
 $AllowInsecureDir = $parsedArgs.AllowInsecureDir
+$Extensions = $parsedArgs.Extensions
 
 $ErrorActionPreference = 'Stop'
 
@@ -98,10 +103,26 @@ Write-Host "Activating virtual environment..."
 . ".\venv\Scripts\Activate.ps1"
 
 # --- Requirements Check ---
-python -m pip install --quiet --disable-pip-version-check -r .\requirements.txt
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "Error: failed to install the requirements." -ForegroundColor Red
-    exit 1
+# Only installs when something is missing; pip's output is shown
+python .\check_requirements.py .\requirements.txt | Out-Null
+if ($LASTEXITCODE -eq 0) {
+    Write-Host "Requirements are installed."
+}
+else {
+    Write-Host "Some requirements are missing:"
+    python .\check_requirements.py .\requirements.txt
+    Write-Host ""
+    Write-Host "Installing the requirements..."
+    python -m pip install --disable-pip-version-check -r .\requirements.txt
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Error: failed to install the requirements." -ForegroundColor Red
+        exit 1
+    }
+    python .\check_requirements.py .\requirements.txt | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Error: the requirements are still not met." -ForegroundColor Red
+        exit 1
+    }
 }
 
 # --- Build Python Argument List ---
@@ -111,6 +132,7 @@ if ($Listen) { $pythonArgs += "--listen" }
 if ($Autostart) { $pythonArgs += "--autostart" }
 if ($Credentials) { $pythonArgs += "--credentials" }
 if ($AllowInsecureDir) { $pythonArgs += "--allow-insecure-dir" }
+if ($Extensions) { $pythonArgs += "--extensions" }
 
 if ($pythonArgs.Count -eq 0) {
     Write-Host "Starting the WebUI...`n"

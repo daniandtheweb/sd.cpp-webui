@@ -5,6 +5,7 @@ import gradio as gr
 from modules.core.server.sdcpp_server import (
     imgedit_api, cancel_active_job
 )
+from modules.extensions.ui import create_extensions_ui
 from modules.interfaces.server.controls import (
     create_listen_ui, create_server_controls, bind_server_controls
 )
@@ -204,6 +205,9 @@ with gr.Blocks() as imgedit_server_block:
             # Experimental
             # experimental_ui = create_experimental_ui()
             # inputs_map.update(experimental_ui)
+
+            # Sections added by extensions
+            inputs_map.update(create_extensions_ui('imgedit'))
 
             with gr.Row():
                 refresh_choices = gr.Button(

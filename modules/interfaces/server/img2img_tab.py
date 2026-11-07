@@ -7,6 +7,7 @@ import gradio as gr
 from modules.core.server.sdcpp_server import (
     img2img_api, cancel_active_job
 )
+from modules.extensions.ui import create_extensions_ui
 from modules.interfaces.server.controls import (
     create_listen_ui, create_server_controls, bind_server_controls
 )
@@ -258,6 +259,9 @@ with gr.Blocks() as img2img_server_block:
             # experimental_ui = create_experimental_ui()
             # inputs_map.update(experimental_ui)
 
+            # Sections added by extensions
+            inputs_map.update(create_extensions_ui('img2img'))
+
             with gr.Row():
                 refresh_choices = gr.Button(
                     value="Refresh sd choices"
@@ -272,10 +276,9 @@ with gr.Blocks() as img2img_server_block:
                 inputs_map['in_img_inp'] = img_inp_img2img_server
             with gr.Row():
                 with gr.Accordion(label="Mask", open=False):
-                    img_mask = gr.ImageEditor(
+                    img_mask = gr.Image(
                         sources="upload",
-                        type="filepath",
-                        layers=False
+                        type="filepath"
                     )
                 inputs_map['in_img_mask'] = img_mask
             (gen_btn, kill_btn, queue_tracker, progress_bar, img_final,

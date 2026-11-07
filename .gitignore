@@ -22,6 +22,15 @@ user_data/
 
 !defaults/*.json
 
+# Everything extensions write
+outputs/extensions/
+
+# Only the built-in extensions are tracked: any other one is the user's
+extensions/*
+!extensions/civitai/
+!extensions/masker.py
+!extensions/pose/
+
 outputs/commands/command_*.txt
 outputs/pprompts/pprompt_*.txt
 outputs/nprompts/nprompt_*.txt

@@ -1,15 +1,47 @@
 """sd.cpp-webui - settings - the config file"""
 
-import os
 import json
+import os
+import shutil
 from copy import deepcopy
-from typing import Any, Dict
+from typing import Any
 
 from modules.options import registry
 from modules.settings.defaults import DEFAULT_SETTINGS
 
-
 DEFAULT_CONFIG_PATH = os.path.join('user_data', 'config.json')
+
+
+def _strip_trailing_commas(text: str) -> str:
+    """
+    Removes the commas that sit right before a closing } or ],
+    leaving the ones inside strings alone.
+    """
+    out = []
+    in_string = escaped = False
+    pending = None  # index in out of a comma not yet followed by a token
+    for ch in text:
+        if in_string:
+            out.append(ch)
+            if escaped:
+                escaped = False
+            elif ch == '\\':
+                escaped = True
+            elif ch == '"':
+                in_string = False
+            continue
+        if ch.isspace():
+            out.append(ch)
+            continue
+        if ch in '}]' and pending is not None:
+            out[pending] = ''
+        pending = None
+        if ch == ',':
+            pending = len(out)
+        elif ch == '"':
+            in_string = True
+        out.append(ch)
+    return ''.join(out)
 
 
 class ConfigManager:
@@ -21,27 +53,61 @@ class ConfigManager:
     # the registry knows which settings are model files
     PATH_MAP = registry.default_model_folders()
 
-    def __init__(self, config_path: str = None):
+    def __init__(self, config_path: str | None = None):
         self.config_path = os.getenv(
             'SD_WEBUI_CONFIG_PATH', config_path or DEFAULT_CONFIG_PATH
         )
         self.data = self._load_json(self.config_path) or {}
         self._initialize_files()
 
-    def _load_json(self, file_path: str) -> Dict[str, Any]:
-        """Safely loads a JSON file."""
+    def _load_json(self, file_path: str) -> dict[str, Any]:
+        """
+        Safely loads a JSON file. A file that only has trailing commas
+        (the usual hand-edit slip) is repaired and loaded; any other
+        error starts from an empty configuration. Either way the
+        original is copied to <file>.broken first, because the config
+        is saved over the file afterwards.
+        """
         if not os.path.isfile(file_path):
             return {}
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except (json.JSONDecodeError, OSError) as e:
-            print(
-                f"Error loading {file_path}: {e}. Using empty configuration."
-            )
+                text = f.read()
+        except OSError as e:
+            print(f"Error loading {file_path}: {e}. Using empty configuration.")
             return {}
 
-    def _save_json(self, file_path: str, data: Dict[str, Any]):
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError as e:
+            error = e
+
+        repaired = _strip_trailing_commas(text)
+        data = None
+        if repaired != text:
+            try:
+                data = json.loads(repaired)
+            except json.JSONDecodeError:
+                pass
+
+        backup = file_path + '.broken'
+        try:
+            shutil.copyfile(file_path, backup)
+            saved = f"A copy of the original was saved to {backup}"
+        except OSError as copy_error:
+            saved = f"Could not back up {file_path}: {copy_error}"
+
+        if isinstance(data, dict):
+            print(
+                f"{file_path} had a syntax error ({error}); "
+                f"removed the trailing comma(s) and loaded it. {saved}"
+            )
+            return data
+        print(f"Error loading {file_path}: {error}. Using empty configuration.")
+        print(saved)
+        return {}
+
+    def _save_json(self, file_path: str, data: dict[str, Any]):
         """Saves data to a JSON file."""
         try:
             with open(file_path, 'w', encoding='utf-8') as f:
@@ -116,7 +182,7 @@ class ConfigManager:
         """Saves the current configuration."""
         self._save_json(self.config_path, self.data)
 
-    def update_settings(self, new_settings: Dict[str, Any]):
+    def update_settings(self, new_settings: dict[str, Any]):
         """Updates the configuration with new settings and saves."""
         self.data.update(new_settings)
         self.save_config()

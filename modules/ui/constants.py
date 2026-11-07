@@ -27,6 +27,7 @@ RNG = ['Default'] + sd_choices.get_choices("rng")
 SAMPLER_RNG = ['Default'] + sd_choices.get_choices("sampler_rng")
 PREVIEW = sd_choices.get_choices("previews")
 PREDICTION = ['Default'] + sd_choices.get_choices("prediction")
+CONTROL_TYPES = sd_choices.get_choices("control_types")
 VAE_FORMAT = ["Default", "flux", "sd3", "flux2", "wan"]
 CACHE_MODE = [
     "easycache", "ucache", "dbcache",

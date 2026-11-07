@@ -3,6 +3,7 @@
 import gradio as gr
 
 from modules.core.cli.sdcpp_cli import imgedit
+from modules.extensions.ui import create_extensions_ui
 from modules.utils.image_utils import size_updater
 from modules.utils.ui_events import (
     get_ordered_inputs, bind_generation_pipeline,
@@ -188,6 +189,9 @@ with gr.Blocks() as imgedit_block:
             # Experimental
             # experimental_ui = create_experimental_ui()
             # inputs_map.update(experimental_ui)
+
+            # Sections added by extensions
+            inputs_map.update(create_extensions_ui('imgedit'))
 
             with gr.Row():
                 refresh_choices = gr.Button(
