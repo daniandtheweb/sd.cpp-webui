@@ -13,7 +13,7 @@ keep the old behaviour for the extensions that declare the old number
 LATEST = 1
 
 # The generation hooks
-HOOKS = ('pre_generation', 'post_generation')
+HOOKS = ('pre_generation', 'post_generation', 'replace_generation')
 
 # The generation tabs an extension can add its own UI to
 TABS = ('txt2img', 'img2img', 'imgedit', 'any2video')

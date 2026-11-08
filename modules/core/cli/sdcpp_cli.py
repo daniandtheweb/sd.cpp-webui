@@ -144,6 +144,25 @@ class CommandRunner(CommonRunner):
                 f"{base}_{begin_idx + i}{ext}" for i in range(batch_count)
             ]
 
+    def _keep_last_step(self) -> str | None:
+        """
+        Saves the preview of the last step of a stopped run next to where
+        its images would go (<name>_stopped.png). Returns its path, None
+        when it can't be saved.
+        """
+        first = self.outputs[0] if self.outputs else self.output_path
+        base, extension = os.path.splitext(first)
+        path, number = f"{base}_stopped{extension}", 1
+        while os.path.exists(path):
+            path = f"{base}_stopped_{number}{extension}"
+            number += 1
+        try:
+            os.replace(self.preview_path, path)
+        except OSError as e:
+            print(f"Could not keep the last step: {e}")
+            return None
+        return path
+
     def build_command(self):
         """
         Main method to build the command.
@@ -202,16 +221,21 @@ class CommandRunner(CommonRunner):
                     gallery_update
                 )
 
+        stopped = subprocess_manager.stopped
+        kept = None
         if self.preview_path and os.path.isfile(self.preview_path):
-            os.remove(self.preview_path)
+            # Stopped: the last step is kept, saved and shown, not blanked
+            kept = self._keep_last_step() if stopped else None
+            if kept is None:
+                os.remove(self.preview_path)
 
-        # Stopped by the user: keep the command, clear the rest
-        if subprocess_manager.stopped:
+        # Stopped by the user: keep the command and the last step
+        if stopped:
             yield (
                 self.fcommand,
                 progress_update(visible=False),
                 gr.update(visible=False, value=""),
-                gr.update(value=None)
+                [kept] if kept else gr.skip()
             )
             return
 

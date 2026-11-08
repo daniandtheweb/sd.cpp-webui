@@ -6,6 +6,7 @@ the extensions that loaded successfully count. The part extensions call
 is in api.py, and the API version in versions.py.
 """
 
+import contextlib
 import os
 import re
 import sys
@@ -13,6 +14,7 @@ import traceback
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from types import MappingProxyType
+from typing import NamedTuple
 
 from modules.extensions.meta import Meta
 from modules.extensions.versions import HOOKS as VALID_HOOKS
@@ -300,6 +302,25 @@ def run_pre(params: dict, tab: str = ''):
             )
 
 
+def run_replace(params: dict, tab: str = ''):
+    """
+    The generation an extension does instead of the app's: the first
+    replace_generation hook that returns a generator (the others are not
+    asked). None when no extension takes over.
+    """
+    for ext, fn in _hooks('replace_generation'):
+        try:
+            task = fn(HookContext(tab, params))
+        except (Exception, SystemExit):
+            report_error(
+                f"{ext.id}: replace_generation hook {_fn_name(fn)} failed"
+            )
+            continue
+        if task is not None:
+            return task
+    return None
+
+
 def _same_items(a, b) -> bool:
     if a is None or b is None:
         return a is b
@@ -323,6 +344,194 @@ def run_post(images, params: dict, tab: str = ''):
                 f"{ext.id}: post_generation hook {_fn_name(fn)} failed"
             )
     return None if _same_items(before, ctx.images) else ctx.images
+
+
+# -- Running a generation -------------------------------------------------
+
+class GenerationStopped(Exception):
+    """The user pressed Stop while a generation was running."""
+
+
+class Progress(NamedTuple):
+    """
+    What a replace_generation hook shows while it works: the percent and
+    text of the progress bar, an image for the results (None leaves the
+    one that is shown), and sub, (percent, text), for a second thinner bar
+    under the main one (None: no second bar).
+    """
+    percent: float
+    text: str = ""
+    image: object = None
+    sub: tuple | None = None
+
+
+# (mode, tab) -> the function that runs its generation, as the app binds
+# it. The app imports the tabs of both modes, so both are known.
+_GENERATORS: dict[tuple[str, str], Callable] = {}
+
+
+def _mode() -> str:
+    from modules.shared_instance import current_mode
+    return current_mode
+
+
+def register_generator(tab: str, fn: Callable):
+    """
+    The pipeline tells which function generates for a tab: the ones of
+    the server end in _api, the others run sd-cli.
+    """
+    mode = 'server' if fn.__name__.endswith('_api') else 'cli'
+    _GENERATORS[(mode, tab)] = fn
+
+
+def _was_stopped() -> bool:
+    if _mode() == 'server':
+        from modules.core.server.sdcpp_server import active_job
+        return active_job.cancel_requested.is_set()
+    from modules.shared_instance import subprocess_manager
+    return subprocess_manager.stopped
+
+
+# Where the CLI keeps the command and the prompts of every run
+_HISTORY = tuple(
+    os.path.join('outputs', name)
+    for name in ('commands', 'pprompts', 'nprompts')
+)
+
+
+def _history() -> set[str]:
+    files = set()
+    for folder in _HISTORY:
+        with contextlib.suppress(OSError):
+            files.update(os.path.join(folder, n) for n in os.listdir(folder))
+    return files
+
+
+def default_params() -> dict:
+    """
+    What a generation tab starts with: every setting at the default the
+    user saved (the Settings tab), or the app's own. The keys are the ones
+    ctx.params has ('in_steps', 'in_cfg', ...); settings of a tab that
+    have no default (the model tabs, the images) are not in it.
+    """
+    from modules.options.registry import OPTIONS
+    from modules.options.spec import NO_DEFAULT
+
+    data = _config().data
+    params = {}
+    for option in OPTIONS:
+        if option.virtual:
+            continue
+        if option.config_key in data:
+            params[option.ui_key] = data[option.config_key]
+        elif option.default is not NO_DEFAULT:
+            params[option.ui_key] = option.default
+    return params
+
+
+def generating(tab: str, params: dict, keep: bool = False):
+    """
+    Run one generation of a tab, through the app (sd-cli or the server).
+    A generator: it yields the updates the app's own tab would show (the
+    progress, the preview) and returns the paths of the files it made, in
+    the tab's output folder. Unless keep is set, the command and prompt
+    files that the run adds to the history are removed: an extension's
+    own runs are not the user's. Raises GenerationStopped when the user
+    stopped it and RuntimeError when it failed.
+    """
+    run = _GENERATORS.get((_mode(), tab))
+    if run is None:
+        raise ValueError(
+            f"there is no generation for the tab {tab!r} in {_mode()} mode"
+        )
+    before = _history()
+    last = None
+    try:
+        for result in run(dict(params)):
+            last = result
+            yield result
+    finally:
+        for path in (set() if keep else _history() - before):
+            with contextlib.suppress(OSError):
+                os.remove(path)
+    if _was_stopped():
+        raise GenerationStopped()
+    if not isinstance(last, (tuple, list)) or len(last) < 4:
+        return []
+    stats, files = last[2], last[3]
+    message = str(stats.get('value', '')) if isinstance(stats, dict) else ''
+    if message.startswith('Error') and not files:
+        raise RuntimeError(message)
+    if isinstance(files, list) and all(isinstance(f, str) for f in files):
+        return list(files)
+    return []
+
+
+def generate(tab: str, params: dict, keep: bool = False) -> list[str]:
+    """generating(), without showing anything: the paths of the files."""
+    steps = generating(tab, params, keep)
+    while True:
+        try:
+            next(steps)
+        except StopIteration as done:
+            return done.value
+
+
+# -- The server ----------------------------------------------------------
+
+def _differs(now, wanted) -> bool:
+    return (now or "") != (wanted or "") and bool(wanted)
+
+
+def serving(changes: dict):
+    """
+    Make sure the running sd-server has these launch params (a model, a
+    ControlNet...: the server loads them when it starts), restarting it
+    with them if it doesn't. A generator: it yields a Progress while it
+    does and returns what to give to restore_server(), or None when
+    nothing changed (in CLI mode every run loads what it needs).
+    """
+    if _mode() != 'server':
+        return None
+    from modules.shared_instance import server_state
+    from modules.core.server.manager import restart_server
+
+    if not server_state.running:
+        raise RuntimeError("the server is not running")
+    before = server_state.launch_params
+    if before is None:
+        raise RuntimeError("the server was not started by the app")
+    wanted = {k: v for k, v in changes.items() if _differs(before.get(k), v)}
+    if not wanted:
+        return None
+    yield Progress(0, "Restarting the server with what the extension needs")
+    try:
+        restart_server({**before, **wanted})
+    except RuntimeError as error:
+        try:
+            restart_server(before)
+        except RuntimeError as again:
+            raise RuntimeError(
+                f"the server could not start with {sorted(wanted)} ({error}) "
+                f"and is not running: start it again ({again})"
+            ) from error
+        raise RuntimeError(
+            f"the server could not start with {sorted(wanted)} ({error}); "
+            "it is running as before"
+        ) from error
+    return before
+
+
+def restore_server(before: dict | None):
+    """The server as serving() found it. Waits; never raises."""
+    if before is None:
+        return
+    from modules.core.server.manager import restart_server
+
+    try:
+        restart_server(before)
+    except RuntimeError as error:
+        print(f"Could not restore the server, start it again: {error}")
 
 
 # -- Gallery actions -------------------------------------------------------

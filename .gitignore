@@ -28,6 +28,7 @@ outputs/extensions/
 # Only the built-in extensions are tracked: any other one is the user's
 extensions/*
 !extensions/civitai/
+!extensions/ultimate_sdcpp_upscale/
 !extensions/masker.py
 !extensions/pose/
 

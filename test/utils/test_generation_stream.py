@@ -143,7 +143,7 @@ def test_images_not_clickable_while_generating():
 
 
 def test_stop_keeps_the_command():
-    """Stopping the queue clears the outputs but keeps the command."""
+    """Stopping the queue keeps the command and the last step shown."""
     import modules.utils.streaming_queue as queue_manager
     from modules.utils.ui_events import GenerationStream
 
@@ -160,7 +160,7 @@ def test_stop_keeps_the_command():
     assert command['value'] == "cmd"
     assert progress['visible'] is False
     assert stats == {'visible': False, 'value': ""}
-    assert images['value'] is None
+    assert images['value'] == ["preview.png"]      # the last step stays
 
 
 def test_outputs_are_sent_only_when_changed():

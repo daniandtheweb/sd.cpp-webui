@@ -17,6 +17,7 @@ from modules.core.common.sd_common import (
     CommonRunner, LORA_TAG_PATTERN, image_to_pil,
     has_output_index_spec, expand_output_index
 )
+from modules.extensions.host import register_generator
 from modules.loader import get_loras
 from modules.utils.metadata_utils import (
     find_sdcpp_generation, SDCPP_SEPARATOR
@@ -415,13 +416,34 @@ class ApiTaskRunner(CommonRunner):
             gallery,
         )
 
-    def _stopped(self):
-        """Builds the update of a stopped job: keeps the command only."""
+    def _keep_last_step(self, preview_b64: str) -> Optional[str]:
+        """
+        Saves the last preview of a stopped job next to where its images
+        would go (<name>_stopped.png). Returns its path, None if it can't.
+        """
+        base, extension = os.path.splitext(self._target_path(0))
+        path, number = f"{base}_stopped.png", 1
+        while os.path.exists(path):
+            path = f"{base}_stopped_{number}.png"
+            number += 1
+        try:
+            decode_image(preview_b64).save(path)
+        except Exception as exc:
+            print(f"Could not keep the last step: {exc}")
+            return None
+        return path
+
+    def _stopped(self, preview_b64: Optional[str] = None):
+        """
+        Builds the update of a stopped job: keeps the command and the last
+        step (saved and shown), if there is one.
+        """
+        kept = self._keep_last_step(preview_b64) if preview_b64 else None
         return (
             self.fcommand,
             progress_update(visible=False),
             gr.update(visible=False, value=""),
-            gr.update(value=None),
+            [kept] if kept else gr.skip(),
         )
 
     def _wait_for_log_stats(self, prev_stats: str) -> str:
@@ -511,7 +533,7 @@ class ApiTaskRunner(CommonRunner):
 
         while True:
             if not server_state.running:
-                yield self._stopped()
+                yield self._stopped(last_preview)
                 return
 
             # Job status and preview
@@ -541,7 +563,7 @@ class ApiTaskRunner(CommonRunner):
                         return
 
                     if status == "cancelled":
-                        yield self._stopped()
+                        yield self._stopped(last_preview)
                         return
 
                     if status == "failed":
@@ -720,6 +742,71 @@ class VideoApiRunner(ApiTaskRunner):
                 f"{result['frame_count']} frames at {result['fps']} fps")
 
 
+class UpscaleApiRunner(ApiTaskRunner):
+    """Upscales an image with a model, through /sdcpp/v1/upscale."""
+
+    kind = 'upscale'
+    dir_key = "upscale_dir"
+    subctrl_id = 4
+    endpoint = "/sdcpp/v1/upscale"
+
+    def _body(self) -> dict:
+        """The request, without the image."""
+        upscaler = self._model_stem(self._get_param('in_upscl'))
+        if self._get_param('in_img_inp') is None or not upscaler:
+            raise ValueError("an image and an upscaler are required")
+        body = {
+            "upscaler": upscaler,
+            "repeats": max(1, min(4, self._int_param('in_upscl_rep', 1) or 1)),
+            "output_format": "png",
+        }
+        tile = self._int_param('in_upscl_tile_size')
+        if tile:
+            body['tile_size'] = tile
+        return body
+
+    def _upscaled(self, body: dict) -> bytes:
+        """The upscaled image, as the server returns it."""
+        if not server_state.running:
+            raise RuntimeError("the server is not running: start it first")
+        image = image_to_pil(self._get_param('in_img_inp'))
+        if image is None:
+            raise ValueError("an image and an upscaler are required")
+        response = httpx.post(
+            self.url, timeout=None,
+            json={**body, "image": encode_image(image.convert('RGB'))})
+        if response.status_code != 200:
+            detail = (response.text or "").strip()[:200]
+            raise RuntimeError(f"HTTP {response.status_code} {detail}")
+        images = response.json().get("images") or []
+        if not images or not images[0].get("b64_json"):
+            raise RuntimeError("the server returned no image")
+        return decode_bytes(images[0]["b64_json"])
+
+    def run(self) -> Generator:
+        """Upscales and yields Gradio updates, like the generations."""
+        try:
+            body = self._body()
+            self.fcommand = json.dumps(body, indent=4)
+        except ValueError as exc:
+            yield self._final(f"Error: {exc}")
+            return
+        yield (
+            self.fcommand,
+            progress_update(0, status="Upscaling..."),
+            gr.update(visible=False, value=""),
+            None,
+        )
+        try:
+            data = self._upscaled(body)
+            with open(self.output_path, 'wb') as f:
+                f.write(data)
+        except Exception as exc:
+            yield self._final(f"Error: {type(exc).__name__}: {exc}")
+            return
+        yield self._final("Upscaled", [self.output_path])
+
+
 def txt2img_api(params: dict):
     """Creates and runs a Txt2ImgApiRunner."""
     runner = Txt2ImgApiRunner(params)
@@ -746,3 +833,14 @@ def any2video_api(params: dict):
     runner = VideoApiRunner(params)
     runner.prepare()
     yield from runner.run()
+
+
+def upscale_api(params: dict):
+    """Creates and runs an UpscaleApiRunner."""
+    runner = UpscaleApiRunner(params)
+    runner.prepare()
+    yield from runner.run()
+
+
+# Extensions can run an upscale too (api.generate)
+register_generator('upscale', upscale_api)

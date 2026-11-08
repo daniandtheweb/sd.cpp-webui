@@ -7,6 +7,7 @@ fields must be JSON integers). Jobs run against a fake sd-server.
 import base64
 import io
 import json
+import os
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -485,6 +486,24 @@ def test_post_upscale_goes_through_upscale_endpoint(fake_server, mocker):
     ] * 2
 
 
+def test_an_upscale_alone_goes_through_the_upscale_endpoint(
+    fake_server, tmp_path
+):
+    from modules.shared_instance import config
+    saved = config.data.get('upscale_dir')
+    config.update_settings({'upscale_dir': str(tmp_path)})
+    try:
+        server = fake_server()
+        final = _run('upscale_api', server.port, {
+            'in_img_inp': Image.new('RGB', (8, 8)),
+            'in_upscl': 'RealESRGAN_x4plus.pth', 'in_upscl_rep': 1.0,
+        })[-1]
+    finally:
+        config.update_settings({'upscale_dir': saved})
+    assert server.upscales[0]['upscaler'] == 'RealESRGAN_x4plus'
+    assert Image.open(final[3][0]).size == (32, 32)
+
+
 def test_upscale_keeps_metadata_off_when_source_has_none():
     from modules.core.server.sdcpp_server import merge_upscale_metadata
     source = base64.b64decode(_png_b64())
@@ -533,14 +552,33 @@ def test_stop_cancels_running_job(fake_server):
     thread.join(timeout=5)
 
     assert server.cancelled == ["job_1"]
-    # Stopped: the command stays, statistics and images are cleared
+    # Stopped: the command stays, the statistics are cleared, and the last
+    # step (the preview the server had) is saved and shown, not blanked
     command, progress, stats, images = results['updates'][-1]
     assert '"prompt"' in command
     assert progress['visible'] is False
     assert stats == {'__type__': 'update', 'visible': False, 'value': ""}
-    assert images == {'__type__': 'update', 'value': None}
+    assert len(images) == 1 and images[0].endswith('_stopped.png')
+    assert os.path.isfile(images[0])
     # Nothing left to cancel once the job has finished
     assert sdcpp_server.active_job.cancel() is False
+
+
+def test_stop_keeps_the_last_preview_saved_and_shown(app_root, tmp_path):
+    from PIL import Image
+
+    from modules.core.server import sdcpp_server
+    runner = sdcpp_server.Txt2ImgApiRunner(
+        {'in_ip': '127.0.0.1', 'in_port': 1})
+    runner.fcommand = "{}"
+    runner.output_path = str(tmp_path / "5.png")
+    preview = sdcpp_server.encode_image(Image.new('RGB', (8, 8), 'red'))
+
+    images = runner._stopped(preview)[3]
+    assert images == [str(tmp_path / "5_stopped.png")]
+    assert (tmp_path / "5_stopped.png").is_file()
+    assert runner._stopped(preview)[3] == [str(tmp_path / "5_stopped_1.png")]
+    assert runner._stopped()[3] == {'__type__': 'update'}   # no step: skip
 
 
 def test_server_launch_passes_context_settings(app_root):

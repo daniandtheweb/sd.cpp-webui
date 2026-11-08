@@ -5,6 +5,7 @@ adds is recorded on its Extension (host.py), so a register() that fails
 halfway leaves nothing behind. The API version is in versions.py.
 """
 
+import contextlib
 import os
 import re
 from collections.abc import Callable
@@ -14,7 +15,13 @@ from modules.extensions.host import (
     Extension,
     SettingSpec,
     downloads_log_path,
+    default_params,
+    GenerationStopped,
+    Progress,
+    restore_server,
+    serving,
     extensions,
+    generating,
     make_id,
     set_setting_value,
     setting_value,
@@ -40,6 +47,11 @@ def _need_callable(fn: Callable, what: str):
 
 class ExtensionAPI:
     """The implementation behind the api object of an extension."""
+
+    # Raised by generate() when the user pressed Stop
+    Stopped = GenerationStopped
+    # What a replace_generation hook yields to show its progress
+    Progress = Progress
 
     def __init__(self, ext: Extension):
         self._ext = ext
@@ -106,7 +118,12 @@ class ExtensionAPI:
         """
         Register a generation hook: fn(ctx). pre_generation hooks change
         ctx.params. post_generation hooks read ctx.params and may replace
-        ctx.images. ctx.tab is the generation tab.
+        ctx.images. replace_generation hooks return None to let the app
+        generate, or a generator that generates instead (see generate()):
+        it yields api.Progress (or (percent, text), or what
+        generate_live() yields) to show its progress, and returns the
+        final images.
+        ctx.tab is the generation tab.
         """
         valid = versions.HOOKS
         if name not in valid:
@@ -115,6 +132,95 @@ class ExtensionAPI:
             )
         _need_callable(fn, "hook fn")
         self._ext.hooks.setdefault(name, []).append(fn)
+
+    def generate(
+        self, params: dict, tab: str = "img2img", keep: bool = False
+    ) -> list:
+        """
+        Run one generation of a tab, through the app, with these params
+        (take ctx.params and change what you need), and wait for it.
+        Returns the images as PIL images. The files the app made for them
+        are removed, and so are the command and prompt files that the run
+        adds to the history, unless keep is set: then the run stays as a
+        normal generation of that tab, in its folder and its history.
+        Raises an error when the generation fails, and stops the
+        extension's work when the user pressed Stop. In CLI mode every
+        call starts sd-cli, which loads the model again.
+        """
+        steps = self.generate_live(params, tab, keep)
+        while True:
+            try:
+                next(steps)
+            except StopIteration as done:
+                return done.value
+
+    def generate_live(
+        self, params: dict, tab: str = "img2img", keep: bool = False
+    ):
+        """
+        generate() as a generator for a replace_generation hook: with
+        `yield from api.generate_live(...)` the user sees the progress and
+        the preview of the generation, as in the tab, and you get the
+        images (PIL) back.
+        """
+        from PIL import Image
+
+        paths = yield from generating(tab, params, keep)
+        images = []
+        for path in paths:
+            with Image.open(path) as picture:
+                image = picture.copy()
+            if keep:
+                image.filename = path       # where the app saved it
+            else:
+                with contextlib.suppress(OSError):
+                    os.remove(path)
+            images.append(image)
+        return images
+
+    def serve(self, changes: dict):
+        """
+        For a replace_generation hook, in server mode: make sure the running
+        sd-server has these launch params (the ones of ctx.params that the
+        server loads when it starts: a model, a ControlNet...), restarting
+        it with them if it doesn't. Use it with
+        `before = yield from api.serve(...)`: it shows the user that it is
+        restarting, and returns what to give to unserve() once you are done,
+        which is None when nothing changed. Does nothing in CLI mode.
+        """
+        return (yield from serving(changes))
+
+    def unserve(self, before):
+        """Put the server back as serve() found it (it waits; no errors)."""
+        restore_server(before)
+
+    def default_params(self) -> dict:
+        """
+        What a generation tab starts with, from the defaults the user
+        saved: a base to build the params of a generation() from, without
+        taking the settings of another one.
+        """
+        return default_params()
+
+    def models(self, kind: str) -> list[str]:
+        """
+        The installed models of a kind (the kinds of download()): their
+        names, relative to their folder, as the app lists them.
+        """
+        if kind not in net.MODEL_KINDS:
+            raise ValueError(
+                f"unknown kind {kind!r} (valid: {', '.join(net.MODEL_KINDS)})"
+            )
+        from modules.loader import get_models
+        return get_models(_config().get(net.MODEL_KINDS[kind]))
+
+    def choices(self, name: str) -> list[str]:
+        """
+        What sd.cpp accepts for a setting: 'samplers', 'schedulers',
+        'rng', 'sampler_rng', 'prediction', 'previews' or 'control_types'.
+        """
+        from modules.shared_instance import sd_choices
+        return list(sd_choices.get_choices(name))
 
     # -- Settings ----------------------------------------------------------
 

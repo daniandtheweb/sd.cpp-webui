@@ -32,6 +32,13 @@ PROGRESS_CSS = """
     color: var(--body-text-color);
     text-shadow: 0 0 2px var(--background-fill-primary);
 }
+.gen-progress-sub {
+    height: 1.4rem;
+    margin-top: 0.35rem;
+}
+.gen-progress-sub .gen-progress-label {
+    font-size: var(--text-xs);
+}
 .gen-progress-status {
     margin-top: 0.35rem;
     text-align: center;
@@ -42,18 +49,24 @@ PROGRESS_CSS = """
 """
 
 
+def _percent(value) -> int:
+    try:
+        return max(0, min(100, int(value)))
+    except (TypeError, ValueError):
+        return 0
+
+
 def progress_html(
     percent: float = 0, step: Optional[int] = None,
-    total: Optional[int] = None, status: str = "", unit: str = "Step"
+    total: Optional[int] = None, status: str = "", unit: str = "Step",
+    sub: Optional[tuple] = None
 ) -> str:
     """
     Builds the progress bar markup: '<unit> step/total · percent%' inside
-    the bar, the status (speed and ETA) under it.
+    the bar, the status (speed and ETA) under it. sub is (percent, text):
+    a second, thinner bar under the first (the tile of an upscale).
     """
-    try:
-        percent = max(0, min(100, int(percent)))
-    except (TypeError, ValueError):
-        percent = 0
+    percent = _percent(percent)
 
     if step is not None and total:
         label = f"{unit} {int(step)}/{int(total)} · {percent}%"
@@ -66,27 +79,53 @@ def progress_html(
             f'<div class="gen-progress-status">{html.escape(status)}</div>'
         )
 
+    sub_html = ""
+    if sub:
+        sub_html = (
+            '<div class="gen-progress-bar gen-progress-sub">'
+            '<div class="gen-progress-fill" '
+            f'style="width: {_percent(sub[0])}%;"></div>'
+            f'<span class="gen-progress-label">{html.escape(str(sub[1]))}'
+            '</span></div>'
+        )
+
     return (
         '<div class="gen-progress">'
         '<div class="gen-progress-bar">'
         f'<div class="gen-progress-fill" style="width: {percent}%;"></div>'
         f'<span class="gen-progress-label">{label}</span>'
         '</div>'
+        f'{sub_html}'
         f'{status_html}'
         '</div>'
     )
 
 
+class ProgressUpdate(dict):
+    """
+    A Gradio update of the progress bar that also says what it shows, for
+    whoever passes the update on (an extension reading the progress of a
+    generation): percent, step, total and status.
+    """
+    percent: float = 0
+    step: Optional[int] = None
+    total: Optional[int] = None
+    status: str = ""
+
+
 def progress_update(
     percent: float = 0, step: Optional[int] = None,
     total: Optional[int] = None, status: str = "", visible: bool = True,
-    unit: str = "Step"
+    unit: str = "Step", sub: Optional[tuple] = None
 ):
     """Builds an update for the progress bar."""
-    return gr.update(
+    update = ProgressUpdate(gr.update(
         visible=visible,
-        value=progress_html(percent, step, total, status, unit)
-    )
+        value=progress_html(percent, step, total, status, unit, sub)
+    ))
+    update.percent, update.step = percent, step
+    update.total, update.status = total, status
+    return update
 
 
 def create_progress_bar():

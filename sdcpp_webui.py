@@ -39,6 +39,9 @@ from modules.interfaces.server.any2video_tab import (
     any2video_server_block, any2video_server_params,
     img_inp_any2video_server
 )
+from modules.interfaces.server.upscale_tab import (
+    upscale_server_block, img_inp_upscale_server
+)
 from modules.interfaces.cli.upscale_tab import (
     upscale_block, img_inp_upscale
 )
@@ -252,8 +255,9 @@ def render_server_ui():
         with gr.TabItem("any2video", id="any2video"):
             any2video_server_block.render()
         with gr.TabItem("Gallery", id="gallery") as gallery_tab:
-            cpy_2_upscale_btn.visible = False
             gallery_block.render()
+        with gr.TabItem("Upscaler", id="upscale"):
+            upscale_server_block.render()
         with gr.TabItem("Models", id="models"):
             models_block.render()
         render_extension_tabs()
@@ -335,12 +339,11 @@ def bind_ui_events(server: bool, tabs, gallery_tab, gallery_loaded_state):
         inputs=common_inputs + [path_info],
         outputs=[tabs] + [v2v_params[f] for f in FIELDS] + [v2v_inp]
     )
-    if not server:
-        cpy_2_upscale_btn.click(
-            create_copy_fn("upscale"),
-            inputs=[path_info],
-            outputs=[tabs, img_inp_upscale]
-        )
+    cpy_2_upscale_btn.click(
+        create_copy_fn("upscale"),
+        inputs=[path_info],
+        outputs=[tabs, img_inp_upscale_server if server else img_inp_upscale]
+    )
 
     restart_btn.click(
         fn=restart_server,

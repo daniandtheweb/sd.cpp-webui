@@ -122,13 +122,22 @@ def register(api):
 |---|---|
 | `add_tab(title, render_fn)` | A new tab (CLI and server UIs). `render_fn()` builds its components. Duplicate titles are skipped. |
 | `add_ui(render_fn, tabs=...)` | A section in the Extensions tab of the generation tabs (all four unless `tabs` lists some). `render_fn(tab)` builds components and returns `{name: component}` — the values the hooks need — or `None`. |
-| `add_hook(name, fn)` | A `pre_generation` or `post_generation` hook. |
+| `add_hook(name, fn)` | A `pre_generation`, `post_generation` or `replace_generation` hook (see Hooks). |
+| `generate(params, tab='img2img', keep=False)` | Runs one generation of a tab through the app and waits for it: `params` is what you got in `ctx.params`, with what you need changed. Returns the images as PIL images; the files the app made for them are removed, and so are the command and prompt files the run adds to the history, unless `keep=True`: then the run stays as a normal generation of that tab (its files and history). Raises an error if the generation fails, and when the user pressed Stop (let it go: the app handles it). In CLI mode every call starts `sd-cli`, which loads the model each time; in server mode the model stays loaded. |
+| `generate_live(params, tab='img2img', keep=False)` | `generate()` as a generator, for a `replace_generation` hook: `images = yield from api.generate_live(...)` shows the progress and the preview of that generation, as the tab does, and returns the images. With `keep=True` each image's `filename` is the file the app saved. |
+| `api.Progress` | What a `replace_generation` generator can yield: `Progress(percent, text, image=None, sub=None)`. `image` goes to the results (`None` leaves the one shown), and `sub=(percent, text)` is a second progress bar under the main one. |
+| `api.Stopped` | The error `generate()` and `generate_live()` raise when the user presses Stop: catch it to clean up or to show what you already have, and the Stop is yours to honour. |
 | `api.param(params, name, default=None)` | In a hook: the value of one of your `add_ui` components. |
 | `add_output(name='', label=None, gallery=True)` | Declares an output folder for what you generate, always inside `outputs/extensions/`: `outputs/extensions/<id>/`, or `outputs/extensions/<id>/<name>/` when you give a `name`. The extension only picks the name: it is sanitized to a single folder name (`../x` becomes `x`), and an extension can't choose any other location. Returns the path, created if missing. With `gallery=True` (images) the Gallery gets a button for the folder, named by `label` (default: `name`, else the extension's name). Use `gallery=False` for other files, such as `.txt` files with a refined prompt: the folder exists, the Gallery doesn't show it. Extensions that save nothing skip it. |
 | `next_output_path(name='', extension='.png')` | The path of the next file of that output folder, numbered like the app's own outputs (`1.png`, `2.png`, ... or `1.txt`, `2.txt`, ...). `extension` must be a dot and up to 8 letters or digits (`.png`), anything else raises `ValueError`. Nothing is created: save to it. |
 | `add_setting(key, default, label=None, info=None, choices=None, secret=False)` | Declares a setting (the name is letters, digits and underscores; it can't clash with an app setting or another extension's) (`bool`, `int`, `float` or `str`, keeping the type of `default`), stored as `ext_<id>_<key>` and set to `default` only when missing. It is editable in the Extensions tab. `secret=True` (text only) is for API keys: a password field that never shows the stored value (empty keeps it, a checkbox clears it); it is still saved as text in the config file. Returns the current value. |
 | `get_setting(key)` | The current value of one of your settings (`KeyError` for any other key). |
 | `set_setting(key, value)` | Changes a setting you declared (`KeyError` for any other key, `ValueError` for a value that doesn't fit). Returns the stored value. |
+| `default_params()` | What a generation tab starts with, from the defaults the user saved: a base for the `params` of `generate()` that doesn't take the settings of another generation. |
+| `serve(changes)` | In server mode, a generator for a `replace_generation` hook: `before = yield from api.serve({'in_cnnet': name})` makes sure the running sd-server has those launch params (the models and ControlNet the server loads when it starts), restarting it with them if it doesn't, and shows that it is. It returns what to give to `unserve()`, or None when nothing changed. It does nothing in CLI mode. Normal generations in other tabs wait while the server restarts. |
+| `unserve(before)` | Put the server back as `serve()` found it. It waits and never raises; call it in a `finally`. |
+| `models(kind)` | The installed models of a kind (the kinds of `download`), as the app lists them. |
+| `choices(name)` | What sd.cpp accepts for `'samplers'`, `'schedulers'`, `'rng'`, `'sampler_rng'`, `'prediction'`, `'previews'` or `'control_types'`. |
 | `data_dir()` | Your own folder for what you keep between runs (models, caches): `user_data/extensions/<id>/`, next to the config file, created if missing. |
 | `add_gallery_action(label, fn)` | A button in the Gallery running `fn(ctx)` on the selected **image** (`ctx.path`; never videos). Return a message to show, or `None`. |
 | `fetch_json(url, headers=None)` | GET a url and return the parsed JSON (5 MB at most). See *Network access* below. |
@@ -153,6 +162,17 @@ Hooks get a context object `ctx`:
   PIL images in server mode, or `None` when nothing was produced. To
   replace them, assign `ctx.images = [...]` (or change the list in
   place). Return values are ignored.
+- `replace_generation` — `fn(ctx)`: return `None` to let the app generate,
+  or a generator that generates **instead**. The generator yields
+  `(percent, text)` to show progress (or `(percent, text, image)` to show
+  an image in the results while it works), or `api.Progress(percent, text,
+  image=None, sub=None)`, where `sub=(percent, text)` adds a second, thinner
+  progress bar under the main one (for the part of the work in progress),
+  and returns the final images (paths or PIL images); inside it, `api.generate(...)` runs generations through
+  the app, so the model, sampler and every other setting of the tab are
+  yours without rebuilding them. The first extension that takes over wins;
+  post hooks still run on its images. If it raises, the user sees the
+  error, and the Stop button ends it (`api.generate` raises when pressed).
 
 Hooks run in extension `PRIORITY` order (then id). Errors are caught
 and printed with their traceback; generation continues. Hooks apply to the generation tabs,
@@ -234,12 +254,17 @@ number keep the old behaviour. `api.version` is the one you declared.
 
 ## The bundled extensions
 
-The `extensions/` folder ships three, which are also the examples to read
+The `extensions/` folder ships four, which are also the examples to read
 (each asks for your approval the first time, like any extension):
 
 - **Civitai** (`extensions/civitai/`): search and download models.
 - **Masker** (`extensions/masker.py`): foreground masks.
 - **Pose** (`extensions/pose/`): OpenPose skeletons for ControlNet.
+- **Ultimate SDCPP Upscale** (`extensions/ultimate_sdcpp_upscale/`): upscales what a
+  generation makes, tile by tile (a `replace_generation` hook that uses
+  `api.generate_live()` and, in server mode, `api.serve()` for the ControlNet).
+  Based on the ideas of [ComfyUI_UltimateSDUpscale](https://github.com/ssitu/ComfyUI_UltimateSDUpscale) and
+  [ultimate-upscale-for-automatic1111](https://github.com/Coyote-A/ultimate-upscale-for-automatic1111).
 
 ## Example: UI injected into the generation tabs
 

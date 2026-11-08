@@ -64,11 +64,12 @@ This WebUI, by using **stable-diffusion.cpp** as its core, supports a large numb
 
 Extensions add features without touching the app. They are off by default: start the WebUI with `--extensions` to enable them (for example `./sdcpp_webui.sh --extensions`).
 
-Three come with the repository, in the `extensions` folder:
+Four come with the repository, in the `extensions` folder:
 
 - **Civitai:** search [Civitai](https://civitai.com) and download models straight into the right model folder.
 - **Masker:** create foreground masks from a photo with [rembg](https://github.com/danielgatis/rembg) and reuse them in img2img.
 - **Pose:** turn a photo of a person into an OpenPose skeleton to use as a ControlNet control image.
+- **Ultimate SDCPP Upscale:** upscale the images of txt2img, img2img and imgedit tile by tile, with its own model, prompts, sampler, denoise, seam fixing and ControlNet tile, and a live preview of the tiles. Based on the ideas of [ComfyUI_UltimateSDUpscale](https://github.com/ssitu/ComfyUI_UltimateSDUpscale) and [ultimate-upscale-for-automatic1111](https://github.com/Coyote-A/ultimate-upscale-for-automatic1111).
 
 > **Only install extensions you trust.** An extension is Python code that runs with all your permissions, and so are the packages it requires. The first time the WebUI sees a new or updated extension it shows what it declares (network sites, output folder, packages) in the terminal and asks for your confirmation. Declining leaves the extension unloaded and it will ask again at the next start.
 

@@ -4,11 +4,15 @@ import functools
 import itertools
 import os
 import threading
+import time
 
 import gradio as gr
 
 import modules.utils.streaming_queue as queue_manager
-from modules.extensions.host import generation_tab, run_post, run_pre
+from modules.extensions.host import (
+    GenerationStopped, Progress, generation_tab, register_generator, run_post,
+    run_pre, run_replace
+)
 from modules.ui.progress import progress_update
 from modules.shared_instance import (
     sd_choices, model_state
@@ -190,12 +194,12 @@ class GenerationStream:
                     return
 
                 if kind == "stopped":
-                    # Keep the command, clear the rest
+                    # Keep the command and the images (the last step)
                     self._set_view(
                         gr.skip(),
                         progress_update(visible=False),
                         gr.update(visible=False, value=""),
-                        gr.update(value=None),
+                        gr.skip(),
                         gr.update(visible=False, value=""),
                     )
                     return
@@ -297,19 +301,90 @@ class GenerationStream:
                 return
 
 
+def _keep_bar(update: tuple) -> tuple:
+    """An update of the app's own, without hiding the progress bar: the
+    extension's work goes on after the app's generation ends."""
+    command, progress, stats, shown = update
+    if isinstance(progress, dict) and progress.get('visible') is False:
+        progress = gr.skip()
+    return command, progress, stats, shown
+
+
+def _replaced(task):
+    """
+    The updates of a generation an extension does instead of the app: the
+    task yields a Progress, or (percent, text), or (percent, text, image),
+    or an update of the app's own (what api.generate_live passes on), and
+    returns the images.
+    """
+    started = time.monotonic()
+    yield (
+        "", progress_update(0, status="Starting..."),
+        gr.update(visible=False, value=""), None
+    )
+    try:
+        while True:
+            try:
+                item = next(task)
+            except StopIteration as done:
+                images = list(done.value or [])
+                break
+            if isinstance(item, Progress):
+                yield (
+                    "", progress_update(item.percent, status=item.text,
+                                        sub=item.sub),
+                    gr.skip(),
+                    gr.skip() if item.image is None else [item.image]
+                )
+            elif len(item) == 4:          # an update of the app's own
+                yield _keep_bar(item)
+            else:
+                percent, text, *shown = item
+                yield (
+                    "", progress_update(percent, status=text), gr.skip(),
+                    [shown[0]] if shown and shown[0] is not None
+                    else gr.skip()
+                )
+    except GenerationStopped:
+        # Keep what is shown (the last step), clear the bar
+        yield (
+            "", progress_update(visible=False),
+            gr.update(visible=False, value=""), gr.skip()
+        )
+        return
+    except (Exception, SystemExit) as e:
+        print(f"An extension's generation failed: {type(e).__name__}: {e}")
+        yield (
+            "", progress_update(visible=False),
+            gr.update(visible=True, value=f"Error: {e}"), None
+        )
+        return
+    yield (
+        "", progress_update(visible=False),
+        gr.update(
+            visible=True, value=f"Done in {time.monotonic() - started:.1f} s"
+        ),
+        images or None
+    )
+
+
 def _hooked(api_func):
     """
-    Wraps a generation api_func with the extension pre/post hooks:
-    pre hooks mutate the params dict, post hooks may replace the
-    final images. The wrapper keeps the function name (it is the tab_id).
+    Wraps a generation api_func with the extension hooks: pre hooks
+    mutate the params dict, a replace hook may do the generation instead
+    of the app, post hooks may replace the final images. The wrapper keeps
+    the function name (it is the tab_id).
     """
     tab = generation_tab(api_func.__name__)
+    register_generator(tab, api_func)
 
     @functools.wraps(api_func)
     def wrapped(params):
         run_pre(params, tab)
+        task = run_replace(params, tab)
         last = None
-        for result in api_func(params):
+        for result in (api_func(params) if task is None
+                       else _replaced(task)):
             yield result
             if (isinstance(result, (tuple, list)) and len(result) >= 4
                     and isinstance(result[3], list)):

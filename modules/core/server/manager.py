@@ -1,6 +1,7 @@
 """sd.cpp-webui - core - stable-diffusion.cpp server manager"""
 
 import threading
+import time
 from typing import Dict, Any
 
 import gradio as gr
@@ -88,6 +89,7 @@ class ServerRunner(CommonRunner):
 
         thread = threading.Thread(target=run_server_wrapper, daemon=True)
         thread.start()
+        server_state.thread = thread
 
         # Address of the running server, shared by every tab
         server_state.ip = self.ip
@@ -103,9 +105,12 @@ def start_server(params):
         return "Running", gr.update(active=True), gr.update(interactive=True)
 
     try:
+        launch = dict(params)       # the runner adds its own keys to it
         runner = ServerRunner(params)
         runner.build_command()
-        return runner.run()
+        result = runner.run()
+        server_state.launch_params = launch
+        return result
 
     except Exception as e:
         return f"Error: {e}", gr.update(active=False), gr.update(interactive=False)
@@ -135,3 +140,43 @@ def stop_server():
             gr.update(active=False),
             gr.update(interactive=False)
         )
+
+
+# What a server that is still loading answers (it listens when ready)
+_NOT_READY = ("Offline", "Loading weights...", "Checking status...")
+
+
+def _wait_until_ready(timeout: float):
+    """Wait for the server to answer, or raise if it dies or is too slow."""
+    from modules.core.server.status_monitor import get_active_model_name
+
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        if not server_state.running:
+            raise RuntimeError("the server stopped while it was starting")
+        name = get_active_model_name(server_state.ip, server_state.port)
+        if name not in _NOT_READY:
+            return
+        time.sleep(1)
+    raise RuntimeError("the server did not answer in time")
+
+
+def restart_server(params: dict, timeout: float = 600):
+    """
+    Stop the running server and start it again with these params, and
+    wait until it is ready. Raises RuntimeError if it can't.
+    """
+    from modules.core.server.live_status import start_watcher
+
+    thread = server_state.thread
+    stop_server()
+    if thread is not None:
+        thread.join(timeout=60)
+        if thread.is_alive():
+            raise RuntimeError("the server did not stop")
+    status = start_server(params)
+    if not server_state.running:
+        raise RuntimeError(str(status[0] if isinstance(
+            status, (tuple, list)) else status))
+    start_watcher(server_state.ip, server_state.port)
+    _wait_until_ready(timeout)

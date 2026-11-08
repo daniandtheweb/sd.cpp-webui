@@ -47,6 +47,9 @@ class ServerState:
         self.ip = ""
         self.port = ""
         self.last_generation_stats = ""
+        # What the running server was started with, and its thread
+        self.launch_params = None
+        self.thread = None
 
 
 migrate_legacy_configs()

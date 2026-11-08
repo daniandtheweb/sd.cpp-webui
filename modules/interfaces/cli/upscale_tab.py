@@ -5,6 +5,7 @@ from functools import partial
 import gradio as gr
 
 from modules.core.cli.sdcpp_cli import upscale
+from modules.extensions.host import register_generator
 from modules.utils.ui_events import (
     get_ordered_inputs, update_interactivity,
     OUTPUT_GALLERY_CLASS
@@ -21,6 +22,10 @@ from modules.loader import (
 from modules.ui.progress import create_progress_bar
 from modules.ui.environment import create_env_ui
 from modules.ui.constants import RELOAD_SYMBOL, SWITCH_V_SYMBOL, LOG_LEVEL
+
+
+# Extensions can run an upscale too (api.generate)
+register_generator('upscale', upscale)
 
 
 with gr.Blocks() as upscale_block:
