@@ -17,6 +17,7 @@ sd*
 !sd*.py
 !*.ps1
 /venv
+.gradio/
 
 user_data/
 

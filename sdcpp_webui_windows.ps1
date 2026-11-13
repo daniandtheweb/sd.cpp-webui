@@ -9,6 +9,7 @@ Options:
     -h, --help                                   Show this help message
     -Server, --server                            Enable stable-diffusion.cpp's server mode
     -Listen, --listen                            Share sd.cpp-webui on your local network
+    -Share, --share                              Share sd.cpp-webui online with a link
     -Autostart, --autostart                      Open the UI automatically
     -Credentials, --credentials                  Enable password protection using credentials.json.
                                                  Expected format: {"username1": "password1", "username2": "password2"}
@@ -23,6 +24,7 @@ $parsedArgs = @{
     Help = $false
     Server = $false
     Listen = $false
+    Share = $false
     Autostart = $false
     Credentials = $false
     AllowInsecureDir = $false
@@ -36,6 +38,8 @@ foreach ($arg in $args) {
         '^-Server$'             { $parsedArgs.Server = $true}
         '^--listen$'            { $parsedArgs.Listen = $true }
         '^-Listen$'             { $parsedArgs.Listen = $true }
+        '^--share$'             { $parsedArgs.Share = $true }
+        '^-Share$'              { $parsedArgs.Share = $true }
         '^--autostart$'         { $parsedArgs.Autostart = $true }
         '^-Autostart$'          { $parsedArgs.Autostart = $true }
         '^--credentials$'       { $parsedArgs.Credentials = $true }
@@ -55,6 +59,7 @@ foreach ($arg in $args) {
 $Help = $parsedArgs.Help
 $Server = $parsedArgs.Server
 $Listen = $parsedArgs.Listen
+$Share = $parsedArgs.Share
 $Autostart = $parsedArgs.Autostart
 $Credentials = $parsedArgs.Credentials
 $AllowInsecureDir = $parsedArgs.AllowInsecureDir
@@ -129,6 +134,7 @@ else {
 $pythonArgs = @()
 if ($Server) { $pythonArgs += "--server" }
 if ($Listen) { $pythonArgs += "--listen" }
+if ($Share) { $pythonArgs += "--share" }
 if ($Autostart) { $pythonArgs += "--autostart" }
 if ($Credentials) { $pythonArgs += "--credentials" }
 if ($AllowInsecureDir) { $pythonArgs += "--allow-insecure-dir" }

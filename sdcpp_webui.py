@@ -220,13 +220,15 @@ def load_credentials(filepath: str = "credentials.json"):
 
 
 def build_launch_args(
-    listen: bool, autostart: bool, credentials: bool
+    listen: bool, share: bool, autostart: bool, credentials: bool
 ) -> dict:
 
     launch_args = {}
 
     if listen:
         launch_args["server_name"] = "0.0.0.0"
+    if share:
+        launch_args["share"] = True
     if autostart:
         launch_args["inbrowser"] = True
 
@@ -354,11 +356,11 @@ def bind_ui_events(server: bool, tabs, gallery_tab, gallery_loaded_state):
 
 def sdcpp_launch(
     server: bool = False, listen: bool = False,
-    autostart: bool = False,
+    share: bool = False, autostart: bool = False,
     credentials: bool = False, insecure_dir: bool = False
 ):
     """Logic for launching sdcpp based on arguments"""
-    launch_args = build_launch_args(listen, autostart, credentials)
+    launch_args = build_launch_args(listen, share, autostart, credentials)
     page_js = build_page_js(config.get('def_color_scheme'))
 
     if insecure_dir:
@@ -409,6 +411,11 @@ def main():
         help='Listen on 0.0.0.0'
     )
     parser.add_argument(
+        '--share',
+        action='store_true',
+        help="Share sd.cpp-webui online with a link"
+    )
+    parser.add_argument(
         '--autostart',
         action='store_true',
         help='Automatically launch in a new browser tab'
@@ -434,7 +441,7 @@ def main():
     load_extensions(config)
 
     sdcpp_launch(
-        args.server, args.listen, args.autostart,
+        args.server, args.listen, args.share, args.autostart,
         args.credentials, args.allow_insecure_dir
     )
 

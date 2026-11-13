@@ -13,6 +13,7 @@ Options:
     -h or --help:            Show this help
     --server                 Enable stable-diffusion.cpp's server mode
     --listen:                Share sd.cpp-webui on your local network
+    --share                  Share sd.cpp-webui online with a link
     --autostart:             Open the UI automatically
     --credentials:           Enable password protection using credentials.json
                              Expected format: {"username1": "password1", "username2": "password2"}
@@ -31,7 +32,7 @@ for arg in "$@"; do
     --server)
       SERVER_MODE=1
       ;;
-    --listen|--autostart|--credentials|--allow-insecure-dir|--extensions)
+    --listen|--share|--autostart|--credentials|--allow-insecure-dir|--extensions)
       ;;
     *)
       printf "Error: Unknown command parameter: %s\n" "$arg" >&2
